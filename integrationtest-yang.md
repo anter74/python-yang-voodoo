@@ -1,3 +1,6 @@
+# YANG Structure for testing.
+
+```
 module: integrationtest
   +--rw imports-in-here
   |  +--rw name?   string
@@ -113,3 +116,4 @@ module: integrationtest
         +--rw leaf5    string
         +--rw leaf6?   string
         +--rw leaf7?   string
+```

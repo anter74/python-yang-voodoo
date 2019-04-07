@@ -1,7 +1,0 @@
-module: brewerslab
-  +--rw tests
-     +--rw temperature
-        +--rw probes* [probeid]
-           +--rw probeid    brewerslab-types:temperature-probe
-           +--rw run?       boolean
-           +--rw value?     brewerslab-types:temperature
