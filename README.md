@@ -2,29 +2,34 @@
 
 The following (amd64) docker image can be used `docker pull allena29/syrepo:0.7.7`
 
-This document provides an overview of interacting with sysrepod directly rather than via the Netopeer2 netconf server.
+This document provides an overview of interacting with sysrepod directly rather than via the Netopeer2 netconf server. This then quickly provided an abstraction layer which allows access via XPATH references (low-level) or a Node-based access (high-level).
+
 Commands in this document should be run from the top-level directory containing the git clone.
 
-The **deb** package providing sysrepod pre-compiled with python3 support is in /tmp/debs of the docker image.
+
 
 
 ## Start Docker & Sysrepod
 
 
 ```bash
-./launch-standalone 09f1721d27b3
+git pull allena29/sysrepo
+docker run -i  -t allena29/sysrepo:0.7.7-py /bin/bash
+
 
 # inside docker container
-screen -dmS sysrepo sysrepod -d -l 2
+cd /working
+git pull
+sysrepod -d -l 2
 sysrepo-plugind
 ```
 
 ## Install YANG & Initialise startup configuration
 
 ```bash
-cd /brewerslabng/yang
+cd /working/yang
 ./install-yang.sh
-cd /brewerslabng/init-data
+cd /working/init-data
 ./init-xml.sh
 
 ```
@@ -51,8 +56,8 @@ Canceling the operation.
 The providers folder contains basic sysrepo python based subscribers which will be invoked each time data changes. A subscriber will independently provide callbacks for config changes (module_change) and oper-data requests (dp_get_items).
 
 ```bash
-cd /brewerslabng/providers
-./launch-providers.sh
+cd /working/subscribers
+./launch-subscribers.sh
 ```
 
 Each provider is launched in a screen session `screen -list` and `screen -r providerintegrationtest.py` to see the sessions and resume.
@@ -73,10 +78,16 @@ sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=ru
 
 An alternative branch is considering trying to provide a python-object navigation, but at the moment it is required to navigate get xpath nodes explicitly. Sysrepo by default will return `<sysrepo.Val; proxy of <Swig Object of type 'sysrepo::S_Val *' at 0x7fc985bb23f0> >` - however our own `DataAccess` object will convert this to python primitives.
 
+Note: the docker image has `ipython3`
+
+From this point forward change into `cd /working/clients`
+
 ```python
+import datalayer
 session = datalayer.DataAccess()
 session.connect()
 value = session.get('/integrationtest:simpleleaf')
+print(value)
 ```
 
 
@@ -160,6 +171,9 @@ root.simpleleaf = None
 # Access a leaf inside a container
 print(root.morecomplex.leaf3)
 
+# Create (or return) a list element - this list has two boolean keys
+listelement = root.twokeylist.create(True, True)
+listelement.tertiary = True
 
 session.commit()
 ```
@@ -167,7 +181,9 @@ session.commit()
 
 # Reference:
 
-- https://github.com/sysrepo/sysrepo/blob/master/swig/python/tests/SysrepoBasicTest.py
+- [Sysrepo](http://www.sysrepo.org/) 
+- [Libyang](https://github.com/CESNET/libyang)
+- [libyang python bindings](https://pypi.org/project/libyang/)
 
 
 # TODO:
