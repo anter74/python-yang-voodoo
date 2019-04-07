@@ -1,0 +1,34 @@
+module testchild {
+
+  namespace "http://brewerslabng.mellon-collie.net/yang/testchild";
+  prefix "testchild";
+
+
+  grouping child {
+    leaf name {
+      type string;
+      default 'foo';
+    }
+  }
+
+  leaf orphan-from-test-child {
+    type empty;
+  }
+
+  typedef temperature {
+    type decimal64 {
+      fraction-digits 3;
+    }
+  }
+
+
+   typedef percent-dot1 {
+     type decimal64 {
+       fraction-digits 1;
+       range "0..100";
+     }
+     description "Percentage";
+   }
+
+
+}

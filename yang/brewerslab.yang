@@ -1,0 +1,21 @@
+module brewerslab {
+
+  namespace "http://brewerslabng.mellon-collie.net/yang/main";
+  prefix "brewlabng";
+
+  import brewerslab-types {
+    prefix brewerslab-types;
+  }
+
+  import brewerslab-teststub {
+    prefix brewerslab-teststub;
+  }
+
+  import brewerslab-stores {
+    prefix brewerslab-stores;
+  }
+
+  uses brewerslab-teststub:tests;
+
+  
+}
