@@ -22,13 +22,13 @@ class test_node_based_access(unittest.TestCase):
     def test_root(self):
         self.assertEqual(repr(self.root), 'BlackArtRoot{}')
 
-        expected_children = ['bronze', 'container-and-lists', 'default', 'dirty-secret', 'empty',
-                             'hyphen-leaf', 'imports-in-here', 'list-to-leafref-against', 'lista', 'morecomplex',
+        expected_children = ['bronze', 'container_and_lists', 'default', 'dirty_secret', 'empty',
+                             'hyphen_leaf', 'imports_in_here', 'list_to_leafref_against', 'lista', 'morecomplex',
                              'numberlist', 'outsidelist', 'patternstr', 'psychedelia', 'quad', 'quarter',
                              'resolver', 'simplecontainer', 'simpleenum', 'simpleleaf', 'simplelist',
-                             'thing-that-is-a-list-based-leafref', 'thing-that-is-leafref',
-                             'thing-that-is-lit-up-for-A', 'thing-that-is-lit-up-for-B', 'thing-that-is-lit-up-for-C',
-                             'thing-that-is-used-for-when', 'thing-to-leafref-against', 'twokeylist', 'whencontainer']
+                             'thing_that_is_a_list_based_leafref', 'thing_that_is_leafref',
+                             'thing_that_is_lit_up_for_A', 'thing_that_is_lit_up_for_B', 'thing_that_is_lit_up_for_C',
+                             'thing_that_is_used_for_when', 'thing_to_leafref_against', 'twokeylist', 'whencontainer']
         self.assertEqual(dir(self.root), expected_children)
 
     def test_simplest_leaf(self):
@@ -107,3 +107,16 @@ class test_node_based_access(unittest.TestCase):
             "/integrationtest:outsidelist[leafo='its cold outside']/integrationtest:otherinsidelist[otherlist1='uno'][otherlist2='due'][otherlist3='tre']/language")
         self.assertEqual(value, "italian")
         self.subject.commit()
+
+    def test_undercore_translation(self):
+        psychedelia = self.root.psychedelia
+        psychedelic_rock = psychedelia.psychedelic_rock
+        psychedelic_rock.bands.create('The 13th Floor Elevators')
+        psychedelic_rock.noise_pop.bands.create('The Jesus and Mary Chain')
+        psychedelic_rock.noise_pop.dream_pop.bands.create('Mazzy Star').favourite = True
+        psychedelic_rock.noise_pop.shoe_gaze.bands.create('Slowdive').favourite = False
+        psychedelic_rock.noise_pop.shoe_gaze.bands.create('The Brian Jonestown Massacre').favourite = True
+
+        self.assertEqual(len(psychedelic_rock.noise_pop.shoe_gaze.bands), 2)
+        self.subject.commit()
+        print('X', repr(psychedelic_rock))

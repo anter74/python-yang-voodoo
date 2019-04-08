@@ -192,10 +192,9 @@ class BlackArtNode:
 
         answer = []
         for child in node_schema.children():
-            answer.append(child.name())
+            answer.append(child.name().replace('-', '_'))
         answer.sort()
         return answer
-        return ['todo']
 
     def _get_schema_of_path(self, xpath):
 
@@ -205,6 +204,8 @@ class BlackArtNode:
         if xpath == "":
             # Root object won't be a valid XPATH
             return self.__dict__['_schema']
+
+        xpath = xpath.replace('_', '-')
 
         if schemacache.is_path_cached(xpath):
             return schemacache.get_item_from_cache(xpath)
@@ -250,17 +251,24 @@ class BlackArtList(BlackArtNode):
         schemactx = self.__dict__['_schemactx']
         cache = self.__dict__['_cache']
         conditional = self._get_keys(list(args))
-        new_xpath = path + conditional
+        new_xpath = path.replace('_', '-') + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
 
         dal.create(new_xpath)
         return BlackArtListElement(module, dal, schema, schemactx, new_xpath,  new_spath, cache)
 
+    def __len__(self):
+        module = self.__dict__['_module']
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+        dal = self.__dict__['_dal']
+        results = dal.gets(spath)
+        return len(list(results))
+
     def get(self, *args):
         module = self.__dict__['_module']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-
         dal = self.__dict__['_dal']
         module = self.__dict__['_module'] = module
         schema = self.__dict__['_schema']
