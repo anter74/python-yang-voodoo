@@ -31,8 +31,9 @@ cd /working/yang
 ./install-yang.sh
 cd /working/init-data
 ./init-xml.sh
-
 ```
+
+The `./launch-dbg` script in this repository will build a docker image (*first time will be slower*) mounts the current directory (i.e. this repository) as `/working` and then runs `/working-start-in-docker.sh`. This gives a quick way of getting a fresh docker instace (after the first build - which will terminate at the end).
 
 ## Exporting Data
 
@@ -181,7 +182,7 @@ session.commit()
 
 # Reference:
 
-- [Sysrepo](http://www.sysrepo.org/) 
+- [Sysrepo](http://www.sysrepo.org/)
 - [Libyang](https://github.com/CESNET/libyang)
 - [libyang python bindings](https://pypi.org/project/libyang/)
 
