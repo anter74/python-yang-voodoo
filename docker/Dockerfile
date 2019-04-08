@@ -120,7 +120,7 @@ RUN \
       tar xvf /tmp/libyang.tar && \
       mkdir ~/sysrepo-python-bundle/DEBIAN && \
       echo "Package: sysrepo-libyang-python-bundle" >~/sysrepo-python-bundle/DEBIAN/control && \
-      echo "Version: 0.7.7-05" >>~/sysrepo-python-bundle/DEBIAN/control && \
+      echo "Version: 0.7.7-06" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Architecture: amd64" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Depends: libev4,libprotobuf-c1" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Maintainer: allena29@noreply.user.github.com" >>~/sysrepo-python-bundle/DEBIAN/control && \
@@ -130,7 +130,7 @@ RUN \
       echo "touch /tmp/pkginstall" >>~/sysrepo-python-bundle/DEBIAN/postinst && \
       chmod 755 ~/sysrepo-python-bundle/DEBIAN/postinst && \
       dpkg --build ~/sysrepo-python-bundle && \
-      mv /root/sysrepo-python-bundle.deb /sysrepo-python-bundle.0.7.7-05.amd64.deb
+      mv /root/sysrepo-python-bundle.deb /sysrepo-python-bundle.0.7.7-06.amd64.deb
 
 
 RUN \
