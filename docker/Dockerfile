@@ -35,11 +35,11 @@ RUN \
       libreadline-dev \
       python-libxml2 \
       libprotobuf-dev && \
-      apt-get install -y libtool libtool-bin libxml2-dev libxslt1-dev libcurl4-openssl-dev xsltproc python-setuptools cmake zlib1g-dev libssl-dev pkg-config libreadline-dev && \ 
+      apt-get install -y libtool libtool-bin libxml2-dev libxslt1-dev libcurl4-openssl-dev xsltproc python-setuptools cmake zlib1g-dev libssl-dev pkg-config libreadline-dev && \
       apt-get install -y bison libboost-thread-dev libboost-thread1.67-dev autoconf automake screen && \
       apt-get install -y libffi-dev || echo 'livffi-dev does not exist'
 
-RUN \ 
+RUN \
     pip3 install ipython ncclient
 
 # add netconf user
@@ -71,7 +71,7 @@ RUN \
       make install && \
       ldconfig
 
-    
+
 
 # sysrepo
 RUN \
@@ -85,10 +85,10 @@ RUN \
       cmake -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 .. && \
       make -j6 && \
       make install && \
-      ldconfig 
+      ldconfig
 
-RUN \ 
-      pip3 install libyang 
+RUN \
+      pip3 install libyang
 
 
 
@@ -96,18 +96,17 @@ RUN \
       cd / && \
       git clone https://github.com/allena29/pyyang-voodoo.git working && \
       cd working && \
-      git checkout python-pkg && \
-      cd .. && \
+      # git checkout undercore-translations && \
       mkdir -p /tmp/python-pkg/pyyangvoodoo && \
-      cp working/clients/datalayer/__init__.py /tmp/python-pkg/pyyangvoodoo && \
-      cp working/clients/datalayer/setup.py /tmp/python-pkg && \
+      cp /working/clients/datalayer/__init__.py /tmp/python-pkg/pyyangvoodoo && \
+      cp /working/clients/datalayer/setup.py /tmp/python-pkg && \
       cp /working/LICENSE /tmp/python-pkg/LICENSE && \
       cp /working/README.md /tmp/python-pkg/README.md && \
       cd /tmp/python-pkg && \
       python3 setup.py install
 
 # Optional build a deb
-RUN \ 
+RUN \
       mkdir ~/sysrepo-python-bundle && \
       cd / && \
       tar cvpf /tmp/working.tar /usr/local /sysrepo  /usr/lib/python3/dist-packages/*sysrepo* && \
@@ -137,6 +136,12 @@ RUN \
     apt-get clean && \
     apt-get autoclean && \
     rm -fr /opt/dev
+#
+RUN \
+   mkdir -p /root/.ipython/profile_default  && \
+   cp /working/Documentation/ipython/ipython_config.py /root/.ipython/profile_default
+
+
 
 
 ENV EDITOR vim

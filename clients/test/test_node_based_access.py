@@ -193,3 +193,24 @@ class test_node_based_access(unittest.TestCase):
 
         self.assertTrue("Dead Meadow" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)
         self.assertFalse("Taylor Swift" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)
+
+        twolist = self.root.twokeylist
+        self.assertTrue((True, True) in twolist)
+
+        other_list = self.root.container_and_lists.multi_key_list
+        self.assertFalse(('A', 'Z') in other_list)
+
+        other_list.create('A', 'Z')
+        self.assertTrue(('A', 'Z') in other_list)
+
+        number_list = self.root.container_and_lists.numberkey_list
+        element = number_list.create(3)
+        number_list.create(4)
+        self.assertEqual(repr(element), "BlackArtListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='3']}")
+        element = number_list.get(4)
+        self.assertEqual(repr(element), "BlackArtListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='4']}")
+        element = number_list.get(3)
+        self.assertEqual(repr(element), "BlackArtListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='3']}")
+
+
+"""sysrepocfg --export --format=xml --datastore=running integrationtest"""

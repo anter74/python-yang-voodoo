@@ -346,6 +346,18 @@ module integrationtest {
         }
       }
     }
+
+    list numberkey-list {
+      key numberkey;
+
+      leaf numberkey {
+        type uint8;
+      }
+
+      leaf description {
+        type string;
+      }
+    }
   }
  //pyang -f sample-xml-skeleton --sample-xml-skeleton-annotations --sample-xml-skeleton-defaults integrationtest.yang | grep -v '<!-- # entries: ' | sed -e 's/<!-- # /</' | sed -e 's/<!-- /</' | sed -e 's/\.\. -->/"\/>/' | sed -e 's/: / val="/' | sed -e 's/ -->/"\/>/' | sed -e 's/-->/"\/>/' | xmllint --format - >integrationtest.sample.2.xml
  // this looked attractive as an option - however we already have a better option by inversion recursion

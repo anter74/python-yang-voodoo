@@ -256,6 +256,16 @@ class BlackArtList(BlackArtNode):
     NODE_TYPE = 'List'
 
     def create(self, *args):
+        """
+        Create a list element.
+
+        For composite-key lists then each key within the yang module must be provided
+        in the same order it is defined within the yang module.
+
+        The newly created list-element is returned.
+
+        Calling the create method a second time will not overwrite/remove data.
+        """
         module = self.__dict__['_module']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
@@ -304,11 +314,16 @@ class BlackArtList(BlackArtNode):
         return BlackArtListIterator(module, dal, schema, schemactx, path, spath, cache)
 
     def __contains__(self, *args):
-        conditional = self._get_keys(args)
+        if isinstance(args[0], tuple):
+            arglist = []
+            for a in args[0]:
+                arglist.append(a)
+        else:
+            arglist = [args[0]]
+        conditional = self._get_keys(arglist)
         path = self.__dict__['_path']
         dal = self.__dict__['_dal']
         new_xpath = path + conditional
-        print('WB.....', new_xpath)
         try:
             reults = list(dal.gets(new_xpath))
             return True
@@ -358,7 +373,6 @@ class BlackArtListIterator(BlackArtNode):
             self.__dict__['_schemacache'] = cache
         # TODO: convert above over to super
 
-        print('AAAAAaaaaaaaa get-iterator', path)
         self.__dict__['_iterator'] = data_access_layer.gets(path)
 
     def __next__(self):
