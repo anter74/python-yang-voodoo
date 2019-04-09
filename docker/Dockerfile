@@ -90,6 +90,23 @@ RUN \
 RUN \ 
       pip3 install libyang 
 
+
+
+RUN \
+      cd / && \
+      git clone https://github.com/allena29/pyyang-voodoo.git working && \
+      cd working && \
+      git checkout python-pkg && \
+      cd .. && \
+      mkdir -p /tmp/python-pkg/pyyangvoodoo && \
+      cp working/clients/datalayer/__init__.py /tmp/python-pkg/pyyangvoodoo && \
+      cp working/clients/datalayer/setup.py /tmp/python-pkg && \
+      cp /working/LICENSE /tmp/python-pkg/LICENSE && \
+      cp /working/README.md /tmp/python-pkg/README.md && \
+      cd /tmp/python-pkg && \
+      python3 setup.py install
+
+
 # Optional build a deb
 RUN \ 
       mkdir ~/sysrepo-python-bundle && \
@@ -99,12 +116,14 @@ RUN \
       tar xvf /tmp/working.tar && \
       rm -fr usr/local/games && \
       rm -fr usr/local/lib/python2.7 && \
-      tar cvpf /tmp/libyang.tar usr/local/lib/python3.6/dist-packages/*libyang* && \
+      tar cvpf /tmp/libyang.tar usr/local/lib/python3.6/dist-packages/*libyang* usr/local/lib/python3.6/dist-packages/*pyyangvoodoo* && \
+
       rm -fr usr/local/lib/python3.6 && \
       tar xvf /tmp/libyang.tar && \
       mkdir ~/sysrepo-python-bundle/DEBIAN && \
       echo "Package: sysrepo-libyang-python-bundle" >~/sysrepo-python-bundle/DEBIAN/control && \
-      echo "Version: 0.7.7-04" >>~/sysrepo-python-bundle/DEBIAN/control && \
+      echo "Version: 0.7.7-06" >>~/sysrepo-python-bundle/DEBIAN/control && \
+
       echo "Architecture: amd64" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Depends: libev4,libprotobuf-c1" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Maintainer: allena29@noreply.user.github.com" >>~/sysrepo-python-bundle/DEBIAN/control && \
@@ -114,7 +133,8 @@ RUN \
       echo "touch /tmp/pkginstall" >>~/sysrepo-python-bundle/DEBIAN/postinst && \
       chmod 755 ~/sysrepo-python-bundle/DEBIAN/postinst && \
       dpkg --build ~/sysrepo-python-bundle && \
-      mv /root/sysrepo-python-bundle.deb /sysrepo-python-bundle.0.7.7-04.amd64.deb
+      mv /root/sysrepo-python-bundle.deb /sysrepo-python-bundle.0.7.7-06.amd64.deb
+
 
 
 RUN \
@@ -126,4 +146,5 @@ RUN \
 ENV EDITOR vim
 EXPOSE 830
 STOPSIGNAL SIGTERM
-WORKDIR /sysrepo
+WORKDIR /working
+

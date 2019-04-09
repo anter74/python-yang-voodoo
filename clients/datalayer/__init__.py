@@ -120,7 +120,7 @@ class BlackArtNode:
 
     def __del__(self):
         path = self.__dict__['_path']
-        print('wanting to delete item', path)
+
 
     def _form_xpath(self, path, attr):
         """
@@ -179,12 +179,9 @@ class BlackArtNode:
 
         node_schema = self._get_schema_of_path(spath)
         if val is None:
-            print('SET-AUTO-DELETE', xpath)
             dal.delete(xpath)
             return
 
-        print("SET", xpath)
-        print(node_schema.type(), '<<<<libyangtype for ', xpath)
         type = Types.LIBYANG_MAPPING[str(node_schema.type())]
 
         dal.set(xpath, val, type)
@@ -192,7 +189,6 @@ class BlackArtNode:
     def __dir__(self):
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-        print('DIR of', path, spath)
         node_schema = self._get_schema_of_path(spath)
 
         answer = []
@@ -259,7 +255,6 @@ class BlackArtList(BlackArtNode):
         new_spath = spath   # Note: we deliberartely won't use conditionals here
 
         dal.create(new_xpath)
-        print('CREATING LIST ELEMENT WIHT SPATH for DIR', spath)
         return BlackArtListElement(module, dal, schema, schemactx, new_xpath,  new_spath, cache)
 
     def get(self, *args):
@@ -275,7 +270,6 @@ class BlackArtList(BlackArtNode):
         conditional = self._get_keys(list(args))
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
-        print('CREATING LIST ELEMENT WIHT SPATH for DIR', spath)
         return BlackArtListElement(module, dal, schema, schemactx, new_xpath,  new_spath, cache)
 
     def _get_keys(self, *args):
@@ -291,7 +285,6 @@ class BlackArtList(BlackArtNode):
         for i in range(len(keys)):
             value = self._get_xpath_value_from_python_value(args[0][i], keys[i].type())
 
-            print(i, keys[i].type(), value)
             conditional = conditional + "[%s='%s']" % (keys[i].name(), value)
         return conditional
 
@@ -504,7 +497,6 @@ class DataAccess:
         elif type == sr.SR_LEAF_EMPTY_T:
             raise NodeHasNoValue('empty-leaf', xpath)
         elif type == sr.SR_LIST_T:
-            # print('container or list - returning nothing')
             return None
         elif type == sr.SR_DECIMAL64_T:
             return valObject.data().get_decimal64()
