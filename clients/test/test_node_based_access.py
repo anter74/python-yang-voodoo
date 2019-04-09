@@ -15,6 +15,7 @@ if err:
 class test_node_based_access(unittest.TestCase):
 
     def setUp(self):
+        self.maxDiff = None
         self.subject = datalayer.DataAccess()
         self.subject.connect()
         self.root = self.subject.get_root('integrationtest')
@@ -28,7 +29,9 @@ class test_node_based_access(unittest.TestCase):
                              'resolver', 'simplecontainer', 'simpleenum', 'simpleleaf', 'simplelist',
                              'thing_that_is_a_list_based_leafref', 'thing_that_is_leafref',
                              'thing_that_is_lit_up_for_A', 'thing_that_is_lit_up_for_B', 'thing_that_is_lit_up_for_C',
-                             'thing_that_is_used_for_when', 'thing_to_leafref_against', 'twokeylist', 'whencontainer']
+                             'thing_that_is_used_for_when', 'thing_to_leafref_against', 'twokeylist',
+                             'underscoretests', 'whencontainer']
+
         self.assertEqual(dir(self.root), expected_children)
 
     def test_simplest_leaf(self):
@@ -109,6 +112,48 @@ class test_node_based_access(unittest.TestCase):
         self.subject.commit()
 
     def test_undercore_translation(self):
+        """
+        This test produces the following XML
+        <psychedelia xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest">
+          <psychedelic-rock>
+            <noise-pop>
+              <dream-pop>
+                <bands>
+                  <band>Mazzy Star</band>
+                  <favourite>true</favourite>
+                </bands>
+              </dream-pop>
+              <shoe-gaze>
+                <bands>
+                  <band>Slowdive</band>
+                  <favourite>false</favourite>
+                </bands>
+                <bands>
+                  <band>The Brian Jonestown Massacre</band>
+                  <favourite>true</favourite>
+                </bands>
+              </shoe-gaze>
+              <bands>
+                <band>The Jesus and Mary Chain</band>
+              </bands>
+            </noise-pop>
+            <bands>
+              <band>The 13th Floor Elevators</band>
+            </bands>
+          </psychedelic-rock>
+        </psychedelia>
+        """
+        underscore = self.root.underscoretests
+        self.root.underscoretests.underscore_only
+        self.root.underscoretests.hyphen_only
+
+        # Note a node can either have hyphen's or underscore's. If we have both the basic
+        # translation logic will fail. This can be seen from get_schema_for_path and __diir__
+        with self.assertRaises(datalayer.NonExistingNode) as context:
+            self.root.underscoretests.underscore_and_hyphen
+        self.assertEqual(str(context.exception),
+                         "The path: /integrationtest:underscoretests/integrationtest:underscore_and_hyphen does not point of a valid schema node in the yang module")
+
         psychedelia = self.root.psychedelia
         psychedelic_rock = psychedelia.psychedelic_rock
         psychedelic_rock.bands.create('The 13th Floor Elevators')
@@ -117,6 +162,34 @@ class test_node_based_access(unittest.TestCase):
         psychedelic_rock.noise_pop.shoe_gaze.bands.create('Slowdive').favourite = False
         psychedelic_rock.noise_pop.shoe_gaze.bands.create('The Brian Jonestown Massacre').favourite = True
 
+        self.assertTrue(psychedelic_rock.stoner_rock.bands.get('Dead Meadow'))
+        self.assertEqual(psychedelic_rock.stoner_rock.bands.get('Dead Meadow').albums.get('Old Growth').album, 'Old Growth')
+
+        # We should already have Dead Meadow as a favourite in this category, and a must condition in yange
+        with self.assertRaises(RuntimeError) as context:
+            psychedelic_rock.stoner_rock.bands.get('Wooden Shjips').favourite = True
+            self.subject.commit()
+        self.assertEqual(str(context.exception), "Validation of the changes failed")
+
+        psychedelic_rock.stoner_rock.bands.get('Wooden Shjips').favourite = False
+
+        with self.assertRaises(datalayer.NodeNotAList) as context:
+            psychedelic_rock.stoner_rock.bands.get('Taylor Swift').favourite = False
+        self.assertEqual(str(context.exception),
+                         "The path: /integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Taylor Swift'] is not a list")
+
         self.assertEqual(len(psychedelic_rock.noise_pop.shoe_gaze.bands), 2)
-        self.subject.commit()
-        print('X', repr(psychedelic_rock))
+        self.assertEqual(repr(psychedelic_rock), "BlackArtContainer{/integrationtest:psychedelia/integrationtest:psychedelic-rock}")
+
+    def test_iteration_of_lists(self):
+
+        expected_answers = [
+            "BlackArtListElement{/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']}",
+            "BlackArtListElement{/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']}"
+        ]
+        for band in self.root.psychedelia.psychedelic_rock.stoner_rock.bands:
+            expected_answer = expected_answers.pop(0)
+            self.assertEqual(repr(band), expected_answer)
+
+        self.assertTrue("Dead Meadow" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)
+        self.assertFalse("Taylor Swift" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)

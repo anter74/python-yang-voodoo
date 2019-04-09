@@ -10,6 +10,19 @@ module integrationtest {
     uses testchild:child;
   }
 
+  container underscoretests {
+    leaf underscore_only {
+      type string;
+    }
+    leaf hyphen-only {
+      type string;
+    }
+    leaf underscore_and-hyphen {
+      type string;
+      description "NO SUPPORTED";
+    }
+  }
+
   leaf empty {
     type empty;
   }
@@ -118,6 +131,7 @@ module integrationtest {
     }
   }
   container psychedelia {
+    description "This lets us tests lists, and must conditions";
     list bands {
       key band;
       leaf band {
@@ -136,6 +150,25 @@ module integrationtest {
         leaf favourite {
           type boolean;
         }
+      }
+      container stoner-rock {
+        list bands {
+          key band;
+          leaf band {
+            type string;
+          }
+          leaf favourite {
+            type boolean;
+          }
+          list albums {
+            key album;
+
+            leaf album {
+              type string;
+            }
+          }
+        }
+        must "count(current()/bands[favourite='true'])<2";
       }
       container noise-pop {
         list bands {
@@ -293,7 +326,7 @@ module integrationtest {
     }
   }
 
-  
+
   container container-and-lists {
     leaf just-a-key {
       type string;

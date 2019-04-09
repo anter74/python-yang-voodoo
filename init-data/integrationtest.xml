@@ -37,3 +37,20 @@
   <idle>w</idle>
   <wild>W</wild>
 </list-to-leafref-against>
+<psychedelia xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest">
+  <psychedelic-rock>
+    <stoner-rock>
+      <bands>
+        <band>Dead Meadow</band>
+        <favourite>true</favourite>
+        <albums>
+          <album>Old Growth</album>
+        </albums>
+      </bands>
+      <bands>
+        <band>Wooden Shjips</band>
+        <favourite>false</favourite>
+      </bands>
+    </stoner-rock>
+  </psychedelic-rock>
+</psychedelia>
