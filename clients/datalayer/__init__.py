@@ -121,8 +121,7 @@ class BlackArtNode:
     def __del__(self):
         path = self.__dict__['_path']
 
-
-    def _form_xpath(self, path, attr):
+    def _form_xpath(self, path, attr, node_schema=None):
         """
         When using the schema xpath lookup we need to use the module prefix
         across every part of the path.
@@ -132,6 +131,8 @@ class BlackArtNode:
          '/integrationtest:imports-in-here/integrationtest:name'
         """
         module = self.__dict__['_module']
+        if node_schema and node_schema.underscore_translated:
+            return path + '/' + module + ":" + attr.replace('_', '-')
 
         return path + '/' + module + ":" + attr
 
@@ -140,32 +141,36 @@ class BlackArtNode:
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
         dal = self.__dict__['_dal']
-        xpath = self._form_xpath(path, attr)
-        spath = self._form_xpath(spath, attr)
         module = self.__dict__['_module'] = module
         schema = self.__dict__['_schema']
         schemactx = self.__dict__['_schemactx']
         cache = self.__dict__['_cache']
 
-        node_schema = self._get_schema_of_path(spath)
+        # Schema Path is a combination of the previous schema path + the attribute
+        # This order of things is pretty important
+        # - get_schema_of_path lets us convert '_' to '-' if the leaf doesn't exist
+        # to take account of the conversions
+        node_schema = self._get_schema_of_path(self._form_xpath(spath, attr))
+        new_spath = self._form_xpath(spath, attr, node_schema)
+        new_xpath = self._form_xpath(path, attr, node_schema)
         node_type = node_schema.nodetype()
 
+        return BlackArtNode._return_black_art_node(module, dal, schema, schemactx, new_xpath, new_spath, cache,
+                                                   node_type, node_schema)
+
+    @staticmethod
+    def _return_black_art_node(module, dal, schema, schemactx, new_xpath, new_spath, cache,
+                               node_type, node_schema):
         if node_type == 1:
             # assume this is a container (or a presence container)
-            new_xpath = self._form_xpath(path, attr)
-            new_spath = spath
             if node_schema.presence() is None:
                 return BlackArtContainer(module, dal, schema, schemactx, new_xpath, new_spath, cache)
             else:
                 return BlackArtPresenceContainer(module, dal, schema, schemactx, new_xpath, new_spath, cache)
         elif node_type == 4:
             # Assume this is always a primitive
-            new_xpath = self._form_xpath(path, attr)
-            new_spath = self._form_xpath(spath, attr)
-            return dal.get(xpath)
+            return dal.get(new_xpath)
         elif node_type == 16:
-            new_xpath = self._form_xpath(path, attr)
-            new_spath = spath
             return BlackArtList(module, dal, schema, schemactx, new_xpath, new_spath, cache)
 
         raise ValueError('Get - not sure what the type is...%s' % (node_type))
@@ -193,10 +198,9 @@ class BlackArtNode:
 
         answer = []
         for child in node_schema.children():
-            answer.append(child.name())
+            answer.append(child.name().replace('-', '_'))
         answer.sort()
         return answer
-        return ['todo']
 
     def _get_schema_of_path(self, xpath):
 
@@ -210,9 +214,20 @@ class BlackArtNode:
         if schemacache.is_path_cached(xpath):
             return schemacache.get_item_from_cache(xpath)
 
-        schema_for_path = next(schemactx.find_path(xpath))
-        schemacache.add_entry(xpath, schema_for_path)
-        return schema_for_path
+        try:
+            schema_for_path = next(schemactx.find_path(xpath))
+            schema_for_path.underscore_translated = False
+            return schema_for_path
+        except libyang.util.LibyangError:
+            pass
+
+        try:
+            schema_for_path = next(schemactx.find_path(xpath.replace('_', '-')))
+            schema_for_path.underscore_translated = True
+            return schema_for_path
+        except libyang.util.LibyangError:
+            pass
+        raise NonExistingNode(xpath)
 
 
 class BlackArtList(BlackArtNode):
@@ -241,12 +256,20 @@ class BlackArtList(BlackArtNode):
     NODE_TYPE = 'List'
 
     def create(self, *args):
+        """
+        Create a list element.
+
+        For composite-key lists then each key within the yang module must be provided
+        in the same order it is defined within the yang module.
+
+        The newly created list-element is returned.
+
+        Calling the create method a second time will not overwrite/remove data.
+        """
         module = self.__dict__['_module']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-
         dal = self.__dict__['_dal']
-        module = self.__dict__['_module'] = module
         schema = self.__dict__['_schema']
         schemactx = self.__dict__['_schemactx']
         cache = self.__dict__['_cache']
@@ -257,20 +280,56 @@ class BlackArtList(BlackArtNode):
         dal.create(new_xpath)
         return BlackArtListElement(module, dal, schema, schemactx, new_xpath,  new_spath, cache)
 
+    def __len__(self):
+        module = self.__dict__['_module']
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+        dal = self.__dict__['_dal']
+        results = dal.gets(spath)
+        return len(list(results))
+
     def get(self, *args):
         module = self.__dict__['_module']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-
         dal = self.__dict__['_dal']
-        module = self.__dict__['_module'] = module
         schema = self.__dict__['_schema']
         schemactx = self.__dict__['_schemactx']
         cache = self.__dict__['_cache']
         conditional = self._get_keys(list(args))
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
+        results = list(dal.gets(new_xpath))
+
         return BlackArtListElement(module, dal, schema, schemactx, new_xpath,  new_spath, cache)
+
+    def __iter__(self):
+        module = self.__dict__['_module']
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+        dal = self.__dict__['_dal']
+        schema = self.__dict__['_schema']
+        schemactx = self.__dict__['_schemactx']
+        cache = self.__dict__['_cache']
+        return BlackArtListIterator(module, dal, schema, schemactx, path, spath, cache)
+
+    def __contains__(self, *args):
+        if isinstance(args[0], tuple):
+            arglist = []
+            for a in args[0]:
+                arglist.append(a)
+        else:
+            arglist = [args[0]]
+        conditional = self._get_keys(arglist)
+        path = self.__dict__['_path']
+        dal = self.__dict__['_dal']
+        new_xpath = path + conditional
+        try:
+            reults = list(dal.gets(new_xpath))
+            return True
+        except:
+            pass
+        return False
 
     def _get_keys(self, *args):
         path = self.__dict__['_path']
@@ -293,6 +352,43 @@ class BlackArtList(BlackArtNode):
             return str(v).lower()
         else:
             return str(v)
+
+
+class BlackArtListIterator(BlackArtNode):
+
+    TYPE = 'BlackArtListIterator'
+
+    def __init__(self, module, data_access_layer, yang_schema, yang_ctx, path='', spath='', cache=None):
+        # TODO: convert over to super
+        self.__dict__['_module'] = module
+        self.__dict__['_path'] = path
+        self.__dict__['_spath'] = spath
+        self.__dict__['_schema'] = yang_schema
+        self.__dict__['_schemactx'] = yang_ctx
+        self.__dict__['_dal'] = data_access_layer
+        self.__dict__['_cache'] = cache
+        if cache is None:
+            self.__dict__['_schemacache'] = BlackHoleCache()
+        else:
+            self.__dict__['_schemacache'] = cache
+        # TODO: convert above over to super
+
+        self.__dict__['_iterator'] = data_access_layer.gets(path)
+
+    def __next__(self):
+        module = self.__dict__['_module']
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+        dal = self.__dict__['_dal']
+        schema = self.__dict__['_schema']
+        schemactx = self.__dict__['_schemactx']
+        cache = self.__dict__['_cache']
+
+        this_xpath = next(self.__dict__['_iterator'])
+
+        return BlackArtListElement(module, dal, schema, schemactx, this_xpath,  spath, cache)
+
+        # return BlackArtListIterator(module, dal, schema, schemactx, new_xpath,  new_spath, cache)
 
 
 class BlackArtListElement(BlackArtNode):
@@ -382,7 +478,11 @@ class DataAccess:
         # self.subscribe = sr.Subscribe(self.session)
 
     def commit(self):
+        # try:
         self.session.commit()
+        # except RuntimeError as err:
+        #    xerror = str(err)
+        #raise CommitFailed(xerror)
 
     def create_container(self, xpath):
         self.set(xpath, None,  sr.SR_CONTAINER_PRESENCE_T)
@@ -526,3 +626,15 @@ class ListWrongNumberOfKeys(Exception):
 
     def __init__(self, xpath, require, given):
         super().__init__("The path: %s is a list requiring %s keys but was given %s keys" % (xpath, require, given))
+
+
+class NonExistingNode(Exception):
+
+    def __init__(self, xpath):
+        super().__init__("The path: %s does not point of a valid schema node in the yang module" % (xpath))
+
+
+class CommitFailed(Exception):
+
+    def __init__(self, message):
+        super().__init__("The commit failed.\n%s" % (message))

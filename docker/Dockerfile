@@ -35,12 +35,15 @@ RUN \
       libreadline-dev \
       python-libxml2 \
       libprotobuf-dev && \
-      apt-get install -y libtool libtool-bin libxml2-dev libxslt1-dev libcurl4-openssl-dev xsltproc python-setuptools cmake zlib1g-dev libssl-dev pkg-config libreadline-dev && \ 
+      apt-get install -y libtool libtool-bin libxml2-dev libxslt1-dev libcurl4-openssl-dev xsltproc python-setuptools cmake zlib1g-dev libssl-dev pkg-config libreadline-dev && \
       apt-get install -y bison libboost-thread-dev libboost-thread1.67-dev autoconf automake screen && \
       apt-get install -y libffi-dev || echo 'livffi-dev does not exist'
 
-RUN \ 
-    pip3 install ipython ncclient
+RUN \
+    pip3 install ipython ncclient && \
+    mkdir -p /root/.ipython/profile_default   && \
+    echo "c.Completer.use_jedi = False" >/root/.ipython/profile_default/ipython_config.py && \
+    echo "c.TerminalInteractiveShell.confirm_exit = False" >>/root/.ipython/profile_default/ipython_config.py 
 
 # add netconf user
 RUN \
@@ -71,7 +74,7 @@ RUN \
       make install && \
       ldconfig
 
-    
+
 
 # sysrepo
 RUN \
@@ -85,10 +88,10 @@ RUN \
       cmake -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 .. && \
       make -j6 && \
       make install && \
-      ldconfig 
+      ldconfig
 
-RUN \ 
-      pip3 install libyang 
+RUN \
+      pip3 install libyang
 
 
 
@@ -96,19 +99,17 @@ RUN \
       cd / && \
       git clone https://github.com/allena29/pyyang-voodoo.git working && \
       cd working && \
-      git checkout python-pkg && \
-      cd .. && \
+      # git checkout undercore-translations && \
       mkdir -p /tmp/python-pkg/pyyangvoodoo && \
-      cp working/clients/datalayer/__init__.py /tmp/python-pkg/pyyangvoodoo && \
-      cp working/clients/datalayer/setup.py /tmp/python-pkg && \
+      cp /working/clients/datalayer/__init__.py /tmp/python-pkg/pyyangvoodoo && \
+      cp /working/clients/datalayer/setup.py /tmp/python-pkg && \
       cp /working/LICENSE /tmp/python-pkg/LICENSE && \
       cp /working/README.md /tmp/python-pkg/README.md && \
       cd /tmp/python-pkg && \
       python3 setup.py install
 
-
 # Optional build a deb
-RUN \ 
+RUN \
       mkdir ~/sysrepo-python-bundle && \
       cd / && \
       tar cvpf /tmp/working.tar /usr/local /sysrepo  /usr/lib/python3/dist-packages/*sysrepo* && \
@@ -117,13 +118,11 @@ RUN \
       rm -fr usr/local/games && \
       rm -fr usr/local/lib/python2.7 && \
       tar cvpf /tmp/libyang.tar usr/local/lib/python3.6/dist-packages/*libyang* usr/local/lib/python3.6/dist-packages/*pyyangvoodoo* && \
-
       rm -fr usr/local/lib/python3.6 && \
       tar xvf /tmp/libyang.tar && \
       mkdir ~/sysrepo-python-bundle/DEBIAN && \
       echo "Package: sysrepo-libyang-python-bundle" >~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Version: 0.7.7-06" >>~/sysrepo-python-bundle/DEBIAN/control && \
-
       echo "Architecture: amd64" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Depends: libev4,libprotobuf-c1" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Maintainer: allena29@noreply.user.github.com" >>~/sysrepo-python-bundle/DEBIAN/control && \
@@ -136,7 +135,6 @@ RUN \
       mv /root/sysrepo-python-bundle.deb /sysrepo-python-bundle.0.7.7-06.amd64.deb
 
 
-
 RUN \
     apt-get clean && \
     apt-get autoclean && \
@@ -147,4 +145,3 @@ ENV EDITOR vim
 EXPOSE 830
 STOPSIGNAL SIGTERM
 WORKDIR /working
-
