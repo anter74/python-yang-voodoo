@@ -40,7 +40,10 @@ RUN \
       apt-get install -y libffi-dev || echo 'livffi-dev does not exist'
 
 RUN \
-    pip3 install ipython ncclient
+    pip3 install ipython ncclient && \
+    mkdir -p /root/.ipython/profile_default   && \
+    echo "c.Completer.use_jedi = False" >/root/.ipython/profile_default/ipython_config.py && \
+    echo "c.TerminalInteractiveShell.confirm_exit = False" >>/root/.ipython/profile_default/ipython_config.py 
 
 # add netconf user
 RUN \
@@ -136,12 +139,6 @@ RUN \
     apt-get clean && \
     apt-get autoclean && \
     rm -fr /opt/dev
-#
-RUN \
-   mkdir -p /root/.ipython/profile_default  && \
-   cp /working/Documentation/ipython/ipython_config.py /root/.ipython/profile_default
-
-
 
 
 ENV EDITOR vim

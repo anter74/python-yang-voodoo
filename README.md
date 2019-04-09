@@ -189,6 +189,7 @@ session.commit()
 
 # TODO:
 
+- convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython
 - enumeration test cases
 - underscore conversion
 - deletes (of non-primitives)
