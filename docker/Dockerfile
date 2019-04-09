@@ -106,6 +106,7 @@ RUN \
       cd /tmp/python-pkg && \
       python3 setup.py install
 
+
 # Optional build a deb
 RUN \ 
       mkdir ~/sysrepo-python-bundle && \
@@ -116,11 +117,13 @@ RUN \
       rm -fr usr/local/games && \
       rm -fr usr/local/lib/python2.7 && \
       tar cvpf /tmp/libyang.tar usr/local/lib/python3.6/dist-packages/*libyang* usr/local/lib/python3.6/dist-packages/*pyyangvoodoo* && \
+
       rm -fr usr/local/lib/python3.6 && \
       tar xvf /tmp/libyang.tar && \
       mkdir ~/sysrepo-python-bundle/DEBIAN && \
       echo "Package: sysrepo-libyang-python-bundle" >~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Version: 0.7.7-06" >>~/sysrepo-python-bundle/DEBIAN/control && \
+
       echo "Architecture: amd64" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Depends: libev4,libprotobuf-c1" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Maintainer: allena29@noreply.user.github.com" >>~/sysrepo-python-bundle/DEBIAN/control && \
@@ -133,6 +136,7 @@ RUN \
       mv /root/sysrepo-python-bundle.deb /sysrepo-python-bundle.0.7.7-06.amd64.deb
 
 
+
 RUN \
     apt-get clean && \
     apt-get autoclean && \
@@ -143,3 +147,4 @@ ENV EDITOR vim
 EXPOSE 830
 STOPSIGNAL SIGTERM
 WORKDIR /working
+

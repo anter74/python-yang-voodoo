@@ -121,6 +121,7 @@ class BlackArtNode:
     def __del__(self):
         path = self.__dict__['_path']
 
+
     def _form_xpath(self, path, attr):
         """
         When using the schema xpath lookup we need to use the module prefix
