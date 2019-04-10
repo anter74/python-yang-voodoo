@@ -160,6 +160,8 @@ This is a proof of concept style quality of code at this stage.
 - We allow libyang to constrain our schema, however this means some things will be **invalid** but not fail basic schema checks.
 - Then `session.commit()` which wraps around sysrepo's commit will actually validate things like must, whens and leaf-ref paths.
 
+**NOTE:** when running `get_root(yang_module)` we must be in a directory where `../yang` contains the yang module.
+
 
 ```python
 import yangvoodoo
@@ -201,9 +203,31 @@ session.commit()
 
 It's quite distracting to see log messages pop-up when interactively using ipython.
 
+By default logging isn't enabled.
+
+
 see... LogWrap() and logsink.py
 
 
+Note: the python bindings to sysrepo don't provide great visibility of errors. It is best to see the logging from sysrepo's perspective if something is unclear. Since the Node-based access is just wrapping around the basic sysrepo python library if there are problems with the node based access ensuring the XPATH and types are consistent with the YANG module.
+
+One example where things are not distinct enough is the following example:
+
+- `root.numberlist.integer.create('2')`  --> **Runtime Error: Invalid Argument**
+- `root.numberlist.integer.create(2)`  --> **Runtime Error: Invalid Argument**
+- `root.numberlist.integer.create(234234234234)` --> **Runtime Error: Invalid Argument**
+- `root.numberlist.integer.create(234234234234)` --> **Runtime Error: Invalid Argument**
+
+In the first two cases the Sysrepo logs show `The node is not enabled in running datastore /integrationtest:numberlist/integrationtest:integer[k='234234234234']` in this case the subscribers were not running. Sysrepo will not accept changes to the datastore without a subscriber active.
+
+In the third case the subscribers were running because it does not match the `uint8` type.
+
+Once the subscriber is active either of the first two cases work- however because the field is a uint8 we should use the second case.
+
+
+## Development/System version
+
+If the `import yangvoodoo` is carried out in the `clients/` subdirectory the version of the library from the GIT repository will be used. If the import is carried out anywhere else the system version will be used.
 
 # Reference:
 
@@ -214,8 +238,16 @@ see... LogWrap() and logsink.py
 
 # TODO:
 
-- convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython
+- ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
+- allow the location of yang's to be specified.
+- define (with tests) further yang types in Types class (and handle a fallback better than 'keyerror')
 - enumeration test cases
 - underscore conversion
 - deletes (of non-primitives)
 - choices
+- enhance logging if there is no subscriber for a particular YANG module.
+- method to persist running into startup configuration.
+- `root.simpleleaf<TAB><TAB><TAB>` calls __getattr__ but if there isn't a sensible attr we shouldn't call the data access methods
+- dir method of a listelement should not expose listkeys
+- list should implement getitem
+- list should implement a friednly keys() to show the items (assuming this is easy to do against sysrepo)

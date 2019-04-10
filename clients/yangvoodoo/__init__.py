@@ -9,18 +9,20 @@ import yangvoodoo.BlackArtNodes
 
 class LogWrap():
 
-    ENABLED = False
     ENABLED_INFO = True
     ENABLED_DEBUG = True
 
-    ENABLED_REMOTE = True
     REMOTE_LOG_IP = "127.0.0.1"
     REMOTE_LOG_PORT = 6666
 
-    def __init__(self):
-        format = "%(asctime)-15s - %(name)-20s %(levelname)-12s  %(message)s"
-        logging.basicConfig(level=logging.DEBUG, format=format)
-        self.log = logging.getLogger('blackhole')
+    def __init__(self, local_log=False, remote_log=False):
+        self.ENABLED = local_log
+        self.ENABLED_REMOTE = remote_log
+
+        if self.ENABLED:
+            format = "%(asctime)-15s - %(name)-20s %(levelname)-12s  %(message)s"
+            logging.basicConfig(level=logging.DEBUG, format=format)
+            self.log = logging.getLogger('blackhole')
 
         if self.ENABLED_REMOTE:
             self.log_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -93,6 +95,11 @@ class DataAccess:
      - libyang 0.16.78 (https://github.com/rjarry/libyang-cffi/)
     """
 
+    def __init__(self, log=None):
+        if not log:
+            log = LogWrap()
+        self.log = log
+
     def get_root(self, module, yang_location="../yang/"):
         """
         Instantiate Node-based access to the data stored in the backend defined by a yang
@@ -104,8 +111,7 @@ class DataAccess:
         """
         yang_ctx = libyang.Context(yang_location)
         yang_schema = yang_ctx.load_module(module)
-
-        context = yangvoodoo.BlackArtNodes.Context(module, self, yang_schema, yang_ctx)
+        context = yangvoodoo.BlackArtNodes.Context(module, self, yang_schema, yang_ctx, log=self.log)
         return yangvoodoo.BlackArtNodes.Root(context)
 
     def connect(self, tag='client'):
@@ -119,7 +125,7 @@ class DataAccess:
         self.session.commit()
         # except RuntimeError as err:
         #    xerror = str(err)
-        #raise CommitFailed(xerror)
+        # raise CommitFailed(xerror)
 
     def create_container(self, xpath):
         self.set(xpath, None,  sr.SR_CONTAINER_PRESENCE_T)
@@ -138,6 +144,7 @@ class DataAccess:
 
         It is required to provide the value and the type of the field.
         """
+        self.log.debug('SET: %s => %s (%s)' % (xpath, value, valtype))
         v = sr.Val(value, valtype)
         self.session.set_item(xpath, v)
 
