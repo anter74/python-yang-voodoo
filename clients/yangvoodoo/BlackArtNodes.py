@@ -125,6 +125,9 @@ class Node:
         return path + '/' + context.module + ":" + attr
 
     def __getattr__(self, attr):
+        if attr in ('_ipython_canary_method_should_not_exist_', '_repr_mimebundle_'):
+            raise AttributeError('Go Away!')
+
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
