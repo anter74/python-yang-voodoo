@@ -238,6 +238,9 @@ class List(Node):
 
     _NODE_TYPE = 'List'
 
+    def __dir__(self):
+        return []
+
     def create(self, *args):
         """
         Create a list element.
