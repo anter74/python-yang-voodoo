@@ -6,9 +6,6 @@ session.connect()
 root = session.get_root('integrationtest')
 print(root)
 
-l = root.twokeylist
-# l._get_keys('true')
-l._get_keys(True, False)
 
 """
 print(dir(root))
