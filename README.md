@@ -179,6 +179,15 @@ listelement.tertiary = True
 session.commit()
 ```
 
+# Debug Logging
+
+**Note: this is quick and dirty and should probably be replaced by syslog**
+
+It's quite distracting to see log messages pop-up when interactively using ipython.
+
+see... LogWrap() and logsink.py
+
+
 
 # Reference:
 

@@ -2,6 +2,98 @@
 import libyang
 import sysrepo as sr
 import time
+import logging
+import socket
+
+
+class LogWrap():
+
+    ENABLED = False
+    ENABLED_INFO = True
+    ENABLED_DEBUG = True
+
+    ENABLED_REMOTE = True
+    REMOTE_LOG_IP = "127.0.0.1"
+    REMOTE_LOG_PORT = 6666
+
+    def __init__(self):
+        format = "%(asctime)-15s - %(name)-20s %(levelname)-12s  %(message)s"
+        logging.basicConfig(level=logging.DEBUG, format=format)
+        self.log = logging.getLogger('blackhole')
+
+        if self.ENABLED_REMOTE:
+            self.log_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            message = self._pad_truncate_to_size("STARTED ("+str(time.time())+"):")
+            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
+
+    @staticmethod
+    def _args_wildcard_to_printf(*args):
+        if isinstance(args, tuple):
+            # (('Using cli startup to do %s', 'O:configure'),)
+            args = list(args[0])
+            if len(args) == 0:
+                return ''
+            message = args.pop(0)
+            if len(args) == 0:
+                pass
+            if len(args) == 1:
+                message = message % (args[0])
+            else:
+                message = message % tuple(args)
+        else:
+            message = args
+        return (message)
+
+    def _pad_truncate_to_size(self, message, size=1024):
+        if len(message) < size:
+            message = message + ' '*(1024-len(message))
+        elif len(message) > 1024:
+            message = message[:1024]
+        return message.encode()
+
+    def info(self, *args):
+        if self.ENABLED and self.ENABLED_INFO:
+            self.log.info(args)
+        if self.ENABLED_REMOTE and self.ENABLED_INFO:
+            print('a')
+            message = 'INFO ' + LogWrap._args_wildcard_to_printf(args)
+            message = self._pad_truncate_to_size('INFO: %s %s' % (str(time.time()), message))
+            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
+
+    def error(self, *args):
+        if self.ENABLED:
+            self.log.error(args)
+        if self.ENABLED_REMOTE:
+            message = 'INFO ' + LogWrap._args_wildcard_to_printf(args)
+            message = self._pad_truncate_to_size('INFO: %s %s' % (str(time.time()), message))
+            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
+
+    def debug(self, *args):
+        if self.ENABLED and self.ENABLED_DEBUG:
+            self.log.debug(args)
+
+        if self.ENABLED_REMOTE and self.ENABLED_DEBUG:
+            message = 'DEBUG ' + LogWrap._args_wildcard_to_printf(args)
+            message = self._pad_truncate_to_size('INFO: %s %s' % (str(time.time()), message))
+            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
+
+
+class BlackArtContext:
+
+    def __init__(self, module, data_access_layer, yang_schema, yang_ctx, path='', spath='', cache=None, log=None):
+        self.__dict__['_module'] = module
+        self.__dict__['_path'] = path
+        self.__dict__['_spath'] = spath
+        self.__dict__['_schema'] = yang_schema
+        self.__dict__['_schemactx'] = yang_ctx
+        self.__dict__['_dal'] = data_access_layer
+        self.__dict__['_cache'] = cache
+        if cache is None:
+            self.__dict__['_schemacache'] = BlackHoleCache()
+        else:
+            self.__dict__['_schemacache'] = cache
+
+        self.log = LogWrap()
 
 
 class Types:
@@ -94,7 +186,7 @@ class BlackArtNode:
 
     NODE_TYPE = 'Node'
 
-    def __init__(self, module, data_access_layer, yang_schema, yang_ctx, path='', spath='', cache=None):
+    def __init__(self, module, data_access_layer, yang_schema, yang_ctx, path='', spath='', cache=None, context=None):
         self.__dict__['_module'] = module
         self.__dict__['_path'] = path
         self.__dict__['_spath'] = spath
@@ -106,6 +198,8 @@ class BlackArtNode:
             self.__dict__['_schemacache'] = BlackHoleCache()
         else:
             self.__dict__['_schemacache'] = cache
+
+        self.__dict__['_context'] = context
 
     def __name__(self):
         return 'BlackArtNode'
@@ -469,7 +563,10 @@ class DataAccess:
         """
         yang_ctx = libyang.Context(yang_location)
         yang_schema = yang_ctx.load_module(module)
-        return BlackArtRoot(module, self, yang_schema, yang_ctx, path)
+
+        context = BlackArtContext(module, self, yang_schema, yang_ctx, path)
+        context.log.info('sdf')
+        return BlackArtRoot(module, self, yang_schema, yang_ctx, path, context=context)
 
     def connect(self, tag='client'):
         self.conn = sr.Connection("%s%s" % (tag, time.time()))
