@@ -1,9 +1,9 @@
 import unittest
 import os
-import datalayer
+import yangvoodoo
 import subprocess
 import sysrepo as sr
-from datalayer import Types
+from yangvoodoo import Types
 
 process = subprocess.Popen(["bash"],
                            stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -15,7 +15,7 @@ if err:
 class test_getdata(unittest.TestCase):
 
     def setUp(self):
-        self.subject = datalayer.DataAccess()
+        self.subject = yangvoodoo.DataAccess()
         self.subject.connect()
 
     def test_delete_and_get(self):
@@ -43,7 +43,7 @@ class test_getdata(unittest.TestCase):
         self.subject.set(xpath, value)
         self.assertEqual(self.subject.get(xpath), 'Outside')
 
-        self.subject = datalayer.DataAccess()
+        self.subject = yangvoodoo.DataAccess()
         self.subject.connect()
 
         xpath = "/integrationtest:morecomplex/inner/leaf5"
@@ -55,7 +55,7 @@ class test_getdata(unittest.TestCase):
         self.assertEqual(self.subject.get(xpath), 'Outside')
         self.subject.commit()
 
-        self.subject = datalayer.DataAccess()
+        self.subject = yangvoodoo.DataAccess()
         self.subject.connect()
 
         xpath = "/integrationtest:morecomplex/inner/leaf5"
@@ -80,9 +80,9 @@ class test_getdata(unittest.TestCase):
         xpath = "/integrationtest:morecomplex/inner/leaf5"
         value = "Outside"
 
-        self.subject1 = datalayer.DataAccess()
+        self.subject1 = yangvoodoo.DataAccess()
         self.subject1.connect('a')
-        self.subject2 = datalayer.DataAccess()
+        self.subject2 = yangvoodoo.DataAccess()
         self.subject2.connect('b')
 
         self.subject1.set(xpath, value)
@@ -109,7 +109,7 @@ class test_getdata(unittest.TestCase):
             self.subject.commit()
         self.assertEqual(str(context.exception), 'Validation of the changes failed')
 
-        self.subject = datalayer.DataAccess()
+        self.subject = yangvoodoo.DataAccess()
         self.subject.connect()
 
         xpath = "/integrationtest:thing-that-is-a-list-based-leafref"
@@ -128,7 +128,7 @@ class test_getdata(unittest.TestCase):
         self.assertEqual(str(context.exception), 'Request contains unknown element')
 
     def test_containers_and_non_existing_data(self):
-        with self.assertRaises(datalayer.NodeHasNoValue) as context:
+        with self.assertRaises(yangvoodoo.Errors.NodeHasNoValue) as context:
             xpath = "/integrationtest:morecomplex"
             self.subject.get(xpath)
         self.assertEqual(str(context.exception), 'The node: container at /integrationtest:morecomplex has no value')
@@ -144,7 +144,7 @@ class test_getdata(unittest.TestCase):
         xpath = "/integrationtest:empty"
         self.subject.set(xpath, None, sr.SR_LEAF_EMPTY_T)
 
-        with self.assertRaises(datalayer.NodeHasNoValue) as context:
+        with self.assertRaises(yangvoodoo.Errors.NodeHasNoValue) as context:
             xpath = "/integrationtest:empty"
             self.subject.get(xpath)
         self.assertEqual(str(context.exception), 'The node: empty-leaf at /integrationtest:empty has no value')
