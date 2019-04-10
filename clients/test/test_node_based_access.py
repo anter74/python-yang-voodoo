@@ -1,6 +1,6 @@
 import unittest
 import os
-import datalayer
+import yangvoodoo
 import subprocess
 import sysrepo as sr
 
@@ -16,7 +16,7 @@ class test_node_based_access(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        self.subject = datalayer.DataAccess()
+        self.subject = yangvoodoo.DataAccess()
         self.subject.connect()
         self.root = self.subject.get_root('integrationtest')
 
@@ -77,7 +77,7 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(repr(twolist), "BlackArtList{/integrationtest:twokeylist}")
         self.assertEqual(twolist._path, '/integrationtest:twokeylist')
 
-        with self.assertRaises(datalayer.ListWrongNumberOfKeys) as context:
+        with self.assertRaises(yangvoodoo.Errors.ListWrongNumberOfKeys) as context:
             twolist.get('true')
         self.assertEqual(str(context.exception), 'The path: /integrationtest:twokeylist is a list requiring 2 keys but was given 1 keys')
 
@@ -149,7 +149,7 @@ class test_node_based_access(unittest.TestCase):
 
         # Note a node can either have hyphen's or underscore's. If we have both the basic
         # translation logic will fail. This can be seen from get_schema_for_path and __diir__
-        with self.assertRaises(datalayer.NonExistingNode) as context:
+        with self.assertRaises(yangvoodoo.Errors.NonExistingNode) as context:
             self.root.underscoretests.underscore_and_hyphen
         self.assertEqual(str(context.exception),
                          "The path: /integrationtest:underscoretests/integrationtest:underscore_and_hyphen does not point of a valid schema node in the yang module")
@@ -173,7 +173,7 @@ class test_node_based_access(unittest.TestCase):
 
         psychedelic_rock.stoner_rock.bands.get('Wooden Shjips').favourite = False
 
-        with self.assertRaises(datalayer.NodeNotAList) as context:
+        with self.assertRaises(yangvoodoo.Errors.NodeNotAList) as context:
             psychedelic_rock.stoner_rock.bands.get('Taylor Swift').favourite = False
         self.assertEqual(str(context.exception),
                          "The path: /integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Taylor Swift'] is not a list")

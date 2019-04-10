@@ -43,7 +43,7 @@ RUN \
     pip3 install ipython ncclient && \
     mkdir -p /root/.ipython/profile_default   && \
     echo "c.Completer.use_jedi = False" >/root/.ipython/profile_default/ipython_config.py && \
-    echo "c.TerminalInteractiveShell.confirm_exit = False" >>/root/.ipython/profile_default/ipython_config.py 
+    echo "c.TerminalInteractiveShell.confirm_exit = False" >>/root/.ipython/profile_default/ipython_config.py
 
 # add netconf user
 RUN \
@@ -99,13 +99,8 @@ RUN \
       cd / && \
       git clone https://github.com/allena29/pyyang-voodoo.git working && \
       cd working && \
-      # git checkout undercore-translations && \
-      mkdir -p /tmp/python-pkg/pyyangvoodoo && \
-      cp /working/clients/datalayer/__init__.py /tmp/python-pkg/pyyangvoodoo && \
-      cp /working/clients/datalayer/setup.py /tmp/python-pkg && \
-      cp /working/LICENSE /tmp/python-pkg/LICENSE && \
-      cp /working/README.md /tmp/python-pkg/README.md && \
-      cd /tmp/python-pkg && \
+      # git checkout  context-and-logging && \
+      cd /working/clients/ && \
       python3 setup.py install
 
 # Optional build a deb
@@ -117,12 +112,12 @@ RUN \
       tar xvf /tmp/working.tar && \
       rm -fr usr/local/games && \
       rm -fr usr/local/lib/python2.7 && \
-      tar cvpf /tmp/libyang.tar usr/local/lib/python3.6/dist-packages/*libyang* usr/local/lib/python3.6/dist-packages/*pyyangvoodoo* && \
+      tar cvpf /tmp/libyang.tar usr/local/lib/python3.6/dist-packages/*libyang* usr/local/lib/python3.6/dist-packages/*yangvoodoo* && \
       rm -fr usr/local/lib/python3.6 && \
       tar xvf /tmp/libyang.tar && \
       mkdir ~/sysrepo-python-bundle/DEBIAN && \
       echo "Package: sysrepo-libyang-python-bundle" >~/sysrepo-python-bundle/DEBIAN/control && \
-      echo "Version: 0.7.7-06" >>~/sysrepo-python-bundle/DEBIAN/control && \
+      echo "Version: 0.7.7-07" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Architecture: amd64" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Depends: libev4,libprotobuf-c1" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Maintainer: allena29@noreply.user.github.com" >>~/sysrepo-python-bundle/DEBIAN/control && \
@@ -132,7 +127,7 @@ RUN \
       echo "touch /tmp/pkginstall" >>~/sysrepo-python-bundle/DEBIAN/postinst && \
       chmod 755 ~/sysrepo-python-bundle/DEBIAN/postinst && \
       dpkg --build ~/sysrepo-python-bundle && \
-      mv /root/sysrepo-python-bundle.deb /sysrepo-python-bundle.0.7.7-06.amd64.deb
+      mv /root/sysrepo-python-bundle.deb /sysrepo-python-bundle.0.7.7-07.amd64.deb
 
 
 RUN \

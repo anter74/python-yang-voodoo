@@ -84,8 +84,8 @@ Note: the docker image has `ipython3`
 From this point forward change into `cd /working/clients`
 
 ```python
-import datalayer
-session = datalayer.DataAccess()
+import yangvoodoo
+session = yangvoodoo.DataAccess()
 session.connect()
 value = session.get('/integrationtest:simpleleaf')
 print(value)
@@ -130,9 +130,9 @@ Note: when fetching data we need to provide to provide at least a top-level modu
 
 
 ```python
-import datalayer
-from datalayer import Types as types
-session = datalayer.DataAccess()
+import yangvoodoo
+session = yangvoodoo.DataAccess()
+from yangvoodoo import Types as types
 session.connect()
 
 
@@ -155,15 +155,19 @@ session.commit()
 
 # Node based python access
 
-**WORKING IN PROGRESS**
+This is a proof of concept style quality of code at this stage.
+
+- We allow libyang to constrain our schema, however this means some things will be **invalid** but not fail basic schema checks.
+- Then `session.commit()` which wraps around sysrepo's commit will actually validate things like must, whens and leaf-ref paths.
+
 
 ```python
-import datalayer
-
-session = datalayer.DataAccess()
+import yangvoodoo
+session = yangvoodoo.DataAccess()
 session.connect()
 root = session.get_root('integrationtest')
 
+# Set a value
 root.simpleleaf = 'abc'
 
 # Delete of a leaf
@@ -176,8 +180,29 @@ print(root.morecomplex.leaf3)
 listelement = root.twokeylist.create(True, True)
 listelement.tertiary = True
 
+# Iterate around a list
+for y in root.twokeylist:
+    print("Object Representation:", repr(y))
+    print("Leaf from listelement:", y.primary)
+    print("Children of listelement:", dir(y))
+
+
+# Multiple levels
+root.bronze.silver.gold.platinum.deep = 'abc'
+
 session.commit()
 ```
+
+
+
+# Debug Logging
+
+**Note: this is quick and dirty and should probably be replaced by syslog**
+
+It's quite distracting to see log messages pop-up when interactively using ipython.
+
+see... LogWrap() and logsink.py
+
 
 
 # Reference:
