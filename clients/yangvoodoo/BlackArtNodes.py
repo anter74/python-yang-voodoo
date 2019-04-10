@@ -134,6 +134,11 @@ class Node:
         # - get_schema_of_path lets us convert '_' to '-' if the leaf doesn't exist
         # to take account of the conversions
         node_schema = self._get_schema_of_path(self._form_xpath(spath, attr))
+
+        # Note: when we call get_schema_of_path we will be given a <libyang> instance
+        # with an additioanl attribute 'underscore_translated'
+        # format_xpath understands this and if it sees underscore_translated it will
+        # then adjust this on the fly.
         new_spath = self._form_xpath(spath, attr, node_schema)
         new_xpath = self._form_xpath(path, attr, node_schema)
         node_type = node_schema.nodetype()
@@ -156,10 +161,12 @@ class Node:
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-        xpath = self._form_xpath(path, attr)
-        spath = self._form_xpath(spath, attr)
 
+        context.log.debug('spath for setattr %s', spath)
+        spath = self._form_xpath(spath, attr)
         node_schema = self._get_schema_of_path(spath)
+        xpath = self._form_xpath(path, attr, node_schema)
+
         if val is None:
             context.dal.delete(xpath)
             return

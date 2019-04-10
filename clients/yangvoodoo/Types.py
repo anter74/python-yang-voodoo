@@ -16,5 +16,8 @@ PRESENCE_CONTAINER = sr.SR_CONTAINER_PRESENCE_T
 LIBYANG_MAPPING = {
     'string': sr.SR_STRING_T,
     'enumeration': sr.SR_ENUM_T,
-    'boolean': sr.SR_BOOL_T
+    'boolean': sr.SR_BOOL_T,
+    'uint8': sr.SR_UINT8_T,
+    'uint16': sr.SR_UINT16_T,
+    'uint32': sr.SR_UINT32_T
 }
