@@ -97,7 +97,7 @@ RUN \
 
 RUN \
       cd / && \
-      git clone https://github.com/allena29/pyyang-voodoo.git working && \
+      git clone https://github.com/allena29/python-yang-voodoo.git working && \
       cd working && \
       # git checkout  context-and-logging && \
       cd /working/clients/ && \
