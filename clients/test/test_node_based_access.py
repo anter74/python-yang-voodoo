@@ -156,11 +156,21 @@ class test_node_based_access(unittest.TestCase):
 
         psychedelia = self.root.psychedelia
         psychedelic_rock = psychedelia.psychedelic_rock
-        psychedelic_rock.bands.create('The 13th Floor Elevators')
+        x = psychedelic_rock.bands.create('The 13th Floor Elevators')
         psychedelic_rock.noise_pop.bands.create('The Jesus and Mary Chain')
         psychedelic_rock.noise_pop.dream_pop.bands.create('Mazzy Star').favourite = True
         psychedelic_rock.noise_pop.shoe_gaze.bands.create('Slowdive').favourite = False
         psychedelic_rock.noise_pop.shoe_gaze.bands.create('The Brian Jonestown Massacre').favourite = True
+
+        """
+        Note sysrepo gives us this protection for free in the backend, but unfortunately
+        we dont' get a very descriptive error message in the python binding.
+        sysrepod[8]: [ERR] (sr_check_value_conform_to_schema:1091) Value doesn't conform to schema expected 21 instead of 20
+sysrepod[8]: [ERR] (sr_val_to_str_with_schema:1408) Value doesn't conform to schema node leaf3
+        """
+        with self.assertRaises(Exception) as context:
+            x.band = 'list-keys-must-not-be-renamed'
+        self.assertEqual(str(context.exception), 'Invalid argument')
 
         self.assertTrue(psychedelic_rock.stoner_rock.bands.get('Dead Meadow'))
         self.assertEqual(psychedelic_rock.stoner_rock.bands.get('Dead Meadow').albums.get('Old Growth').album, 'Old Growth')
