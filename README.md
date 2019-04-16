@@ -229,6 +229,25 @@ Once the subscriber is active either of the first two cases work- however becaus
 
 If the `import yangvoodoo` is carried out in the `clients/` subdirectory the version of the library from the GIT repository will be used. If the import is carried out anywhere else the system version will be used.
 
+### Virtual ENV
+
+The git clone has a `.python-version` file which is only important if pyenv is used for a virtual environment. To create a virtual-env the following will clone and add to a bash shell.
+
+```
+git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+PATH=~/.pyenv/bin:$PATH
+eval "$(pyenv init -)"
+export PYENV_ROOT="$HOME/.pyenv"
+git clone https://github.com/pyenv/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
+  # For MAC-OSX Mojave
+  CFLAGS="-I$(xcrun --show-sdk-path)/usr/include" pyenv install -v 3.5.6
+  # Otherwise
+  pyenv install 3.6.7
+eval "$(pyenv virtualenv-init -)"
+pyenv virtualenv 3.6.7 yang-voodoo
+pip install -r requirements.lock
+```
+
 # Reference:
 
 - [Sysrepo](http://www.sysrepo.org/)
@@ -247,7 +266,7 @@ If the `import yangvoodoo` is carried out in the `clients/` subdirectory the ver
 - choices
 - enhance logging if there is no subscriber for a particular YANG module.
 - method to persist running into startup configuration.
-- `root.simpleleaf<TAB><TAB><TAB>` calls __getattr__ but if there isn't a sensible attr we shouldn't call the data access methods
-- dir method of a listelement should not expose listkeys
+- `root.simpleleaf<TAB><TAB><TAB>` calls \_\_getattr\_\_ but if there isn't a sensible attr we shouldn't call the data access methods
+- ~~dir method of a listelement should not expose listkeys - Note: sysrepo stops us changing list keys.~~
 - list should implement getitem
 - list should implement a friednly keys() to show the items (assuming this is easy to do against sysrepo)
