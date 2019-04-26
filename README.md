@@ -1,16 +1,90 @@
-# Sysrepo - Configuration Store
+# Python access to YANG based Datastore (based on libyang/sysrepo)
 
-The following (amd64) docker image can be used `docker pull allena29/syrepo:0.7.7`
+The aim of this project is to provide the ability to write python code where there is a strong YANG based data model.
+By providing an object based access layer it allows data to be traversed without worrying about lower level details, and
+allow a stronger focus on getting the 'value add' correct.
 
-This document provides an overview of interacting with sysrepod directly rather than via the Netopeer2 netconf server. This then quickly provided an abstraction layer which allows access via XPATH references (low-level) or a Node-based access (high-level).
+Taking the very basic yang module below, we can imagine how it might look in a few different ways.
 
-Commands in this document should be run from the top-level directory containing the git clone.
+```
+container bronze {
+  container silver {
+    container gold {
+      container platinum {
+        leaf deep {
+          type string;
+        }
+      }
+    }
+  }
+}
+```
 
+
+This project builds upon [Sysrepo](http://www.sysrepo.org/) as the datastore which makes use of [Libyang](https://github.com/CESNET/libyang) and will provide a simple interface to fetching/storing data.
+
+
+```python
+root.bronze.silver.gold.platinum.deep = 'DOWN'
+print(root.bronze.silver.gold.platinum.deep)
+```
+
+We can then imagine other ways we might WRITE and READ this data, if this was a database backend like SQL we might access the data as.
+
+```sql
+UPDATE bronze_silver_gold_platinum SET deep = 'DOWN';
+SELECT deep FROM bronze_silver_gold_platinum;
+```
+
+Or perhaps with the sysrepo vanilla python bindings with XPATH.
+
+```python
+session.set_item('/module:bronze/silver/gold/platinum/deep', 'DOWN'. sr.SR_STRING_T)
+
+item = session.get_item('/module:bronze/silver/gold/platinum/deep')
+print(item.val_to_string)
+```
+
+Or Perhaps modelled as xml
+
+```xml
+  <bronze>
+    <silver>
+      <gold>
+        <platinum>
+          <deep>DOWN</deep>
+        </platinum>
+      </gold>
+    </silver>
+  </bronze>
+```
+
+ Or json
+
+ ```json
+  {
+    "bronze" : {
+      "silver": {
+        "gold": {
+          "platinum": {
+            "deep": "down"
+          }
+        }
+      }
+    }
+  }
+
+
+ ```
 
 
 
 ## Start Docker & Sysrepod
 
+
+See below for for instructions setting up without docker.
+
+The following (amd64) docker image can be used `docker pull allena29/syrepo:0.7.7`
 
 ```bash
 git pull allena29/sysrepo
@@ -77,7 +151,7 @@ sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=ru
 
 ## Getting Data
 
-An alternative branch is considering trying to provide a python-object navigation, but at the moment it is required to navigate get xpath nodes explicitly. Sysrepo by default will return `<sysrepo.Val; proxy of <Swig Object of type 'sysrepo::S_Val *' at 0x7fc985bb23f0> >` - however our own `DataAccess` object will convert this to python primitives.
+Sysrepo by default will return `<sysrepo.Val; proxy of <Swig Object of type 'sysrepo::S_Val *' at 0x7fc985bb23f0> >` - however our own `DataAccess` object will convert this to python primitives.
 
 Note: the docker image has `ipython3`
 
@@ -94,7 +168,7 @@ print(value)
 
 ## Setting Data
 
-Unfortunately setting data requires types, as a covenience the default happens to be a string.
+Unfortunately setting data requires types, as a convenience the default happens to be a string.
 
 **NOTE:** the commit method from python does not persist running configuration into startup configuration (see - https://github.com/sysrepo/sysrepo/issues/966). It may be we have to sort ourselves out with regards to copying running to startup from time to time.
 
@@ -153,7 +227,8 @@ session.delete("/integrationtest:simpleenum")
 session.commit()
 ```
 
-# Node based python access
+
+# Object based python access
 
 This is a proof of concept style quality of code at this stage.
 
@@ -225,20 +300,61 @@ In the third case the subscribers were running because it does not match the `ui
 Once the subscriber is active either of the first two cases work- however because the field is a uint8 we should use the second case.
 
 
-## Development/System version
+# Development/System version
 
 If the `import yangvoodoo` is carried out in the `clients/` subdirectory the version of the library from the GIT repository will be used. If the import is carried out anywhere else the system version will be used.
 
-### Virtual ENV
+
+
+# Local development environment (without Docker)
+
+## Dependencies
+
+#### Linux
+
+```
+see Dockerfile - see below for sysrepo install.
+```
+
+#### Mac OSX
+
+Tested with Mojave 10.14.3
+
+```bash
+xcode-select --install
+brew install cmake        # tested with version 3.14.3
+brew install protobuf-c   # tested with version 1.3.1.2
+brew install libev        # tested with version 4.24
+brew install pcre         # tested with version 8.43
+wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
+tar xvfz swig-3.0.12.tar.gz
+cd swig-3.0.12
+./configure
+make && sudo make install
+cd ../
+git clone --branch v1.0-r2  https://github.com/CESNET/libyang.git
+cd libyang
+mkdir build && cd build
+cmake ..
+make && sudo make install
+cd ../
+pip install libyang
+git clone https://github.com/sysrepo/libredblack.git
+cd libredblack
+./configure && make && sudo make install
+```
+
+## pyenv/virtualenv
 
 The git clone has a `.python-version` file which is only important if pyenv is used for a virtual environment. To create a virtual-env the following will clone and add to a bash shell.
 
-```
+```bash
 git clone https://github.com/pyenv/pyenv.git ~/.pyenv
 PATH=~/.pyenv/bin:$PATH
 eval "$(pyenv init -)"
 export PYENV_ROOT="$HOME/.pyenv"
 git clone https://github.com/pyenv/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
+export PYTHON_CONFIGURE_OPTS="--enable-framework"
   # For MAC-OSX Mojave
   CFLAGS="-I$(xcrun --show-sdk-path)/usr/include" pyenv install -v 3.5.6
   # Otherwise
@@ -246,6 +362,23 @@ git clone https://github.com/pyenv/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-v
 eval "$(pyenv virtualenv-init -)"
 pyenv virtualenv 3.6.7 yang-voodoo
 pip install -r requirements.lock
+```
+
+## sysrepo/libyang and python bindings
+
+The following instructions install sysrepo bindings within a pyenv environment. If not using pyenv then follow the simpler steps from the docker file.
+
+```bash
+git clone --branch=v0.7.7 https://github.com/sysrepo/sysrepo.git
+echo "3.6.7/envs/yang-voodoo" >.python-version
+sed  -e 's/unset/#/' -i.bak swig/CMakeLists.txt
+mkdir build
+cd build
+cmake -DPYTHON_EXECUTABLE=~/.pyenv/versions/yang-voodoo/bin/python3  -DPYTHON_LIBRARY=~/.pyenv/versions/3.6.7/lib/libpython3.6.dylib  -DPYTHON_INCLUDE_DIR=~/.pyenv/versions/3.6.7/include/python3.6m  -DGEN_LUA_BINDINGS=0 -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 ..
+make && sudo make install
+
+# Libyang
+LIBYANG_INSTALL=system pip install libyang
 ```
 
 # Reference:
@@ -264,9 +397,16 @@ pip install -r requirements.lock
 - underscore conversion
 - deletes (of non-primitives)
 - choices
-- enhance logging if there is no subscriber for a particular YANG module.
+- augmentation
+- deviations
+- investigate  https://github.com/clicon/clixon/blob/master/example/hello/README.md for a CLI instead of prompt-toolkit
+- enhance logging if there is no subscriber for a particular YANG module (sysrepo swig bindings are a limiting factor here - if there is a non-zero error code we just get a python runtime error).
+  - potential to open up sysrepo code to return more discrete error codes (if they aren't already) and then change the SWIG code to provide more descriptive text.
 - method to persist running into startup configuration.
 - `root.simpleleaf<TAB><TAB><TAB>` calls \_\_getattr\_\_ but if there isn't a sensible attr we shouldn't call the data access methods
 - ~~dir method of a listelement should not expose listkeys - Note: sysrepo stops us changing list keys.~~
 - list should implement getitem
 - list should implement a friednly keys() to show the items (assuming this is easy to do against sysrepo)
+- If we use netconf + sysrepo we would have to think about how in-progress transactions and sysrepo python bindings would work.
+  - Assumption is the callback gives us an iterator of changed XPATHs, if we connect to sysrepo it's independent and will not include those changes.
+  - This isn't a deal breaker if the pattern is asynchronous because the callback will just blindly accept syntax valid data and the trigger configuraiton, however if the implementation processes in a synchronous manner then we want to keep the ability to throw a bad error code to reject the overall NETCONF transaction.
