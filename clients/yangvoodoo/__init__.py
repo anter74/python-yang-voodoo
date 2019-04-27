@@ -123,12 +123,19 @@ class DataAccess:
         self.session = sr.Session(self.conn)
 
     def commit(self):
-        # try:
         self._refresh()
         try:
             self.session.commit()
         except RuntimeError as err:
             self._handle_error(None, err)
+
+    def validate(self):
+        self._refresh()
+        try:
+            self.session.validate()
+        except RuntimeError as err:
+            self._handle_error(None, err)
+        return True
 
     def create_container(self, xpath):
         self._refresh()
