@@ -1,0 +1,12 @@
+#!/usr/bin/python3
+import IPython
+import yangvoodoo
+
+
+session = yangvoodoo.DataAccess()
+session.connect()
+root = session.get_root('integrationtest')
+
+print('root', root)
+
+IPython.embed(display_banner=False)
