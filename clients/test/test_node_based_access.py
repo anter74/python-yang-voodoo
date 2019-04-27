@@ -21,7 +21,7 @@ class test_node_based_access(unittest.TestCase):
         self.root = self.subject.get_root('integrationtest')
 
     def test_root(self):
-        self.assertEqual(repr(self.root), 'BlackArtRoot{}')
+        self.assertEqual(repr(self.root), 'BlackArtRoot{} YANG Module: integrationtest')
 
         expected_children = ['bronze', 'container_and_lists', 'default', 'dirty_secret', 'empty',
                              'hyphen_leaf', 'imports_in_here', 'list_to_leafref_against', 'lista', 'morecomplex',

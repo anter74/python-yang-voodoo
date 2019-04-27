@@ -15,6 +15,7 @@ class Context:
         else:
             self.schemacache = cache
         self.log = log
+        self.yang_module = module
 
 
 class Cache:
@@ -403,3 +404,7 @@ class PresenceContainer(Node):
 class Root(Node):
 
     _NODE_TYPE = 'Root'
+
+    def __repr__(self):
+        context = self.__dict__['_context']
+        return "BlackArtRoot{} YANG Module: " + context.module
