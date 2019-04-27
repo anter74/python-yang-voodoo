@@ -135,6 +135,8 @@ RUN \
     apt-get autoclean && \
     rm -fr /opt/dev
 
+RUN \
+    pip3 install mock
 
 ENV EDITOR vim
 EXPOSE 830
