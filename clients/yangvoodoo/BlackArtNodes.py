@@ -182,6 +182,11 @@ class Node:
         if base_type in Types.LIBYANG_MAPPING:
             return Types.LIBYANG_MAPPING[base_type]
 
+        if base_type == 9:  # LEAF REF
+            new_base_type = node_schema.leafref_type().base()
+            if new_base_type in Types.LIBYANG_MAPPING:
+                return Types.LIBYANG_MAPPING[new_base_type]
+
         raise ValueError('need to find real type of field %s' % (yang_type))
 
     def __setattr__(self, attr, val):
