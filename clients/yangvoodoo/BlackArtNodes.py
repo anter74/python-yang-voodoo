@@ -71,6 +71,7 @@ class Node:
     ------------------------
       - module    = the name of the yang module (e.g integrationtest)
       - dal       = An instantiated object of DataAccess() - one object used for all access.
+                    Note: it is possible to access sysrepo diretly via root._context.dal.session
       - schema    = A libyang object of the top-level yang module.
       - schemactx = A libyang context object
       - cache     = A cache object to store the schema (assumption here is libyang lookups are expesnive - but

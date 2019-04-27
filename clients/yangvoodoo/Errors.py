@@ -33,3 +33,11 @@ class CommitFailed(Exception):
 
     def __init__(self, message):
         super().__init__("The commit failed.\n%s" % (message))
+
+
+class NotConnect(Exception):
+
+    def __init__(self):
+        super().__init__("Not connected to the datastore - try to reconnect.\n")
+
+

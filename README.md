@@ -338,7 +338,6 @@ mkdir build && cd build
 cmake ..
 make && sudo make install
 cd ../
-pip install libyang
 git clone https://github.com/sysrepo/libredblack.git
 cd libredblack
 ./configure && make && sudo make install
@@ -356,9 +355,10 @@ export PYENV_ROOT="$HOME/.pyenv"
 git clone https://github.com/pyenv/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
 export PYTHON_CONFIGURE_OPTS="--enable-framework"
   # For MAC-OSX Mojave
-  CFLAGS="-I$(xcrun --show-sdk-path)/usr/include" pyenv install -v 3.5.6
-  # Otherwise
-  pyenv install 3.6.7
+  export LDFLAGS="-L/usr/local/opt/zlib/lib -L/usr/local/opt/sqlite3/lib"
+  export CPPFLAGS="-I/usr/local/opt/zlib/include -I/usr/local/opt/sqlite3/include"
+  export CFLAGS="-I$(xcrun --show-sdk-path)/usr/include"
+pyenv install 3.6.7
 eval "$(pyenv virtualenv-init -)"
 pyenv virtualenv 3.6.7 yang-voodoo
 pip install -r requirements.lock

@@ -109,26 +109,28 @@ class DataAccess:
         We must have access to the same YANG module loaded within in sysrepo, which can be
         set by modifying yang_location argument.
         """
+        self._refresh()
         yang_ctx = libyang.Context(yang_location)
         yang_schema = yang_ctx.load_module(module)
         context = yangvoodoo.BlackArtNodes.Context(module, self, yang_schema, yang_ctx, log=self.log)
         return yangvoodoo.BlackArtNodes.Root(context)
 
     def connect(self, tag='client'):
+        """
+        Connect to the datastore.
+        """
         self.conn = sr.Connection("%s%s" % (tag, time.time()))
         self.session = sr.Session(self.conn)
 
-        # self.subscribe = sr.Subscribe(self.session)
-
     def commit(self):
         # try:
+        self._refresh()
         self.session.commit()
-        # except RuntimeError as err:
-        #    xerror = str(err)
-        # raise CommitFailed(xerror)
 
     def create_container(self, xpath):
-        self.set(xpath, None,  sr.SR_CONTAINER_PRESENCE_T)
+        self._refresh()
+        self.set(xpath, None, sr.SR_CONTAINER_PRESENCE_T)
+
 
     def create(self, xpath):
         """
@@ -136,6 +138,7 @@ class DataAccess:
          e.g. / path/to/list[key1 = ''][key2 = ''][key3 = '']
         """
         self.set(xpath, None, sr.SR_LIST_T)
+        self._refresh()
 
     def set(self, xpath, value, valtype=sr.SR_STRING_T):
         """
@@ -144,6 +147,7 @@ class DataAccess:
 
         It is required to provide the value and the type of the field.
         """
+        self._refresh()
         self.log.debug('SET: %s => %s (%s)' % (xpath, value, valtype))
         v = sr.Val(value, valtype)
         self.session.set_item(xpath, v)
@@ -153,6 +157,7 @@ class DataAccess:
         Get a list of xpaths for each items in the list, this can then be used to fetch data
         from within the list.
         """
+        self._refresh()
         vals = self.session.get_items(xpath)
         if not vals:
             raise yangvoodoo.Errors.NodeNotAList(xpath)
@@ -162,10 +167,12 @@ class DataAccess:
                 yield v.xpath()
 
     def get(self, xpath):
+        self._refresh()
         sysrepo_item = self.session.get_item(xpath)
         return self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
 
     def delete(self, xpath):
+        self._refresh()
         self.session.delete_item(xpath)
 
     def _get_python_datatype_from_sysrepo_val(self, valObject, xpath=None):
@@ -246,3 +253,15 @@ class DataAccess:
             return valObject.data().get_decimal64()
 
         raise yangvoodoo.Errors.NodeHasNoValue('unknown', xpath)
+
+    def _refresh(self):
+        """
+        Ensure we are still connected to sysrepo and using the latest dataset.
+
+        Note: if we are ever disconnected it is possible to simply just call
+        the connect() method of this object.
+        """
+        try:
+            self.session.refresh()
+        except RuntimeError:
+            raise yangvoodoo.Errors.NotConnect()
