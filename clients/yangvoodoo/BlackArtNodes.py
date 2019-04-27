@@ -162,6 +162,28 @@ class Node:
 
         raise ValueError('Get - not sure what the type is...%s' % (node_type))
 
+    def _get_yang_type(self, node_schema):
+        """
+        Map a given yang-type (e.g. string, decimal64) to a type code for the backend.
+
+        Sysrepo has a few cases- centered around the sr.Val() class
+         1) For most types we can provide just the value, but can optionally provide the type
+         2) For enumerations we must provide sr.SR_ENUM_T
+         3) For decimal64 we must not provide any type
+
+        Libyang gives us the following type from
+            node = next(yangctx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf666'))
+            node.type().base()
+
+
+        Unless we find a Union (11) or leafref (9) then we can just map directly.
+        """
+        base_type = node_schema.base()
+        if base_type in Types.LIBYANG_MAPPING:
+            return Types.LIBYANG_MAPPING[base_type]
+
+        raise ValueError('need to find real type of field %s' % (yang_type))
+
     def __setattr__(self, attr, val):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
@@ -176,9 +198,9 @@ class Node:
             context.dal.delete(xpath)
             return
 
-        type = Types.LIBYANG_MAPPING[str(node_schema.type())]
+        backend_type = self._get_yang_type(node_schema.type())
 
-        context.dal.set(xpath, val, type)
+        context.dal.set(xpath, val, backend_type)
 
     def __dir__(self):
         path = self.__dict__['_path']
