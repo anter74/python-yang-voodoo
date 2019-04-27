@@ -39,19 +39,21 @@ class test_node_based_access(unittest.TestCase):
 
         # More complex case where we have a leafref to a complex set of unions and we want to get an ENUm out
         yangnode = next(self.schemactx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf888'))
-        result = self.root._get_yang_type(yangnode.type())
-        self.assertEqual(result, yangvoodoo.Types.ENUM, 'A')
+        with self.assertRaises(NotImplementedError) as context:
+            result = self.root._get_yang_type(yangnode.type())
+        self.assertEqual(str(context.exception), "Union containing unions not supported (see README.md)")
 
-        # More complex case where we have a leafref to a complex set of unions and we want to get an STRING out
-        # TODO: is it just easier to return None here?e
-        yangnode = next(self.schemactx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf888'))
-        result = self.root._get_yang_type(yangnode.type())
+        # More complex case where we have a leafref to a string
+        yangnode = next(self.schemactx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf8'))
+        result = self.root._get_yang_type(yangnode.type(), 'A')
+        self.assertEqual(result, yangvoodoo.Types.ENUM)
 
-        self.assertEqual(result, yangvoodoo.Types.STRING, 'Aavzvs')
+        # More complex case where we have a leafref to a string
+        yangnode = next(self.schemactx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf8'))
+        result = self.root._get_yang_type(yangnode.type(), 'Z')
+        self.assertEqual(result, yangvoodoo.Types.STRING)
 
-        # More complex case where we have a leafref to a complex set of unions and we want to get an UINT32
-        # TODO: is it just easier to return None here??
-        yangnode = next(self.schemactx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf888'))
-        result = self.root._get_yang_type(yangnode.type())
-
-        self.assertEqual(result, yangvoodoo.Types.UINT32, 234)
+        # More complex case where we have a union of int8,int16,int32,int64, uint8,uint16,uint32,uint64
+        yangnode = next(self.schemactx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf000'))
+        result = self.root._get_yang_type(yangnode.type(), 2342342)
+        self.assertEqual(result, yangvoodoo.Types.INT32)

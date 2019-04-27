@@ -395,6 +395,8 @@ LIBYANG_INSTALL=system pip install libyang
 - define (with tests) further yang types in Types class (and handle a fallback better than 'keyerror')
 - typedef's (partly resolved by using libyang's type().base() - but unions don't provide a composite base type)
 - leafref's (as with typedefs type().base() from libyang doesn't tell us the type).
+  - ~~leafrefs to non-unions~~
+  - leafrefs to union
 - enumeration test cases
 - underscore conversion
 - deletes (of non-primitives)
@@ -412,3 +414,14 @@ LIBYANG_INSTALL=system pip install libyang
 - If we use netconf + sysrepo we would have to think about how in-progress transactions and sysrepo python bindings would work.
   - Assumption is the callback gives us an iterator of changed XPATHs, if we connect to sysrepo it's independent and will not include those changes.
   - This isn't a deal breaker if the pattern is asynchronous because the callback will just blindly accept syntax valid data and the trigger configuraiton, however if the implementation processes in a synchronous manner then we want to keep the ability to throw a bad error code to reject the overall NETCONF transaction.
+
+
+# Limitations:
+
+The following list of known limitations are not planned to be handled until there is a strong use case, they are viewd as corner cases at this moment in time.
+
+- Types, binary, bits, identity
+  - `Types.py` will require updates, `yangvoodoo/__init__.py` and potentially `BlackArtNode/__getattr__` and `BlackArtNode/_get_yang_type`
+- Union's containing leafref's
+  - This will lead to `BlackArtNode/_get_yang_type` needing updates to recursively follow unions and leafrefs.
+-
