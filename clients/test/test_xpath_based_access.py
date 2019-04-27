@@ -1,4 +1,5 @@
 import unittest
+from mock import Mock
 import os
 import yangvoodoo
 import subprocess
@@ -17,6 +18,32 @@ class test_getdata(unittest.TestCase):
     def setUp(self):
         self.subject = yangvoodoo.DataAccess()
         self.subject.connect()
+
+    def test_handle_error_no_subscribers(self):
+        error_mock = Mock()
+        error_mock.xpath.return_value = "/path"
+        error_mock.message.return_value = "The node is not enabled in running datastore"
+        errors_mock = Mock()
+        errors_mock.error_cnt.return_value = 1
+        errors_mock.error.return_value = error_mock
+        self.subject.session.get_last_errors = Mock(return_value=errors_mock)
+
+        with self.assertRaises(yangvoodoo.Errors.SubscriberNotEnabledOnBackendDatastore) as context:
+            self.subject._handle_error('/path', 'err')
+        self.assertEqual(str(context.exception), "There is no subscriber connected able to process data for the following path.\n /path")
+
+    def test_handle_error_no_other_backend_error(self):
+        error_mock = Mock()
+        error_mock.xpath.return_value = "/path"
+        error_mock.message.return_value = "Someother stuff went wrong"
+        errors_mock = Mock()
+        errors_mock.error_cnt.return_value = 1
+        errors_mock.error.return_value = error_mock
+        self.subject.session.get_last_errors = Mock(return_value=errors_mock)
+
+        with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
+            self.subject._handle_error('/path', 'err')
+        self.assertEqual(str(context.exception), "1 Errors occured\nError 0: Someother stuff went wrong (Path: /path)\n")
 
     def test_delete_and_get(self):
         self.subject.set('/integrationtest:simpleenum', 'A', Types.ENUM)
@@ -105,9 +132,10 @@ class test_getdata(unittest.TestCase):
         invalid_value = 'ZZZ'
         self.subject.set(xpath, invalid_value)
 
-        with self.assertRaises(RuntimeError) as context:
+        with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             self.subject.commit()
-        self.assertEqual(str(context.exception), 'Validation of the changes failed')
+        self.assertEqual(str(context.exception),
+                         "1 Errors occured\nError 0: Leafref \"../thing-to-leafref-against\" of value \"ZZZ\" points to a non-existing leaf. (Path: /integrationtest:thing-that-is-leafref)\n")
 
         self.subject = yangvoodoo.DataAccess()
         self.subject.connect()
@@ -150,18 +178,18 @@ class test_getdata(unittest.TestCase):
         self.assertEqual(str(context.exception), 'The node: empty-leaf at /integrationtest:empty has no value')
 
     def test_numbers(self):
-        with self.assertRaises(RuntimeError) as context:
+        with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             xpath = "/integrationtest:bronze/silver/gold/platinum/deep"
             self.subject.set(xpath, 123, sr.SR_UINT16_T)
-        self.assertEqual(str(context.exception), "Invalid argument")
+        self.assertEqual(str(context.exception), "1 Errors occured\nError 0: Invalid argument (Path: None)\n")
 
         xpath = "/integrationtest:bronze/silver/gold/platinum/deep"
         self.subject.set(xpath, "123", sr.SR_STRING_T)
 
-        with self.assertRaises(RuntimeError) as context:
+        with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             xpath = "/integrationtest:morecomplex/leaf3"
             self.subject.set(xpath, 123, sr.SR_UINT16_T)
-        self.assertEqual(str(context.exception), "Invalid argument")
+        self.assertEqual(str(context.exception), '1 Errors occured\nError 0: Invalid argument (Path: None)\n')
 
         xpath = "/integrationtest:morecomplex/leaf3"
         self.subject.set(xpath, 123, sr.SR_UINT32_T)
@@ -216,10 +244,10 @@ class test_getdata(unittest.TestCase):
         self.assertEqual(value, None)
 
         # Missing key
-        with self.assertRaises(RuntimeError) as context:
+        with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             xpath = "/integrationtest:twokeylist[primary='true']"
             self.subject.set(xpath,  None, sr.SR_LIST_T)
-        self.assertEqual(str(context.exception), 'Invalid argument')
+        self.assertEqual(str(context.exception), '1 Errors occured\nError 0: Invalid argument (Path: None)\n')
 
         xpath = "/integrationtest:container-and-lists/multi-key-list"
         items = self.subject.gets(xpath)

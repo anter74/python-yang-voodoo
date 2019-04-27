@@ -163,23 +163,22 @@ class test_node_based_access(unittest.TestCase):
         psychedelic_rock.noise_pop.shoe_gaze.bands.create('The Brian Jonestown Massacre').favourite = True
 
         """
-        Note sysrepo gives us this protection for free in the backend, but unfortunately
-        we dont' get a very descriptive error message in the python binding.
-        sysrepod[8]: [ERR] (sr_check_value_conform_to_schema:1091) Value doesn't conform to schema expected 21 instead of 20
-sysrepod[8]: [ERR] (sr_val_to_str_with_schema:1408) Value doesn't conform to schema node leaf3
+        Note sysrepo gives us this protection for free in the backend.
         """
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             x.band = 'list-keys-must-not-be-renamed'
-        self.assertEqual(str(context.exception), 'Invalid argument')
+        self.assertEqual(str(context.exception),
+                         "1 Errors occured\nError 0: Value of the key can not be set (Path: /integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:bands[band='The 13th Floor Elevators']/integrationtest:band)\n")
 
         self.assertTrue(psychedelic_rock.stoner_rock.bands.get('Dead Meadow'))
         self.assertEqual(psychedelic_rock.stoner_rock.bands.get('Dead Meadow').albums.get('Old Growth').album, 'Old Growth')
 
         # We should already have Dead Meadow as a favourite in this category, and a must condition in yange
-        with self.assertRaises(RuntimeError) as context:
+        with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             psychedelic_rock.stoner_rock.bands.get('Wooden Shjips').favourite = True
             self.subject.commit()
-        self.assertEqual(str(context.exception), "Validation of the changes failed")
+        self.assertEqual(str(context.exception),
+                         "1 Errors occured\nError 0: Must condition \"count(current()/bands[favourite='true'])<2\" not satisfied. (Path: /integrationtest:psychedelia/psychedelic-rock/stoner-rock)\n")
 
         psychedelic_rock.stoner_rock.bands.get('Wooden Shjips').favourite = False
 

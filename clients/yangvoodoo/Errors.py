@@ -41,3 +41,23 @@ class NotConnect(Exception):
         super().__init__("Not connected to the datastore - try to reconnect.\n")
 
 
+class SubscriberNotEnabledOnBackendDatastore(Exception):
+
+    def __init__(self, xpath):
+        super().__init__("There is no subscriber connected able to process data for the following path.\n %s" % (xpath))
+
+
+class BackendDatastoreError(Exception):
+
+    def __init__(self, errors):
+        if len(errors) > 10:
+            message = "%s Errors occurred - restricting to the first 10\n" % (len(errors))
+            cnt = 10
+        else:
+            message = "%s Errors occured\n" % (len(errors))
+            cnt = len(errors)
+
+        for c in range(cnt):
+            message = message + "Error %s: %s (Path: %s)\n" % (c, errors[c][0], errors[c][1])
+
+        super().__init__(message)

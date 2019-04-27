@@ -400,8 +400,8 @@ LIBYANG_INSTALL=system pip install libyang
 - augmentation
 - deviations
 - investigate  https://github.com/clicon/clixon/blob/master/example/hello/README.md for a CLI instead of prompt-toolkit
-- enhance logging if there is no subscriber for a particular YANG module (sysrepo swig bindings are a limiting factor here - if there is a non-zero error code we just get a python runtime error).
-  - potential to open up sysrepo code to return more discrete error codes (if they aren't already) and then change the SWIG code to provide more descriptive text.
+- ~~enhance logging if there is no subscriber for a particular YANG module (sysrepo swig bindings are a limiting factor here - if there is a non-zero error code we just get a python runtime error).~~
+  - ~~potential to open up sysrepo code to return more discrete error codes (if they aren't already) and then change the SWIG code to provide more descriptive text.~~
 - method to persist running into startup configuration.
 - `root.simpleleaf<TAB><TAB><TAB>` calls \_\_getattr\_\_ but if there isn't a sensible attr we shouldn't call the data access methods
 - ~~dir method of a listelement should not expose listkeys - Note: sysrepo stops us changing list keys.~~

@@ -11,11 +11,13 @@ ipython==7.4.0
 ipython-genutils==0.2.0
 jedi==0.13.3
 lxml==4.3.3
+mock==2.0.0
 ncclient==0.6.4
 paramiko==2.4.2
 parse==1.12.0
 parse-type==0.4.2
 parso==0.4.0
+pbr==5.2.0
 pexpect==4.7.0
 pickleshare==0.7.5
 prompt-toolkit==2.0.9

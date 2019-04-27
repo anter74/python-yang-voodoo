@@ -125,20 +125,40 @@ class DataAccess:
     def commit(self):
         # try:
         self._refresh()
-        self.session.commit()
+        try:
+            self.session.commit()
+        except RuntimeError as err:
+            self._handle_error(None, err)
 
     def create_container(self, xpath):
         self._refresh()
-        self.set(xpath, None, sr.SR_CONTAINER_PRESENCE_T)
+        try:
+            self.set(xpath, None, sr.SR_CONTAINER_PRESENCE_T)
+        except RuntimeError as err:
+            self._handle_error(xpath, err)
 
+    def _handle_error(self, xpath, err):
+        sysrepo_errors = self.session.get_last_errors()
+        errors = []
+        for index in range(sysrepo_errors.error_cnt()):
+            sysrepo_error = sysrepo_errors.error(index)
+            if sysrepo_error.xpath() == xpath:
+                if sysrepo_error.message() == "The node is not enabled in running datastore":
+                    raise yangvoodoo.Errors.SubscriberNotEnabledOnBackendDatastore(xpath)
+            errors.append((sysrepo_error.message(), sysrepo_error.xpath()))
+
+        raise yangvoodoo.Errors.BackendDatastoreError(errors)
 
     def create(self, xpath):
         """
         Create a list item by XPATH including keys
          e.g. / path/to/list[key1 = ''][key2 = ''][key3 = '']
         """
-        self.set(xpath, None, sr.SR_LIST_T)
         self._refresh()
+        try:
+            self.set(xpath, None, sr.SR_LIST_T)
+        except RuntimeError as err:
+            self._handle_error(xpath, err)
 
     def set(self, xpath, value, valtype=sr.SR_STRING_T):
         """
@@ -150,7 +170,11 @@ class DataAccess:
         self._refresh()
         self.log.debug('SET: %s => %s (%s)' % (xpath, value, valtype))
         v = sr.Val(value, valtype)
-        self.session.set_item(xpath, v)
+
+        try:
+            self.session.set_item(xpath, v)
+        except RuntimeError as err:
+            self._handle_error(xpath, err)
 
     def gets(self, xpath):
         """
@@ -164,16 +188,25 @@ class DataAccess:
         else:
             for i in range(vals.val_cnt()):
                 v = vals.val(i)
-                yield v.xpath()
+                try:
+                    yield v.xpath()
+                except RuntimeError as err:
+                    self._handle_error(xpath, err)
 
     def get(self, xpath):
         self._refresh()
         sysrepo_item = self.session.get_item(xpath)
-        return self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
+        try:
+            return self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
+        except RuntimeError as err:
+            self._handle_error(xpath, err)
 
     def delete(self, xpath):
         self._refresh()
-        self.session.delete_item(xpath)
+        try:
+            self.session.delete_item(xpath)
+        except RuntimeError as err:
+            self._handle_error(xpath, err)
 
     def _get_python_datatype_from_sysrepo_val(self, valObject, xpath=None):
         """
