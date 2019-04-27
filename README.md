@@ -107,7 +107,7 @@ cd /working/init-data
 ./init-xml.sh
 ```
 
-The `./launch-dbg` script in this repository will build a docker image (*first time will be slower*) mounts the current directory (i.e. this repository) as `/working` and then runs `/working-start-in-docker.sh`. This gives a quick way of getting a fresh docker instace (after the first build - which will terminate at the end).
+The `./launch-dbg` script in this repository will build a docker image (*first time will be slower*) mounts the current directory (i.e. this repository) as `/working` and then runs `/working-start-in-docker.sh`. This gives a quick way of getting a fresh docker instace (after the first build - which will terminate at the end). This will launch into an interactive python session (CTRL+D) to exit to bash.
 
 ## Exporting Data
 
@@ -391,8 +391,10 @@ LIBYANG_INSTALL=system pip install libyang
 # TODO:
 
 - ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
-- allow the location of yang's to be specified.
+- ~~allow the location of yang's to be specified.~~
 - define (with tests) further yang types in Types class (and handle a fallback better than 'keyerror')
+- typedef's (partly resolved by using libyang's type().base() - but unions don't provide a composite base type)
+- leafref's (as with typedefs type().base() from libyang doesn't tell us the type).
 - enumeration test cases
 - underscore conversion
 - deletes (of non-primitives)

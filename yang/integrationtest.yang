@@ -441,6 +441,17 @@ module integrationtest {
   }
 
   container morecomplex {
+
+    leaf superstar {
+      type percentile95th;
+    }
+
+    leaf percentage {
+      type decimal64 {
+        fraction-digits 1;
+      }
+    }
+
     leaf nonconfig {
       config false;
       crux:info "A non-configuration node";
@@ -492,6 +503,12 @@ module integrationtest {
         type string;
         default "this-is-a-default";
       }
+
+      leaf leaf666 {
+        description "Pretty nasty";
+        type type6;
+      }
+
     }
   }
 
@@ -519,6 +536,26 @@ module integrationtest {
     type union {
       type type3;
       type type2;
+    }
+  }
+
+  typedef type5 {
+    type string;
+  }
+
+  typedef type6 {
+    description "Complex maaping which ultimately allows a string (type5) or a uin32 (type2 via type4)
+    or an enumeration A B C (type 3 via type4)";
+    type union {
+      type type4;
+      type type5;
+    }
+  }
+
+  typedef percentile95th {
+    type decimal64 {
+      fraction-digits 1;
+      range 95..100;
     }
   }
 }

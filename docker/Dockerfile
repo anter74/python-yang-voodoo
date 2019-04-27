@@ -136,7 +136,10 @@ RUN \
     rm -fr /opt/dev
 
 RUN \
-    pip3 install mock
+    pip3 install mock coverage nose2 && \
+    cd /working && \
+    echo "Git Pull " && \
+    git pull 
 
 ENV EDITOR vim
 EXPOSE 830
