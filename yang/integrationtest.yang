@@ -509,6 +509,27 @@ module integrationtest {
         type type6;
       }
 
+      leaf leaf777 {
+        description "Leafref to a simple type";
+        type leafref {
+          path "../leaf7";
+        }
+      }
+
+      leaf leaf888 {
+        description "Leafref to the complex stuff";
+        type leafref {
+          path "../leaf666";
+        }
+      }
+
+      leaf leaf999 {
+        description "Leafref to a simple type of boolean";
+        type leafref {
+          path "../../leaf2";
+        }
+      }
+
     }
   }
 
