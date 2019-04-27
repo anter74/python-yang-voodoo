@@ -95,9 +95,9 @@ class DataAccess:
      - libyang 0.16.78 (https://github.com/rjarry/libyang-cffi/)
     """
 
-    def __init__(self, log=None):
+    def __init__(self, log=None, local_log=False, remote_log=False):
         if not log:
-            log = LogWrap()
+            log = LogWrap(local_log=local_log, remote_log=remote_log)
         self.log = log
 
     def get_root(self, module, yang_location="../yang/"):
@@ -172,11 +172,16 @@ class DataAccess:
         Set an individual item by XPATH.
           e.g. / path/to/item
 
-        It is required to provide the value and the type of the field.
+        It is required to provide the value and the type of the field in most cases.
+        In the case of Decimal64 we cannot use a value type
+            v=sr.Val(2.344)
         """
         self._refresh()
         self.log.debug('SET: %s => %s (%s)' % (xpath, value, valtype))
-        v = sr.Val(value, valtype)
+        if valtype:
+            v = sr.Val(value, valtype)
+        else:
+            v = sr.Val(value)
 
         try:
             self.session.set_item(xpath, v)

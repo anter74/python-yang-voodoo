@@ -221,5 +221,9 @@ class test_node_based_access(unittest.TestCase):
         element = number_list.get(3)
         self.assertEqual(repr(element), "BlackArtListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='3']}")
 
+    def test_decimal64_and_typedef_resolving(self):
+        self.root.morecomplex.superstar = 95.6
+        self.assertEqual(int(self.root.morecomplex.superstar * 100), 9560)
+
 
 """sysrepocfg --export --format=xml --datastore=running integrationtest"""
