@@ -391,8 +391,9 @@ LIBYANG_INSTALL=system pip install libyang
 # TODO:
 
 - ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
-- allow the location of yang's to be specified.
+- ~~allow the location of yang's to be specified.~~
 - define (with tests) further yang types in Types class (and handle a fallback better than 'keyerror')
+- typedef's 
 - enumeration test cases
 - underscore conversion
 - deletes (of non-primitives)

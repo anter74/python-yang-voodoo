@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sysrepod 
+sysrepod
 sysrepo-plugind
 # netopeer2-server
 cd /working/yang
@@ -11,6 +11,6 @@ cd /working/subscribers
 ./launch-subscribers.sh
 
 echo "Ready"
-cd /working
-/bin/bash 
-
+cd /working/clients
+./interactive
+/bin/bash
