@@ -441,6 +441,17 @@ module integrationtest {
   }
 
   container morecomplex {
+
+    leaf superstar {
+      type percentile95th;
+    }
+
+    leaf percentage {
+      type decimal64 {
+        fraction-digits 1;
+      }
+    }
+
     leaf nonconfig {
       config false;
       crux:info "A non-configuration node";
@@ -519,6 +530,13 @@ module integrationtest {
     type union {
       type type3;
       type type2;
+    }
+  }
+
+  typedef percentile95th {
+    type decimal64 {
+      fraction-digits 1;
+      range 95..100;
     }
   }
 }
