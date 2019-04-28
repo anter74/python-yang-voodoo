@@ -122,9 +122,13 @@ module integrationtest {
     }
   }
   container bronze {
+    description "The metallics are used to test container nesting";
     container silver {
+      description "Silver is the second level";
       container gold {
+        description "Gold is a bit better than silver";
         container platinum {
+          description "Then we get platinum which is as deep as we go.";
           leaf deep {
             type string;
           }

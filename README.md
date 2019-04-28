@@ -276,6 +276,9 @@ del root.twokeylist[True, True]
 # Multiple levels
 root.bronze.silver.gold.platinum.deep = 'abc'
 
+# Accessing parents (this is root.bronze (use with care - it's intended for interactive debug)
+root.bronze.silver._parent
+
 # Validate data with the sysrepo backend datastore.
 session.validate()
 
@@ -409,7 +412,7 @@ LIBYANG_INSTALL=system pip install libyang
 - master
   - FIX: accessing empty lists would raise exception
   - FEATURE: `session.help(node)` returns YANG description if present.
-
+  - FEATURE: `node._parent` returns the parent object
 
 # TODO:
 

@@ -93,10 +93,11 @@ class Node:
 
     _NODE_TYPE = 'Node'
 
-    def __init__(self, context, path='', spath=''):
+    def __init__(self, context, path='', spath='', parent_self=None):
         self.__dict__['_context'] = context
         self.__dict__['_path'] = path
         self.__dict__['_spath'] = spath
+        self.__dict__['_parent'] = parent_self
 
     def __name__(self):
         return 'BlackArtNode'
@@ -151,14 +152,17 @@ class Node:
         if node_type == 1:
             # assume this is a container (or a presence container)
             if node_schema.presence() is None:
-                return Container(context, new_xpath, new_spath)
+                # Return Object
+                return Container(context, new_xpath, new_spath, self)
             else:
-                return PresenceContainer(context, new_xpath, new_spath)
+                # Return Object
+                return PresenceContainer(context, new_xpath, new_spath, self)
         elif node_type == 4:
             # Assume this is always a primitive
             return context.dal.get(new_xpath)
         elif node_type == 16:
-            return List(context, new_xpath, new_spath)
+            # Return Object
+            return List(context, new_xpath, new_spath, self)
 
         raise ValueError('Get - not sure what the type is...%s' % (node_type))
 
@@ -341,7 +345,8 @@ class List(Node):
         new_spath = spath   # Note: we deliberartely won't use conditionals here
 
         context.dal.create(new_xpath)
-        return ListElement(context, new_xpath, new_spath)
+        # Return Object
+        return ListElement(context, new_xpath, new_spath, self)
 
     def __len__(self):
         context = self.__dict__['_context']
@@ -370,14 +375,15 @@ class List(Node):
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
         results = list(context.dal.gets(new_xpath))
-
-        return ListElement(context, new_xpath, new_spath)
+        # Return Object
+        return ListElement(context, new_xpath, new_spath, self)
 
     def __iter__(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-        return ListIterator(context, path, spath)
+        # Return Object
+        return ListIterator(context, path, spath, self)
 
     def __contains__(self, *args):
         context = self.__dict__['_context']
@@ -409,8 +415,8 @@ class List(Node):
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
         list(context.dal.gets(new_xpath))
-
-        return ListElement(context, new_xpath, new_spath)
+        # Return Object
+        return ListElement(context, new_xpath, new_spath, self)
 
     def __delitem__(self, *args):
         context = self.__dict__['_context']
@@ -422,7 +428,6 @@ class List(Node):
             conditional = self._get_keys(list(args))
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't
-        print('delete', new_xpath)
         context.dal.delete(new_xpath)
 
         return None
@@ -454,21 +459,21 @@ class ListIterator(Node):
 
     TYPE = 'ListIterator'
 
-    def __init__(self, context, path, spath):
+    def __init__(self, context, path, spath, parent_self):
         self.__dict__['_context'] = context
         self.__dict__['_path'] = path
         self.__dict__['_spath'] = spath
-
+        self.__dict__['_parent'] = parent_self
         self.__dict__['_iterator'] = context.dal.gets(path, ignore_empty_lists=True)
 
     def __next__(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-
+        parent = self.__dict__['_parent']
         this_xpath = next(self.__dict__['_iterator'])
-
-        return ListElement(context, this_xpath, spath)
+        # Return Object
+        return ListElement(context, this_xpath, spath, parent)
 
 
 class ListElement(Node):
