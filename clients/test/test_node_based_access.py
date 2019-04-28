@@ -157,6 +157,7 @@ class test_node_based_access(unittest.TestCase):
         psychedelia = self.root.psychedelia
         psychedelic_rock = psychedelia.psychedelic_rock
         x = psychedelic_rock.bands.create('The 13th Floor Elevators')
+        x = psychedelic_rock.bands['The 13th Floor Elevators']
         psychedelic_rock.noise_pop.bands.create('The Jesus and Mary Chain')
         psychedelic_rock.noise_pop.dream_pop.bands.create('Mazzy Star').favourite = True
         psychedelic_rock.noise_pop.shoe_gaze.bands.create('Slowdive').favourite = False
@@ -182,10 +183,10 @@ class test_node_based_access(unittest.TestCase):
 
         psychedelic_rock.stoner_rock.bands.get('Wooden Shjips').favourite = False
 
-        with self.assertRaises(yangvoodoo.Errors.NodeNotAList) as context:
+        with self.assertRaises(yangvoodoo.Errors.ListDoesNotContainElement) as context:
             psychedelic_rock.stoner_rock.bands.get('Taylor Swift').favourite = False
         self.assertEqual(str(context.exception),
-                         "The path: /integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Taylor Swift'] is not a list")
+                         "The list does not container the list element: /integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Taylor Swift']")
 
         self.assertEqual(len(psychedelic_rock.noise_pop.shoe_gaze.bands), 2)
         self.assertEqual(repr(psychedelic_rock), "BlackArtContainer{/integrationtest:psychedelia/integrationtest:psychedelic-rock}")
@@ -209,8 +210,19 @@ class test_node_based_access(unittest.TestCase):
         other_list = self.root.container_and_lists.multi_key_list
         self.assertFalse(('A', 'Z') in other_list)
 
-        other_list.create('A', 'Z')
+        item = other_list.create('A', 'Z')
         self.assertTrue(('A', 'Z') in other_list)
+
+        # Test __getitem__
+        self.assertEqual(repr(other_list['A', 'Z']), repr(item))
+
+        # Test delete item
+        self.assertEqual(len(other_list), 1)
+        other_list.create('thing', 'todelete').inner.C = 'soon'
+        self.assertEqual(len(other_list), 2)
+        self.assertEqual(other_list['thing', 'todelete'].inner.C, 'soon')
+        del other_list['thing', 'todelete']
+        self.assertEqual(len(other_list), 1)
 
         number_list = self.root.container_and_lists.numberkey_list
         element = number_list.create(3)

@@ -196,7 +196,7 @@ class DataAccess:
         self._refresh()
         vals = self.session.get_items(xpath)
         if not vals:
-            raise yangvoodoo.Errors.NodeNotAList(xpath)
+            raise yangvoodoo.Errors.ListDoesNotContainElement(xpath)
         else:
             for i in range(vals.val_cnt()):
                 v = vals.val(i)

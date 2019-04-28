@@ -257,12 +257,18 @@ print(root.morecomplex.leaf3)
 listelement = root.twokeylist.create(True, True)
 listelement.tertiary = True
 
+# Access data with square brackets (both these two options are equivalent)
+listelement = root.twokeylist[True, True]
+listelement = root.twokeylist.get(True, True)
+
 # Iterate around a list
 for y in root.twokeylist:
     print("Object Representation:", repr(y))
     print("Leaf from listelement:", y.primary)
     print("Children of listelement:", dir(y))
 
+# Delete list times
+del root.twokeylist[True, True]
 
 # Multiple levels
 root.bronze.silver.gold.platinum.deep = 'abc'
@@ -395,6 +401,8 @@ LIBYANG_INSTALL=system pip install libyang
 - define (with tests) further yang types in Types class (and handle a fallback better than 'keyerror')
 - typedef's (partly resolved by using libyang's type().base() - but unions don't provide a composite base type)
 - leafref's (as with typedefs type().base() from libyang doesn't tell us the type).
+  - ~~leafrefs to non-unions~~
+  - leafrefs to union
 - enumeration test cases
 - underscore conversion
 - deletes (of non-primitives)
@@ -405,10 +413,21 @@ LIBYANG_INSTALL=system pip install libyang
 - ~~enhance logging if there is no subscriber for a particular YANG module (sysrepo swig bindings are a limiting factor here - if there is a non-zero error code we just get a python runtime error).~~
   - ~~potential to open up sysrepo code to return more discrete error codes (if they aren't already) and then change the SWIG code to provide more descriptive text.~~
 - method to persist running into startup configuration.
-- `root.simpleleaf<TAB><TAB><TAB>` calls \_\_getattr\_\_ but if there isn't a sensible attr we shouldn't call the data access methods
+- ~~`root.simpleleaf<TAB><TAB><TAB>` calls \_\_getattr\_\_ but if there isn't a sensible attr we shouldn't call the data access methods~~
 - ~~dir method of a listelement should not expose listkeys - Note: sysrepo stops us changing list keys.~~
-- list should implement getitem
+- ~~list should implement getitem~~
+- ~~iterating around an empty list gives a confusing 'NodeNotAList: The path: /integrationtest:simplelist is not a list'~~
 - list should implement a friednly keys() to show the items (assuming this is easy to do against sysrepo)
 - If we use netconf + sysrepo we would have to think about how in-progress transactions and sysrepo python bindings would work.
   - Assumption is the callback gives us an iterator of changed XPATHs, if we connect to sysrepo it's independent and will not include those changes.
   - This isn't a deal breaker if the pattern is asynchronous because the callback will just blindly accept syntax valid data and the trigger configuraiton, however if the implementation processes in a synchronous manner then we want to keep the ability to throw a bad error code to reject the overall NETCONF transaction.
+
+
+# Limitations:
+
+The following list of known limitations are not planned to be handled until there is a strong use case, they are viewd as corner cases at this moment in time.
+
+- Types, binary, bits, identity
+  - `Types.py` will require updates, `yangvoodoo/__init__.py` and potentially `BlackArtNode/__getattr__` and `BlackArtNode/_get_yang_type`
+- Union's containing leafref's
+  - This will lead to `BlackArtNode/_get_yang_type` needing updates to recursively follow unions and leafrefs.
