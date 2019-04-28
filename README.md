@@ -234,16 +234,17 @@ session.commit()
 
 This is a proof of concept style quality of code at this stage.
 
-- We allow libyang to constrain our schema, however this means some things will be **invalid** but not fail basic schema checks.
-- Then `session.commit()` which wraps around sysrepo's commit will actually validate things like must, whens and leaf-ref paths.
+- We allow libyang to constrain our schema, however this means some things will be **invalid** but not fail basic schema checks which libyang gives us as part of it's validations.
+- Then `session.commit()` which wraps around sysrepo's commit will actually validate things like must, whens and leaf-ref pathss.
 
-**NOTE:** when running `get_root(yang_module)` we must be in a directory where `../yang` contains the yang module.
 
+When running `get_root(yang_module)` the directory `../yang` will be used to find the respective yang modules. There is a 1:1 mapping between a root object and yang module - this fits with the pattern of sysrepo. An optional argument `yang_location=<>` can be passed to get_root to specify an alternative location.
 
 ```python
 import yangvoodoo
 session = yangvoodoo.DataAccess()
 session.connect()
+# this will look in ../yang for the yang module integrationtest.yang and associated dependencies.
 root = session.get_root('integrationtest')
 
 # Set a value
@@ -275,6 +276,11 @@ del root.twokeylist[True, True]
 # Multiple levels
 root.bronze.silver.gold.platinum.deep = 'abc'
 
+# Validate data with the sysrepo backend datastore.
+session.validate()
+
+# Refresh data from the sysrepo backend datastore.
+session.refresh()
 session.commit()
 ```
 

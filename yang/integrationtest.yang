@@ -490,6 +490,15 @@ module integrationtest {
 
     container inner {
       presence true;
+
+      list list-that-will-stay-empty {
+        key akey;
+
+        leaf akey {
+          type string;
+        }
+      }
+
       leaf leaf5 {
         type string;
         mandatory true;

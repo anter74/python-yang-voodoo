@@ -459,7 +459,7 @@ class ListIterator(Node):
         self.__dict__['_path'] = path
         self.__dict__['_spath'] = spath
 
-        self.__dict__['_iterator'] = context.dal.gets(path)
+        self.__dict__['_iterator'] = context.dal.gets(path, ignore_empty_lists=True)
 
     def __next__(self):
         context = self.__dict__['_context']

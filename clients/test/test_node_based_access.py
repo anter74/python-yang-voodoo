@@ -233,6 +233,9 @@ class test_node_based_access(unittest.TestCase):
         element = number_list.get(3)
         self.assertEqual(repr(element), "BlackArtListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='3']}")
 
+        for x in self.root.morecomplex.inner.list_that_will_stay_empty:
+            self.fail('Did not expect any data in the list')
+
     def test_decimal64_and_typedef_resolving(self):
         self.root.morecomplex.superstar = 95.6
         self.assertEqual(int(self.root.morecomplex.superstar * 100), 9560)

@@ -182,13 +182,18 @@ class DataAccess:
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
-    def gets(self, xpath):
+    def gets(self, xpath, ignore_empty_lists=False):
         """
         Get a list of xpaths for each items in the list, this can then be used to fetch data
         from within the list.
+
+        By default we look to actually get the specific item, however if we are using this
+        function from an iterator with a blank list we do not want to throw an exception.
         """
         vals = self.session.get_items(xpath)
         if not vals:
+            if ignore_empty_lists:
+                return
             raise yangvoodoo.Errors.ListDoesNotContainElement(xpath)
         else:
             for i in range(vals.val_cnt()):
