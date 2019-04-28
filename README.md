@@ -401,6 +401,15 @@ LIBYANG_INSTALL=system pip install libyang
 - [Libyang](https://github.com/CESNET/libyang)
 - [libyang python bindings](https://pypi.org/project/libyang/)
 
+# Release History:
+
+
+- v0.0.1 - Initial version
+  -  Proof of concept implementation
+- master
+  - FIX: accessing empty lists would raise exception
+  - FEATURE: `session.help(node)` returns YANG description if present.
+
 
 # TODO:
 
