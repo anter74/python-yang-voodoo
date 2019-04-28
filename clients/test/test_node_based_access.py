@@ -183,10 +183,10 @@ class test_node_based_access(unittest.TestCase):
 
         psychedelic_rock.stoner_rock.bands.get('Wooden Shjips').favourite = False
 
-        with self.assertRaises(yangvoodoo.Errors.NodeNotAList) as context:
+        with self.assertRaises(yangvoodoo.Errors.ListDoesNotContainElement) as context:
             psychedelic_rock.stoner_rock.bands.get('Taylor Swift').favourite = False
         self.assertEqual(str(context.exception),
-                         "The path: /integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Taylor Swift'] is not a list")
+                         "The list does not container the list element: /integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Taylor Swift']")
 
         self.assertEqual(len(psychedelic_rock.noise_pop.shoe_gaze.bands), 2)
         self.assertEqual(repr(psychedelic_rock), "BlackArtContainer{/integrationtest:psychedelia/integrationtest:psychedelic-rock}")

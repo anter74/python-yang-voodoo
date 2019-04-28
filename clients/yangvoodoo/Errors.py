@@ -17,6 +17,12 @@ class NodeNotAList(Exception):
         super().__init__("The path: %s is not a list" % (xpath))
 
 
+class ListDoesNotContainElement(Exception):
+
+    def __init__(self, xpath):
+        super().__init__("The list does not container the list element: %s" % (xpath))
+
+
 class ListWrongNumberOfKeys(Exception):
 
     def __init__(self, xpath, require, given):
