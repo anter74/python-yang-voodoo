@@ -20,7 +20,7 @@ class NodeNotAList(Exception):
 class ListDoesNotContainElement(Exception):
 
     def __init__(self, xpath):
-        super().__init__("The list does not container the list element: %s" % (xpath))
+        super().__init__("The list does not contain the list element: %s" % (xpath))
 
 
 class ListWrongNumberOfKeys(Exception):

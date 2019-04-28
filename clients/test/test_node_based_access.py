@@ -186,7 +186,7 @@ class test_node_based_access(unittest.TestCase):
         with self.assertRaises(yangvoodoo.Errors.ListDoesNotContainElement) as context:
             psychedelic_rock.stoner_rock.bands.get('Taylor Swift').favourite = False
         self.assertEqual(str(context.exception),
-                         "The list does not container the list element: /integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Taylor Swift']")
+                         "The list does not contain the list element: /integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Taylor Swift']")
 
         self.assertEqual(len(psychedelic_rock.noise_pop.shoe_gaze.bands), 2)
         self.assertEqual(repr(psychedelic_rock), "BlackArtContainer{/integrationtest:psychedelia/integrationtest:psychedelic-rock}")
@@ -235,6 +235,10 @@ class test_node_based_access(unittest.TestCase):
 
         for x in self.root.morecomplex.inner.list_that_will_stay_empty:
             self.fail('Did not expect any data in the list')
+
+        self.assertEqual(len(self.root.morecomplex.inner.list_that_will_stay_empty), 0)
+
+        self.assertFalse('x' in self.root.morecomplex.inner.list_that_will_stay_empty)
 
     def test_decimal64_and_typedef_resolving(self):
         self.root.morecomplex.superstar = 95.6
