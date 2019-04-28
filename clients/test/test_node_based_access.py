@@ -216,6 +216,14 @@ class test_node_based_access(unittest.TestCase):
         # Test __getitem__
         self.assertEqual(repr(other_list['A', 'Z']), repr(item))
 
+        # Test delete item
+        self.assertEqual(len(other_list), 1)
+        other_list.create('thing', 'todelete').inner.C = 'soon'
+        self.assertEqual(len(other_list), 2)
+        self.assertEqual(other_list['thing', 'todelete'].inner.C, 'soon')
+        del other_list['thing', 'todelete']
+        self.assertEqual(len(other_list), 1)
+
         number_list = self.root.container_and_lists.numberkey_list
         element = number_list.create(3)
         number_list.create(4)

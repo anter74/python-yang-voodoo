@@ -408,9 +408,24 @@ class List(Node):
             conditional = self._get_keys(list(args))
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
-        results = list(context.dal.gets(new_xpath))
+        list(context.dal.gets(new_xpath))
 
         return ListElement(context, new_xpath, new_spath)
+
+    def __delitem__(self, *args):
+        context = self.__dict__['_context']
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+        if isinstance(args[0], tuple):
+            conditional = self._get_keys(list(args[0]))
+        else:
+            conditional = self._get_keys(list(args))
+        new_xpath = path + conditional
+        new_spath = spath   # Note: we deliberartely won't
+        print('delete', new_xpath)
+        context.dal.delete(new_xpath)
+
+        return None
 
     def _get_keys(self, *args):
         path = self.__dict__['_path']

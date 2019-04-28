@@ -267,6 +267,8 @@ for y in root.twokeylist:
     print("Leaf from listelement:", y.primary)
     print("Children of listelement:", dir(y))
 
+# Delete list times
+del root.twokeylist[True, True]
 
 # Multiple levels
 root.bronze.silver.gold.platinum.deep = 'abc'
