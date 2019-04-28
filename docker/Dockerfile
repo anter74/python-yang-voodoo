@@ -103,6 +103,62 @@ RUN \
       cd /working/clients/ && \
       python3 setup.py install
 
+
+
+# libssh
+RUN \
+      cd /opt/dev && \
+      git clone https://git.libssh.org/projects/libssh.git libssh && \
+      cd libssh && \
+      # git checkout afa4021ded6e58da4ee4d01dbf4e503d3711d002 && \
+      git checkout libssh-0.8.7 && \
+      mkdir build && cd build && \
+      cmake .. && \
+      make -j6 && \
+      make install && \
+      ldconfig
+
+# libnetconf2
+RUN \
+      git clone https://github.com/CESNET/libnetconf2.git && \
+      cd libnetconf2 && mkdir build && cd build && \
+      # git checkout 54ba1c7a1dbd85f3e700c1629ced8e4b52bac4ec && \
+      git checkout v0.12-r1 && \
+      cmake .. && \
+      make -j6 && \
+      make install && \
+      ldconfig
+
+# keystore
+RUN \
+      cd /opt/dev && \
+      git clone https://github.com/CESNET/Netopeer2.git && \
+      cd Netopeer2 && \
+      # git checkout d3ae5423847cbfc67c844ad19288744701bd47a4 && \
+      git checkout v0.7-r1 && \
+      # This commit fixes keystored method signature (original-xpath missing)
+      git checkout 6db56863fcac3fc21c18835576314a75ceea1267 && \
+      cd keystored && mkdir build && cd build && \
+      cmake .. && \
+      make -j6  && \
+      make install && \
+      ldconfig
+
+# netopeer2
+RUN \
+      cd /opt/dev && \
+      cd Netopeer2/server && mkdir build && cd build && \
+      #git checkout d3ae5423847cbfc67c844ad19288744701bd47a4 && \
+      git checkout v0.7-r1 && \
+      cmake .. && \
+      make -j6 && \
+      make install && \
+      cd ../../cli && mkdir build && cd build && \
+      cmake -DCMAKE_BUILD_TYPE:String="Debug" .. && \
+      make  && \
+      make install
+
+
 # Optional build a deb
 RUN \
       mkdir ~/sysrepo-python-bundle && \
@@ -138,8 +194,8 @@ RUN \
 RUN \
     pip3 install mock coverage nose2 && \
     cd /working && \
-    echo "Git Pull " && \
-    git pull 
+    echo "Git Pull (v2)" && \
+    git pull
 
 ENV EDITOR vim
 EXPOSE 830

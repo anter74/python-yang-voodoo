@@ -86,6 +86,8 @@ See below for for instructions setting up without docker.
 
 The following (amd64) docker image can be used `docker pull allena29/syrepo:0.7.7`
 
+Note: the docker image also includes Netopeer2 NETCONF server.
+
 ```bash
 git pull allena29/sysrepo
 docker run -i  -t allena29/sysrepo:0.7.7-py /bin/bash
