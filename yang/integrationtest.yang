@@ -5,6 +5,7 @@ module integrationtest {
 
   import crux { prefix crux; }
   import testchild { prefix testchild; }
+  import ietf-inet-types { prefix inet; }
 
   container imports-in-here {
     uses testchild:child;
@@ -548,6 +549,15 @@ module integrationtest {
       leaf leaf000 {
         description "Numbers";
         type sillytypedef;
+      }
+
+      container ietf-inet-types {
+
+        container ip {
+          leaf address {
+            type inet:ip-address;
+          }
+        }
       }
 
     }

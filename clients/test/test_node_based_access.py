@@ -244,5 +244,11 @@ class test_node_based_access(unittest.TestCase):
         self.root.morecomplex.superstar = 95.6
         self.assertEqual(int(self.root.morecomplex.superstar * 100), 9560)
 
+    def test_ietf(self):
+        self.root.morecomplex.inner.ietf_inet_types.ip.address = 'ff::1'
+        self.root.morecomplex.inner.ietf_inet_types.ip.address = '1.2.3.4'
+        with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
+            self.root.morecomplex.inner.ietf_inet_types.ip.address = '1.2.3.444'
+
 
 """sysrepocfg --export --format=xml --datastore=running integrationtest"""
