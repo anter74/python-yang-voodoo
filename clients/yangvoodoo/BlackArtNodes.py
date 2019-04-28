@@ -208,7 +208,6 @@ class Node:
                 elif union_type.base() == 6:
                     # TODO: we need to lookup enumerations
                     for (val, validx) in union_type.enums():
-                        print('XXenum', val, value)
                         if str(val) == str(value):
                             return Types.ENUM
                 u_types.append(union_type.base())
@@ -325,7 +324,11 @@ class List(Node):
         For composite-key lists then each key within the yang module must be provided
         in the same order it is defined within the yang module.
 
-        The newly created list-element is returned.
+        Example:
+          node.create(value)                - create item where there is a single key.
+          node.create(value1, value2)       - create item where there is a composite key.
+
+        Returns a ListElement Node of the newly created list item.
 
         Calling the create method a second time will not overwrite/remove data.
         """
@@ -348,6 +351,17 @@ class List(Node):
         return len(list(results))
 
     def get(self, *args):
+        """
+        Get an item from the list
+
+        Example:
+          node.get(value)                   - fetch item where there is a single key.
+          node.get(value1, value2)          - fetch item where there is a composite key.
+
+        Returns a ListElement Node.
+
+        Alternatively access data by node[value] or node[value1, value2]
+        """
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
@@ -383,6 +397,20 @@ class List(Node):
         except:
             pass
         return False
+
+    def __getitem__(self, *args):
+        context = self.__dict__['_context']
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+        if isinstance(args[0], tuple):
+            conditional = self._get_keys(list(args[0]))
+        else:
+            conditional = self._get_keys(list(args))
+        new_xpath = path + conditional
+        new_spath = spath   # Note: we deliberartely won't use conditionals here
+        results = list(context.dal.gets(new_xpath))
+
+        return ListElement(context, new_xpath, new_spath)
 
     def _get_keys(self, *args):
         path = self.__dict__['_path']

@@ -257,6 +257,10 @@ print(root.morecomplex.leaf3)
 listelement = root.twokeylist.create(True, True)
 listelement.tertiary = True
 
+# Access data with square brackets (both these two options are equivalent)
+listelement = root.twokeylist[True, True]
+listelement = root.twokeylist.get(True, True)
+
 # Iterate around a list
 for y in root.twokeylist:
     print("Object Representation:", repr(y))
@@ -407,9 +411,9 @@ LIBYANG_INSTALL=system pip install libyang
 - ~~enhance logging if there is no subscriber for a particular YANG module (sysrepo swig bindings are a limiting factor here - if there is a non-zero error code we just get a python runtime error).~~
   - ~~potential to open up sysrepo code to return more discrete error codes (if they aren't already) and then change the SWIG code to provide more descriptive text.~~
 - method to persist running into startup configuration.
-- `root.simpleleaf<TAB><TAB><TAB>` calls \_\_getattr\_\_ but if there isn't a sensible attr we shouldn't call the data access methods
+- ~~`root.simpleleaf<TAB><TAB><TAB>` calls \_\_getattr\_\_ but if there isn't a sensible attr we shouldn't call the data access methods~~
 - ~~dir method of a listelement should not expose listkeys - Note: sysrepo stops us changing list keys.~~
-- list should implement getitem
+- ~~list should implement getitem~~
 - list should implement a friednly keys() to show the items (assuming this is easy to do against sysrepo)
 - If we use netconf + sysrepo we would have to think about how in-progress transactions and sysrepo python bindings would work.
   - Assumption is the callback gives us an iterator of changed XPATHs, if we connect to sysrepo it's independent and will not include those changes.
@@ -424,4 +428,3 @@ The following list of known limitations are not planned to be handled until ther
   - `Types.py` will require updates, `yangvoodoo/__init__.py` and potentially `BlackArtNode/__getattr__` and `BlackArtNode/_get_yang_type`
 - Union's containing leafref's
   - This will lead to `BlackArtNode/_get_yang_type` needing updates to recursively follow unions and leafrefs.
--

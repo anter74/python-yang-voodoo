@@ -157,6 +157,7 @@ class test_node_based_access(unittest.TestCase):
         psychedelia = self.root.psychedelia
         psychedelic_rock = psychedelia.psychedelic_rock
         x = psychedelic_rock.bands.create('The 13th Floor Elevators')
+        x = psychedelic_rock.bands['The 13th Floor Elevators']
         psychedelic_rock.noise_pop.bands.create('The Jesus and Mary Chain')
         psychedelic_rock.noise_pop.dream_pop.bands.create('Mazzy Star').favourite = True
         psychedelic_rock.noise_pop.shoe_gaze.bands.create('Slowdive').favourite = False
@@ -209,8 +210,11 @@ class test_node_based_access(unittest.TestCase):
         other_list = self.root.container_and_lists.multi_key_list
         self.assertFalse(('A', 'Z') in other_list)
 
-        other_list.create('A', 'Z')
+        item = other_list.create('A', 'Z')
         self.assertTrue(('A', 'Z') in other_list)
+
+        # Test __getitem__
+        self.assertEqual(repr(other_list['A', 'Z']), repr(item))
 
         number_list = self.root.container_and_lists.numberkey_list
         element = number_list.create(3)
