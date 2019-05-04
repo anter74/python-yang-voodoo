@@ -419,12 +419,15 @@ LIBYANG_INSTALL=system pip install libyang
 - ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
 - ~~allow the location of yang's to be specified.~~
 - define (with tests) further yang types in Types class (and handle a fallback better than 'keyerror')
+- session revert() and session compare() would be useful functions.
 - typedef's (partly resolved by using libyang's type().base() - but unions don't provide a composite base type)
 - leafref's (as with typedefs type().base() from libyang doesn't tell us the type).
   - ~~leafrefs to non-unions~~
   - leafrefs to union
 - enumeration test cases
 - underscore conversion
+- should support <object>[child-attr-name] for setting, getting data (i.e. where we want to use a variable to define child-attr-name])
+- setting a list key as a blank value must be prevented.
 - deletes (of non-primitives)
 - choices
 - augmentation

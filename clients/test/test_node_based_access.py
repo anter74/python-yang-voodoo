@@ -30,7 +30,7 @@ class test_node_based_access(unittest.TestCase):
                              'thing_that_is_a_list_based_leafref', 'thing_that_is_leafref',
                              'thing_that_is_lit_up_for_A', 'thing_that_is_lit_up_for_B', 'thing_that_is_lit_up_for_C',
                              'thing_that_is_used_for_when', 'thing_to_leafref_against', 'twokeylist',
-                             'underscoretests', 'whencontainer']
+                             'underscoretests', 'web', 'whencontainer']
 
         self.assertEqual(dir(self.root), expected_children)
 

@@ -4,6 +4,37 @@
 module: integrationtest
   +--rw imports-in-here
   |  +--rw name?   string
+  +--rw web
+  |  +--rw venues* [name location]
+  |  |  +--rw name           string
+  |  |  +--rw location       locations
+  |  |  +--rw country?       countries
+  |  |  +--rw beers* [name]
+  |  |  |  +--rw name    string
+  |  |  +--rw information
+  |  |     +--rw profiles* [profile]
+  |  |        +--rw profile       string
+  |  |        +--rw doors-open?   string
+  |  |        +--rw curfew?       string
+  |  +--rw promoters* [name]
+  |  |  +--rw name    string
+  |  +--rw bands* [name]
+  |  |  +--rw name    string
+  |  |  +--rw gigs* [year month day venue location]
+  |  |     +--rw year        uint16
+  |  |     +--rw month       uint8
+  |  |     +--rw day         uint8
+  |  |     +--rw venue       -> /web/venues/name
+  |  |     +--rw location    -> /web/venues[integrationtest:name=current()/../venue]/location
+  |  |     +--rw festival?   string
+  |  |     +--rw missed!
+  |  |     |  +--rw reason?   string
+  |  |     +--rw comments?   string
+  |  |     +--rw rating?     uint8
+  |  |     +--rw support* [name]
+  |  |        +--rw name     -> /web/bands/name
+  |  |        +--rw order?   enumeration
+  |  +--rw favourite?   -> ../bands/name
   +--rw underscoretests
   |  +--rw underscore_only?         string
   |  +--rw hyphen-only?             string
