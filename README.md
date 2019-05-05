@@ -89,8 +89,8 @@ The following (amd64) docker image can be used `docker pull allena29/syrepo:0.7.
 Note: the docker image also includes Netopeer2 NETCONF server.
 
 ```bash
-git pull allena29/sysrepo
-docker run -i  -t allena29/sysrepo:0.7.7-py /bin/bash
+git pull allena29/yangvoodoo:devel
+docker run -i  -t allena29/yangvoodoo:devel /bin/bash
 
 
 # inside docker container
@@ -276,6 +276,20 @@ del root.twokeylist[True, True]
 # Multiple levels
 root.bronze.silver.gold.platinum.deep = 'abc'
 
+# Accessing parents (this is root.bronze (use with care - it's intended for interactive debug)
+root.bronze.silver._parent
+
+# A special method on lists allows us to retrieve items sorted by XPATH
+# instead of by the order they were added to the datastore.
+
+for gig in root.web.bands['Yuck'].gigs._xpath_sorted:
+   print(gig.year, gig.month, gig.day, gig.venue, gig.location)
+   # Results in
+   #  2010 10 14 Harley Sheffield
+   #  2010 10 27 Lexington Islington
+   #  2011 11 24 Electric Ballroom Camden
+   #  2011 5 18 Scala Kings Cross
+
 # Validate data with the sysrepo backend datastore.
 session.validate()
 
@@ -400,35 +414,6 @@ LIBYANG_INSTALL=system pip install libyang
 - [Sysrepo](http://www.sysrepo.org/)
 - [Libyang](https://github.com/CESNET/libyang)
 - [libyang python bindings](https://pypi.org/project/libyang/)
-
-
-# TODO:
-
-- ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
-- ~~allow the location of yang's to be specified.~~
-- define (with tests) further yang types in Types class (and handle a fallback better than 'keyerror')
-- typedef's (partly resolved by using libyang's type().base() - but unions don't provide a composite base type)
-- leafref's (as with typedefs type().base() from libyang doesn't tell us the type).
-  - ~~leafrefs to non-unions~~
-  - leafrefs to union
-- enumeration test cases
-- underscore conversion
-- deletes (of non-primitives)
-- choices
-- augmentation
-- deviations
-- investigate  https://github.com/clicon/clixon/blob/master/example/hello/README.md for a CLI instead of prompt-toolkit
-- ~~enhance logging if there is no subscriber for a particular YANG module (sysrepo swig bindings are a limiting factor here - if there is a non-zero error code we just get a python runtime error).~~
-  - ~~potential to open up sysrepo code to return more discrete error codes (if they aren't already) and then change the SWIG code to provide more descriptive text.~~
-- method to persist running into startup configuration.
-- ~~`root.simpleleaf<TAB><TAB><TAB>` calls \_\_getattr\_\_ but if there isn't a sensible attr we shouldn't call the data access methods~~
-- ~~dir method of a listelement should not expose listkeys - Note: sysrepo stops us changing list keys.~~
-- ~~list should implement getitem~~
-- ~~iterating around an empty list gives a confusing 'NodeNotAList: The path: /integrationtest:simplelist is not a list'~~
-- list should implement a friednly keys() to show the items (assuming this is easy to do against sysrepo)
-- If we use netconf + sysrepo we would have to think about how in-progress transactions and sysrepo python bindings would work.
-  - Assumption is the callback gives us an iterator of changed XPATHs, if we connect to sysrepo it's independent and will not include those changes.
-  - This isn't a deal breaker if the pattern is asynchronous because the callback will just blindly accept syntax valid data and the trigger configuraiton, however if the implementation processes in a synchronous manner then we want to keep the ability to throw a bad error code to reject the overall NETCONF transaction.
 
 
 # Limitations:

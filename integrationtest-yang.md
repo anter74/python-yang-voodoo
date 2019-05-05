@@ -4,6 +4,41 @@
 module: integrationtest
   +--rw imports-in-here
   |  +--rw name?   string
+  +--rw web
+  |  +--rw venues* [name location]
+  |  |  +--rw name           string
+  |  |  +--rw location       locations
+  |  |  +--rw country?       countries
+  |  |  +--rw beers* [name]
+  |  |  |  +--rw name    string
+  |  |  +--rw information
+  |  |     +--rw profiles* [profile]
+  |  |        +--rw profile       string
+  |  |        +--rw doors-open?   string
+  |  |        +--rw curfew?       string
+  |  +--rw promoters* [name]
+  |  |  +--rw name    string
+  |  +--rw bands* [name]
+  |  |  +--rw name    string
+  |  |  +--rw gigs* [year month day venue location]
+  |  |     +--rw year        uint16
+  |  |     +--rw month       uint8
+  |  |     +--rw day         uint8
+  |  |     +--rw venue       -> /web/venues/name
+  |  |     +--rw location    -> /web/venues[integrationtest:name=current()/../venue]/location
+  |  |     +--rw festival?   string
+  |  |     +--rw missed!
+  |  |     |  +--rw reason?   string
+  |  |     +--rw comments?   string
+  |  |     +--rw rating?     uint8
+  |  |     +--rw support* [name]
+  |  |        +--rw name     -> /web/bands/name
+  |  |        +--rw order?   enumeration
+  |  +--rw favourite?   -> ../bands/name
+  +--rw underscoretests
+  |  +--rw underscore_only?         string
+  |  +--rw hyphen-only?             string
+  |  +--rw underscore_and-hyphen?   string
   +--rw empty?                                empty
   +--rw simpleleaf?                           string
   +--rw dirty-secret?                         string
@@ -37,6 +72,12 @@ module: integrationtest
   |     +--rw bands* [band]
   |     |  +--rw band         string
   |     |  +--rw favourite?   boolean
+  |     +--rw stoner-rock
+  |     |  +--rw bands* [band]
+  |     |     +--rw band         string
+  |     |     +--rw favourite?   boolean
+  |     |     +--rw albums* [album]
+  |     |        +--rw album    string
   |     +--rw noise-pop
   |        +--rw bands* [band]
   |        |  +--rw band         string
@@ -79,10 +120,13 @@ module: integrationtest
   +--rw container-and-lists
   |  +--rw just-a-key?       string
   |  +--rw multi-key-list* [A B]
-  |     +--rw A        string
-  |     +--rw B        string
-  |     +--rw inner
-  |        +--rw C?   string
+  |  |  +--rw A        string
+  |  |  +--rw B        string
+  |  |  +--rw inner
+  |  |     +--rw C?   string
+  |  +--rw numberkey-list* [numberkey]
+  |     +--rw numberkey      uint8
+  |     +--rw description?   string
   +--rw lista* [firstkey]
   |  +--rw firstkey    string
   |  +--rw listb* [secondkey thirdkey]
@@ -105,6 +149,8 @@ module: integrationtest
   |  +--rw a?        string
   |  +--rw leaf-a?   type-a
   +--rw morecomplex
+     +--rw superstar?       percentile95th
+     +--rw percentage?      decimal64
      +--ro nonconfig?       string
      +--rw extraboolean?    boolean
      +--rw extraboolean2?   boolean
@@ -113,7 +159,18 @@ module: integrationtest
      +--rw leaf3?           type2
      +--rw leaf4?           type4
      +--rw inner!
-        +--rw leaf5    string
-        +--rw leaf6?   string
-        +--rw leaf7?   string
+        +--rw list-that-will-stay-empty* [akey]
+        |  +--rw akey    string
+        +--rw leaf5                        string
+        +--rw leaf6?                       string
+        +--rw leaf7?                       string
+        +--rw leaf8?                       type8
+        +--rw leaf666?                     type6
+        +--rw leaf777?                     -> ../leaf7
+        +--rw leaf888?                     -> ../leaf666
+        +--rw leaf999?                     -> ../../leaf2
+        +--rw leaf000?                     sillytypedef
+        +--rw ietf-inet-types
+           +--rw ip
+              +--rw address?   inet:ip-address
 ```

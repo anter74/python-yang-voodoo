@@ -12,7 +12,7 @@ fi
 echo "Building Image"
 if [ "$1" = "" ]
 then
-  image=`docker build docker/builder | tail -n 1 | awk '{print $3}'`
+  image=`docker build docker | tail -n 1 | awk '{print $3}'`
 else
   image=$1
 fi
@@ -22,10 +22,8 @@ echo "Image $image" &>/dev/stderr
 pwd=`pwd`
 echo "Running in local dir $pwd" >/dev/stderr
 #container=`docker run -i -d -v $pwd:/working:rw $image`
-docker run -i -t -v $pwd:/working:rw $image /working/start-in-docker.sh
+docker run -i -d -v $pwd:/working:rw $image /working/start-in-docker.sh
 
-#echo "Container $container" >/dev/stderr
-
-#docker ps >/dev/stderr
-
-#docker exec -i -t $container /bin/bash
+echo "Container $container" >/dev/stderr
+docker ps >/dev/stderr
+docker exec -i -t $container /bin/bash

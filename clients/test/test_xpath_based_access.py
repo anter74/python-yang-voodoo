@@ -284,3 +284,35 @@ class test_getdata(unittest.TestCase):
         # However if we iterate around the answer we will get
         # each character of the string '/integrationtest:simpleleaf'
         # self.assertEqual(str(context.exception), "The path: /integrationtest:simpleleaf is not a list")
+
+    def test_lists_ordering(self):
+
+        xpath = "/integrationtest:simplelist[simplekey='A']"
+        self.subject.create(xpath)
+
+        xpath = "/integrationtest:simplelist[simplekey='Z']"
+        self.subject.create(xpath)
+
+        xpath = "/integrationtest:simplelist[simplekey='middle']"
+        self.subject.create(xpath)
+
+        xpath = "/integrationtest:simplelist[simplekey='M']"
+        self.subject.create(xpath)
+
+        xpath = "/integrationtest:simplelist"
+
+        # GETS is based on user defined order
+        items = self.subject.gets(xpath)
+        expected_results = ["/integrationtest:simplelist[simplekey='A']",
+                            "/integrationtest:simplelist[simplekey='Z']",
+                            "/integrationtest:simplelist[simplekey='middle']",
+                            "/integrationtest:simplelist[simplekey='M']"]
+        self.assertEqual(list(items), expected_results)
+
+        # GETS_SORTED is based on xpath sorted order
+        items = self.subject.gets_sorted(xpath)
+        expected_results = ["/integrationtest:simplelist[simplekey='A']",
+                            "/integrationtest:simplelist[simplekey='M']",
+                            "/integrationtest:simplelist[simplekey='Z']",
+                            "/integrationtest:simplelist[simplekey='middle']"]
+        self.assertEqual(list(items), expected_results)

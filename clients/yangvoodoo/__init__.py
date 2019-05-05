@@ -100,6 +100,18 @@ class DataAccess:
             log = LogWrap(local_log=local_log, remote_log=remote_log)
         self.log = log
 
+    def _help(self, node):
+        """
+        Provide help text from the yang module if available.
+        """
+        if node.__dict__['_spath'] == '':
+            return None
+        try:
+            schema = next(node.__dict__['_context'].schemactx.find_path(node.__dict__['_spath']))
+            return schema.description()
+        except:
+            pass
+
     def get_root(self, module, yang_location="../yang/"):
         """
         Instantiate Node-based access to the data stored in the backend defined by a yang
@@ -112,6 +124,9 @@ class DataAccess:
         yang_ctx = libyang.Context(yang_location)
         yang_schema = yang_ctx.load_module(module)
         context = yangvoodoo.BlackArtNodes.Context(module, self, yang_schema, yang_ctx, log=self.log)
+
+        self.help = self._help
+
         return yangvoodoo.BlackArtNodes.Root(context)
 
     def connect(self, tag='client'):
@@ -182,9 +197,19 @@ class DataAccess:
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
+    def gets_sorted(self, xpath, ignore_empty_lists=False):
+        """
+        Get a generator providing a sorted list of xpaths, which can then be used for fetch data frmo
+        within the list.
+        """
+        results = list(self.gets(xpath, ignore_empty_lists))
+        results.sort()
+        for result in results:
+            yield result
+
     def gets(self, xpath, ignore_empty_lists=False):
         """
-        Get a list of xpaths for each items in the list, this can then be used to fetch data
+        Get a generator providing xpaths for each items in the list, this can then be used to fetch data
         from within the list.
 
         By default we look to actually get the specific item, however if we are using this

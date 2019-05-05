@@ -5,9 +5,214 @@ module integrationtest {
 
   import crux { prefix crux; }
   import testchild { prefix testchild; }
+  import ietf-inet-types { prefix inet; }
+
+
+  typedef date {
+    description "date format YYYY-MM-DD - this isn't super precise validation";
+    type string {
+      pattern "[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]" {
+        error-message "Date format must be YYYY-MM-DD";
+      }
+    }
+  }
+
+  typedef countries {
+    type enumeration {
+      enum GB;
+      enum DK;
+      enum DE;
+      enum FR;
+      enum NL;
+    }
+    default GB;
+  }
+
+  typedef locations {
+    type enumeration {
+      enum Islington;
+      enum Camden;
+      enum Hackney;
+      enum Brixton;
+      enum SOHO;
+      enum Dalston;
+      enum Kensington;
+      enum Shoreditch;
+      enum Clapham;
+      enum "Charring Cross";
+      enum "Shepherds Bush";
+      enum "Kings Cross";
+      enum Southend;
+      enum Glasgow;
+      enum Newcastle;
+      enum Sheffield;
+      enum Oxford;
+      enum Norwich;
+      enum Cleethorpes;
+      enum Rotherham;
+      enum Nottingham;
+      enum Cambridge;
+      enum Manchester;
+      enum Reading;
+      enum Colchester;
+      enum Berlin;
+      enum Eindhoven;
+      enum Hannover;
+      enum Paris;
+      enum Copenhagen;
+      enum Amsterdam;
+    }
+  }
 
   container imports-in-here {
     uses testchild:child;
+  }
+
+  container web {
+
+    list venues {
+      key "name location";
+
+      leaf name {
+        type string;
+      }
+
+      leaf location {
+        type locations;
+      }
+
+      leaf country {
+        type countries;
+        default GB;
+      }
+
+      list beers {
+        description "Does the venue have any good beer?";
+        key name;
+
+        leaf name {
+          type string;
+        }
+      }
+
+      container information {
+        description "Usual venue information";
+
+        list profiles {
+          key profile;
+
+          leaf profile {
+            type string;
+          }
+
+          leaf doors-open {
+            type string;
+          }
+          leaf curfew {
+            type string;
+          }
+        }
+      }
+
+    }
+
+    list promoters {
+      key name;
+
+      leaf name {
+        type string;
+      }
+    }
+
+    list bands {
+      key name;
+
+      leaf name {
+        type string;
+      }
+
+
+      list gigs {
+        key "year month day venue location";
+
+        leaf year {
+          type uint16 {
+            range 1999..2079;
+          }
+        }
+
+        leaf month {
+          type uint8 {
+            range 1..12;
+          }
+        }
+
+        leaf day {
+          type uint8 {
+            range 1..31;
+          }
+        }
+
+        leaf venue {
+          type leafref {
+            path "/integrationtest:web/integrationtest:venues/integrationtest:name";
+          }
+        }
+
+        leaf location {
+          type leafref {
+            path "/integrationtest:web/integrationtest:venues[integrationtest:name=current()/../integrationtest:venue]/integrationtest:location";
+          }
+        }
+
+        leaf festival {
+          type string;
+        }
+
+        container missed {
+          presence true;
+          leaf reason {
+            type string;
+          }
+        }
+        leaf comments {
+          type string;
+        }
+
+        leaf rating {
+          type uint8 {
+            range 1..10;
+          }
+        }
+
+        list support {
+          key name;
+
+          leaf name {
+            type leafref {
+              path "/integrationtest:web/integrationtest:bands/integrationtest:name";
+            }
+          }
+
+          leaf order {
+            type enumeration {
+              enum "First Support";
+              enum "Second Support";
+              enum "Third Support";
+              enum "Fourth Support";
+            }
+          }
+        }
+      }
+
+
+    }
+
+    leaf favourite {
+      type leafref {
+        path "../bands/name";
+      }
+    }
   }
 
   container underscoretests {
@@ -121,9 +326,13 @@ module integrationtest {
     }
   }
   container bronze {
+    description "The metallics are used to test container nesting";
     container silver {
+      description "Silver is the second level";
       container gold {
+        description "Gold is a bit better than silver";
         container platinum {
+          description "Then we get platinum which is as deep as we go.";
           leaf deep {
             type string;
           }
@@ -548,6 +757,15 @@ module integrationtest {
       leaf leaf000 {
         description "Numbers";
         type sillytypedef;
+      }
+
+      container ietf-inet-types {
+
+        container ip {
+          leaf address {
+            type inet:ip-address;
+          }
+        }
       }
 
     }

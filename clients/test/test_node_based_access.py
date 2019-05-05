@@ -30,7 +30,7 @@ class test_node_based_access(unittest.TestCase):
                              'thing_that_is_a_list_based_leafref', 'thing_that_is_leafref',
                              'thing_that_is_lit_up_for_A', 'thing_that_is_lit_up_for_B', 'thing_that_is_lit_up_for_C',
                              'thing_that_is_used_for_when', 'thing_to_leafref_against', 'twokeylist',
-                             'underscoretests', 'whencontainer']
+                             'underscoretests', 'web', 'whencontainer']
 
         self.assertEqual(dir(self.root), expected_children)
 
@@ -244,5 +244,60 @@ class test_node_based_access(unittest.TestCase):
         self.root.morecomplex.superstar = 95.6
         self.assertEqual(int(self.root.morecomplex.superstar * 100), 9560)
 
+    def test_ietf(self):
+        self.root.morecomplex.inner.ietf_inet_types.ip.address = 'ff::1'
+        self.root.morecomplex.inner.ietf_inet_types.ip.address = '1.2.3.4'
+        with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
+            self.root.morecomplex.inner.ietf_inet_types.ip.address = '1.2.3.444'
 
-"""sysrepocfg --export --format=xml --datastore=running integrationtest"""
+    def test_parents_and_help_text(self):
+        great_grandparent = self.root.bronze.silver.gold.platinum._parent._parent._parent
+
+        self.assertEqual(repr(great_grandparent), "BlackArtContainer{/integrationtest:bronze}")
+        self.assertEqual(self.subject.help(great_grandparent), "The metallics are used to test container nesting")
+
+        list_element = self.root.simplelist.create('newlistitem')
+        self.assertEqual(repr(list_element._parent), "BlackArtList{/integrationtest:simplelist}")
+
+        obj = self.root.bronze.silver._parent.silver._parent.silver.gold
+        self.assertEqual(repr(obj), "BlackArtContainer{/integrationtest:bronze/integrationtest:silver/integrationtest:gold}")
+
+    def test_lists_ordering(self):
+        self.root.simplelist.create('A')
+        self.root.simplelist.create('Z')
+        self.root.simplelist.create('middle')
+        self.root.simplelist.create('M')
+
+        # GETS is based on user defined order
+        # Act
+        items = list(self.root.simplelist)
+
+        # Assert
+        expected_results = ["BlackArtListElement{/integrationtest:simplelist[simplekey='A']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='Z']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='middle']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='M']}"]
+
+        for i in range(len(items)):
+            self.assertEqual(repr(items[i]), expected_results[i])
+
+        # GETS_SORTED is based on xpath sorted order
+        # Act
+        items = list(self.root.simplelist._xpath_sorted)
+
+        # Assert
+        expected_results = ["BlackArtListElement{/integrationtest:simplelist[simplekey='A']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='M']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='Z']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='middle']}"]
+
+        for i in range(len(items)):
+            self.assertEqual(repr(items[i]), expected_results[i])
+
+        outside_a = self.root.outsidelist.create('a')
+        outside_a.insidelist.create('1')
+        outside_a.insidelist.create('2')
+        outside_b = self.root.outsidelist.create('b')
+        outside_b.insidelist.create('3')
+        self.assertEqual(len(outside_a.insidelist), 2)
+        self.assertEqual(len(outside_b.insidelist), 1)
