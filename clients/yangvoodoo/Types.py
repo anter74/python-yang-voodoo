@@ -38,10 +38,10 @@ LIBYANG_MAPPING = {
                   799     LY_TYPE_ENUM,6
                   800     LY_TYPE_IDENT,7
                   801     LY_TYPE_INST,8
-                  802     LY_TYPE_LEAFREF, 9
-                  803     LY_TYPE_STRING,
-                  804     LY_TYPE_UNION,
-                  805     LY_TYPE_INT8, 12
+                  802     LY_TYPE_LEAFREF,  9
+                  803     LY_TYPE_STRING,  10
+                  804     LY_TYPE_UNION,   11
+                  805     LY_TYPE_INT8,    12
                   806     LY_TYPE_UINT8,13
                   807     LY_TYPE_INT16,14
                   808     LY_TYPE_UINT16,15

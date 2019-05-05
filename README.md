@@ -333,6 +333,70 @@ Once the subscriber is active either of the first two cases work- however becaus
 If the `import yangvoodoo` is carried out in the `clients/` subdirectory the version of the library from the GIT repository will be used. If the import is carried out anywhere else the system version will be used.
 
 
+# Updating libyang cffi bindings (Robin Jerry's bindings)
+
+- Important reference - libyang class definitions. [https://netopeer.liberouter.org/doc/libyang/master/group__schematree.html#structlys__type__info__str](https://netopeer.liberouter.org/doc/libyang/master/group__schematree.html#structlys__type__info__str) - forked into https://github.com/allena29/libyang-cffi
+
+First use case missing constraints for leaves in a yang mode.
+
+### cffi/cdefs.h
+
+
+```c++
+// added this based on the documentation in the class reference (it has to line up)
+struct lys_restr {
+	const char* expr;
+	const char* dsc;
+	const char* ref;
+	const char* eapptag;
+	const char* emsg;
+	...;
+};
+
+// added this based on the documentation in the class reference (it has to line up)
+struct lys_type_info_str {  
+	struct lys_restr* length;
+	struct lys_restr* patterns;
+	int pat_count;
+	...;
+};
+
+// added a type_info_str.
+union lys_type_info {
+	struct lys_type_info_bits bits;
+	struct lys_type_info_enums enums;
+	struct lys_type_info_lref lref;
+	struct lys_type_info_union uni;
+	struct lys_type_info_str str;  
+	...;
+};
+
+```
+
+### class Leaf: in libyang/schema.py
+
+```python
+def constraints(self):
+    return self.type().leaf_constraints()
+```
+
+### class Leaf: in libyang/schema.py
+```python
+def leaf_constraints(self):
+    t = self._type
+    yield c2str(t.info.str.length.emsg)
+    # return t.info.str.length
+```
+
+
+Quick and ditry results from this are consistent without yang model.
+
+```python
+next(next(yangctx.find_path('/integrationtest:validator/integrationtest:strings/integrationtest:sillylen')).constraints())
+'BOO!'
+```
+
+
 
 # Local development environment (without Docker)
 
@@ -401,11 +465,8 @@ echo 'export PYENV_VIRTUALENV_DISABLE_PROMPT=1' >>~/.bashrc
 
 ```
 
-<<<<<<< Updated upstream
-## sysrepo/libyang and python bindings
-=======
 ## libyang/sysrepo and python bindings
->>>>>>> Stashed changes
+
 
 The following instructions install sysrepo bindings within a pyenv environment. If not using pyenv then follow the simpler steps from the docker file.
 
@@ -419,14 +480,17 @@ cmake -DPYTHON_EXECUTABLE=~/.pyenv/versions/yang-voodoo/bin/python3  -DPYTHON_LI
 make && sudo make install
 
 # Libyang
-LIBYANG_INSTALL=system pip install libyang
+git clone https://github.com/allena29/libyang-cffi
+cd libyang-cffi
+git checkout devel-node-constraints
+LIBYANG_INSTALL=system python3 setup.py install
 ```
 
 # Reference:
 
 - [Sysrepo](http://www.sysrepo.org/)
 - [Libyang](https://github.com/CESNET/libyang)
-- [libyang python bindings](https://pypi.org/project/libyang/)
+- [libyang python bindings](https://github.com/allena29/libyang-cffi)
 
 
 # Limitations:

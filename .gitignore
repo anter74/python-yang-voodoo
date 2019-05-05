@@ -2,3 +2,4 @@ debs/
 __pycache__/
 build
 artefacts/
+libyang-cffi/

@@ -92,8 +92,13 @@ RUN \
       ldconfig
 
 RUN \
-      pip3 install libyang
-
+      git clone https://github.com/allena29/libyang-cffi.git && \
+      cd libyang-cffi && \
+      git checkout devel-node-constraints && \
+      echo "#!/bin/bash" >rebuild.sh && \
+      echo "LIBYANG_INSTALL=system python3 setup.py install" >>rebuild.sh && \
+      chmod 755 rebuild.sh && \
+      ./rebuild.sh
 
 
 RUN \
@@ -103,7 +108,6 @@ RUN \
       # git checkout  context-and-logging && \
       cd /working/clients/ && \
       python3 setup.py install
-
 
 
 # libssh
