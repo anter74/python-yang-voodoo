@@ -89,8 +89,8 @@ The following (amd64) docker image can be used `docker pull allena29/syrepo:0.7.
 Note: the docker image also includes Netopeer2 NETCONF server.
 
 ```bash
-git pull allena29/yangvoodoo
-docker run -i  -t allena29/yangvoodoo-devel /bin/bash
+git pull allena29/yangvoodoo:devel
+docker run -i  -t allena29/yangvoodoo:devel /bin/bash
 
 
 # inside docker container
