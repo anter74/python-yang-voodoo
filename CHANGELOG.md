@@ -9,3 +9,4 @@
   - FEATURE: `session.help(node)` returns YANG description if present.
   - FEATURE: `node._parent` returns the parent object
   - FEATURE: `for x in list._xpath_sorted` returns items sorted by xpath `for x in list` rerturns items based on the datastore order (which should be the order they were added)
+  - Docker file split into `builder` for compiling everything from source and a smaller version (`docker/build.sh`) to build both images.

@@ -34,3 +34,4 @@
   - Assumption is the callback gives us an iterator of changed XPATHs, if we connect to sysrepo it's independent and will not include those changes.
   - This isn't a deal breaker if the pattern is asynchronous because the callback will just blindly accept syntax valid data and the trigger configuraiton, however if the implementation processes in a synchronous manner then we want to keep the ability to throw a bad error code to reject the overall NETCONF transaction.
  - Optimise Docker image so it doesn't compile the core packages, but instead sucks them in from somewhere else.
+- Packaging of the sysrepo into a deb for the minimal image is very naive.
