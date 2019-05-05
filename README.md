@@ -376,13 +376,14 @@ cd libredblack
 The git clone has a `.python-version` file which is only important if pyenv is used for a virtual environment. To create a virtual-env the following will clone and add to a bash shell.
 
 ```bash
+
 git clone https://github.com/pyenv/pyenv.git ~/.pyenv
 PATH=~/.pyenv/bin:$PATH
-eval "$(pyenv init -)"
+  eval "$(pyenv init -)"
 export PYENV_ROOT="$HOME/.pyenv"
 git clone https://github.com/pyenv/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
-export PYTHON_CONFIGURE_OPTS="--enable-framework"
   # For MAC-OSX Mojave
+  export PYTHON_CONFIGURE_OPTS="--enable-framework"
   export LDFLAGS="-L/usr/local/opt/zlib/lib -L/usr/local/opt/sqlite3/lib"
   export CPPFLAGS="-I/usr/local/opt/zlib/include -I/usr/local/opt/sqlite3/include"
   export CFLAGS="-I$(xcrun --show-sdk-path)/usr/include"
@@ -390,9 +391,21 @@ pyenv install 3.6.7
 eval "$(pyenv virtualenv-init -)"
 pyenv virtualenv 3.6.7 yang-voodoo
 pip install -r requirements.lock
+
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >>~/.bashrc
+echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >>~/.bashrc
+echo 'eval "$(pyenv init -)"' >>~/.bashrc
+echo 'eval "$(pyenv virtualenv-init -)"' >>~/.bashrc
+echo 'export PS1="{\[\033[36m\]\u@\[\033[36m\]\h} \[\033[33;1m\]\w\[\033[m\] \$ "' >>~/.bashrc
+echo 'export PYENV_VIRTUALENV_DISABLE_PROMPT=1' >>~/.bashrc
+
 ```
 
+<<<<<<< Updated upstream
 ## sysrepo/libyang and python bindings
+=======
+## libyang/sysrepo and python bindings
+>>>>>>> Stashed changes
 
 The following instructions install sysrepo bindings within a pyenv environment. If not using pyenv then follow the simpler steps from the docker file.
 
