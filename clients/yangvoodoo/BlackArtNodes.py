@@ -371,7 +371,7 @@ class List(Node):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-        results = context.dal.gets(spath, ignore_empty_lists=True)
+        results = context.dal.gets(path, ignore_empty_lists=True)
         return len(list(results))
 
     def xpaths(self, sorted_by_xpath=False):

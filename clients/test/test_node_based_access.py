@@ -293,3 +293,11 @@ class test_node_based_access(unittest.TestCase):
 
         for i in range(len(items)):
             self.assertEqual(repr(items[i]), expected_results[i])
+
+        outside_a = self.root.outsidelist.create('a')
+        outside_a.insidelist.create('1')
+        outside_a.insidelist.create('2')
+        outside_b = self.root.outsidelist.create('b')
+        outside_b.insidelist.create('3')
+        self.assertEqual(len(outside_a.insidelist), 2)
+        self.assertEqual(len(outside_b.insidelist), 1)
