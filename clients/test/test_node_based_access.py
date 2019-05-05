@@ -262,5 +262,34 @@ class test_node_based_access(unittest.TestCase):
         obj = self.root.bronze.silver._parent.silver._parent.silver.gold
         self.assertEqual(repr(obj), "BlackArtContainer{/integrationtest:bronze/integrationtest:silver/integrationtest:gold}")
 
+    def test_lists_ordering(self):
+        self.root.simplelist.create('A')
+        self.root.simplelist.create('Z')
+        self.root.simplelist.create('middle')
+        self.root.simplelist.create('M')
 
-"""sysrepocfg --export --format=xml --datastore=running integrationtest"""
+        # GETS is based on user defined order
+        # Act
+        items = list(self.root.simplelist)
+
+        # Assert
+        expected_results = ["BlackArtListElement{/integrationtest:simplelist[simplekey='A']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='Z']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='middle']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='M']}"]
+
+        for i in range(len(items)):
+            self.assertEqual(repr(items[i]), expected_results[i])
+
+        # GETS_SORTED is based on xpath sorted order
+        # Act
+        items = list(self.root.simplelist._xpath_sorted)
+
+        # Assert
+        expected_results = ["BlackArtListElement{/integrationtest:simplelist[simplekey='A']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='M']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='Z']}",
+                            "BlackArtListElement{/integrationtest:simplelist[simplekey='middle']}"]
+
+        for i in range(len(items)):
+            self.assertEqual(repr(items[i]), expected_results[i])

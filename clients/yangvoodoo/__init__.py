@@ -197,9 +197,19 @@ class DataAccess:
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
+    def gets_sorted(self, xpath, ignore_empty_lists=False):
+        """
+        Get a generator providing a sorted list of xpaths, which can then be used for fetch data frmo
+        within the list.
+        """
+        results = list(self.gets(xpath, ignore_empty_lists))
+        results.sort()
+        for result in results:
+            yield result
+
     def gets(self, xpath, ignore_empty_lists=False):
         """
-        Get a list of xpaths for each items in the list, this can then be used to fetch data
+        Get a generator providing xpaths for each items in the list, this can then be used to fetch data
         from within the list.
 
         By default we look to actually get the specific item, however if we are using this

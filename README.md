@@ -279,6 +279,17 @@ root.bronze.silver.gold.platinum.deep = 'abc'
 # Accessing parents (this is root.bronze (use with care - it's intended for interactive debug)
 root.bronze.silver._parent
 
+# A special method on lists allows us to retrieve items sorted by XPATH
+# instead of by the order they were added to the datastore.
+
+for gig in root.web.bands['Yuck'].gigs._xpath_sorted:
+   print(gig.year, gig.month, gig.day, gig.venue, gig.location)
+   # Results in
+   #  2010 10 14 Harley Sheffield
+   #  2010 10 27 Lexington Islington
+   #  2011 11 24 Electric Ballroom Camden
+   #  2011 5 18 Scala Kings Cross
+
 # Validate data with the sysrepo backend datastore.
 session.validate()
 
@@ -409,10 +420,11 @@ LIBYANG_INSTALL=system pip install libyang
 
 - v0.0.1 - Initial version
   -  Proof of concept implementation
-- master
+- devel
   - FIX: accessing empty lists would raise exception
   - FEATURE: `session.help(node)` returns YANG description if present.
   - FEATURE: `node._parent` returns the parent object
+  - FEATURE: `for x in list._xpath_sorted` returns items sorted by xpath `for x in list` rerturns items based on the datastore order (which should be the order they were added)
 
 # TODO:
 
@@ -432,6 +444,11 @@ LIBYANG_INSTALL=system pip install libyang
 - choices
 - augmentation
 - deviations
+- leaf-lists are not implemented yet.
+- jinja2 templates are a little trickier accessing data on objects is trivial, invoking object (not sure how that works).
+  - Consider list of bands, with a list of gis - if we want to find the the last gig we can do this.
+  - In python we can do `list(root.web.bands._xpath_sorted)[-2].gigs.get_last()`
+- presence nodes don't have to be explicitly created - this is not the correct behaviour
 - investigate  https://github.com/clicon/clixon/blob/master/example/hello/README.md for a CLI instead of prompt-toolkit
 - ~~enhance logging if there is no subscriber for a particular YANG module (sysrepo swig bindings are a limiting factor here - if there is a non-zero error code we just get a python runtime error).~~
   - ~~potential to open up sysrepo code to return more discrete error codes (if they aren't already) and then change the SWIG code to provide more descriptive text.~~

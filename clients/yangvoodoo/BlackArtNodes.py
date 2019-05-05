@@ -98,6 +98,7 @@ class Node:
         self.__dict__['_path'] = path
         self.__dict__['_spath'] = spath
         self.__dict__['_parent'] = parent_self
+        self._specific_init()
 
     def __name__(self):
         return 'BlackArtNode'
@@ -110,7 +111,11 @@ class Node:
         return 'BlackArt%s{%s}' % (self._NODE_TYPE, path)
 
     def __del__(self):
-        path = self.__dict__['_path']
+        pass
+        # path = self.__dict__['_path']
+
+    def _specific_init(self):
+        pass
 
     def _form_xpath(self, path, attr, node_schema=None):
         """
@@ -130,10 +135,13 @@ class Node:
     def __getattr__(self, attr):
         if attr in ('_ipython_canary_method_should_not_exist_', '_repr_mimebundle_'):
             raise AttributeError('Go Away!')
-
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
+
+        if attr == '_xpath_sorted' and self._NODE_TYPE == 'List':
+            # Return Object
+            return SortedList(context, path, spath, self)
 
         # Schema Path is a combination of the previous schema path + the attribute
         # This order of things is pretty important
@@ -310,13 +318,25 @@ class List(Node):
     each key from the yang module. It is not possible to provide partial keys
     in a hope to get multiple records.
 
+    The datastore will maintain the order list elements are added, if you
+    prefer to see items sorted (based on XPATH) then you may iterate around
+    <this object>._xpath_sorted() instead.
+
     Note: values for the list keys should be provided as they would in an
     XPATH express. i.e. python True > 'true', False > 'false'
 
-    TOOD: interator
     """
 
     _NODE_TYPE = 'List'
+    _SORTED_LIST = False
+    #
+    # def _specific_init(self):
+    #     context = self.__dict__['_context']
+    #     path = self.__dict__['_path']
+    #     spath = self.__dict__['_spath']
+    #     # Return Object
+    #     self.__dict__['_xpath_sorted'] = SortedList(context, path, spath, self)
+    #
 
     def __dir__(self):
         return []
@@ -339,7 +359,6 @@ class List(Node):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-
         conditional = self._get_keys(list(args))
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
@@ -354,6 +373,84 @@ class List(Node):
         spath = self.__dict__['_spath']
         results = context.dal.gets(spath, ignore_empty_lists=True)
         return len(list(results))
+
+    def xpaths(self, sorted_by_xpath=False):
+        """
+        Return a list of xpaths for each value in the list.
+
+        The datastore will maintain the order entries were originally added into the list.
+        The sorted_by_xpath argument can be used to sort the list by xpath.
+        """
+        context = self.__dict__['_context']
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+
+        if sorted_by_xpath:
+            results = context.dal.gets_sorted(spath, ignore_empty_lists=True)
+        else:
+            results = context.dal.gets(spath, ignore_empty_lists=True)
+
+        # Return Object
+        return results
+
+    def keys(self, sorted_by_xpath=False):
+        """
+        Return a list of keys in the list.
+
+        This is currently not supported.
+        """
+        # This will need to break apart the XPATH strings into tuples of values.
+        raise NotImplementedError("The keys() method is not supported")
+
+    def get_last(self, sorted_by_xpath=False):
+        """
+        Return the last element from the list, the datastore will store elements in a list in
+        the order they have been created.
+
+        The optional argument sorted_by_xpath will sort the list by XPATH before returning the
+        last item.
+        """
+        # Note by default sysrepo stores list elements in the order they are put into the
+        # database.
+        # list(session.gets('/integrationtest:simplelist'))
+        # Out[1]:
+        # ["/integrationtest:simplelist[simplekey='A']",
+        #  "/integrationtest:simplelist[simplekey='Z']",
+        #  "/integrationtest:simplelist[simplekey='b']"]
+        context = self.__dict__['_context']
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+
+        results = list(context.dal.gets_sorted(spath, ignore_empty_lists=True))
+
+        this_xpath = results[-1]
+        # Return Object
+        return ListElement(context, this_xpath, spath, self)
+
+    def get_first(self, sorted_by_xpath=False):
+        """
+        Return the first element from the list, the datastore will store elements in a list in
+        the order they have been created.
+
+        The optional argument sorted_by_xpath will sort the list by XPATH before returning the
+        first item.
+        """
+        # Note by default sysrepo stores list elements in the order they are put into the
+        # database.
+        # list(session.gets('/integrationtest:simplelist'))
+        # Out[1]:
+        # ["/integrationtest:simplelist[simplekey='A']",
+        #  "/integrationtest:simplelist[simplekey='Z']",
+        #  "/integrationtest:simplelist[simplekey='b']"]
+        context = self.__dict__['_context']
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+
+        results = list(context.dal.gets_sorted(spath, ignore_empty_lists=True))
+
+        this_xpath = results[0]
+        # Return Object
+        return ListElement(context, this_xpath, spath, self)
 
     def get(self, *args):
         """
@@ -383,7 +480,7 @@ class List(Node):
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
         # Return Object
-        return ListIterator(context, path, spath, self)
+        return ListIterator(context, path, spath, self, xpath_sorted=self._SORTED_LIST)
 
     def __contains__(self, *args):
         context = self.__dict__['_context']
@@ -400,7 +497,7 @@ class List(Node):
         try:
             reults = list(context.dal.gets(new_xpath))
             return True
-        except:
+        except Exception as err:
             pass
         return False
 
@@ -455,16 +552,49 @@ class List(Node):
             return str(v)
 
 
+class SortedList(List):
+
+    """
+    Represents a list from a yang module.
+
+    New entries can be created on this object with the create object, each
+    key defined in the yang module should be passed in paying attention to
+    the order of the keys.
+        (e.g.
+        key1 = True
+        key2 = False
+        root.twokeylist.create(key1, key2)
+
+    To obtain a specific instance from the list call the get method, passing
+    each key from the yang module. It is not possible to provide partial keys
+    in a hope to get multiple records.
+
+    Note: values for the list keys should be provided as they would in an
+    XPATH express. i.e. python True > 'true', False > 'false'
+
+    The only difference between this object and the base List type is that
+    in this case we go to lengths to sort the list (based on XPATH) rather than
+    the order things are defiend.
+    """
+
+    _NODE_TYPE = 'SortedList'
+    _SORTED_LIST = True
+
+
 class ListIterator(Node):
 
-    TYPE = 'ListIterator'
+    _NODE_TYPE = 'ListIterator'
 
-    def __init__(self, context, path, spath, parent_self):
+    def __init__(self, context, path, spath, parent_self, xpath_sorted=False):
         self.__dict__['_context'] = context
         self.__dict__['_path'] = path
         self.__dict__['_spath'] = spath
         self.__dict__['_parent'] = parent_self
-        self.__dict__['_iterator'] = context.dal.gets(path, ignore_empty_lists=True)
+        self.__dict__['_xpath_sorted'] = xpath_sorted
+        if xpath_sorted:
+            self.__dict__['_iterator'] = context.dal.gets_sorted(path, ignore_empty_lists=True)
+        else:
+            self.__dict__['_iterator'] = context.dal.gets(path, ignore_empty_lists=True)
 
     def __next__(self):
         context = self.__dict__['_context']
@@ -474,6 +604,14 @@ class ListIterator(Node):
         this_xpath = next(self.__dict__['_iterator'])
         # Return Object
         return ListElement(context, this_xpath, spath, parent)
+
+    def __repr__(self):
+        context = self.__dict__['_context']
+        path = self.__dict__['_path']
+        base_repr = self._base_repr()
+        if self.__dict__['_xpath_sorted']:
+            return base_repr + " Sorted By XPATH"
+        return base_repr + " Sorted By User (datastore)"
 
 
 class ListElement(Node):
