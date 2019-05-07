@@ -70,6 +70,9 @@ RUN \
       git checkout 85d09f3bdf5ea01ea2e01deb384b2b0dde057e3f && \
       git checkout v0.16-r3 && \
       mkdir build && cd build && \
+      # We may not end up using these bindings (yang) and instead use (libyang - see below)
+      # But it's useful to debug with both
+      #cmake -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=ON .. && \
       cmake .. && \
       make -j6  && \
       make install && \
@@ -94,11 +97,8 @@ RUN \
 RUN \
       git clone https://github.com/allena29/libyang-cffi.git && \
       cd libyang-cffi && \
-      git checkout devel-node-constraints && \
       echo "#!/bin/bash" >rebuild.sh && \
-      echo "LIBYANG_INSTALL=system python3 setup.py install" >>rebuild.sh && \
-      chmod 755 rebuild.sh && \
-      ./rebuild.sh
+      LIBYANG_INSTALL=system python3 setup.py install
 
 
 RUN \
@@ -164,7 +164,7 @@ RUN \
       make install
 
 
-ENV MY_VERSION=0.0.2
+ENV MY_VERSION=0.0.2cffi
 ENV MY_ARCH=amd64
 
 # Optional build a deb
@@ -195,13 +195,9 @@ RUN \
       mv /root/sysrepo-python-bundle.deb /artefacts/python-yang-vooodoo_bundle.${MY_VERSION}.${MY_ARCH}.deb
 
 
-RUN \
-    apt-get clean && \
-    apt-get autoclean && \
-    rm -fr /opt/dev
 
 RUN \
-    pip3 install mock coverage nose2 && \
+    pip3 install mock coverage nose2 autopep8 pyflakes && \
     cd /working && \
     echo "Git Pull (v2)" && \
     git pull

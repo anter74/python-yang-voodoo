@@ -13,6 +13,8 @@ set pipefail -euo
 
 echo "Building image and compiling everything...."
 img=`docker build builder | tail -n 1 | sed -e's/Successfully built //'`
+docker tag $img allena29/yangvoodoo:builder
+
 container=`docker run -i -d $img /bin/bash`
 
 echo "Image $img, Container $container"
@@ -33,4 +35,3 @@ img=`docker build . | tail -n 1 | sed -e's/Successfully built //'`
 echo "Built minimal development image"
 docker tag $img allena29/yangvoodoo:devel
 
-rm -fr artefacts

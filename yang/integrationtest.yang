@@ -126,6 +126,17 @@ module integrationtest {
           }
         }
       }
+      leaf patternandlengtherror {
+        type string {
+          pattern "A.+Z" {
+            error-message "It went wrong";
+          }
+          length "2 | 3" {
+            error-message "This is actually duplicated up by the regular expression.";
+          }
+        }
+      }
+
     }
   }
 
@@ -790,29 +801,6 @@ module integrationtest {
 
 
       leaf leaf8 {
-        description "Current tetsting
-yang library (rather than libyang)
-yangctx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf8').schema()[0]
-# This reutrns nothing
-yangctx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf8').schema()[0].subtype().type().info().uni().types()
-# This still wroks
-yangctx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf8').schema()[0].subtype().type().der().type().info().uni().types()
-
-If we do this with the cffi bindings
-next(yangctx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf8')).type()
-At least repr's itself as type8 which it is, but type8 goes to a union--> union --> typedef2, typedef3, typedef5
-
-
-typedef2 = uint32
-typedef3 = enum
-typedef5 = string
-
-The segault I got when switching to yang (native swig) rather libyang-cffi was not actually handled by libyang-cffi
-list(next(yangctx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf8')).type().enums())
-
-What seems to be required is to recurse (potentially deepely)
-
-        !";
         type type8;
       }
 
@@ -835,33 +823,21 @@ What seems to be required is to recurse (potentially deepely)
                                   |                |                 |
                                 uint32       enum (A.B.C)          string
 
-        Two theories (perhaps three)
-        a) leafrefs
-        b) enums
-        c) something else.
-
-  Working with libayang-cffi
-
-  So if
-  next(yangctx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf8'))
-    Class   = Leaf (nodetype == 4)
-    type    -  <libyang.schema.Type: type8>
-
-
-  And
-  next(yangctx.find_path('/integrationtest:simpleleaf'))
-    Class   = leaf (nodetype == 4)
-    type()  - <libyang.schema.Type: string>
-
-    Basic appoach would be that if type() is somethign in the RFC then we don't have derrived
-
-
-  libyang (cffi based) collapses type() into the type8 or string
-
         ";
         type type8;
       }
 
+      leaf leaf-union-of-union {
+        type union {
+          type union {
+            type string;
+            type uint32;
+          }
+          type decimal64 {
+            fraction-digits 2;
+          }
+        }
+      }
       leaf leaf888-withoutenum {
         description "This might get to the heart of segfaults...
 
