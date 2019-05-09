@@ -219,7 +219,7 @@ print(value)
 
 session.create("/integrationtest:simplelist[simplekey='abc123']")
 
-for item in session.gets("/integrationtest:simplelist"):
+for item in session.gets_unsorted("/integrationtest:simplelist"):
   print(item)
   value = session.get(item + "/simplekey")
   print(value)

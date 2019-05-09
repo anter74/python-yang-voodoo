@@ -371,7 +371,7 @@ class List(Node):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-        results = context.dal.gets(path, ignore_empty_lists=True)
+        results = context.dal.gets_unsorted(path, ignore_empty_lists=True)
         return len(list(results))
 
     def xpaths(self, sorted_by_xpath=False):
@@ -388,7 +388,7 @@ class List(Node):
         if sorted_by_xpath:
             results = context.dal.gets_sorted(spath, ignore_empty_lists=True)
         else:
-            results = context.dal.gets(spath, ignore_empty_lists=True)
+            results = context.dal.gets_unsorted(spath, ignore_empty_lists=True)
 
         # Return Object
         return results
@@ -471,7 +471,7 @@ class List(Node):
         conditional = self._get_keys(list(args))
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
-        results = list(context.dal.gets(new_xpath))
+        results = list(context.dal.gets_unsorted(new_xpath))
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
 
@@ -495,7 +495,7 @@ class List(Node):
         path = self.__dict__['_path']
         new_xpath = path + conditional
         try:
-            reults = list(context.dal.gets(new_xpath))
+            reults = list(context.dal.gets_unsorted(new_xpath))
             return True
         except Exception as err:
             pass
@@ -511,7 +511,7 @@ class List(Node):
             conditional = self._get_keys(list(args))
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
-        list(context.dal.gets(new_xpath))
+        list(context.dal.gets_unsorted(new_xpath))
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
 
@@ -594,7 +594,7 @@ class ListIterator(Node):
         if xpath_sorted:
             self.__dict__['_iterator'] = context.dal.gets_sorted(path, ignore_empty_lists=True)
         else:
-            self.__dict__['_iterator'] = context.dal.gets(path, ignore_empty_lists=True)
+            self.__dict__['_iterator'] = context.dal.gets_unsorted(path, ignore_empty_lists=True)
 
     def __next__(self):
         context = self.__dict__['_context']

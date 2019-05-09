@@ -208,6 +208,7 @@ class DataAccess:
             yield result
 
     def gets(self, xpath, ignore_empty_lists=False):
+    def gets_unsorted(self, xpath, ignore_empty_lists=False):
         """
         Get a generator providing xpaths for each items in the list, this can then be used to fetch data
         from within the list.

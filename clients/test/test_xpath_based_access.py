@@ -250,7 +250,7 @@ class test_getdata(unittest.TestCase):
         self.assertEqual(str(context.exception), '1 Errors occured\nError 0: Invalid argument (Path: None)\n')
 
         xpath = "/integrationtest:container-and-lists/multi-key-list"
-        items = self.subject.gets(xpath)
+        items = self.subject.gets_unsorted(xpath)
         self.assertNotEqual(items, None)
 
         expected = [
@@ -280,7 +280,7 @@ class test_getdata(unittest.TestCase):
         # gets() works on leaves.
         # with self.assertRaises(datalayer.NodeNotAList) as context:
         xpath = "/integrationtest:simpleleaf"
-        items = self.subject.gets(xpath)
+        items = self.subject.gets_unsorted(xpath)
         # However if we iterate around the answer we will get
         # each character of the string '/integrationtest:simpleleaf'
         # self.assertEqual(str(context.exception), "The path: /integrationtest:simpleleaf is not a list")
@@ -302,7 +302,7 @@ class test_getdata(unittest.TestCase):
         xpath = "/integrationtest:simplelist"
 
         # GETS is based on user defined order
-        items = self.subject.gets(xpath)
+        items = self.subject.gets_unsorted(xpath)
         expected_results = ["/integrationtest:simplelist[simplekey='A']",
                             "/integrationtest:simplelist[simplekey='Z']",
                             "/integrationtest:simplelist[simplekey='middle']",
