@@ -101,14 +101,14 @@ class Node:
         self._specific_init()
 
     def __name__(self):
-        return 'BlackArtNode'
+        return 'VoodooNode'
 
     def __repr__(self):
         return self._base_repr()
 
     def _base_repr(self):
         path = self.__dict__['_path']
-        return 'BlackArt%s{%s}' % (self._NODE_TYPE, path)
+        return 'Voodoo%s{%s}' % (self._NODE_TYPE, path)
 
     def __del__(self):
         pass
@@ -668,4 +668,4 @@ class Root(Node):
 
     def __repr__(self):
         context = self.__dict__['_context']
-        return "BlackArtRoot{} YANG Module: " + context.module
+        return "VoodooRoot{} YANG Module: " + context.module

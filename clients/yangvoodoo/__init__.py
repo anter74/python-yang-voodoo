@@ -4,7 +4,7 @@ import sysrepo as sr
 import time
 import logging
 import socket
-import yangvoodoo.BlackArtNodes
+import yangvoodoo.VoodooNode
 
 
 class LogWrap():
@@ -123,11 +123,11 @@ class DataAccess:
         """
         yang_ctx = libyang.Context(yang_location)
         yang_schema = yang_ctx.load_module(module)
-        context = yangvoodoo.BlackArtNodes.Context(module, self, yang_schema, yang_ctx, log=self.log)
+        context = yangvoodoo.VoodooNode.Context(module, self, yang_schema, yang_ctx, log=self.log)
 
         self.help = self._help
 
-        return yangvoodoo.BlackArtNodes.Root(context)
+        return yangvoodoo.VoodooNode.Root(context)
 
     def connect(self, tag='client'):
         """

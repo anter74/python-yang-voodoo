@@ -498,6 +498,6 @@ LIBYANG_INSTALL=system python3 setup.py install
 The following list of known limitations are not planned to be handled until there is a strong use case, they are viewd as corner cases at this moment in time.
 
 - Types, binary, bits, identity
-  - `Types.py` will require updates, `yangvoodoo/__init__.py` and potentially `BlackArtNode/__getattr__` and `BlackArtNode/_get_yang_type`
+  - `Types.py` will require updates, `yangvoodoo/__init__.py` and potentially `VoodooNode/__getattr__` and `VoodooNode/_get_yang_type`
 - Union's containing leafref's
-  - This will lead to `BlackArtNode/_get_yang_type` needing updates to recursively follow unions and leafrefs.
+  - This will lead to `VoodooNode/_get_yang_type` needing updates to recursively follow unions and leafrefs.
