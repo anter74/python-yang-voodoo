@@ -1,10 +1,18 @@
 #!/usr/bin/python3
 import IPython
 import yangvoodoo
-import sysrepo as sr
+import yangvoodoo.stubdal
 import libyang
 
-session = yangvoodoo.DataAccess(remote_log=True)
+
+# Using Stub backend
+# stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
+# session = yangvoodoo.DataAccess(remote_log=True, data_abstraction_layer=stub)
+
+# Using Sysrepo backend
+session = yangvoodoo.DataAccess(remote_log=True, data_abstraction_layer=stub)
+
+
 session.connect()
 root = session.get_root('integrationtest')
 backend = session.session
