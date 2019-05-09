@@ -81,6 +81,8 @@ class SysrepoDataAbstractionLayer:
             v=sr.Val(2.344)
         """
         self.log.debug('SET: %s => %s (%s)' % (xpath, value, valtype))
+        if valtype == 10:
+            valtype = None
         if valtype:
             v = sr.Val(value, valtype)
         else:

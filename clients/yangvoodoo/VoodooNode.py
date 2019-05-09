@@ -221,30 +221,30 @@ class Node:
                     # TODO: we need to lookup enumerations
                     for (val, validx) in union_type.enums():
                         if str(val) == str(value):
-                            return Types.ENUM
+                            return Types.DATA_ABSTRACTION_MAPPING['ENUM']
                 u_types.append(union_type.base())
 
             if 10 in u_types and isinstance(value, str):
-                return Types.STRING
+                return Types.DATA_ABSTRACTION_MAPPING['STRING']
             elif isinstance(value, float):
-                return Types.DECIMAL64
+                return Types.DATA_ABSTRACTION_MAPPING['DECIMAL64']
             if isinstance(value, int):
                 if 12 in u_types and value >= -127 and value <= 128:
-                    return Types.INT8
+                    return Types.DATA_ABSTRACTION_MAPPING['INT8']
                 elif 13 in u_types and value >= 0 and value <= 255:
-                    return Types.UINT8
+                    return Types.DATA_ABSTRACTION_MAPPING['UINT8']
                 elif 14 in u_types and value >= -32768 and value <= 32767:
-                    return Types.INT16
+                    return Types.DATA_ABSTRACTION_MAPPING['INT16']
                 elif 15 in u_types and value >= 0 and value <= 65535:
-                    return Types.UINT16
+                    return Types.DATA_ABSTRACTION_MAPPING['UINT16']
                 elif 16 in u_types and value >= -2147483648 and value <= 2147483647:
-                    return Types.INT32
+                    return Types.DATA_ABSTRACTION_MAPPING['INT32']
                 elif 17 in u_types and value >= 0 and value <= 4294967295:
-                    return Types.UINT32
+                    return Types.DATA_ABSTRACTION_MAPPING['UINT32']
                 elif 19 in u_types and value >= 0:
-                    return Types.UINT64
+                    return Types.DATA_ABSTRACTION_MAPPING['UINT64']
                 else:
-                    return Types.INT64
+                    return Types.DATA_ABSTRACTION_MAPPING['INT64']
 
         raise NotImplementedError('Unable to handle the yang type at path %s (this may be listed as a corner-case on the README already' % (xpath))
 

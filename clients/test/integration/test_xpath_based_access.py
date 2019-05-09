@@ -20,7 +20,7 @@ class test_getdata(unittest.TestCase):
         self.subject.connect()
 
     def test_delete_and_get(self):
-        self.subject.set('/integrationtest:simpleenum', 'A', Types.ENUM)
+        self.subject.set('/integrationtest:simpleenum', 'A', Types.DATA_ABSTRACTION_MAPPING['ENUM'])
         value = self.subject.get('/integrationtest:simpleenum')
         self.assertEqual(value, 'A')
 
