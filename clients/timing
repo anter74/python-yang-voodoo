@@ -1,0 +1,82 @@
+#!/usr/bin/python3
+import yangvoodoo
+import sysrepo as sr
+import libyang
+import time
+
+start = time.time()
+total_start = start
+
+
+def timer(todo=''):
+    global start
+    print((time.time()-start)*1, 'milliseconds to-do', todo)
+    start = time.time()
+
+
+session = yangvoodoo.DataAccess(remote_log=False)
+timer('yangvoodoo-session')
+session.connect()
+timer('yangvoodoo-connect')
+root = session.get_root('integrationtest')
+backend = session.session
+timer('yangvoodoo-root')
+yanglist = root.web.bands
+timer('yangvoodoo-getlist')
+print(repr(root.web.bands))
+timer('yangvoodoo-repr(getlist)')
+
+# This firest list fetch is more expensive than the next two
+# - almost certainly because of the schema lookup (factor of 4!)
+yanglist.get('Idlewild')
+timer('yangvoodoo-getlist.__getitem__[Idlewild]')
+
+
+yanglist.get('Band Of Skulls')
+timer('yangvoodoo-getlist.__getitem__[BandOfSk]')
+
+yanglist.get('Yuck')
+timer('yangvoodoo-getlist.__getitem__[Yuck]')
+
+# This is much cheaper than the first version of Idlewild and
+# somewhat equivalent to the others
+yanglist.get('Idlewild')
+timer('yangvoodoo-getlist.__getitem__[Idlewild]')
+
+
+# This is much cheaper than the first version of Idlewild and
+# somewhat equivalent to the others - sometimes this actually is
+# quicker@!
+root._context.schemacache.empty()
+yanglist.get('Idlewild')
+timer('yangvoodoo-getlist.__getitem__[Idlewild] -after cache clear')
+
+for x in root.web.bands:
+    X = x
+timer('iterate but do nothign around the list')
+
+l = len(root.web.bands)
+timer('get length of list')
+
+
+for x in root.web.bands:
+    X = x.name
+print('         ', ((time.time()-start)/l), 'per listelement.name for x itmes', l)
+timer('iterate and get values - ')
+
+for x in root.web.bands:
+    X = x.name
+print('         ', ((time.time()-start)/l), 'per listelement.name for x itmes', l)
+timer('iterate and get values - same as before')
+
+for x in root.web.bands:
+    X = x.name
+    y = len(x.gigs)
+print('         ', ((time.time()-start)/l), 'per listelement.name for x itmes', l)
+timer('iterate and get values - ')
+
+for x in root.web.bands:
+    X = x.name
+    y = len(x.gigs)
+print('         ', ((time.time()-start)/l), 'per listelement.name for x itmes', l)
+timer('iterate and get values - ')
