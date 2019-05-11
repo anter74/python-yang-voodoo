@@ -125,7 +125,7 @@ class DataAccess:
         try:
             schema = next(node.__dict__['_context'].schemactx.find_path(node.__dict__['_spath']))
             return schema.description()
-        except Exception as err:
+        except Exception:
             pass
 
     def get_root(self, module, yang_location="../yang/"):

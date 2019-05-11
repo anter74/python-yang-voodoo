@@ -12,5 +12,6 @@ cd /working/subscribers
 
 echo "Ready"
 cd /working/clients
+./run-test.sh
 ./interactive
 /bin/bash

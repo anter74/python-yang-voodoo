@@ -49,18 +49,6 @@ class SysrepoDataAbstractionLayer:
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
-    def _handle_error(self, xpath, err):
-        sysrepo_errors = self.session.get_last_errors()
-        errors = []
-        for index in range(sysrepo_errors.error_cnt()):
-            sysrepo_error = sysrepo_errors.error(index)
-            if sysrepo_error.xpath() == xpath:
-                if sysrepo_error.message() == "The node is not enabled in running datastore":
-                    raise yangvoodoo.Errors.SubscriberNotEnabledOnBackendDatastore(xpath)
-            errors.append((sysrepo_error.message(), sysrepo_error.xpath()))
-
-        raise yangvoodoo.Errors.BackendDatastoreError(errors)
-
     def create(self, xpath):
         """
         Create a list item by XPATH including keys
@@ -98,7 +86,7 @@ class SysrepoDataAbstractionLayer:
         Test to determine if a list item exists
         """
         item = self.session.get_item(xpath)
-        return not item is None
+        return item is not None
 
     def gets_sorted(self, xpath, ignore_empty_lists=False):
         """
@@ -234,18 +222,6 @@ class SysrepoDataAbstractionLayer:
             self.session.refresh()
         except RuntimeError:
             raise yangvoodoo.Errors.NotConnect()
-
-    def _handle_error(self, xpath, err):
-        sysrepo_errors = self.session.get_last_errors()
-        errors = []
-        for index in range(sysrepo_errors.error_cnt()):
-            sysrepo_error = sysrepo_errors.error(index)
-            if sysrepo_error.xpath() == xpath:
-                if sysrepo_error.message() == "The node is not enabled in running datastore":
-                    raise yangvoodoo.Errors.SubscriberNotEnabledOnBackendDatastore(xpath)
-            errors.append((sysrepo_error.message(), sysrepo_error.xpath()))
-
-        raise yangvoodoo.Errors.BackendDatastoreError(errors)
 
     def _handle_error(self, xpath, err):
         sysrepo_errors = self.session.get_last_errors()

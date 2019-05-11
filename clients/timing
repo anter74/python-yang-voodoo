@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 import yangvoodoo
-import sysrepo as sr
-import libyang
 import time
 
 start = time.time()

@@ -188,8 +188,8 @@ class Node:
             (when considering a union of all 8 types). For simple leaves sysrepo is strict.
 
         Libyang gives us the following type from
-            node = next(yangctx.find_path(`'/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf666'`))
-            node.type().base()
+          node = next(yangctx.find_path(`'/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf666'`))
+          node.type().base()
 
 
         Unless we find a Union (11) or leafref (9) then we can just map directly.
@@ -246,7 +246,9 @@ class Node:
                 else:
                     return Types.DATA_ABSTRACTION_MAPPING['INT64']
 
-        raise NotImplementedError('Unable to handle the yang type at path %s (this may be listed as a corner-case on the README already' % (xpath))
+        msg = 'Unable to handle the yang type at path ' + xpath
+        msg += ' (this may be listed as a corner-case on the README already'
+        raise NotImplementedError(msg)
 
     def __setattr__(self, attr, val):
         context = self.__dict__['_context']
@@ -267,7 +269,6 @@ class Node:
         context.dal.set(xpath, val, backend_type)
 
     def __dir__(self):
-        path = self.__dict__['_path']
         spath = self.__dict__['_spath']
         node_schema = self._get_schema_of_path(spath)
 
@@ -370,7 +371,6 @@ class List(Node):
     def __len__(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
         results = context.dal.gets_unsorted(path, ignore_empty_lists=True)
         return len(list(results))
 
@@ -382,7 +382,6 @@ class List(Node):
         The sorted_by_xpath argument can be used to sort the list by xpath.
         """
         context = self.__dict__['_context']
-        path = self.__dict__['_path']
         spath = self.__dict__['_spath']
 
         if sorted_by_xpath:
@@ -418,7 +417,6 @@ class List(Node):
         #  "/integrationtest:simplelist[simplekey='Z']",
         #  "/integrationtest:simplelist[simplekey='b']"]
         context = self.__dict__['_context']
-        path = self.__dict__['_path']
         spath = self.__dict__['_spath']
 
         results = list(context.dal.gets_sorted(spath, ignore_empty_lists=True))
@@ -443,7 +441,6 @@ class List(Node):
         #  "/integrationtest:simplelist[simplekey='Z']",
         #  "/integrationtest:simplelist[simplekey='b']"]
         context = self.__dict__['_context']
-        path = self.__dict__['_path']
         spath = self.__dict__['_spath']
 
         results = list(context.dal.gets_sorted(spath, ignore_empty_lists=True))
@@ -516,13 +513,11 @@ class List(Node):
     def __delitem__(self, *args):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
         if isinstance(args[0], tuple):
             conditional = self._get_keys(list(args[0]))
         else:
             conditional = self._get_keys(list(args))
         new_xpath = path + conditional
-        new_spath = spath   # Note: we deliberartely won't
         context.dal.delete(new_xpath)
 
         return None
@@ -596,7 +591,6 @@ class ListIterator(Node):
 
     def __next__(self):
         context = self.__dict__['_context']
-        path = self.__dict__['_path']
         spath = self.__dict__['_spath']
         parent = self.__dict__['_parent']
         this_xpath = next(self.__dict__['_iterator'])
@@ -604,8 +598,6 @@ class ListIterator(Node):
         return ListElement(context, this_xpath, spath, parent)
 
     def __repr__(self):
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
         base_repr = self._base_repr()
         if self.__dict__['_xpath_sorted']:
             return base_repr + " Sorted By XPATH"

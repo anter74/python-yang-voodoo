@@ -1,16 +1,6 @@
 import unittest
 from mock import Mock
-import os
 import yangvoodoo
-import subprocess
-from yangvoodoo import Types
-
-# process = subprocess.Popen(["bash"],
-#                            stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-# (out, err) = process.communicate('sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest'.encode('UTF-8'))
-# if err:
-#     raise ValueError('Unable to import data\n%s\n%s' % (our, err))
-#
 
 
 class test_sysrepodal(unittest.TestCase):
@@ -30,7 +20,8 @@ class test_sysrepodal(unittest.TestCase):
 
         with self.assertRaises(yangvoodoo.Errors.SubscriberNotEnabledOnBackendDatastore) as context:
             self.subject._handle_error('/path', 'err')
-        self.assertEqual(str(context.exception), "There is no subscriber connected able to process data for the following path.\n /path")
+        self.assertEqual(str(context.exception),
+                         "There is no subscriber connected able to process data for the following path.\n /path")
 
     def test_handle_error_no_other_backend_error(self):
         error_mock = Mock()
@@ -43,4 +34,5 @@ class test_sysrepodal(unittest.TestCase):
 
         with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             self.subject._handle_error('/path', 'err')
-        self.assertEqual(str(context.exception), "1 Errors occured\nError 0: Someother stuff went wrong (Path: /path)\n")
+        self.assertEqual(str(context.exception),
+                         "1 Errors occured\nError 0: Someother stuff went wrong (Path: /path)\n")

@@ -1,16 +1,15 @@
 import unittest
-from mock import Mock
-import os
+
 import yangvoodoo
 import subprocess
 import sysrepo as sr
 from yangvoodoo import Types
 
-process = subprocess.Popen(["bash"],
-                           stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-(out, err) = process.communicate('sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest'.encode('UTF-8'))
+command = 'sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest'
+process = subprocess.Popen(["bash"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+(out, err) = process.communicate(command.encode('UTF-8'))
 if err:
-    raise ValueError('Unable to import data\n%s\n%s' % (our, err))
+    raise ValueError('Unable to import data\n%s\n%s' % (out, err))
 
 
 class test_getdata(unittest.TestCase):
@@ -109,7 +108,9 @@ class test_getdata(unittest.TestCase):
         with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             self.subject.commit()
         self.assertEqual(str(context.exception),
-                         "1 Errors occured\nError 0: Leafref \"../thing-to-leafref-against\" of value \"ZZZ\" points to a non-existing leaf. (Path: /integrationtest:thing-that-is-leafref)\n")
+                         ("1 Errors occured\n"
+                          "Error 0: Leafref \"../thing-to-leafref-against\" of value \"ZZZ\" "
+                          "points to a non-existing leaf. (Path: /integrationtest:thing-that-is-leafref)\n"))
 
         self.subject = yangvoodoo.DataAccess()
         self.subject.connect()

@@ -48,18 +48,9 @@ class StubDataAbstractionLayer:
         self.stub_store[xpath] = True
 
     def _list_xpath(self, xpath):
-        return self.REGEX_LIST_XPATH.sub('\g<1>', xpath)
+        return self.REGEX_LIST_XPATH.sub(r'\g<1>', xpath)
 
     def create(self, xpath):
-        # sysrepo backend takes in the entire xpath
-        # ie. /integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Dead Meadow']
-        # However for the stub to easily deal with membership tests without iterating the entire stub_store the list
-        # does make a little more sense.
-        # .*:[A-Za-z0_-]+
-
-        # This is too simplisitc in sysrepo we can call
-        # /path/list1[key1]/thing/list2[key2
-        # and even if list1 doesn't exist it will be created on demand.
         list_xpath = self._list_xpath(xpath)
         if list_xpath not in self.stub_store:
             self.stub_store[list_xpath] = []

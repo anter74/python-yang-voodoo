@@ -45,17 +45,20 @@ class test_node_based_access(unittest.TestCase):
         morecomplex = self.root.morecomplex
         self.assertEqual(repr(morecomplex), "VoodooContainer{/integrationtest:morecomplex}")
 
-        expected_children = ['extraboolean', 'extraboolean2', 'extraboolean3', 'inner', 'leaf2', 'leaf3', 'leaf4', 'nonconfig', 'percentage', 'superstar']
+        expected_children = ['extraboolean', 'extraboolean2', 'extraboolean3', 'inner', 'leaf2', 'leaf3', 'leaf4',
+                             'nonconfig', 'percentage', 'superstar']
         self.assertEqual(dir(morecomplex), expected_children)
 
         inner = morecomplex.inner.create()
-        self.assertEqual(repr(inner), 'VoodooPresenceContainer{/integrationtest:morecomplex/integrationtest:inner} Exists')
+        self.assertEqual(repr(inner),
+                         'VoodooPresenceContainer{/integrationtest:morecomplex/integrationtest:inner} Exists')
         inner.leaf7 = 'this-is-not-a-default-now'
         self.assertEqual(morecomplex.inner.leaf7, 'this-is-not-a-default-now')
         self.assertTrue(morecomplex.inner.exists())
 
         simplecontainer = self.root.simplecontainer
-        self.assertEqual(repr(simplecontainer), "VoodooPresenceContainer{/integrationtest:simplecontainer} Does Not Exist")
+        self.assertEqual(repr(simplecontainer),
+                         "VoodooPresenceContainer{/integrationtest:simplecontainer} Does Not Exist")
         self.assertFalse(simplecontainer.exists())
 
         simplecontainer.create()
@@ -73,11 +76,13 @@ class test_node_based_access(unittest.TestCase):
 
         with self.assertRaises(yangvoodoo.Errors.ListWrongNumberOfKeys) as context:
             twolist.get('true')
-        self.assertEqual(str(context.exception), 'The path: /integrationtest:twokeylist is a list requiring 2 keys but was given 1 keys')
+        self.assertEqual(str(context.exception),
+                         'The path: /integrationtest:twokeylist is a list requiring 2 keys but was given 1 keys')
 
         listelement = twolist.get(True, False)
         expected_children = ['primary', 'secondary', 'tertiary']
-        self.assertEqual(repr(listelement), "VoodooListElement{/integrationtest:twokeylist[primary='true'][secondary='false']}")
+        self.assertEqual(repr(listelement),
+                         "VoodooListElement{/integrationtest:twokeylist[primary='true'][secondary='false']}")
         self.assertEqual(dir(listelement), expected_children)
         self.assertEqual(listelement.tertiary, True)
 
@@ -86,7 +91,8 @@ class test_node_based_access(unittest.TestCase):
 
         listelement = twolist.get(True, True)
         expected_children = ['primary', 'secondary', 'tertiary']
-        self.assertEqual(repr(listelement), "VoodooListElement{/integrationtest:twokeylist[primary='true'][secondary='true']}")
+        self.assertEqual(repr(listelement),
+                         "VoodooListElement{/integrationtest:twokeylist[primary='true'][secondary='true']}")
         self.assertEqual(dir(listelement), expected_children)
         self.assertEqual(listelement.tertiary, True)
 
@@ -98,8 +104,10 @@ class test_node_based_access(unittest.TestCase):
 
         # Act.
         expected_answers = [
-            "VoodooListElement{/integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Dead Meadow']}",
-            "VoodooListElement{/integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Wooden Shjips']}"
+            ("VoodooListElement{/integrationtest:psychedelia/integrationtest:psychedelic-rock/"
+             "integrationtest:stoner-rock/integrationtest:bands[band='Dead Meadow']}"),
+            ("VoodooListElement{/integrationtest:psychedelia/integrationtest:psychedelic-rock/"
+             "integrationtest:stoner-rock/integrationtest:bands[band='Wooden Shjips']}")
         ]
         for band in self.root.psychedelia.psychedelic_rock.stoner_rock.bands:
             expected_answer = expected_answers.pop(0)
@@ -132,11 +140,17 @@ class test_node_based_access(unittest.TestCase):
         number_list = self.root.container_and_lists.numberkey_list
         element = number_list.create(3)
         number_list.create(4)
-        self.assertEqual(repr(element), "VoodooListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='3']}")
+        self.assertEqual(repr(element),
+                         ("VoodooListElement{/integrationtest:container-and-lists/"
+                          "integrationtest:numberkey-list[numberkey='3']}"))
         element = number_list.get(4)
-        self.assertEqual(repr(element), "VoodooListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='4']}")
+        self.assertEqual(repr(element),
+                         ("VoodooListElement{/integrationtest:container-and-lists/"
+                          "integrationtest:numberkey-list[numberkey='4']}"))
         element = number_list.get(3)
-        self.assertEqual(repr(element), "VoodooListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='3']}")
+        self.assertEqual(repr(element),
+                         ("VoodooListElement{/integrationtest:container-and-lists/"
+                          "integrationtest:numberkey-list[numberkey='3']}"))
 
         for x in self.root.morecomplex.inner.list_that_will_stay_empty:
             self.fail('Did not expect any data in the list')
@@ -159,7 +173,8 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(repr(list_element._parent), "VoodooList{/integrationtest:simplelist}")
 
         obj = self.root.bronze.silver._parent.silver._parent.silver.gold
-        self.assertEqual(repr(obj), "VoodooContainer{/integrationtest:bronze/integrationtest:silver/integrationtest:gold}")
+        self.assertEqual(repr(obj),
+                         "VoodooContainer{/integrationtest:bronze/integrationtest:silver/integrationtest:gold}")
 
     def test_lists_ordering(self):
         self.root.simplelist.create('A')
