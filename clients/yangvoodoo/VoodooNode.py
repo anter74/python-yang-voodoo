@@ -494,6 +494,7 @@ class List(Node):
 
         path = self.__dict__['_path']
         new_xpath = path + conditional
+        # TODO: optimise this, we should be able to just test membership directly on the backend
         try:
             reults = list(context.dal.gets_unsorted(new_xpath))
             return True
@@ -651,7 +652,9 @@ class PresenceContainer(Node):
     def create(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
         context.dal.create_container(path)
+        return PresenceContainer(context, path, spath, self)
 
     def __repr__(self):
         context = self.__dict__['_context']

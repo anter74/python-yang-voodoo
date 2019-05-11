@@ -14,13 +14,14 @@
 - setting a list key as a blank value must be prevented.
 - deletes (of non-primitives)
 - choices
+- testing membership of list elements is lazily done by asking for everything on the backend - implement a method to ask the backend datastore about membership.
 - ~~augmentation - augment seems to just work out of the box with libyang~~
 - deviations
 - leaf-lists are not implemented yet.
 - jinja2 templates are a little trickier accessing data on objects is trivial, invoking object (not sure how that works).
   - Consider list of bands, with a list of gis - if we want to find the the last gig we can do this.
   - In python we can do `list(root.web.bands._xpath_sorted)[-2].gigs.get_last()`
-- presence nodes don't have to be explicitly created - this is not the correct behaviour
+- presence nodes don't have to be explicitly created (in sysrepo backend) - this is not the correct behaviour
 - investigate  https://github.com/clicon/clixon/blob/master/example/hello/README.md for a CLI instead of prompt-toolkit
 - ~~enhance logging if there is no subscriber for a particular YANG module (sysrepo swig bindings are a limiting factor here - if there is a non-zero error code we just get a python runtime error).~~
   - ~~potential to open up sysrepo code to return more discrete error codes (if they aren't already) and then change the SWIG code to provide more descriptive text.~~
