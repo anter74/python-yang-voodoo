@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 import libyang
-import sysrepo as sr
 import time
 import logging
 import socket
-import yangvoodoo.BlackArtNodes
+import importlib
+import yangvoodoo.VoodooNode
 
 
 class LogWrap():
@@ -87,18 +87,34 @@ class DataAccess:
     This module provides two methods to access data, either XPATH based (low-level) or
     Node based (high-level).
 
-    The backend supported by this module is sysrepo (without netopeer2), however the
-    basic constructs decribed by this class could be ported to other backends.
+    The default backend for this module is sysrepo, however when instantiating this class
+    it is possible to send in an alternative 'data_abstraction_layer'. For the sysrepo based
+    implementation see sysrepodal.py
+
+    The data_abstraction_layer itself supports primitive operations such as get, set, create,
+    create_container, gets_sorted, gets_unsorted, delete, commit, validate, refresh, connect.
+    The key assumption is that the datastore itself will stored data based upon XPATH or
+    similair path structure.
+
 
     Dependencies:
-     - sysrepo 0.7.7 python3  bindings (https://github.com/sysrepo/sysrepo)
      - libyang 0.16.78 (https://github.com/rjarry/libyang-cffi/)
     """
 
-    def __init__(self, log=None, local_log=False, remote_log=False):
+    def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None):
         if not log:
             log = LogWrap(local_log=local_log, remote_log=remote_log)
         self.log = log
+        self.session = None
+        self.conn = None
+        if data_abstraction_layer:
+            self.data_abstraction_layer = data_abstraction_layer
+        else:
+            self.data_abstraction_layer = self._get_data_abastraction_layer(log)
+
+    def _get_data_abastraction_layer(self, log):
+        importlib.import_module('yangvoodoo.sysrepodal')
+        return yangvoodoo.sysrepodal.SysrepoDataAbstractionLayer(log)
 
     def _help(self, node):
         """
@@ -109,7 +125,7 @@ class DataAccess:
         try:
             schema = next(node.__dict__['_context'].schemactx.find_path(node.__dict__['_spath']))
             return schema.description()
-        except:
+        except Exception as err:
             pass
 
     def get_root(self, module, yang_location="../yang/"):
@@ -123,61 +139,45 @@ class DataAccess:
         """
         yang_ctx = libyang.Context(yang_location)
         yang_schema = yang_ctx.load_module(module)
-        context = yangvoodoo.BlackArtNodes.Context(module, self, yang_schema, yang_ctx, log=self.log)
+        context = yangvoodoo.VoodooNode.Context(module, self, yang_schema, yang_ctx, log=self.log)
 
         self.help = self._help
 
-        return yangvoodoo.BlackArtNodes.Root(context)
+        return yangvoodoo.VoodooNode.Root(context)
 
     def connect(self, tag='client'):
         """
         Connect to the datastore.
         """
-        self.conn = sr.Connection("%s%s" % (tag, time.time()))
-        self.session = sr.Session(self.conn)
+        connect_status = self.data_abstraction_layer.connect()
+        self.session = self.data_abstraction_layer.session
+        self.conn = self.data_abstraction_layer.conn
+        return connect_status
 
     def commit(self):
-        try:
-            self.session.commit()
-        except RuntimeError as err:
-            self._handle_error(None, err)
+        """
+        Commit pending changes to the datastore backend.
+        """
+        return self.data_abstraction_layer.commit()
 
     def validate(self):
-        try:
-            self.session.validate()
-        except RuntimeError as err:
-            self._handle_error(None, err)
-        return True
+        """
+        Validate the pending changes against the data in the backend datatstore without actually committing
+        the data.
+        """
+        return self.data_abstraction_layer.validate()
 
     def create_container(self, xpath):
-        try:
-            self.set(xpath, None, sr.SR_CONTAINER_PRESENCE_T)
-        except RuntimeError as err:
-            self._handle_error(xpath, err)
-
-    def _handle_error(self, xpath, err):
-        sysrepo_errors = self.session.get_last_errors()
-        errors = []
-        for index in range(sysrepo_errors.error_cnt()):
-            sysrepo_error = sysrepo_errors.error(index)
-            if sysrepo_error.xpath() == xpath:
-                if sysrepo_error.message() == "The node is not enabled in running datastore":
-                    raise yangvoodoo.Errors.SubscriberNotEnabledOnBackendDatastore(xpath)
-            errors.append((sysrepo_error.message(), sysrepo_error.xpath()))
-
-        raise yangvoodoo.Errors.BackendDatastoreError(errors)
+        return self.data_abstraction_layer.create_container(xpath)
 
     def create(self, xpath):
         """
         Create a list item by XPATH including keys
          e.g. / path/to/list[key1 = ''][key2 = ''][key3 = '']
         """
-        try:
-            self.set(xpath, None, sr.SR_LIST_T)
-        except RuntimeError as err:
-            self._handle_error(xpath, err)
+        return self.data_abstraction_layer.create(xpath)
 
-    def set(self, xpath, value, valtype=sr.SR_STRING_T):
+    def set(self, xpath, value, valtype=18):
         """
         Set an individual item by XPATH.
           e.g. / path/to/item
@@ -185,29 +185,19 @@ class DataAccess:
         It is required to provide the value and the type of the field in most cases.
         In the case of Decimal64 we cannot use a value type
             v=sr.Val(2.344)
-        """
-        self.log.debug('SET: %s => %s (%s)' % (xpath, value, valtype))
-        if valtype:
-            v = sr.Val(value, valtype)
-        else:
-            v = sr.Val(value)
 
-        try:
-            self.session.set_item(xpath, v)
-        except RuntimeError as err:
-            self._handle_error(xpath, err)
+        18 is the sysrepo value sr.SR_STRING_T
+        """
+        return self.data_abstraction_layer.set(xpath, value, valtype)
 
     def gets_sorted(self, xpath, ignore_empty_lists=False):
         """
         Get a generator providing a sorted list of xpaths, which can then be used for fetch data frmo
         within the list.
         """
-        results = list(self.gets(xpath, ignore_empty_lists))
-        results.sort()
-        for result in results:
-            yield result
+        return self.data_abstraction_layer.gets_sorted(xpath, ignore_empty_lists)
 
-    def gets(self, xpath, ignore_empty_lists=False):
+    def gets_unsorted(self, xpath, ignore_empty_lists=False):
         """
         Get a generator providing xpaths for each items in the list, this can then be used to fetch data
         from within the list.
@@ -215,110 +205,23 @@ class DataAccess:
         By default we look to actually get the specific item, however if we are using this
         function from an iterator with a blank list we do not want to throw an exception.
         """
-        vals = self.session.get_items(xpath)
-        if not vals:
-            if ignore_empty_lists:
-                return
-            raise yangvoodoo.Errors.ListDoesNotContainElement(xpath)
-        else:
-            for i in range(vals.val_cnt()):
-                v = vals.val(i)
-                try:
-                    yield v.xpath()
-                except RuntimeError as err:
-                    self._handle_error(xpath, err)
+        return self.data_abstraction_layer.gets_unsorted(xpath, ignore_empty_lists)
+
+    def has_item(self, xpath):
+        """
+        Evaluate if the item is present in the datatsore, determines if a specific XPATH has been
+        set, may be called on leaves, presence containers or specific list elements.
+        """
+        return self.data_abstraction_layer.has_item(xpath)
 
     def get(self, xpath):
-        sysrepo_item = self.session.get_item(xpath)
-        try:
-            return self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
-        except RuntimeError as err:
-            self._handle_error(xpath, err)
+        """
+        Get a specific path (leaf nodes or presence containers).
+        """
+        return self.data_abstraction_layer.get(xpath)
 
     def delete(self, xpath):
-        try:
-            self.session.delete_item(xpath)
-        except RuntimeError as err:
-            self._handle_error(xpath, err)
-
-    def _get_python_datatype_from_sysrepo_val(self, valObject, xpath=None):
-        """
-        For now this is copied out of providers/dataprovider/__init__.py, if this carries on as a good
-        idea then would need to combined.
-
-        Note: there is a limitation here, we can't return False for a container presence node that doesn't
-        exist becuase we never will get a valObject for it. Likewise boolean's and empties that dont' exist.
-
-        This is a wrapped version of a Val Object object
-        http: // www.sysrepo.org/static/doc/html/classsysrepo_1_1Data.html
-        http: // www.sysrepo.org/static/doc/html/group__cl.html  # ga5801ac5c6dcd2186aa169961cf3d8cdc
-
-        These don't map directly to the C API
-        SR_UINT32_T 20
-        SR_CONTAINER_PRESENCE_T 4
-        SR_INT64_T 16
-        SR_BITS_T 7
-        SR_IDENTITYREF_T 11
-        SR_UINT8_T 18
-        SR_LEAF_EMPTY_T 5
-        SR_DECIMAL64_T 9
-        SR_INSTANCEID_T 12
-        SR_TREE_ITERATOR_T 1
-        SR_CONTAINER_T 3
-        SR_UINT64_T 21
-        SR_INT32_T 15
-        SR_ENUM_T 10
-        SR_UNKNOWN_T 0
-        SR_STRING_T 17
-        SR_ANYXML_T 22
-        SR_INT8_T 13
-        SR_LIST_T 2
-        SR_INT16_T 14
-        SR_BOOL_T 8
-        SR_ANYDATA_T 23
-        SR_UINT16_T 19
-        SR_BINARY_T 6
-
-        """
-        if not valObject:
-            return None
-        type = valObject.type()
-        if type == sr.SR_STRING_T:
-            return valObject.val_to_string()
-        elif type == sr.SR_UINT64_T:
-            return valObject.data().get_uint64()
-        elif type == sr.SR_UINT32_T:
-            return valObject.data().get_uint32()
-        elif type == sr.SR_UINT16_T:
-            return valObject.data().get_uint16()
-        elif type == sr.SR_UINT8_T:
-            return valObject.data().get_uint8()
-        elif type == sr.SR_UINT64_T:
-            return valObject.data().get_uint8()
-        elif type == sr.SR_INT64_T:
-            return valObject.data().get_int64()
-        elif type == sr.SR_INT32_T:
-            return valObject.data().get_int32()
-        elif type == sr.SR_INT16_T:
-            return valObject.data().get_int16()
-        elif type == sr.SR_INT64_T:
-            return valObject.data().get_int8()
-        elif type == sr.SR_BOOL_T:
-            return valObject.data().get_bool()
-        elif type == sr.SR_ENUM_T:
-            return valObject.data().get_enum()
-        elif type == sr.SR_CONTAINER_PRESENCE_T:
-            return True
-        elif type == sr.SR_CONTAINER_T:
-            raise yangvoodoo.Errors.NodeHasNoValue('container', xpath)
-        elif type == sr.SR_LEAF_EMPTY_T:
-            raise yangvoodoo.Errors.NodeHasNoValue('empty-leaf', xpath)
-        elif type == sr.SR_LIST_T:
-            return None
-        elif type == sr.SR_DECIMAL64_T:
-            return valObject.data().get_decimal64()
-
-        raise yangvoodoo.Errors.NodeHasNoValue('unknown', xpath)
+        return self.data_abstraction_layer.delete(xpath)
 
     def refresh(self):
         """
@@ -327,7 +230,4 @@ class DataAccess:
         Note: if we are ever disconnected it is possible to simply just call
         the connect() method of this object.
         """
-        try:
-            self.session.refresh()
-        except RuntimeError:
-            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.refresh()

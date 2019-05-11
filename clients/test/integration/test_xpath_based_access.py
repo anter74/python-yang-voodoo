@@ -19,34 +19,8 @@ class test_getdata(unittest.TestCase):
         self.subject = yangvoodoo.DataAccess()
         self.subject.connect()
 
-    def test_handle_error_no_subscribers(self):
-        error_mock = Mock()
-        error_mock.xpath.return_value = "/path"
-        error_mock.message.return_value = "The node is not enabled in running datastore"
-        errors_mock = Mock()
-        errors_mock.error_cnt.return_value = 1
-        errors_mock.error.return_value = error_mock
-        self.subject.session.get_last_errors = Mock(return_value=errors_mock)
-
-        with self.assertRaises(yangvoodoo.Errors.SubscriberNotEnabledOnBackendDatastore) as context:
-            self.subject._handle_error('/path', 'err')
-        self.assertEqual(str(context.exception), "There is no subscriber connected able to process data for the following path.\n /path")
-
-    def test_handle_error_no_other_backend_error(self):
-        error_mock = Mock()
-        error_mock.xpath.return_value = "/path"
-        error_mock.message.return_value = "Someother stuff went wrong"
-        errors_mock = Mock()
-        errors_mock.error_cnt.return_value = 1
-        errors_mock.error.return_value = error_mock
-        self.subject.session.get_last_errors = Mock(return_value=errors_mock)
-
-        with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
-            self.subject._handle_error('/path', 'err')
-        self.assertEqual(str(context.exception), "1 Errors occured\nError 0: Someother stuff went wrong (Path: /path)\n")
-
     def test_delete_and_get(self):
-        self.subject.set('/integrationtest:simpleenum', 'A', Types.ENUM)
+        self.subject.set('/integrationtest:simpleenum', 'A', Types.DATA_ABSTRACTION_MAPPING['ENUM'])
         value = self.subject.get('/integrationtest:simpleenum')
         self.assertEqual(value, 'A')
 
@@ -250,7 +224,7 @@ class test_getdata(unittest.TestCase):
         self.assertEqual(str(context.exception), '1 Errors occured\nError 0: Invalid argument (Path: None)\n')
 
         xpath = "/integrationtest:container-and-lists/multi-key-list"
-        items = self.subject.gets(xpath)
+        items = self.subject.gets_unsorted(xpath)
         self.assertNotEqual(items, None)
 
         expected = [
@@ -280,7 +254,7 @@ class test_getdata(unittest.TestCase):
         # gets() works on leaves.
         # with self.assertRaises(datalayer.NodeNotAList) as context:
         xpath = "/integrationtest:simpleleaf"
-        items = self.subject.gets(xpath)
+        items = self.subject.gets_unsorted(xpath)
         # However if we iterate around the answer we will get
         # each character of the string '/integrationtest:simpleleaf'
         # self.assertEqual(str(context.exception), "The path: /integrationtest:simpleleaf is not a list")
@@ -302,7 +276,7 @@ class test_getdata(unittest.TestCase):
         xpath = "/integrationtest:simplelist"
 
         # GETS is based on user defined order
-        items = self.subject.gets(xpath)
+        items = self.subject.gets_unsorted(xpath)
         expected_results = ["/integrationtest:simplelist[simplekey='A']",
                             "/integrationtest:simplelist[simplekey='Z']",
                             "/integrationtest:simplelist[simplekey='middle']",

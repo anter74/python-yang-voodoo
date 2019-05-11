@@ -21,7 +21,8 @@ container bronze {
 ```
 
 
-This project builds upon [Sysrepo](http://www.sysrepo.org/) as the datastore which makes use of [Libyang](https://github.com/CESNET/libyang) and will provide a simple interface to fetching/storing data.
+This project builds upon [Sysrepo](http://www.sysrepo.org/) as the **default** datastore, and [Libyang](https://github.com/CESNET/libyang) to tightly couple the data model to a set of standard yang models.
+
 
 
 ```python
@@ -73,36 +74,101 @@ Or Perhaps modelled as xml
       }
     }
   }
-
-
  ```
 
 
+# Overall Structure
 
-## Start Docker & Sysrepod
+```
++-------------------------------------------+
+|                                           |
+|  yangvoodoo                               |
+|                                           |
+|  (object based access constrained by      |
+|   YANG models and mapped to specific      |
+|   xpath Key/Value pairs)                  |
++------+----------------------------+-------+
+       |                            |
+       |                            |
++-----------------------------v---------------+     +------+---------------------------------------------------+
+|                                             |     |                                                          |
+| libyang (C++ library, with python bindings) |     | data_abstraction_layer  (translation layer)              |
+| -  Describes the schema and constraints the |     |  - Primitive operations for setting/getting daata        |
+|    basic layout and types of the data.      |     |    based upon XPATH Key/Value Paris.                     |
+|                                             |     |  - Primitive transaction operations (validate, commit)   |
++---------------------------------------------+     |  - Enforces schema and data (i.e. when, must, leafrefs)  |
+                                                    |    conditions of the YANG modules.                       |
+                                                    |  - 2 DAL's are provided (Sysrepo and Stub)               |
+                                    +---------------+                                                          |
+                                    |               +------+------------------------------+--------------------+
+                                    |                              ^
+                 +------------------v-----------------+   +--------+--------------------------+
+                 |                                    |   |                                   |
+                 | sysrepo                            |   | stub                              |
+                 |   - open source datastore.         |   |  - dictionary based datastore     |
+                 |                                    |   |  for unit tests/prototyping       |
+                 +------------------------------------+   +-----------------------------------+
 
+```
+
+
+
+## Abstraction of Data Access
+
+This project was written around sysrepo for data storage, however there is no strong dependency on using sysrepo. In order to support unit testing of code there is already an alternative datastore provided as **stubdal** (although that is not production grade).
+
+Implementing a new data_abastraction_layer is as simple as implementing the following methods.
+
+ - **connect()** - connects to the datastore, it is expected that the datastore may provide and track a specific connection providing *transactionality*
+ - **validate()** - validate pending changes are valid based on the full data of the entire datastore (VoodooNode is limited to validating the yang schema itself).
+ - **refresh()** - refresh the data from the datastore, the datastore may provide us with the data present in the datastore at the time we first connected, or it may refresh in realtime everytime we access a given set of data.
+ - **commit()** - commit pending datastore.
+
+
+ - **get(xpath)** - get specific data by XPATH, this will not apply to non-presence containers or lists
+ - **gets_unsorted(xpath, ignore_empty_lists)** - get a list of XPATH's representing the items in the list, it is expected the datastore will maintain the order the user inserts the data and this MUST return the data in that order. If the list is empty this method will normally raise an ListDoesNotContainElement exception.
+ - **gets_unsorted(xpath, ignore_empty_lists)** - as gets_unsorted, but the results will be sorted by XPATH.
+ - **has_item(xpath)**- returns True if the item has been populated with data.
+ - **create(xpath)** - create a list item
+ - **create_container(xpath)** - if a container is a presence container explicitly create the container.
+ - **set(xpath, value, valuetype)** - sets the value of a specific xpath (supported for yang leaves). The valuetype is an integer (defined in Types.py/DATA_ABSTRACTION_MAPPING) based on the effective type of the yang field (*based on fuzzy matching in the case of unions*).
+
+
+### SCHEMA vs DATA level constraints
+
+There are some validation and constraints that are schema level, that is they are defined in the yang model and have no dependency on the data in the datastore. Schema based constraints are enforced by libyang without a requirement to run a full datastore (like sysrepo).
+Examples of schema based constraints.
+
+ - Creating/accessing nodes that are not part of the YANG model.
+ - Setting data that does not match they type (i.e. string, uintX, intX, boolean)
+
+
+Data level constraints need to be supported by the backend datastore, and this is true of sysrepo.
+
+ - Validating enumerations
+ - Validating must and when expressions
+ - Validating data matches the path of a leafref.
+
+
+
+## Example Docker instance
 
 See below for for instructions setting up without docker.
 
-The following (amd64) docker image can be used `docker pull allena29/syrepo:0.7.7`
-
-Note: the docker image also includes Netopeer2 NETCONF server.
+The following (amd64) docker image can be used `docker pull allena29/yabgvoodoo:devel`
 
 ```bash
 git pull allena29/yangvoodoo:devel
 docker run -i  -t allena29/yangvoodoo:devel /bin/bash
-
 
 # inside docker container
 cd /working
 git pull
 sysrepod -d -l 2
 sysrepo-plugind
-```
 
 ## Install YANG & Initialise startup configuration
 
-```bash
 cd /working/yang
 ./install-yang.sh
 cd /working/init-data
@@ -110,6 +176,12 @@ cd /working/init-data
 ```
 
 The `./launch-dbg` script in this repository will build a docker image (*first time will be slower*) mounts the current directory (i.e. this repository) as `/working` and then runs `/working-start-in-docker.sh`. This gives a quick way of getting a fresh docker instace (after the first build - which will terminate at the end). This will launch into an interactive python session (CTRL+D) to exit to bash.
+
+
+
+
+# Sysrepo Datastore
+
 
 ## Exporting Data
 
@@ -170,39 +242,25 @@ print(value)
 
 ## Setting Data
 
-Unfortunately setting data requires types, as a convenience the default happens to be a string.
+Setting data requires types, as a convenience the default happens to be a string.
 
 **NOTE:** the commit method from python does not persist running configuration into startup configuration (see - https://github.com/sysrepo/sysrepo/issues/966). It may be we have to sort ourselves out with regards to copying running to startup from time to time.
 
-- SR_UINT32_T 20
-- SR_CONTAINER_PRESENCE_T 4
-- SR_INT64_T 16
-- SR_BITS_T 7
-- SR_IDENTITYREF_T 11
-- SR_UINT8_T 18
-- SR_LEAF_EMPTY_T 5
-- SR_DECIMAL64_T 9
-- SR_INSTANCEID_T 12
-- SR_TREE_ITERATOR_T 1
-- SR_CONTAINER_T 3
-- SR_UINT64_T 21
-- SR_INT32_T 15
-- SR_ENUM_T 10
-- SR_UNKNOWN_T 0
-- SR_STRING_T 17
-- SR_ANYXML_T 22
-- SR_INT8_T 13
-- SR_LIST_T 2
-- SR_INT16_T 14
-- SR_BOOL_T 8
-- SR_ANYDATA_T 23
-- SR_UINT16_T 19
-- SR_BINARY_T 6
+See Types.py for the mapping of values - STRING = 18
 
 
-# XPATH based python access
 
-Note: when fetching data we need to provide to provide at least a top-level module prefix, however it is
+
+# XPATH access (via the Data Abstraction Layer)
+
+The data abstraction layer uses XPATH notation for specifying access, all components of the path should include the yang module.
+
+- `/integrationtest:leafname` - access to a leaf
+- `/integrationtest:container/integrationtest:leaf` - access to a leaf in a container
+- `/integrationtest:list[integrationtest:key='abc']` - access to a list element where the list has a single key named key
+- `/integrationtest:twokeys[integrationtest:key1='abc'][integrationtestkey2:='def']` - access to a list element where list has two keys
+- `/integrationtest:list[integrationtest:key='abc']/integrationtest:leafinsidelist` - access to an item in the list
+- `/integrationtest:list[integrationtest:key='abc']/integrationtest:secondlist[integrationtest:insidekey='aa']` - access to a list within a list.
 
 
 ```python
@@ -217,11 +275,13 @@ session.set("/integrationtest:simpleleaf", "BOO!", types.SR_STRING_T)
 value = session.get("/integrationtest:simpleleaf", "BOO!")
 print(value)
 
-session.create("/integrationtest:simplelist[simplekey='abc123']")
+exists = session.has_item("/integrationtest:simplelist[integrationtest:simplekey='abc123']")
 
-for item in session.gets("/integrationtest:simplelist"):
+session.create("/integrationtest:simplelist[integrationtest:simplekey='abc123']")
+
+for item in session.gets_unsorted("/integrationtest:simplelist"):
   print(item)
-  value = session.get(item + "/simplekey")
+  value = session.get(item + "/integrationtest:simplekey")
   print(value)
 
 session.delete("/integrationtest:simpleenum")
@@ -300,32 +360,26 @@ session.commit()
 
 
 
-# Debug Logging
+#### Using a stub and writing unit tests
 
-**Note: this is quick and dirty and should probably be replaced by syslog**
+When writing unit tests it is expensive to make use of the real sysrepo backend, this projectThis is a proof of concept style quality of code at this stage. This reduces the dependencies to just libyang library and the forked libyang-cffi bindings.
 
-It's quite distracting to see log messages pop-up when interactively using ipython.
-
-By default logging isn't enabled.
-
-
-see... LogWrap() and logsink.py
+```python
+import unittest
+import yangvoodoo
+import yangvoodoo.stubdal
 
 
-Note: the python bindings to sysrepo don't provide great visibility of errors. It is best to see the logging from sysrepo's perspective if something is unclear. Since the Node-based access is just wrapping around the basic sysrepo python library if there are problems with the node based access ensuring the XPATH and types are consistent with the YANG module.
+class test_node_based_access(unittest.TestCase):
 
-One example where things are not distinct enough is the following example:
+    def setUp(self):
+        self.stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
+        self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
+        self.subject.connect()
+        self.root = self.subject.get_root('integrationtest')
+```
 
-- `root.numberlist.integer.create('2')`  --> **Runtime Error: Invalid Argument**
-- `root.numberlist.integer.create(2)`  --> **Runtime Error: Invalid Argument**
-- `root.numberlist.integer.create(234234234234)` --> **Runtime Error: Invalid Argument**
-- `root.numberlist.integer.create(234234234234)` --> **Runtime Error: Invalid Argument**
 
-In the first two cases the Sysrepo logs show `The node is not enabled in running datastore /integrationtest:numberlist/integrationtest:integer[k='234234234234']` in this case the subscribers were not running. Sysrepo will not accept changes to the datastore without a subscriber active.
-
-In the third case the subscribers were running because it does not match the `uint8` type.
-
-Once the subscriber is active either of the first two cases work- however because the field is a uint8 we should use the second case.
 
 
 # Development/System version
@@ -472,6 +526,7 @@ The following instructions install sysrepo bindings within a pyenv environment. 
 
 ```bash
 git clone --branch=v0.7.7 https://github.com/sysrepo/sysrepo.git
+cd sysrepo
 echo "3.6.7/envs/yang-voodoo" >.python-version
 sed  -e 's/unset/#/' -i.bak swig/CMakeLists.txt
 mkdir build
@@ -480,24 +535,32 @@ cmake -DPYTHON_EXECUTABLE=~/.pyenv/versions/yang-voodoo/bin/python3  -DPYTHON_LI
 make && sudo make install
 
 # Libyang
+cd /tmp
 git clone https://github.com/allena29/libyang-cffi
 cd libyang-cffi
-git checkout devel-node-constraints
 LIBYANG_INSTALL=system python3 setup.py install
 ```
+
+
+
+# Debug Logging
+
+**Note: this is quick and dirty and should probably be replaced by syslog**
+
+It's quite distracting to see log messages pop-up when interactively using ipython.
+By default logging isn't enabled.   see... LogWrap() and logsink.py
+
+
+Note: launching sysrepod so that it runs with more logging in the foreground can help troubleshoot issues, `sysrepod -d -l 4`. 
+
+
+# TODO LIST
+
+see [TODO LIST](TODO.md)
+
 
 # Reference:
 
 - [Sysrepo](http://www.sysrepo.org/)
 - [Libyang](https://github.com/CESNET/libyang)
 - [libyang python bindings](https://github.com/allena29/libyang-cffi)
-
-
-# Limitations:
-
-The following list of known limitations are not planned to be handled until there is a strong use case, they are viewd as corner cases at this moment in time.
-
-- Types, binary, bits, identity
-  - `Types.py` will require updates, `yangvoodoo/__init__.py` and potentially `BlackArtNode/__getattr__` and `BlackArtNode/_get_yang_type`
-- Union's containing leafref's
-  - This will lead to `BlackArtNode/_get_yang_type` needing updates to recursively follow unions and leafrefs.

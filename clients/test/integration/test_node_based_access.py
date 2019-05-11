@@ -4,6 +4,16 @@ import yangvoodoo
 import subprocess
 import sysrepo as sr
 
+"""
+Integration tests making use of python-yang-voodoo and the sysrepo backend.
+
+The upside of this testing is we test the integration into sysrepo (which
+gives us the ability to test complex yang validation dependant upon the
+data (i.e. must, when, leafrefs).
+
+The downside is that cleaning the datastore between every test becomes a
+little expensive, so there is bleed between each individual test.
+"""
 
 process = subprocess.Popen(["bash"],
                            stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -21,7 +31,7 @@ class test_node_based_access(unittest.TestCase):
         self.root = self.subject.get_root('integrationtest')
 
     def test_root(self):
-        self.assertEqual(repr(self.root), 'BlackArtRoot{} YANG Module: integrationtest')
+        self.assertEqual(repr(self.root), 'VoodooRoot{} YANG Module: integrationtest')
 
         expected_children = ['bronze', 'container_and_lists', 'default', 'dirty_secret', 'empty',
                              'hyphen_leaf', 'imports_in_here', 'list_to_leafref_against', 'lista', 'morecomplex',
@@ -51,7 +61,7 @@ class test_node_based_access(unittest.TestCase):
 
     def test_containers(self):
         morecomplex = self.root.morecomplex
-        self.assertEqual(repr(morecomplex), "BlackArtContainer{/integrationtest:morecomplex}")
+        self.assertEqual(repr(morecomplex), "VoodooContainer{/integrationtest:morecomplex}")
 
         expected_children = ['extraboolean', 'extraboolean2', 'extraboolean3', 'inner', 'leaf2', 'leaf3', 'leaf4', 'nonconfig', 'percentage', 'superstar']
         self.assertEqual(dir(morecomplex), expected_children)
@@ -60,13 +70,13 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(morecomplex.inner.leaf7, 'this-is-a-default')
 
         inner = morecomplex.inner
-        self.assertEqual(repr(inner), 'BlackArtPresenceContainer{/integrationtest:morecomplex/integrationtest:inner} Exists')
+        self.assertEqual(repr(inner), 'VoodooPresenceContainer{/integrationtest:morecomplex/integrationtest:inner} Exists')
         inner.leaf7 = 'this-is-not-a-default-now'
         self.assertEqual(morecomplex.inner.leaf7, 'this-is-not-a-default-now')
         self.assertTrue(morecomplex.inner.exists())
 
         simplecontainer = self.root.simplecontainer
-        self.assertEqual(repr(simplecontainer), "BlackArtPresenceContainer{/integrationtest:simplecontainer} Does Not Exist")
+        self.assertEqual(repr(simplecontainer), "VoodooPresenceContainer{/integrationtest:simplecontainer} Does Not Exist")
         self.assertFalse(simplecontainer.exists())
 
         simplecontainer.create()
@@ -74,7 +84,7 @@ class test_node_based_access(unittest.TestCase):
 
     def test_list(self):
         twolist = self.root.twokeylist
-        self.assertEqual(repr(twolist), "BlackArtList{/integrationtest:twokeylist}")
+        self.assertEqual(repr(twolist), "VoodooList{/integrationtest:twokeylist}")
         self.assertEqual(twolist._path, '/integrationtest:twokeylist')
 
         with self.assertRaises(yangvoodoo.Errors.ListWrongNumberOfKeys) as context:
@@ -83,7 +93,7 @@ class test_node_based_access(unittest.TestCase):
 
         listelement = twolist.get(True, False)
         expected_children = ['primary', 'secondary', 'tertiary']
-        self.assertEqual(repr(listelement), "BlackArtListElement{/integrationtest:twokeylist[primary='true'][secondary='false']}")
+        self.assertEqual(repr(listelement), "VoodooListElement{/integrationtest:twokeylist[primary='true'][secondary='false']}")
         self.assertEqual(dir(listelement), expected_children)
         self.assertEqual(listelement.tertiary, True)
 
@@ -92,7 +102,7 @@ class test_node_based_access(unittest.TestCase):
 
         listelement = twolist.get(True, True)
         expected_children = ['primary', 'secondary', 'tertiary']
-        self.assertEqual(repr(listelement), "BlackArtListElement{/integrationtest:twokeylist[primary='true'][secondary='true']}")
+        self.assertEqual(repr(listelement), "VoodooListElement{/integrationtest:twokeylist[primary='true'][secondary='true']}")
         self.assertEqual(dir(listelement), expected_children)
         self.assertEqual(listelement.tertiary, True)
 
@@ -103,7 +113,7 @@ class test_node_based_access(unittest.TestCase):
 
         expected_children = ['language',  'otherlist1',  'otherlist2',  'otherlist3', 'otherlist4', 'otherlist5']
         self.assertEqual(repr(
-            italian_numbers), "BlackArtListElement{/integrationtest:outsidelist[leafo='its cold outside']/integrationtest:otherinsidelist[otherlist1='uno'][otherlist2='due'][otherlist3='tre']}")
+            italian_numbers), "VoodooListElement{/integrationtest:outsidelist[leafo='its cold outside']/integrationtest:otherinsidelist[otherlist1='uno'][otherlist2='due'][otherlist3='tre']}")
         self.assertEqual(dir(italian_numbers), expected_children)
         self.assertEqual(italian_numbers.language, 'italian')
         value = self.subject.get(
@@ -189,13 +199,13 @@ class test_node_based_access(unittest.TestCase):
                          "The list does not contain the list element: /integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/integrationtest:bands[band='Taylor Swift']")
 
         self.assertEqual(len(psychedelic_rock.noise_pop.shoe_gaze.bands), 2)
-        self.assertEqual(repr(psychedelic_rock), "BlackArtContainer{/integrationtest:psychedelia/integrationtest:psychedelic-rock}")
+        self.assertEqual(repr(psychedelic_rock), "VoodooContainer{/integrationtest:psychedelia/integrationtest:psychedelic-rock}")
 
     def test_iteration_of_lists(self):
 
         expected_answers = [
-            "BlackArtListElement{/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']}",
-            "BlackArtListElement{/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']}"
+            "VoodooListElement{/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']}",
+            "VoodooListElement{/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']}"
         ]
         for band in self.root.psychedelia.psychedelic_rock.stoner_rock.bands:
             expected_answer = expected_answers.pop(0)
@@ -227,11 +237,11 @@ class test_node_based_access(unittest.TestCase):
         number_list = self.root.container_and_lists.numberkey_list
         element = number_list.create(3)
         number_list.create(4)
-        self.assertEqual(repr(element), "BlackArtListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='3']}")
+        self.assertEqual(repr(element), "VoodooListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='3']}")
         element = number_list.get(4)
-        self.assertEqual(repr(element), "BlackArtListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='4']}")
+        self.assertEqual(repr(element), "VoodooListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='4']}")
         element = number_list.get(3)
-        self.assertEqual(repr(element), "BlackArtListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='3']}")
+        self.assertEqual(repr(element), "VoodooListElement{/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='3']}")
 
         for x in self.root.morecomplex.inner.list_that_will_stay_empty:
             self.fail('Did not expect any data in the list')
@@ -253,14 +263,14 @@ class test_node_based_access(unittest.TestCase):
     def test_parents_and_help_text(self):
         great_grandparent = self.root.bronze.silver.gold.platinum._parent._parent._parent
 
-        self.assertEqual(repr(great_grandparent), "BlackArtContainer{/integrationtest:bronze}")
+        self.assertEqual(repr(great_grandparent), "VoodooContainer{/integrationtest:bronze}")
         self.assertEqual(self.subject.help(great_grandparent), "The metallics are used to test container nesting")
 
         list_element = self.root.simplelist.create('newlistitem')
-        self.assertEqual(repr(list_element._parent), "BlackArtList{/integrationtest:simplelist}")
+        self.assertEqual(repr(list_element._parent), "VoodooList{/integrationtest:simplelist}")
 
         obj = self.root.bronze.silver._parent.silver._parent.silver.gold
-        self.assertEqual(repr(obj), "BlackArtContainer{/integrationtest:bronze/integrationtest:silver/integrationtest:gold}")
+        self.assertEqual(repr(obj), "VoodooContainer{/integrationtest:bronze/integrationtest:silver/integrationtest:gold}")
 
     def test_lists_ordering(self):
         self.root.simplelist.create('A')
@@ -273,10 +283,10 @@ class test_node_based_access(unittest.TestCase):
         items = list(self.root.simplelist)
 
         # Assert
-        expected_results = ["BlackArtListElement{/integrationtest:simplelist[simplekey='A']}",
-                            "BlackArtListElement{/integrationtest:simplelist[simplekey='Z']}",
-                            "BlackArtListElement{/integrationtest:simplelist[simplekey='middle']}",
-                            "BlackArtListElement{/integrationtest:simplelist[simplekey='M']}"]
+        expected_results = ["VoodooListElement{/integrationtest:simplelist[simplekey='A']}",
+                            "VoodooListElement{/integrationtest:simplelist[simplekey='Z']}",
+                            "VoodooListElement{/integrationtest:simplelist[simplekey='middle']}",
+                            "VoodooListElement{/integrationtest:simplelist[simplekey='M']}"]
 
         for i in range(len(items)):
             self.assertEqual(repr(items[i]), expected_results[i])
@@ -286,10 +296,10 @@ class test_node_based_access(unittest.TestCase):
         items = list(self.root.simplelist._xpath_sorted)
 
         # Assert
-        expected_results = ["BlackArtListElement{/integrationtest:simplelist[simplekey='A']}",
-                            "BlackArtListElement{/integrationtest:simplelist[simplekey='M']}",
-                            "BlackArtListElement{/integrationtest:simplelist[simplekey='Z']}",
-                            "BlackArtListElement{/integrationtest:simplelist[simplekey='middle']}"]
+        expected_results = ["VoodooListElement{/integrationtest:simplelist[simplekey='A']}",
+                            "VoodooListElement{/integrationtest:simplelist[simplekey='M']}",
+                            "VoodooListElement{/integrationtest:simplelist[simplekey='Z']}",
+                            "VoodooListElement{/integrationtest:simplelist[simplekey='middle']}"]
 
         for i in range(len(items)):
             self.assertEqual(repr(items[i]), expected_results[i])

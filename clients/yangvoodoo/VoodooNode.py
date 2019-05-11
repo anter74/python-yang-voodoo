@@ -101,14 +101,14 @@ class Node:
         self._specific_init()
 
     def __name__(self):
-        return 'BlackArtNode'
+        return 'VoodooNode'
 
     def __repr__(self):
         return self._base_repr()
 
     def _base_repr(self):
         path = self.__dict__['_path']
-        return 'BlackArt%s{%s}' % (self._NODE_TYPE, path)
+        return 'Voodoo%s{%s}' % (self._NODE_TYPE, path)
 
     def __del__(self):
         pass
@@ -221,30 +221,30 @@ class Node:
                     # TODO: we need to lookup enumerations
                     for (val, validx) in union_type.enums():
                         if str(val) == str(value):
-                            return Types.ENUM
+                            return Types.DATA_ABSTRACTION_MAPPING['ENUM']
                 u_types.append(union_type.base())
 
             if 10 in u_types and isinstance(value, str):
-                return Types.STRING
+                return Types.DATA_ABSTRACTION_MAPPING['STRING']
             elif isinstance(value, float):
-                return Types.DECIMAL64
+                return Types.DATA_ABSTRACTION_MAPPING['DECIMAL64']
             if isinstance(value, int):
                 if 12 in u_types and value >= -127 and value <= 128:
-                    return Types.INT8
+                    return Types.DATA_ABSTRACTION_MAPPING['INT8']
                 elif 13 in u_types and value >= 0 and value <= 255:
-                    return Types.UINT8
+                    return Types.DATA_ABSTRACTION_MAPPING['UINT8']
                 elif 14 in u_types and value >= -32768 and value <= 32767:
-                    return Types.INT16
+                    return Types.DATA_ABSTRACTION_MAPPING['INT16']
                 elif 15 in u_types and value >= 0 and value <= 65535:
-                    return Types.UINT16
+                    return Types.DATA_ABSTRACTION_MAPPING['UINT16']
                 elif 16 in u_types and value >= -2147483648 and value <= 2147483647:
-                    return Types.INT32
+                    return Types.DATA_ABSTRACTION_MAPPING['INT32']
                 elif 17 in u_types and value >= 0 and value <= 4294967295:
-                    return Types.UINT32
+                    return Types.DATA_ABSTRACTION_MAPPING['UINT32']
                 elif 19 in u_types and value >= 0:
-                    return Types.UINT64
+                    return Types.DATA_ABSTRACTION_MAPPING['UINT64']
                 else:
-                    return Types.INT64
+                    return Types.DATA_ABSTRACTION_MAPPING['INT64']
 
         raise NotImplementedError('Unable to handle the yang type at path %s (this may be listed as a corner-case on the README already' % (xpath))
 
@@ -371,7 +371,7 @@ class List(Node):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-        results = context.dal.gets(path, ignore_empty_lists=True)
+        results = context.dal.gets_unsorted(path, ignore_empty_lists=True)
         return len(list(results))
 
     def xpaths(self, sorted_by_xpath=False):
@@ -388,7 +388,7 @@ class List(Node):
         if sorted_by_xpath:
             results = context.dal.gets_sorted(spath, ignore_empty_lists=True)
         else:
-            results = context.dal.gets(spath, ignore_empty_lists=True)
+            results = context.dal.gets_unsorted(spath, ignore_empty_lists=True)
 
         # Return Object
         return results
@@ -471,7 +471,8 @@ class List(Node):
         conditional = self._get_keys(list(args))
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
-        results = list(context.dal.gets(new_xpath))
+        if not context.dal.has_item(new_xpath):
+            raise yangvoodoo.Errors.ListDoesNotContainElement(new_xpath)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
 
@@ -494,12 +495,7 @@ class List(Node):
 
         path = self.__dict__['_path']
         new_xpath = path + conditional
-        try:
-            reults = list(context.dal.gets(new_xpath))
-            return True
-        except Exception as err:
-            pass
-        return False
+        return context.dal.has_item(new_xpath)
 
     def __getitem__(self, *args):
         context = self.__dict__['_context']
@@ -511,7 +507,9 @@ class List(Node):
             conditional = self._get_keys(list(args))
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
-        list(context.dal.gets(new_xpath))
+
+        if not context.dal.has_item(new_xpath):
+            raise yangvoodoo.Errors.ListDoesNotContainElement(new_xpath)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
 
@@ -594,7 +592,7 @@ class ListIterator(Node):
         if xpath_sorted:
             self.__dict__['_iterator'] = context.dal.gets_sorted(path, ignore_empty_lists=True)
         else:
-            self.__dict__['_iterator'] = context.dal.gets(path, ignore_empty_lists=True)
+            self.__dict__['_iterator'] = context.dal.gets_unsorted(path, ignore_empty_lists=True)
 
     def __next__(self):
         context = self.__dict__['_context']
@@ -651,7 +649,9 @@ class PresenceContainer(Node):
     def create(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
         context.dal.create_container(path)
+        return PresenceContainer(context, path, spath, self)
 
     def __repr__(self):
         context = self.__dict__['_context']
@@ -668,4 +668,4 @@ class Root(Node):
 
     def __repr__(self):
         context = self.__dict__['_context']
-        return "BlackArtRoot{} YANG Module: " + context.module
+        return "VoodooRoot{} YANG Module: " + context.module
