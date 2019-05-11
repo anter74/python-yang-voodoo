@@ -93,6 +93,13 @@ class SysrepoDataAbstractionLayer:
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
+    def has_item(self, xpath):
+        """
+        Test to determine if a list item exists
+        """
+        item = self.session.get_item(xpath)
+        return not item is None
+
     def gets_sorted(self, xpath, ignore_empty_lists=False):
         """
         Get a generator providing a sorted list of xpaths, which can then be used for fetch data frmo

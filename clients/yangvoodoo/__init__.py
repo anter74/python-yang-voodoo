@@ -207,7 +207,17 @@ class DataAccess:
         """
         return self.data_abstraction_layer.gets_unsorted(xpath, ignore_empty_lists)
 
+    def has_item(self, xpath):
+        """
+        Evaluate if the item is present in the datatsore, determines if a specific XPATH has been
+        set, may be called on leaves, presence containers or specific list elements.
+        """
+        return self.data_abstraction_layer.has_item(xpath)
+
     def get(self, xpath):
+        """
+        Get a specific path (leaf nodes or presence containers).
+        """
         return self.data_abstraction_layer.get(xpath)
 
     def delete(self, xpath):

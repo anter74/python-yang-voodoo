@@ -471,7 +471,8 @@ class List(Node):
         conditional = self._get_keys(list(args))
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
-        results = list(context.dal.gets_unsorted(new_xpath))
+        if not context.dal.has_item(new_xpath):
+            raise yangvoodoo.Errors.ListDoesNotContainElement(new_xpath)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
 
@@ -494,13 +495,7 @@ class List(Node):
 
         path = self.__dict__['_path']
         new_xpath = path + conditional
-        # TODO: optimise this, we should be able to just test membership directly on the backend
-        try:
-            reults = list(context.dal.gets_unsorted(new_xpath))
-            return True
-        except Exception as err:
-            pass
-        return False
+        return context.dal.has_item(new_xpath)
 
     def __getitem__(self, *args):
         context = self.__dict__['_context']
@@ -512,7 +507,9 @@ class List(Node):
             conditional = self._get_keys(list(args))
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
-        list(context.dal.gets_unsorted(new_xpath))
+
+        if not context.dal.has_item(new_xpath):
+            raise yangvoodoo.Errors.ListDoesNotContainElement(new_xpath)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
 
