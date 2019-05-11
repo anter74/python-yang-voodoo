@@ -55,6 +55,11 @@ class SubscriberNotEnabledOnBackendDatastore(Exception):
 
 class BackendDatastoreError(Exception):
 
+    """
+    A catch all for errors on the data backend, the exception takes in a list of tuples.
+        [ (error-string, xpath) ]
+    """
+
     def __init__(self, errors):
         if len(errors) > 10:
             message = "%s Errors occurred - restricting to the first 10\n" % (len(errors))

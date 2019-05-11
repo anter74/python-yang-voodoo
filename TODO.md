@@ -37,3 +37,15 @@
  - Optimise Docker image so it doesn't compile the core packages, but instead sucks them in from somewhere else.
 - Packaging of the sysrepo into a deb for the minimal image is very naive.
 - Implement disconnect() for the data_abstraction_layer.
+- Stubdal - should it satisfy default values - it probably can.
+
+
+
+# Limitations:
+
+The following list of known limitations are not planned to be handled until there is a strong use case, they are viewd as corner cases at this moment in time.
+
+- Types, binary, bits, identity
+  - `Types.py` will require updates, `yangvoodoo/__init__.py` and potentially `VoodooNode/__getattr__` and `VoodooNode/_get_yang_type`
+- Union's containing leafref's
+  - This will lead to `VoodooNode/_get_yang_type` needing updates to recursively follow unions and leafrefs.
