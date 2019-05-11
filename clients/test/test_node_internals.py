@@ -38,8 +38,8 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(result, yangvoodoo.Types.BOOLEAN, None)
 
         # More complex case where we have a leafref to a complex set of unions and we want to get an ENUm out
-        yangnode = next(self.schemactx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf888'))
         with self.assertRaises(NotImplementedError) as context:
+            yangnode = next(self.schemactx.find_path('/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf-union-of-union'))
             result = self.root._get_yang_type(yangnode.type())
         self.assertEqual(str(context.exception), "Union containing unions not supported (see README.md)")
 

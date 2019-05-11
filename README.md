@@ -333,6 +333,70 @@ Once the subscriber is active either of the first two cases work- however becaus
 If the `import yangvoodoo` is carried out in the `clients/` subdirectory the version of the library from the GIT repository will be used. If the import is carried out anywhere else the system version will be used.
 
 
+# Updating libyang cffi bindings (Robin Jerry's bindings)
+
+- Important reference - libyang class definitions. [https://netopeer.liberouter.org/doc/libyang/master/group__schematree.html#structlys__type__info__str](https://netopeer.liberouter.org/doc/libyang/master/group__schematree.html#structlys__type__info__str) - forked into https://github.com/allena29/libyang-cffi
+
+First use case missing constraints for leaves in a yang mode.
+
+### cffi/cdefs.h
+
+
+```c++
+// added this based on the documentation in the class reference (it has to line up)
+struct lys_restr {
+	const char* expr;
+	const char* dsc;
+	const char* ref;
+	const char* eapptag;
+	const char* emsg;
+	...;
+};
+
+// added this based on the documentation in the class reference (it has to line up)
+struct lys_type_info_str {  
+	struct lys_restr* length;
+	struct lys_restr* patterns;
+	int pat_count;
+	...;
+};
+
+// added a type_info_str.
+union lys_type_info {
+	struct lys_type_info_bits bits;
+	struct lys_type_info_enums enums;
+	struct lys_type_info_lref lref;
+	struct lys_type_info_union uni;
+	struct lys_type_info_str str;  
+	...;
+};
+
+```
+
+### class Leaf: in libyang/schema.py
+
+```python
+def constraints(self):
+    return self.type().leaf_constraints()
+```
+
+### class Leaf: in libyang/schema.py
+```python
+def leaf_constraints(self):
+    t = self._type
+    yield c2str(t.info.str.length.emsg)
+    # return t.info.str.length
+```
+
+
+Quick and ditry results from this are consistent without yang model.
+
+```python
+next(next(yangctx.find_path('/integrationtest:validator/integrationtest:strings/integrationtest:sillylen')).constraints())
+'BOO!'
+```
+
+
 
 # Local development environment (without Docker)
 
@@ -376,13 +440,14 @@ cd libredblack
 The git clone has a `.python-version` file which is only important if pyenv is used for a virtual environment. To create a virtual-env the following will clone and add to a bash shell.
 
 ```bash
+
 git clone https://github.com/pyenv/pyenv.git ~/.pyenv
 PATH=~/.pyenv/bin:$PATH
-eval "$(pyenv init -)"
+  eval "$(pyenv init -)"
 export PYENV_ROOT="$HOME/.pyenv"
 git clone https://github.com/pyenv/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
-export PYTHON_CONFIGURE_OPTS="--enable-framework"
   # For MAC-OSX Mojave
+  export PYTHON_CONFIGURE_OPTS="--enable-framework"
   export LDFLAGS="-L/usr/local/opt/zlib/lib -L/usr/local/opt/sqlite3/lib"
   export CPPFLAGS="-I/usr/local/opt/zlib/include -I/usr/local/opt/sqlite3/include"
   export CFLAGS="-I$(xcrun --show-sdk-path)/usr/include"
@@ -390,9 +455,18 @@ pyenv install 3.6.7
 eval "$(pyenv virtualenv-init -)"
 pyenv virtualenv 3.6.7 yang-voodoo
 pip install -r requirements.lock
+
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >>~/.bashrc
+echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >>~/.bashrc
+echo 'eval "$(pyenv init -)"' >>~/.bashrc
+echo 'eval "$(pyenv virtualenv-init -)"' >>~/.bashrc
+echo 'export PS1="{\[\033[36m\]\u@\[\033[36m\]\h} \[\033[33;1m\]\w\[\033[m\] \$ "' >>~/.bashrc
+echo 'export PYENV_VIRTUALENV_DISABLE_PROMPT=1' >>~/.bashrc
+
 ```
 
-## sysrepo/libyang and python bindings
+## libyang/sysrepo and python bindings
+
 
 The following instructions install sysrepo bindings within a pyenv environment. If not using pyenv then follow the simpler steps from the docker file.
 
@@ -406,14 +480,17 @@ cmake -DPYTHON_EXECUTABLE=~/.pyenv/versions/yang-voodoo/bin/python3  -DPYTHON_LI
 make && sudo make install
 
 # Libyang
-LIBYANG_INSTALL=system pip install libyang
+git clone https://github.com/allena29/libyang-cffi
+cd libyang-cffi
+git checkout devel-node-constraints
+LIBYANG_INSTALL=system python3 setup.py install
 ```
 
 # Reference:
 
 - [Sysrepo](http://www.sysrepo.org/)
 - [Libyang](https://github.com/CESNET/libyang)
-- [libyang python bindings](https://pypi.org/project/libyang/)
+- [libyang python bindings](https://github.com/allena29/libyang-cffi)
 
 
 # Limitations:

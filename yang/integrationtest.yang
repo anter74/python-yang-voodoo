@@ -64,6 +64,82 @@ module integrationtest {
     }
   }
 
+  typedef length-must-not-be-4-long {
+    type string {
+      length '1..3 | 5..max' {
+        error-message "Must not be 4 characters long";
+      }
+    }
+  }
+
+  container validator {
+    container strings {
+      leaf nolen {
+        type string;
+      }
+
+      leaf non-quatre {
+        description "For some arbritary reason this must not be 4 long. This is seg faulty
+        next(yangctx.find_path('/integrationtest:validator/integrationtest:strings/integrationtest:non-quatre')).type().leaf_length_constraints()
+        Without the leaf_length_constraints it's ok
+        next(yangctx.find_path('/integrationtest:validator/integrationtest:strings/integrationtest:non-quatre')).type()
+        !";
+
+        type length-must-not-be-4-long;
+
+      }
+      leaf minlen {
+        description "This is not segfaulty
+      next(yangctx.find_path('/integrationtest:validator/integrationtest:strings/integrationtest:minlen')).type()..leaf_length_constraints()
+      !";
+        type string {
+
+          length "1..max";
+        }
+      }
+      leaf maxlen {
+        type string {
+          length "min..4";
+        }
+      }
+      leaf minmaxlen {
+        type string {
+          length "2..3";
+        }
+      }
+      leaf sillylen {
+        type string {
+          length "1..3 | 9..11 | 16..32" {
+            error-message "BOO!";
+          }
+        }
+      }
+      leaf pattern {
+        type string {
+          pattern "A..?Z";
+        }
+      }
+      leaf patternerror {
+        type string {
+          pattern "AZ" {
+            error-message "It went wrong";
+          }
+        }
+      }
+      leaf patternandlengtherror {
+        type string {
+          pattern "A.+Z" {
+            error-message "It went wrong";
+          }
+          length "2 | 3" {
+            error-message "This is actually duplicated up by the regular expression.";
+          }
+        }
+      }
+
+    }
+  }
+
   container imports-in-here {
     uses testchild:child;
   }
@@ -739,8 +815,47 @@ module integrationtest {
           path "../leaf7";
         }
       }
-
       leaf leaf888 {
+        description "This might get to the heart of segfaults....
+        TYPEDEF888 -> TYPEDEF88
+        TYPEDEF88  -> TYPE8
+        TYPEDEF8   -> UNINON  { type2          type3               type5
+                                  |                |                 |
+                                uint32       enum (A.B.C)          string
+
+        ";
+        type type8;
+      }
+
+      leaf leaf-union-of-union {
+        type union {
+          type union {
+            type string;
+            type uint32;
+          }
+          type decimal64 {
+            fraction-digits 2;
+          }
+        }
+      }
+      leaf leaf888-withoutenum {
+        description "This might get to the heart of segfaults...
+
+        TYPEDEF888 -> TYPEDEF88
+        TYPEDEF88  -> TYPE8
+        TYPEDEF8-noenum-> UNINON  { type2            type5
+                                      |               |
+                                    uint32           string
+
+        Two theories (perhaps three)
+        a) leafrefs
+        b) enums
+        c) something else";
+        type type8-noenum;
+      }
+
+
+      leaf leaf8888 {
         description "Leafref to the complex stuff";
         type leafref {
           path "../leaf666";
@@ -757,6 +872,20 @@ module integrationtest {
       leaf leaf000 {
         description "Numbers";
         type sillytypedef;
+      }
+
+      leaf leaf111 {
+        description "Union without typedefs";
+        type union {
+          type enumeration {
+            enum cow;
+            enum pig;
+            enum sheep;
+          }
+          type string;
+          type uint32;
+          type boolean;
+        }
       }
 
       container ietf-inet-types {
@@ -821,7 +950,8 @@ module integrationtest {
   }
 
   typedef type8 {
-    description "This union captures what is currently supported.... type6 is viewed as corner case";
+    description "This union captures what is currently supported.... type6 is viewed as corner case.
+    Although this is actually not handldewd (libyang-ciffg) or segfaulty (yang native bindingG)";
     type union {
       type type2;
       type type3;
@@ -829,6 +959,13 @@ module integrationtest {
     }
   }
 
+  typedef type8-noenum {
+    description "Same as type8 without the enum";
+    type union {
+      type type2;
+      type type5;
+    }
+  }
   typedef typeu8 {
     type uint8;
   }
@@ -879,5 +1016,13 @@ module integrationtest {
       fraction-digits 1;
       range 95..100;
     }
+  }
+
+  typedef type88 {
+    type type8;
+  }
+
+  typedef type888 {
+    type type88;
   }
 }
