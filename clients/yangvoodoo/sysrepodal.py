@@ -30,6 +30,10 @@ class SysrepoDataAbstractionLayer:
         self.conn = sr.Connection("%s%s" % (tag, time.time()))
         self.session = sr.Session(self.conn)
 
+    def disconnect(self):
+        self.session = None
+        self.conn = None
+
     def commit(self):
         try:
             self.session.commit()

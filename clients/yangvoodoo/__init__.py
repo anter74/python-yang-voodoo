@@ -107,6 +107,7 @@ class DataAccess:
         self.log = log
         self.session = None
         self.conn = None
+        self.connected = False
         if data_abstraction_layer:
             self.data_abstraction_layer = data_abstraction_layer
         else:
@@ -137,6 +138,9 @@ class DataAccess:
         We must have access to the same YANG module loaded within in sysrepo, which can be
         set by modifying yang_location argument.
         """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+
         yang_ctx = libyang.Context(yang_location)
         yang_schema = yang_ctx.load_module(module)
         context = yangvoodoo.VoodooNode.Context(module, self, yang_schema, yang_ctx, log=self.log)
@@ -152,12 +156,22 @@ class DataAccess:
         connect_status = self.data_abstraction_layer.connect()
         self.session = self.data_abstraction_layer.session
         self.conn = self.data_abstraction_layer.conn
+        self.connected = True
         return connect_status
+
+    def disconnect(self):
+        """
+        Disconnect from the datastore - losing any pending changes.
+        """
+        self.connected = False
+        return self.data_abstraction_layer.disconnect()
 
     def commit(self):
         """
         Commit pending changes to the datastore backend.
         """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.commit()
 
     def validate(self):
@@ -165,9 +179,13 @@ class DataAccess:
         Validate the pending changes against the data in the backend datatstore without actually committing
         the data.
         """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.validate()
 
     def create_container(self, xpath):
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.create_container(xpath)
 
     def create(self, xpath):
@@ -175,6 +193,8 @@ class DataAccess:
         Create a list item by XPATH including keys
          e.g. / path/to/list[key1 = ''][key2 = ''][key3 = '']
         """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.create(xpath)
 
     def set(self, xpath, value, valtype=18):
@@ -188,6 +208,8 @@ class DataAccess:
 
         18 is the sysrepo value sr.SR_STRING_T
         """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.set(xpath, value, valtype)
 
     def gets_sorted(self, xpath, ignore_empty_lists=False):
@@ -195,6 +217,8 @@ class DataAccess:
         Get a generator providing a sorted list of xpaths, which can then be used for fetch data frmo
         within the list.
         """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.gets_sorted(xpath, ignore_empty_lists)
 
     def gets_unsorted(self, xpath, ignore_empty_lists=False):
@@ -205,6 +229,8 @@ class DataAccess:
         By default we look to actually get the specific item, however if we are using this
         function from an iterator with a blank list we do not want to throw an exception.
         """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.gets_unsorted(xpath, ignore_empty_lists)
 
     def has_item(self, xpath):
@@ -212,15 +238,21 @@ class DataAccess:
         Evaluate if the item is present in the datatsore, determines if a specific XPATH has been
         set, may be called on leaves, presence containers or specific list elements.
         """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.has_item(xpath)
 
     def get(self, xpath):
         """
         Get a specific path (leaf nodes or presence containers).
         """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.get(xpath)
 
     def delete(self, xpath):
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.delete(xpath)
 
     def refresh(self):
@@ -230,4 +262,6 @@ class DataAccess:
         Note: if we are ever disconnected it is possible to simply just call
         the connect() method of this object.
         """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.refresh()

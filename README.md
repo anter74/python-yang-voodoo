@@ -123,7 +123,7 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **validate()** - validate pending changes are valid based on the full data of the entire datastore (VoodooNode is limited to validating the yang schema itself).
  - **refresh()** - refresh the data from the datastore, the datastore may provide us with the data present in the datastore at the time we first connected, or it may refresh in realtime everytime we access a given set of data.
  - **commit()** - commit pending datastore.
-
+ - **disconnect()** - disconnect from the datastore
 
  - **get(xpath)** - get specific data by XPATH, this will not apply to non-presence containers or lists
  - **gets_unsorted(xpath, ignore_empty_lists)** - get a list of XPATH's representing the items in the list, it is expected the datastore will maintain the order the user inserts the data and this MUST return the data in that order. If the list is empty this method will normally raise an ListDoesNotContainElement exception.
@@ -356,6 +356,7 @@ session.validate()
 # Refresh data from the sysrepo backend datastore.
 session.refresh()
 session.commit()
+session.disconnect()
 ```
 
 
@@ -551,7 +552,7 @@ It's quite distracting to see log messages pop-up when interactively using ipyth
 By default logging isn't enabled.   see... LogWrap() and logsink.py
 
 
-Note: launching sysrepod so that it runs with more logging in the foreground can help troubleshoot issues, `sysrepod -d -l 4`. 
+Note: launching sysrepod so that it runs with more logging in the foreground can help troubleshoot issues, `sysrepod -d -l 4`.
 
 
 # TODO LIST

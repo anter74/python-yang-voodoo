@@ -14,3 +14,4 @@
   - FIX: return a PresenceContainer object when calling create on a presence node path.
   - FIX: implement `has_item(xpath)` asking the datastore about existence rather than getting the full list back.
   - Renamed BlackArt to Voodoo for representation of objects.
+  - Implement specific `disconnect` method on the data_abstraction_layer

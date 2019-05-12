@@ -36,7 +36,10 @@ class StubDataAbstractionLayer:
         self.conn = None
 
     def connect(self, tag='<id-tag>'):
-        pass
+        return True
+
+    def disconnect(self):
+        return True
 
     def commit(self):
         return True
