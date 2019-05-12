@@ -152,6 +152,8 @@ class DataAccess:
     def connect(self, tag='client'):
         """
         Connect to the datastore.
+
+        returns: True
         """
         connect_status = self.data_abstraction_layer.connect()
         self.session = self.data_abstraction_layer.session
@@ -161,14 +163,23 @@ class DataAccess:
 
     def disconnect(self):
         """
-        Disconnect from the datastore - losing any pending changes.
+        Disconnect from the datastore - losing any pending changes to data which has not yet
+        been committed.
+
+        returns: True
         """
         self.connected = False
         return self.data_abstraction_layer.disconnect()
 
     def commit(self):
         """
-        Commit pending changes to the datastore backend.
+        Commit pending changes to the datastore backend, it is possible to call validate()
+        before a commit. The datastore has the final say if the changes are valid or not,
+        the only assurance that the yangvoodoo objects can provide is that the data conforms
+        to the YANG schema - it cannot guarantee the values are consistent with the full
+        data held in the datastore.
+
+        returns: True
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
@@ -176,14 +187,23 @@ class DataAccess:
 
     def validate(self):
         """
-        Validate the pending changes against the data in the backend datatstore without actually committing
-        the data.
+        Validate the pending changes against the data in the backend datatstore without actually
+        committing the data. The full set of rules within the YANG model/datatstore must be
+        checked such that a user calling validate(), commit() in short sucession should get a
+        failure to commit.
+
+        returns: True or False
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.validate()
 
     def create_container(self, xpath):
+        """
+        Create a presence container - only suitable for use on presence containers.
+
+        returns: VoodoooPresenceContainer()
+        """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.create_container(xpath)
@@ -191,7 +211,9 @@ class DataAccess:
     def create(self, xpath):
         """
         Create a list item by XPATH including keys
-         e.g. / path/to/list[key1 = ''][key2 = ''][key3 = '']
+         e.g. /path/to/list[key1='val1'][key2='val2'][key3='val3']
+
+         returns: VoodooListElement()
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
@@ -202,11 +224,10 @@ class DataAccess:
         Set an individual item by XPATH.
           e.g. / path/to/item
 
-        It is required to provide the value and the type of the field in most cases.
-        In the case of Decimal64 we cannot use a value type
-            v=sr.Val(2.344)
+        valtype defaults to 18 (STRING), see Types.DATA_ABSTRACTION_MAPPING for the
+        full set of value types.
 
-        18 is the sysrepo value sr.SR_STRING_T
+        returns: value
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
@@ -214,8 +235,10 @@ class DataAccess:
 
     def gets_sorted(self, xpath, ignore_empty_lists=False):
         """
-        Get a generator providing a sorted list of xpaths, which can then be used for fetch data frmo
-        within the list.
+        For the given XPATH (of a list) return an sorted list of XPATHS representing every
+        list element within the list.
+
+        returns: generator of sorted XPATHS
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
@@ -223,11 +246,11 @@ class DataAccess:
 
     def gets_unsorted(self, xpath, ignore_empty_lists=False):
         """
-        Get a generator providing xpaths for each items in the list, this can then be used to fetch data
-        from within the list.
+        For the given XPATH (of a list) return an unsorted list of XPATHS representing every
+        list element within the list.
+        This method must maintain the order that entries were added by the user into the list.
 
-        By default we look to actually get the specific item, however if we are using this
-        function from an iterator with a blank list we do not want to throw an exception.
+        returns: generator of XPATHS
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
@@ -237,6 +260,8 @@ class DataAccess:
         """
         Evaluate if the item is present in the datatsore, determines if a specific XPATH has been
         set, may be called on leaves, presence containers or specific list elements.
+
+        returns: True or False
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
@@ -244,13 +269,26 @@ class DataAccess:
 
     def get(self, xpath):
         """
-        Get a specific path (leaf nodes or presence containers).
+        Get a specific path (leaf nodes or presence containers), in the case of leaves a python
+        primitive is returned (i.e. strings, booleans, integers).
+        In the case of non-terminating nodes (i.e. Lists, Containers, PresenceContainers) this
+        method will return a Voodoo object of the relevant type.
+
+        FUTURE CHANGE: in future enumerations should be returned as a specific object type
+
+
+        returns: value or Vooodoo<X>
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.get(xpath)
 
     def delete(self, xpath):
+        """
+        Delete the data, and all decendants for a particular XPATH.
+
+        returns: True
+        """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.delete(xpath)
@@ -261,6 +299,8 @@ class DataAccess:
 
         Note: if we are ever disconnected it is possible to simply just call
         the connect() method of this object.
+
+        returns: True
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()

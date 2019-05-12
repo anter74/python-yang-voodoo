@@ -2,9 +2,10 @@
 import time
 import sysrepo as sr
 import yangvoodoo
+import yangvoodoo.basedal
 
 
-class SysrepoDataAbstractionLayer:
+class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     """
     This module provides two methods to access data, either XPATH based (low-level) or
@@ -18,21 +19,18 @@ class SysrepoDataAbstractionLayer:
      - libyang 0.16.78 (https://github.com/rjarry/libyang-cffi/)
     """
 
-    def __init__(self, log=None):
-        self.log = log
-        self.session = None
-        self.conn = None
-
     def connect(self, tag='client'):
         """
         Connect to the datastore.
         """
         self.conn = sr.Connection("%s%s" % (tag, time.time()))
         self.session = sr.Session(self.conn)
+        return True
 
     def disconnect(self):
         self.session = None
         self.conn = None
+        return True
 
     def commit(self):
         try:
@@ -82,6 +80,7 @@ class SysrepoDataAbstractionLayer:
 
         try:
             self.session.set_item(xpath, v)
+            return v
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
@@ -133,6 +132,7 @@ class SysrepoDataAbstractionLayer:
     def delete(self, xpath):
         try:
             self.session.delete_item(xpath)
+            return True
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
