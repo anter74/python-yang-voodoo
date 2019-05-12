@@ -3,3 +3,6 @@ __pycache__/
 build
 artefacts/
 libyang-cffi/
+.tox/
+*.egg-info/
+dist/
