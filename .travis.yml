@@ -19,4 +19,4 @@ matrix:
     - env: TOXENV=py36
       python: 3.6.7
 
-script: tox -- $(git ls-files '*.py')
+script: tox
