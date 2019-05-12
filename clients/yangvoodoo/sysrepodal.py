@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import time
 import sysrepo as sr
+import sysrepo as sr2
 import yangvoodoo
 import yangvoodoo.basedal
 
@@ -25,7 +26,40 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         """
         self.conn = sr.Connection("%s%s" % (tag, time.time()))
         self.session = sr.Session(self.conn)
+
+        self.dirty_conn = sr2.Connection("dirty_%s%s" % (tag, time.time()))
+        self.dirty_session = sr2.Session(self.dirty_conn)
+        self.dirty_subscription = False
         return True
+
+    def setup_root(self, module):
+        if not self.dirty_subscription:
+            # Note; having two subscriptions to sysrepo appears to be a bad idea.
+            #  sysrepo itself is happy with multiple subscribers (and all must succeed)
+             # but when run from here we get a segfault....
+            self.subscribe = sr2.Subscribe(self.dirty_session)
+            print(self.subscribe, '<<<<<<<<<<<<subscribe')
+
+            # With this commented out we can have 100 commits in a loop
+            # with this uncommented we get straight to segfault ville
+            #self.subscribe.module_change_subscribe(module, self._datastore_config_change_callback)
+            self.dirty_subscription = True
+            print(self.subscribe, '<.><><><')
+            #
+            # self.subscribe = sr.Subscribe(self.session)
+            # print(self.subscribe, '<<<<<<<<<<<<subscribe')
+            # self.subscribe.module_change_subscribe(module, self._datastore_config_change_callback)
+            # self.dirty_subscription = True
+            # print(self.subscribe, '<.><><><')
+            pass
+
+    def _datastore_config_change_callback(self, session, module_name, event, private_ctx):
+        """
+        This is specific to the sysrepo datastore, however other datastores may have the same
+        principle.
+        """
+        print('callback')
+        return sr.SR_ERR_OK
 
     def disconnect(self):
         self.session = None

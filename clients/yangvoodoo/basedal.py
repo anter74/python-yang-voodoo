@@ -24,6 +24,13 @@ class BaseDataAbstractionLayer:
         """
         pass
 
+    def setup_root(self, module):
+        """
+        If required may be used to carry out to do any preparation before a root object
+        is obtained.
+        """
+        pass
+
     def connect(self, tag='client'):
         raise NotImplementedError('connect not implemented')
 
@@ -62,3 +69,6 @@ class BaseDataAbstractionLayer:
 
     def refresh(self):
         raise NotImplementedError("refresh not implemented")
+
+    def is_session_dirty(self):
+        raise NotImplementedError("is_session_dirty not implemented")
