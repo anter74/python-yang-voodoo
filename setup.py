@@ -1,6 +1,10 @@
+import os
 import setuptools
-with open('../README.md', 'r') as fh:
+with open('README.md', 'r') as fh:
     long_description = fh.read()
+
+os.chdir('clients')
+
 setuptools.setup(name='yangvoodoo',
                  version='0.0.77', author='Adam Allen',
                  author_email='allena29@users.noreply.github.com',
