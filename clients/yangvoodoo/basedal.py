@@ -16,6 +16,7 @@ class BaseDataAbstractionLayer:
         self.session = None
         self.conn = None
         self.dirty = None
+        self.module = None
         self._initdal()
 
     def _initdal(self):

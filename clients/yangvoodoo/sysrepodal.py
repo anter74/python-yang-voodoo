@@ -1,7 +1,7 @@
 #!/usr/bin/python3
+import os
 import time
 import sysrepo as sr
-import sysrepo as sr2
 import yangvoodoo
 import yangvoodoo.basedal
 
@@ -20,46 +20,50 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
      - libyang 0.16.78 (https://github.com/rjarry/libyang-cffi/)
     """
 
+    SYSREPO_DATASTORE_LOCATION = "/sysrepo/data"
+
     def connect(self, tag='client'):
         """
         Connect to the datastore.
         """
         self.conn = sr.Connection("%s%s" % (tag, time.time()))
         self.session = sr.Session(self.conn)
+        self.running_conf_last_changed = 0
 
+        """
+        # Note: having a sysrepo module_change_subscribe() spun up ni this python process
+        # is problematic (in a segfaulty kind of way).
         self.dirty_conn = sr2.Connection("dirty_%s%s" % (tag, time.time()))
         self.dirty_session = sr2.Session(self.dirty_conn)
         self.dirty_subscription = False
+        """
         return True
 
     def setup_root(self, module):
+        """
         if not self.dirty_subscription:
-            # Note; having two subscriptions to sysrepo appears to be a bad idea.
-            #  sysrepo itself is happy with multiple subscribers (and all must succeed)
-             # but when run from here we get a segfault....
             self.subscribe = sr2.Subscribe(self.dirty_session)
-            print(self.subscribe, '<<<<<<<<<<<<subscribe')
-
             # With this commented out we can have 100 commits in a loop
             # with this uncommented we get straight to segfault ville
             #self.subscribe.module_change_subscribe(module, self._datastore_config_change_callback)
-            self.dirty_subscription = True
-            print(self.subscribe, '<.><><><')
-            #
-            # self.subscribe = sr.Subscribe(self.session)
-            # print(self.subscribe, '<<<<<<<<<<<<subscribe')
-            # self.subscribe.module_change_subscribe(module, self._datastore_config_change_callback)
-            # self.dirty_subscription = True
-            # print(self.subscribe, '<.><><><')
-            pass
 
-    def _datastore_config_change_callback(self, session, module_name, event, private_ctx):
+            def _datastore_config_change_callback(self, session, module_name, event, private_ctx):
+                print('callback')
+                return sr.SR_ERR_OK
         """
-        This is specific to the sysrepo datastore, however other datastores may have the same
-        principle.
-        """
-        print('callback')
-        return sr.SR_ERR_OK
+
+        self.running_conf_last_changed = self._get_datstore_timestamp(module)
+        self.module = module
+
+    def _get_datstore_timestamp(self, module):
+        return os.stat(self.SYSREPO_DATASTORE_LOCATION + "/" + module + ".running").st_mtime
+
+    def is_session_dirty(self):
+        if not self.module:
+            return False
+        if not self._get_datstore_timestamp(self.module) == self.running_conf_last_changed:
+            return True
+        return False
 
     def disconnect(self):
         self.session = None
@@ -68,7 +72,18 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     def commit(self):
         try:
+            before_change_timestamp = self._get_datstore_timestamp(self.module)
             self.session.commit()
+            if self.module:
+                # This logic is flawed - this doesn't mean out transaction succeeded
+                for c in range(1000):
+                    self.running_conf_last_changed = self._get_datstore_timestamp(self.module)
+                    if self.running_conf_last_changed > before_change_timestamp:
+                        break
+                    time.sleep(0.01)
+            # so because all we know is the data store has changed (either our or someone elses
+            # transaction we break here)
+            self.session.refresh()
         except RuntimeError as err:
             self._handle_error(None, err)
 
@@ -258,6 +273,9 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         """
         try:
             self.session.refresh()
+            if self.module:
+                self.running_conf_last_changed = self._get_datstore_timestamp(self.module)
+
         except RuntimeError:
             raise yangvoodoo.Errors.NotConnect()
 

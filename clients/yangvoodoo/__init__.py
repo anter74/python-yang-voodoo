@@ -344,4 +344,4 @@ class DataAccess:
           In this case the commit from session2 doesn't remove ListElement 'A' because the
           transaction for session2 did not make any changes.
         """
-        return self.data_abstraction_layer.is_sesion_dirty()
+        return self.data_abstraction_layer.is_session_dirty()
