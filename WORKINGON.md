@@ -1,5 +1,19 @@
 
+ - XML Templates
+
+   - Simple cases work... non simple cases don't
+
+   - if a list doesn't touch non-key's we don't create the list element (gut feel says we should)
+   - XPATH forming isn't safe with "'" in a value.
+   - `SET /integrationtest:web/integrationtest:bands[integrationtest:name='Veracruise']/integrationtest:gigs/integrationtest:rating`
+     - This should be
+     `/integrationtest:web/integrationtest:bands[integrationtest:name='Veracruise']/integrationtest:gigs[integrationtest:year='1999'][integrationtest:month='12'][integrationtest:day='4'][integrationtest:venue='Shedmill'][integrationtest:location='Sheff']/integrationtest:rating`
+   - XML parsing doesn't like comments in the document - this feels wrong.
+
+
+
  - First priority - deal with test membership, it doesn't work well with the stub node.
+    - actually think this is done
 
 - optimise with get_items() or sr_get_items_iter() so that list fetches are not painfuly slow
   - the former makes mention about having to call free_items. the latter probably doesn't

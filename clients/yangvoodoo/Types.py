@@ -30,3 +30,10 @@ LIBYANG_MAPPING = {
     16: DATA_ABSTRACTION_MAPPING['INT32'],
     17: DATA_ABSTRACTION_MAPPING['UINT32']
 }
+
+
+# To populate from lys_nodetype
+LIBYANG_NODETYPE = {
+    1: 'CONTAINER',
+    4: 'LEAF',
+}

@@ -1,10 +1,13 @@
 #!/usr/bin/python3
 import libyang
+import re
 import time
 import logging
 import socket
 import importlib
 import yangvoodoo.VoodooNode
+from jinja2 import Template
+from lxml import etree
 
 
 class LogWrap():
@@ -128,6 +131,132 @@ class DataAccess:
             return schema.description()
         except Exception:
             pass
+
+    def from_template(self, root, template, **kwargs):
+        """
+        Process a template with a number of data nodes. The result of processing the template
+        with Jinja2 must be a valid XML document.
+
+        Example:
+            session.from_template(root, 'template1.xml')
+
+            Process the template from the the path specified (i.e. template1.xml)
+            In the Jinja2 templates the root object is available as 'root.'
+
+            session.from_template(root, 'template1.xml', data_a=root.morecomplex)
+
+            In this case the Jinja2 template will receive both 'data_a' as the subset of
+            data at /morecomplex and root.
+
+        The path to the template may be specified as a relative path (to where the python
+        process is running (i.e. os.getcwd) or an exact path.
+        """
+
+        variables = {'root': root}
+        for variable_name in kwargs:
+            variables[variable_name] = kwargs[variable_name]
+
+        xmlstr = ""
+        with open(template) as file_handle:
+            t = Template(file_handle.read())
+            xmlstr = t.render(variables)
+
+        xmldoc = etree.fromstring(xmlstr)
+        tree = etree.ElementTree(xmldoc)
+        xpaths_to_set = {}
+
+        module = "integrationtest"
+        path = "//"
+        last_node = ''
+        last_depth_count = 0
+        print(xmlstr)
+        xmldoc_iterator = xmldoc.iter()
+        print(xmldoc_iterator)
+
+        remove_squares = re.compile(r'\[\d+\]', re.UNICODE)
+        list_predicates = {}
+
+        for child in xmldoc_iterator:
+            """
+            Each time around the the loop we need to be getting information a bit further
+            down.
+
+            I.e. if our xmldoc is
+
+            <j2templatea>
+                <simpleleaf>sdfsdf</simpleleaf>
+            </j2template>
+
+            This is straightforward we have an XPATHT of /simpleleaf and can just write
+            child.text
+
+            However In this case
+
+            <j2template>
+                <simplelist>
+                    <simplekey>KEY</simplekey>
+                    <nonleafkey>SDFSDF</nonleafkey>
+                </simplelist>
+            </j2template>
+
+            In the above case we need to form the path
+                /simplelist[simplekey='KEY']
+                /simplelist[simplekey='KEY']/nonleafkey
+
+            More tricky is how to deal within list of list
+
+            Constraints _ this is very hacky and hardcodes integration test as a module
+            Prints shit ton of debug
+            and the xpath isn't safe because we don deal with singlequote in the values.
+
+            But it seems to work.
+            """
+
+            node = tree.getelementpath(child)
+            node = tree.getelementpath(child)
+            print(node, tree.getpath(child))
+            path = '/' + node
+            path = path.replace('/', '/' + module + ':')
+            path = remove_squares.sub('', path)
+            if node == '.':
+                continue
+            #
+            # # The schema never ever takes predicates in the path
+            node_schema = root._get_schema_of_path(path)
+            node_type = node_schema.nodetype()
+            # if node_schema.nodetype() == 1 and not node_schema.presence():
+            #     continue
+            #
+            if node_schema.nodetype() == 16:
+                print('   preparing predicates for ', path)
+                predicates = ""
+                for key_required in node_schema.keys():
+                    try:
+                        next_xml_node = next(xmldoc_iterator)
+                    except StopIteration:
+                        raise ValueError('wrong key name expected _%s_ got _%s_' % (key_required.name(), 'NOTHING'))
+                    if not next_xml_node.tag == key_required.name():
+                        raise ValueError('wrong key name expected _%s_ got _%s_' % (key_required.name(), next_xml_node.tag))
+                    predicates = predicates + "[" + module+':'+key_required.name() + "='" + next_xml_node.text + "']"
+                print('   predicates = ', predicates)
+                list_predicates[path] = predicates
+                # TODO: we need to create the li - the logic for substrituteing in predicates needs methoding out
+            if node_type == 4 or (node_type == 1 and node_schema.presence()):
+                print(list_predicates)
+                for predicate in list(list_predicates):
+                    if predicate not in path:  # and predicate in list_predicates:
+                        print('this is crap', predicate)
+                        del list_predicates[predicate]
+                    else:
+                        print('look at what to do with', predicate, list_predicates[predicate])
+
+                        start_pos = path.find(predicate)
+                        end_pos = start_pos + len(predicate)
+                        path = path[start_pos:start_pos+len(predicate)] + list_predicates[predicate] + path[end_pos:]
+
+                        print('CREATE', path, child.text)
+                type = root._get_yang_type(node_schema.type(), child.text, path)
+                print('SET', path, child.text, type)
 
     def get_root(self, module, yang_location="../yang/"):
         """

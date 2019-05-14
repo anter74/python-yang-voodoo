@@ -1,0 +1,46 @@
+<j2template>
+  <simpleleaf>HELLO WORLD</simpleleaf>
+  <morecomplex>
+    <leaf2>True</leaf2>
+  </morecomplex>
+  <simplelist>
+    <simplekey>KEY</simplekey>
+    <nonleafkey>NONKEY</nonleafkey>
+  </simplelist>
+  <bronze>
+    <silver>
+      <gold>
+        <platinum>
+          <deep>DOWN HERE IN THE DEPTHS</deep>
+        </platinum>
+      </gold>
+    </silver>
+  </bronze>
+  <twokeylist>
+    <primary>True</primary>
+    <secondary>True</secondary>
+    <tertiary>True</tertiary>
+  </twokeylist>
+  <twokeylist>
+    <primary>False</primary>
+    <secondary>True</secondary>
+    <tertiary>False</tertiary>
+  </twokeylist>
+  <web>
+    <venues>
+      <name>Shedmill</name>
+      <location>Sheff</location>
+    </venues>
+    <bands>
+      <name>Veracruise</name>
+      <gigs>
+        <year>1999</year>
+        <month>12</month>
+        <day>4</day>
+        <venue>Shedmill</venue>
+        <location>Sheff</location>
+        <rating>9</rating>
+      </gigs>
+    </bands>
+  </web>
+</j2template>
