@@ -15,6 +15,8 @@ setuptools.setup(name='yangvoodoo',
                  install_requires=[
                      'libyang',
                      'cffi',
+                     'jinja2',
+                     'lxml',
                  ],
                  zip_safe=False,
                  include_package_data=True,

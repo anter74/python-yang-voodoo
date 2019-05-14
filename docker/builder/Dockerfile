@@ -106,7 +106,8 @@ RUN \
       git clone https://github.com/allena29/python-yang-voodoo.git working && \
       cd working && \
       # git checkout  context-and-logging && \
-      cd /working/ && \
+      cd /working && \
+      pip3 install -r requirements.txt && \
       python3 setup.py install
 
 
