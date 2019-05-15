@@ -1,8 +1,3 @@
-
-
- - First priority - deal with test membership, it doesn't work well with the stub node.
-    - actually think this is done
-
 - optimise with get_items() or sr_get_items_iter() so that list fetches are not painfuly slow
   - the former makes mention about having to call free_items. the latter probably doesn't
     - get_items()

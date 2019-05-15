@@ -8,6 +8,7 @@ import importlib
 import yangvoodoo.VoodooNode
 from jinja2 import Template
 from lxml import etree
+import warnings
 
 
 class LogWrap():
@@ -102,6 +103,7 @@ class DataAccess:
 
     Dependencies:
      - libyang 0.16.78 (https://github.com/rjarry/libyang-cffi/)
+     - lxml
     """
 
     def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None):
@@ -302,7 +304,7 @@ class DataAccess:
 
         return value_path
 
-    def get_root(self, module, yang_location="../yang/"):
+    def get_root(self, module=None, yang_location="../yang/"):
         """
         Instantiate Node-based access to the data stored in the backend defined by a yang
         schema. The data access will be constraint to the YANG module chosen when invoking
@@ -311,27 +313,33 @@ class DataAccess:
         We must have access to the same YANG module loaded within in sysrepo, which can be
         set by modifying yang_location argument.
         """
+        if module:
+            self.data_abstraction_layer.module = module
+            warnings.warn("<module> should not be sent into get_root - send into connect instead.")
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
 
         yang_ctx = libyang.Context(yang_location)
-        yang_schema = yang_ctx.load_module(module)
+        yang_schema = yang_ctx.load_module(self.module)
 
-        self.data_abstraction_layer.setup_root(module)
+        self.data_abstraction_layer.setup_root()
 
-        context = yangvoodoo.VoodooNode.Context(module, self, yang_schema, yang_ctx, log=self.log)
+        context = yangvoodoo.VoodooNode.Context(self.module, self, yang_schema, yang_ctx, log=self.log)
 
         self.help = self._help
 
         return yangvoodoo.VoodooNode.Root(context)
 
-    def connect(self, tag='client'):
+    def connect(self, module=None, tag='client'):
         """
         Connect to the datastore.
 
         returns: True
         """
-        connect_status = self.data_abstraction_layer.connect()
+        if not module:
+            warnings.warn("<module> name should be sent into connect()")
+        self.module = module
+        connect_status = self.data_abstraction_layer.connect(self.module)
         self.session = self.data_abstraction_layer.session
         self.conn = self.data_abstraction_layer.conn
         self.connected = True

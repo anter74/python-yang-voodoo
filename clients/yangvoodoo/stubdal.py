@@ -43,7 +43,8 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     def _initdal(self):
         self.stub_store = {}
 
-    def connect(self, tag='<id-tag>'):
+    def connect(self, module, tag='<id-tag>'):
+        self.module = module
         return True
 
     def disconnect(self):

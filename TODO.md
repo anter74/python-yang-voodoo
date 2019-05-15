@@ -1,5 +1,6 @@
 # TODO:
 
+- XPATH forming/decoding lazily forms key='value' - we need to be careful about having special characters/single quotes in the value.
 - ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
 - ~~allow the location of yang's to be specified.~~
 - enumerations - should really be returned as an object not a string.
@@ -38,8 +39,8 @@
  - Optimise Docker image so it doesn't compile the core packages, but instead sucks them in from somewhere else.
 - Packaging of the sysrepo into a deb for the minimal image is very naive.
 - ~~Implement disconnect() for the data_abstraction_layer.~~
-- Stubdal - should it satisfy default values - it probably can.
-
+- Stubdal - should it satisfy default values - it probably can by looking at libyang but that may be quite intensive.
+ - Remove warnings for the connect/get_root change of behaviour.
 
 
 # Limitations:

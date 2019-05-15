@@ -22,14 +22,14 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     SYSREPO_DATASTORE_LOCATION = "/sysrepo/data"
 
-    def connect(self, tag='client'):
+    def connect(self, module, tag='client'):
         """
         Connect to the datastore.
         """
         self.conn = sr.Connection("%s%s" % (tag, time.time()))
         self.session = sr.Session(self.conn)
         self.running_conf_last_changed = 0
-
+        self.module = module
         """
         # Note: having a sysrepo module_change_subscribe() spun up ni this python process
         # is problematic (in a segfaulty kind of way).
@@ -39,7 +39,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         """
         return True
 
-    def setup_root(self, module):
+    def setup_root(self):
         """
         if not self.dirty_subscription:
             self.subscribe = sr2.Subscribe(self.dirty_session)
@@ -52,16 +52,15 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
                 return sr.SR_ERR_OK
         """
 
-        self.running_conf_last_changed = self._get_datstore_timestamp(module)
-        self.module = module
+        self.running_conf_last_changed = self._get_datstore_timestamp()
 
-    def _get_datstore_timestamp(self, module):
-        return os.stat(self.SYSREPO_DATASTORE_LOCATION + "/" + module + ".running").st_mtime
+    def _get_datstore_timestamp(self):
+        return os.stat(self.SYSREPO_DATASTORE_LOCATION + "/" + self.module + ".running").st_mtime
 
     def is_session_dirty(self):
         if not self.module:
             return False
-        if not self._get_datstore_timestamp(self.module) == self.running_conf_last_changed:
+        if not self._get_datstore_timestamp() == self.running_conf_last_changed:
             return True
         return False
 
@@ -72,12 +71,12 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     def commit(self):
         try:
-            before_change_timestamp = self._get_datstore_timestamp(self.module)
+            before_change_timestamp = self._get_datstore_timestamp()
             self.session.commit()
             if self.module:
                 # This logic is flawed - this doesn't mean out transaction succeeded
                 for c in range(1000):
-                    self.running_conf_last_changed = self._get_datstore_timestamp(self.module)
+                    self.running_conf_last_changed = self._get_datstore_timestamp()
                     if self.running_conf_last_changed > before_change_timestamp:
                         break
                     time.sleep(0.01)
@@ -274,7 +273,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         try:
             self.session.refresh()
             if self.module:
-                self.running_conf_last_changed = self._get_datstore_timestamp(self.module)
+                self.running_conf_last_changed = self._get_datstore_timestamp()
 
         except RuntimeError:
             raise yangvoodoo.Errors.NotConnect()

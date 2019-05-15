@@ -8,8 +8,8 @@ class test_xml_to_xpath(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.subject = yangvoodoo.DataAccess()
-        self.subject.connect()
-        self.root = self.subject.get_root('integrationtest')
+        self.subject.connect("integrationtest")
+        self.root = self.subject.get_root()
         self.schemactx = self.root._context.schemactx
 
     def test_look_ahead_for_list_keys(self):
