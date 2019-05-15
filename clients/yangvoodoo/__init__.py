@@ -184,14 +184,15 @@ class DataAccess:
             self.set(xpath, value, valuetype)
 
     def _convert_xml_to_xpaths(self, root, xmlstr):
+        """
+        TODO: move these methods into a new utility class.
+        """
         xpaths = {}
         xmldoc = etree.fromstring(xmlstr)
         tree = etree.ElementTree(xmldoc)
 
         module = xmldoc.tag
         path = "//"
-        last_node = ''
-        last_depth_count = 0
         xmldoc_iterator = xmldoc.iter()
 
         remove_squares = re.compile(r'\[\d+\]', re.UNICODE)

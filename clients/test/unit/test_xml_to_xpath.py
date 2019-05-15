@@ -1,6 +1,6 @@
 import unittest
 import yangvoodoo
-from mock import Mock, patch, mock_open
+from mock import Mock
 
 
 class test_xml_to_xpath(unittest.TestCase):
@@ -234,7 +234,7 @@ class test_xml_to_xpath(unittest.TestCase):
         self.root.simpleleaf = 'GOODBYE'
 
         # Act
-        results = self.subject.from_template(self.root, 'test/unit/test.xml')
+        self.subject.from_template(self.root, 'test/unit/test.xml')
 
         # Assert
         self.assertEqual(self.root.simpleleaf, 'HELLO')
