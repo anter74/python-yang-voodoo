@@ -630,6 +630,23 @@ module integrationtest {
         leaf "C" {
           type string;
         }
+
+        list level3list {
+          key level3key;
+          leaf level3key {
+            type string;
+          }
+          leaf level3-nonkey {
+            type string;
+          }
+        }
+      }
+
+      list level2list {
+        key level2key;
+        leaf level2key {
+          type string;
+        }
       }
     }
 

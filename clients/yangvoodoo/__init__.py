@@ -150,6 +150,20 @@ class DataAccess:
 
         The path to the template may be specified as a relative path (to where the python
         process is running (i.e. os.getcwd) or an exact path.
+
+        IMPORTANT to note is that variable and logic is processed in the template based upon
+        the data available at the time, then the result of the entire template is applied.
+        To be clear consdiering this template
+            <integrationtest>
+                <simpleleaf>HELLO</simpleleaf>
+                <default>{{ root.simpleleaf }}</default>
+            </integrationtest>
+
+            root.simpleleaf = 'GOODBYE'
+            session.from_template(root, 'hello-goodbye.xml')
+
+        The resulting value for simpleleaf will be 'GOODBYE' not hello.
+
         """
 
         variables = {'root': root}
@@ -161,60 +175,28 @@ class DataAccess:
             t = Template(file_handle.read())
             xmlstr = t.render(variables)
 
+        xpaths = self._convert_xml_to_xpaths(root, xmlstr)
+
+        for xpath in xpaths:
+            (value, valuetype) = xpaths[xpath]
+            self.set(xpath, value, valuetype)
+
+    def _convert_xml_to_xpaths(self, root, xmlstr):
+        xpaths = {}
         xmldoc = etree.fromstring(xmlstr)
         tree = etree.ElementTree(xmldoc)
-        xpaths_to_set = {}
 
-        module = "integrationtest"
+        module = xmldoc.tag
         path = "//"
         last_node = ''
         last_depth_count = 0
-        print(xmlstr)
         xmldoc_iterator = xmldoc.iter()
-        print(xmldoc_iterator)
 
         remove_squares = re.compile(r'\[\d+\]', re.UNICODE)
         list_predicates = {}
 
         for child in xmldoc_iterator:
-            """
-            Each time around the the loop we need to be getting information a bit further
-            down.
-
-            I.e. if our xmldoc is
-
-            <j2templatea>
-                <simpleleaf>sdfsdf</simpleleaf>
-            </j2template>
-
-            This is straightforward we have an XPATHT of /simpleleaf and can just write
-            child.text
-
-            However In this case
-
-            <j2template>
-                <simplelist>
-                    <simplekey>KEY</simplekey>
-                    <nonleafkey>SDFSDF</nonleafkey>
-                </simplelist>
-            </j2template>
-
-            In the above case we need to form the path
-                /simplelist[simplekey='KEY']
-                /simplelist[simplekey='KEY']/nonleafkey
-
-            More tricky is how to deal within list of list
-
-            Constraints _ this is very hacky and hardcodes integration test as a module
-            Prints shit ton of debug
-            and the xpath isn't safe because we don deal with singlequote in the values.
-
-            But it seems to work.
-            """
-
             node = tree.getelementpath(child)
-            node = tree.getelementpath(child)
-            print(node, tree.getpath(child))
             path = '/' + node
             path = path.replace('/', '/' + module + ':')
             path = remove_squares.sub('', path)
@@ -224,39 +206,101 @@ class DataAccess:
             # # The schema never ever takes predicates in the path
             node_schema = root._get_schema_of_path(path)
             node_type = node_schema.nodetype()
-            # if node_schema.nodetype() == 1 and not node_schema.presence():
-            #     continue
-            #
+
+            value_path = path
+
+            value_path = self._find_predicate_match(list_predicates, value_path)
+
             if node_schema.nodetype() == 16:
-                print('   preparing predicates for ', path)
-                predicates = ""
-                for key_required in node_schema.keys():
-                    try:
-                        next_xml_node = next(xmldoc_iterator)
-                    except StopIteration:
-                        raise ValueError('wrong key name expected _%s_ got _%s_' % (key_required.name(), 'NOTHING'))
-                    if not next_xml_node.tag == key_required.name():
-                        raise ValueError('wrong key name expected _%s_ got _%s_' % (key_required.name(), next_xml_node.tag))
-                    predicates = predicates + "[" + module+':'+key_required.name() + "='" + next_xml_node.text + "']"
-                print('   predicates = ', predicates)
-                list_predicates[path] = predicates
-                # TODO: we need to create the li - the logic for substrituteing in predicates needs methoding out
+                predicates = self._lookahead_for_list_keys(node_schema, xmldoc_iterator, module, value_path, list_predicates)
+                xpaths[value_path + predicates] = (None, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['LIST'])
+
+            if node_schema.nodetype() == 1 and not node_schema.presence():
+                continue
             if node_type == 4 or (node_type == 1 and node_schema.presence()):
-                print(list_predicates)
-                for predicate in list(list_predicates):
-                    if predicate not in path:  # and predicate in list_predicates:
-                        print('this is crap', predicate)
-                        del list_predicates[predicate]
-                    else:
-                        print('look at what to do with', predicate, list_predicates[predicate])
-
-                        start_pos = path.find(predicate)
-                        end_pos = start_pos + len(predicate)
-                        path = path[start_pos:start_pos+len(predicate)] + list_predicates[predicate] + path[end_pos:]
-
-                        print('CREATE', path, child.text)
                 type = root._get_yang_type(node_schema.type(), child.text, path)
-                print('SET', path, child.text, type)
+                xpaths[value_path] = (child.text, type)
+
+        return xpaths
+
+    def _lookahead_for_list_keys(self, node_schema, xmldoc_iterator, module, value_path, list_predicates):
+        """
+        In the payloads for a NETCONF if we have the list /simplelist with a key of simplekey
+        and a leaf of nonleafkey.
+
+        The XML payload would look like
+
+        <integrationtest>
+            <simplelist>
+                <simplekey>ThisIsTheKey</simplekey>
+                <nonleafkey>NotTheKey</nonleafkey>
+            </simplelist>
+        </integrationtest>
+
+        The XPATH for the LIST would be
+
+            /integrationtest:simplelist[integrationtest:simplekey]
+
+        The XPATH for the non leaf key would be
+
+            /integrationtest:simplelist[integrationtest:simplekey]/integrationtest:nonleafkey
+
+
+        Given a none_schema, this method will based on the YANG schema look for the required number
+        of keys and attempt to read them from the XML.
+
+        If we have the right number of keys we will add an entry to list_predicates
+
+            list_predicates["/integrationtest:simplelist"] = "[integrationtest:simplekey]"
+
+        """
+        predicates = ""
+        for key_required in node_schema.keys():
+            try:
+                next_xml_node = next(xmldoc_iterator)
+            except StopIteration:
+                raise yangvoodoo.Errors.XmlTemplateParsingBadKeys(key_required.name(), None)
+            if not next_xml_node.tag == key_required.name():
+                raise yangvoodoo.Errors.XmlTemplateParsingBadKeys(key_required.name(), next_xml_node.tag)
+            predicates = predicates + "[" + module+':'+key_required.name() + "='" + next_xml_node.text + "']"
+        list_predicates[value_path] = predicates
+
+        return predicates
+
+    def _find_predicate_match(self, list_predicates, path):
+        """
+        Finds if the leading part of our path has any predicates and tries to add them in.
+
+        We expect to take in a path without any predicates (the input path), our goal is to
+        return a value_path with the right predicates stitched in.
+        e.g. /integrationtest:container-and-lists/integrationtest:multi-key-list/integrationtest:level2list
+
+        In this case we have two lists, firstly 'multi-key-list' and secondly 'level2list'
+
+        The list of predicates in list_predicates should contain, keys
+         key: /integrationtest:container-and-lists/integrationtest:multi-key-list
+         value: [integrationtest:A='a'][integrationtest:B='b']
+
+        First time around the loop we will start tackle the first set of predicates for multi-key-list
+         (i.e. we stitch in [integrationtest:A='a'][integrationtest:B='b'])
+
+        Second time we lookup for a matching path with the result of our first loop
+           ("/integrationtest:container-and-lists/integrationtest:multi-key-list[integrationtest:A='a']"
+           "[integrationtest:B='b']/integrationtest:level2list")
+
+        This should give us a new bit of predicates for the next list in the chain.
+        "[integrationtest:level2key='22222']"
+
+        The value path is returned.
+        """
+        value_path = path
+        for predicate in list_predicates:
+            if predicate in value_path:  # and predicate in list_predicates:
+                start_pos = value_path.find(predicate)
+                end_pos = start_pos + len(predicate)
+                value_path = value_path[start_pos:start_pos+len(predicate)] + list_predicates[predicate] + value_path[end_pos:]
+
+        return value_path
 
     def get_root(self, module, yang_location="../yang/"):
         """

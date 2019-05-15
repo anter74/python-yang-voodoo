@@ -1,4 +1,4 @@
-<j2template>
+<integrationtest>
   <simpleleaf>HELLO WORLD</simpleleaf>
   <morecomplex>
     <leaf2>True</leaf2>
@@ -11,7 +11,7 @@
     <silver>
       <gold>
         <platinum>
-          <deep>DOWN HERE IN THE DEPTHS</deep>
+          <deep>{{ root.simpleleaf }}</deep>
         </platinum>
       </gold>
     </silver>
@@ -43,4 +43,4 @@
       </gigs>
     </bands>
   </web>
-</j2template>
+</integrationtest>

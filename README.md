@@ -21,7 +21,7 @@ container bronze {
 ```
 
 
-This project builds upon [Sysrepo](http://www.sysrepo.org/) as the **default** datastore, and [Libyang](https://github.com/CESNET/libyang) to tightly couple the data model to a set of standard yang models.
+This project builds upon [Sysrepo](http://www.sysrepo.org/) as the **default** datastore, and [Libyang](https://github.com/CESNET/libyang) to tightly couple the data model to a set of standard yang models. [lxml](https://lxml.de/index.html) is used for processing of templates.
 
 
 
@@ -360,6 +360,39 @@ session.commit()
 session.disconnect()
 ```
 
+#### Templates
+
+It is possible to apply templates to set data instead of manually setting every element of data individually. [Jinja2](http://jinja.pocoo.org/docs/2.10/) is used to provide the ability to make templates less static.
+
+It is important to note the template is rendered **first** with the existing data, and then applied. The implication of this is that even though we set `root.simpleleaf` to `HELLO WOLRD` as the second line in the template - when we substitute the value in the 14th line will take the existing value at the time of rendering the template.
+
+
+```xml
+<integrationtest>
+  <simpleleaf>HELLO WORLD</simpleleaf>
+  <morecomplex>
+    <leaf2>True</leaf2>
+  </morecomplex>
+  <simplelist>
+    <simplekey>KEY</simplekey>
+    <nonleafkey>NONKEY</nonleafkey>
+  </simplelist>
+  <bronze>
+    <silver>
+      <gold>
+        <platinum>
+          <deep>{{ root.simpleleaf }}</deep>
+        </platinum>
+      </gold>
+    </silver>
+  </bronze>
+</integrationtest>
+```
+
+```python
+root.simpleleaf='Before Value'
+session.from_template(root, 'templates/sample.xml')
+```
 
 
 #### Using a stub and writing unit tests
