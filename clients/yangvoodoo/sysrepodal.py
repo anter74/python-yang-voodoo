@@ -1,10 +1,12 @@
 #!/usr/bin/python3
+import os
 import time
 import sysrepo as sr
 import yangvoodoo
+import yangvoodoo.basedal
 
 
-class SysrepoDataAbstractionLayer:
+class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     """
     This module provides two methods to access data, either XPATH based (low-level) or
@@ -18,21 +20,69 @@ class SysrepoDataAbstractionLayer:
      - libyang 0.16.78 (https://github.com/rjarry/libyang-cffi/)
     """
 
-    def __init__(self, log=None):
-        self.log = log
-        self.session = None
-        self.conn = None
+    SYSREPO_DATASTORE_LOCATION = "/sysrepo/data"
 
-    def connect(self, tag='client'):
+    def connect(self, module, tag='client'):
         """
         Connect to the datastore.
         """
         self.conn = sr.Connection("%s%s" % (tag, time.time()))
         self.session = sr.Session(self.conn)
+        self.running_conf_last_changed = 0
+        self.module = module
+        """
+        # Note: having a sysrepo module_change_subscribe() spun up ni this python process
+        # is problematic (in a segfaulty kind of way).
+        self.dirty_conn = sr2.Connection("dirty_%s%s" % (tag, time.time()))
+        self.dirty_session = sr2.Session(self.dirty_conn)
+        self.dirty_subscription = False
+        """
+        return True
+
+    def setup_root(self):
+        """
+        if not self.dirty_subscription:
+            self.subscribe = sr2.Subscribe(self.dirty_session)
+            # With this commented out we can have 100 commits in a loop
+            # with this uncommented we get straight to segfault ville
+            #self.subscribe.module_change_subscribe(module, self._datastore_config_change_callback)
+
+            def _datastore_config_change_callback(self, session, module_name, event, private_ctx):
+                print('callback')
+                return sr.SR_ERR_OK
+        """
+
+        self.running_conf_last_changed = self._get_datstore_timestamp()
+
+    def _get_datstore_timestamp(self):
+        return os.stat(self.SYSREPO_DATASTORE_LOCATION + "/" + self.module + ".running").st_mtime
+
+    def is_session_dirty(self):
+        if not self.module:
+            return False
+        if not self._get_datstore_timestamp() == self.running_conf_last_changed:
+            return True
+        return False
+
+    def disconnect(self):
+        self.session = None
+        self.conn = None
+        return True
 
     def commit(self):
         try:
+            before_change_timestamp = self._get_datstore_timestamp()
             self.session.commit()
+            if self.module:
+                # This logic is flawed - this doesn't mean out transaction succeeded
+                for c in range(1000):
+                    self.running_conf_last_changed = self._get_datstore_timestamp()
+                    if self.running_conf_last_changed > before_change_timestamp:
+                        break
+                    time.sleep(0.01)
+            # so because all we know is the data store has changed (either our or someone elses
+            # transaction we break here)
+            self.session.refresh()
         except RuntimeError as err:
             self._handle_error(None, err)
 
@@ -78,6 +128,7 @@ class SysrepoDataAbstractionLayer:
 
         try:
             self.session.set_item(xpath, v)
+            return v
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
@@ -129,6 +180,7 @@ class SysrepoDataAbstractionLayer:
     def delete(self, xpath):
         try:
             self.session.delete_item(xpath)
+            return True
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
@@ -220,6 +272,9 @@ class SysrepoDataAbstractionLayer:
         """
         try:
             self.session.refresh()
+            if self.module:
+                self.running_conf_last_changed = self._get_datstore_timestamp()
+
         except RuntimeError:
             raise yangvoodoo.Errors.NotConnect()
 

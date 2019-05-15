@@ -72,3 +72,13 @@ class BackendDatastoreError(Exception):
             message = message + "Error %s: %s (Path: %s)\n" % (c, errors[c][0], errors[c][1])
 
         super().__init__(message)
+
+
+class XmlTemplateParsingBadKeys(Exception):
+
+    def __init__(self, key_expected, key_found):
+        if not key_found:
+            key_found = "nothing"
+        message = "Expecting to find list key '%s' but found '%s' instead" % (key_expected, key_found)
+
+        super().__init__(message)

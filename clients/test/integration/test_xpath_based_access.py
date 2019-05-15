@@ -16,7 +16,7 @@ class test_getdata(unittest.TestCase):
 
     def setUp(self):
         self.subject = yangvoodoo.DataAccess()
-        self.subject.connect()
+        self.subject.connect('integrationtest')
 
     def test_delete_and_get(self):
         self.subject.set('/integrationtest:simpleenum', 'A', Types.DATA_ABSTRACTION_MAPPING['ENUM'])
@@ -44,7 +44,7 @@ class test_getdata(unittest.TestCase):
         self.assertEqual(self.subject.get(xpath), 'Outside')
 
         self.subject = yangvoodoo.DataAccess()
-        self.subject.connect()
+        self.subject.connect('integrationtest')
 
         xpath = "/integrationtest:morecomplex/inner/leaf5"
         self.assertNotEqual(self.subject.get(xpath), 'Outside')
@@ -56,7 +56,7 @@ class test_getdata(unittest.TestCase):
         self.subject.commit()
 
         self.subject = yangvoodoo.DataAccess()
-        self.subject.connect()
+        self.subject.connect('integrationtest')
 
         xpath = "/integrationtest:morecomplex/inner/leaf5"
         self.assertEqual(self.subject.get(xpath), 'Outside')
@@ -81,9 +81,9 @@ class test_getdata(unittest.TestCase):
         value = "Outside"
 
         self.subject1 = yangvoodoo.DataAccess()
-        self.subject1.connect('a')
+        self.subject1.connect('integrationtest', 'a')
         self.subject2 = yangvoodoo.DataAccess()
-        self.subject2.connect('b')
+        self.subject2.connect('integrationtest', 'b')
 
         self.subject1.set(xpath, value)
         self.assertEqual(self.subject1.get(xpath), 'Outside')
@@ -113,7 +113,7 @@ class test_getdata(unittest.TestCase):
                           "points to a non-existing leaf. (Path: /integrationtest:thing-that-is-leafref)\n"))
 
         self.subject = yangvoodoo.DataAccess()
-        self.subject.connect()
+        self.subject.connect('integrationtest')
 
         xpath = "/integrationtest:thing-that-is-a-list-based-leafref"
         valid_value = 'I'

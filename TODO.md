@@ -1,7 +1,9 @@
 # TODO:
 
+- XPATH forming/decoding lazily forms key='value' - we need to be careful about having special characters/single quotes in the value.
 - ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
 - ~~allow the location of yang's to be specified.~~
+- enumerations - should really be returned as an object not a string.
 - define (with tests) further yang types in Types class (and handle a fallback better than 'keyerror')
 - session revert() and session compare() would be useful functions.
 - typedef's (partly resolved by using libyang's type().base() - but unions don't provide a composite base type)
@@ -33,12 +35,12 @@
 - list should implement a friednly keys() to show the items (assuming this is easy to do against sysrepo)
 - If we use netconf + sysrepo we would have to think about how in-progress transactions and sysrepo python bindings would work.
   - Assumption is the callback gives us an iterator of changed XPATHs, if we connect to sysrepo it's independent and will not include those changes.
-  - This isn't a deal breaker if the pattern is asynchronous because the callback will just blindly accept syntax valid data and the trigger configuraiton, however if the implementation processes in a synchronous manner then we want to keep the ability to throw a bad error code to reject the overall NETCONF transaction.
+  - This isn't a deal breaker if the pattern is asynchronous because the callback will just blindly accept syntax valid data and the trigger configuration, however if the implementation processes in a synchronous manner then we want to keep the ability to throw a bad error code to reject the overall NETCONF transaction.
  - Optimise Docker image so it doesn't compile the core packages, but instead sucks them in from somewhere else.
 - Packaging of the sysrepo into a deb for the minimal image is very naive.
-- Implement disconnect() for the data_abstraction_layer.
-- Stubdal - should it satisfy default values - it probably can.
-
+- ~~Implement disconnect() for the data_abstraction_layer.~~
+- Stubdal - should it satisfy default values - it probably can by looking at libyang but that may be quite intensive.
+ - Remove warnings for the connect/get_root change of behaviour.
 
 
 # Limitations:

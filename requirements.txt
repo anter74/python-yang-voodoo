@@ -12,8 +12,10 @@ filelock==3.0.10
 ipython==7.4.0
 ipython-genutils==0.2.0
 jedi==0.13.3
+Jinja2==2.10.1
 libyang==0.16.78
 lxml==4.3.3
+MarkupSafe==1.1.1
 mock==2.0.0
 ncclient==0.6.4
 paramiko==2.4.2

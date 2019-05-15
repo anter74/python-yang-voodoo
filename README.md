@@ -21,7 +21,7 @@ container bronze {
 ```
 
 
-This project builds upon [Sysrepo](http://www.sysrepo.org/) as the **default** datastore, and [Libyang](https://github.com/CESNET/libyang) to tightly couple the data model to a set of standard yang models.
+This project builds upon [Sysrepo](http://www.sysrepo.org/) as the **default** datastore, and [Libyang](https://github.com/CESNET/libyang) to tightly couple the data model to a set of standard yang models. [lxml](https://lxml.de/index.html) is used for processing of templates.
 
 
 
@@ -123,7 +123,8 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **validate()** - validate pending changes are valid based on the full data of the entire datastore (VoodooNode is limited to validating the yang schema itself).
  - **refresh()** - refresh the data from the datastore, the datastore may provide us with the data present in the datastore at the time we first connected, or it may refresh in realtime everytime we access a given set of data.
  - **commit()** - commit pending datastore.
-
+ - **disconnect()** - disconnect from the datastore
+ - **is_session_dirty()** - indicates changes have been made to the datastore from a different transaction. The datastore may provide the ability to register a callback to receive a notification when changes happen to the datastore. (In the case of sysrepo this is the `module_change_subscribe` callback)
 
  - **get(xpath)** - get specific data by XPATH, this will not apply to non-presence containers or lists
  - **gets_unsorted(xpath, ignore_empty_lists)** - get a list of XPATH's representing the items in the list, it is expected the datastore will maintain the order the user inserts the data and this MUST return the data in that order. If the list is empty this method will normally raise an ListDoesNotContainElement exception.
@@ -183,111 +184,7 @@ The `./launch-dbg` script in this repository will build a docker image (*first t
 # Sysrepo Datastore
 
 
-## Exporting Data
-
-The datastore can be **startup** or **running**, however the running datastore can only be accessed if there is a subscriber to the yang module.
-
-```
-sysrepocfg --export --format=xml --datastore=startup integrationtest
-<morecomplex xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest">
- <inner>
-   <leaf5>fsf</leaf5>
- </inner>
-</morecomplex>
-
-sysrepocfg --export --format=xml --datastore=running integrationtest
-Cannot operate on the running datastore for 'integrationtest' as there are no active subscriptions for it.
-Canceling the operation.
-```
-
-## Subscribers
-
-The providers folder contains basic sysrepo python based subscribers which will be invoked each time data changes. A subscriber will independently provide callbacks for config changes (module_change) and oper-data requests (dp_get_items).
-
-```bash
-cd /working/subscribers
-./launch-subscribers.sh
-```
-
-Each provider is launched in a screen session `screen -list` and `screen -r providerintegrationtest.py` to see the sessions and resume.
-
-
-## Importing Data
-
-The data can be imported into the running config (with at least on subscriber active) or startup config (without requiring any subscribers). Note: the docker image doesn't have the test yang models or any data in when it launches so the instructions above always init the startup data.
-
-```
-sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest
-```
-
-**NOTE:** sysrepo does not automatically copying running configuration into startup configuration.
-
-
-## Getting Data
-
-Sysrepo by default will return `<sysrepo.Val; proxy of <Swig Object of type 'sysrepo::S_Val *' at 0x7fc985bb23f0> >` - however our own `DataAccess` object will convert this to python primitives.
-
-Note: the docker image has `ipython3`
-
-From this point forward change into `cd /working/clients`
-
-```python
-import yangvoodoo
-session = yangvoodoo.DataAccess()
-session.connect()
-value = session.get('/integrationtest:simpleleaf')
-print(value)
-```
-
-
-## Setting Data
-
-Setting data requires types, as a convenience the default happens to be a string.
-
-**NOTE:** the commit method from python does not persist running configuration into startup configuration (see - https://github.com/sysrepo/sysrepo/issues/966). It may be we have to sort ourselves out with regards to copying running to startup from time to time.
-
-See Types.py for the mapping of values - STRING = 18
-
-
-
-
-# XPATH access (via the Data Abstraction Layer)
-
-The data abstraction layer uses XPATH notation for specifying access, all components of the path should include the yang module.
-
-- `/integrationtest:leafname` - access to a leaf
-- `/integrationtest:container/integrationtest:leaf` - access to a leaf in a container
-- `/integrationtest:list[integrationtest:key='abc']` - access to a list element where the list has a single key named key
-- `/integrationtest:twokeys[integrationtest:key1='abc'][integrationtestkey2:='def']` - access to a list element where list has two keys
-- `/integrationtest:list[integrationtest:key='abc']/integrationtest:leafinsidelist` - access to an item in the list
-- `/integrationtest:list[integrationtest:key='abc']/integrationtest:secondlist[integrationtest:insidekey='aa']` - access to a list within a list.
-
-
-```python
-import yangvoodoo
-session = yangvoodoo.DataAccess()
-from yangvoodoo import Types as types
-session.connect()
-
-
-session.set("/integrationtest:simpleleaf", "BOO!", types.SR_STRING_T)
-
-value = session.get("/integrationtest:simpleleaf", "BOO!")
-print(value)
-
-exists = session.has_item("/integrationtest:simplelist[integrationtest:simplekey='abc123']")
-
-session.create("/integrationtest:simplelist[integrationtest:simplekey='abc123']")
-
-for item in session.gets_unsorted("/integrationtest:simplelist"):
-  print(item)
-  value = session.get(item + "/integrationtest:simplekey")
-  print(value)
-
-session.delete("/integrationtest:simpleenum")
-
-session.commit()
-```
+See [Details Sysrepo Documentation](Documentation/Datastores.md)
 
 
 # Object based python access
@@ -356,8 +253,42 @@ session.validate()
 # Refresh data from the sysrepo backend datastore.
 session.refresh()
 session.commit()
+session.disconnect()
 ```
 
+#### Templates
+
+It is possible to apply templates to set data instead of manually setting every element of data individually. [Jinja2](http://jinja.pocoo.org/docs/2.10/) is used to provide the ability to make templates less static.
+
+It is important to note the template is rendered **first** with the existing data, and then applied. The implication of this is that even though we set `root.simpleleaf` to `HELLO WOLRD` as the second line in the template - when we substitute the value in the 14th line will take the existing value at the time of rendering the template.
+
+
+```xml
+<integrationtest>
+  <simpleleaf>HELLO WORLD</simpleleaf>
+  <morecomplex>
+    <leaf2>True</leaf2>
+  </morecomplex>
+  <simplelist>
+    <simplekey>KEY</simplekey>
+    <nonleafkey>NONKEY</nonleafkey>
+  </simplelist>
+  <bronze>
+    <silver>
+      <gold>
+        <platinum>
+          <deep>{{ root.simpleleaf }}</deep>
+        </platinum>
+      </gold>
+    </silver>
+  </bronze>
+</integrationtest>
+```
+
+```python
+root.simpleleaf='Before Value'
+session.from_template(root, 'templates/sample.xml')
+```
 
 
 #### Using a stub and writing unit tests
@@ -375,8 +306,8 @@ class test_node_based_access(unittest.TestCase):
     def setUp(self):
         self.stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
         self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
-        self.subject.connect()
-        self.root = self.subject.get_root('integrationtest')
+        self.subject.connect('integrationtest')
+        self.root = self.subject.get_root()
 ```
 
 
@@ -551,7 +482,7 @@ It's quite distracting to see log messages pop-up when interactively using ipyth
 By default logging isn't enabled.   see... LogWrap() and logsink.py
 
 
-Note: launching sysrepod so that it runs with more logging in the foreground can help troubleshoot issues, `sysrepod -d -l 4`. 
+Note: launching sysrepod so that it runs with more logging in the foreground can help troubleshoot issues, `sysrepod -d -l 4`.
 
 
 # TODO LIST

@@ -1,8 +1,9 @@
 import yangvoodoo
+import yangvoodoo.basedal
 import re
 
 
-class StubDataAbstractionLayer:
+class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     """
     IMPORTANT:
@@ -30,13 +31,24 @@ class StubDataAbstractionLayer:
     """
     REGEX_LIST_XPATH = re.compile('(.*:[A-Za-z0_-]+)(.*)')
 
-    def __init__(self):
-        self.stub_store = {}
-        self.session = None
-        self.conn = None
+    def dump_xpaths(self):
+        new_dict = {}
+        for key in self.stub_store:
+            if isinstance(self.stub_store[key], list):
+                new_dict[key] = None
+            else:
+                new_dict[key] = str(self.stub_store[key])
+        return new_dict
 
-    def connect(self, tag='<id-tag>'):
-        pass
+    def _initdal(self):
+        self.stub_store = {}
+
+    def connect(self, module, tag='<id-tag>'):
+        self.module = module
+        return True
+
+    def disconnect(self):
+        return True
 
     def commit(self):
         return True

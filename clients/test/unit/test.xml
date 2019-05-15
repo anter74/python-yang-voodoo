@@ -1,0 +1,4 @@
+<integrationtest>
+  <simpleleaf>HELLO</simpleleaf>
+  <default>{{ root.simpleleaf }}</default>
+</integrationtest>

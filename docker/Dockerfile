@@ -36,7 +36,8 @@ RUN \
 RUN \
       python3 /get-pip.py && \
       rm -f /get-pip.py && \
-      pip3 install mock coverage nose2 autopep8
+      pip3 install mock coverage nose2 autopep8  && \
+      pip3 install lxml jinja2
 
 
 

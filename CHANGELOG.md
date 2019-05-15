@@ -14,3 +14,7 @@
   - FIX: return a PresenceContainer object when calling create on a presence node path.
   - FIX: implement `has_item(xpath)` asking the datastore about existence rather than getting the full list back.
   - Renamed BlackArt to Voodoo for representation of objects.
+  - Implement specific `disconnect` method on the data_abstraction_layer
+  - The Stub Datastore supports a `dump_xpaths` method, useful for asserting within unit tests.
+  - Support for setting data using Jinja2 templates.
+  - **CHANGE OF BEHAVIOUR** `session.connect()` should not be `session.connect('yang-module-name')`. `session.get_root('yang-mdoule-name')` should be `session.get_root()`. This forces a single session per yang module.
