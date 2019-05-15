@@ -106,6 +106,7 @@ RUN \
       git clone https://github.com/allena29/python-yang-voodoo.git working && \
       cd working && \
       # git checkout  context-and-logging && \
+      echo "v0.0.2-devel-with-stub" && \
       cd /working && \
       pip3 install -r requirements.txt && \
       pip3 install jinja2 lxml && \
@@ -202,8 +203,10 @@ RUN \
     pip3 install mock coverage nose2 autopep8 pyflakes && \
     cd /working && \
     echo "Git Pull (v2)" && \
-    git pull
+    git pull 
 
+RUN \
+    touch /builder
 ENV EDITOR vim
 EXPOSE 830
 STOPSIGNAL SIGTERM

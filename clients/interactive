@@ -16,8 +16,8 @@ except ImportError:
     stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
     session = yangvoodoo.DataAccess(remote_log=True, data_abstraction_layer=stub)
 
-session.connect()
-root = session.get_root('integrationtest')
+session.connect('integrationtest')
+root = session.get_root()
 backend = session.session
 yang = root._context.schema
 yangctx = root._context.schemactx

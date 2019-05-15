@@ -25,7 +25,7 @@ class BaseDataAbstractionLayer:
         """
         pass
 
-    def setup_root(self, module):
+    def setup_root(self):
         """
         If required may be used to carry out to do any preparation before a root object
         is obtained.

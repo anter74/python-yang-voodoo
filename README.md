@@ -4,6 +4,12 @@ The aim of this project is to provide the ability to write python code where the
 By providing an object based access layer it allows data to be traversed without worrying about lower level details, and
 allow a stronger focus on getting the 'value add' correct.
 
+To see screencasts demonstrating the concepts see:
+
+ - [36 second spinning up docker](https://asciinema.org/a/246485) - uses this [yang model](https://raw.githubusercontent.com/allena29/python-yang-voodoo/master/yang/integrationtest.yang) and [initial data](https://raw.githubusercontent.com/allena29/python-yang-voodoo/master/init-data/integrationtest__webdata.xml)
+ - [12min showing details usage](https://asciinema.org/a/246248)
+
+
 Taking the very basic yang module below, we can imagine how it might look in a few different ways.
 
 ```
@@ -318,7 +324,7 @@ class test_node_based_access(unittest.TestCase):
 If the `import yangvoodoo` is carried out in the `clients/` subdirectory the version of the library from the GIT repository will be used. If the import is carried out anywhere else the system version will be used.
 
 
-# Updating libyang cffi bindings (Robin Jerry's bindings)
+# Updating libyang cffi bindings (Robin Jarry's bindings)
 
 - Important reference - libyang class definitions. [https://netopeer.liberouter.org/doc/libyang/master/group__schematree.html#structlys__type__info__str](https://netopeer.liberouter.org/doc/libyang/master/group__schematree.html#structlys__type__info__str) - forked into https://github.com/allena29/libyang-cffi
 

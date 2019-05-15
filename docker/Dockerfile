@@ -44,3 +44,4 @@ RUN \
 EXPOSE 830 5000
 STOPSIGNAL SIGTERM
 WORKDIR /working
+CMD /working/start-in-docker.sh
