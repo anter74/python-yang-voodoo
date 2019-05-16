@@ -9,7 +9,7 @@ class test_xml_to_xpath(unittest.TestCase):
         self.maxDiff = None
         self.session = yangvoodoo.DataAccess()
         self.session.connect("integrationtest")
-        self.root = self.session.get_root()
+        self.root = self.session.get_node()
         self.subject = yangvoodoo.TemplateNinja.TemplateNinja()
 
         self.schemactx = self.root._context.schemactx

@@ -8,7 +8,7 @@ class test_node_based_access(unittest.TestCase):
         self.maxDiff = None
         self.subject = yangvoodoo.DataAccess()
         self.subject.connect('integrationtest')
-        self.root = self.subject.get_root()
+        self.root = self.subject.get_node()
         self.schemactx = self.root._context.schemactx
 
     def test_get_yang_type_simple_base_case(self):

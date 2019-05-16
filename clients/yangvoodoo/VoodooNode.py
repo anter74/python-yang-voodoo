@@ -1,4 +1,3 @@
-import re
 import libyang
 import yangvoodoo.Errors
 from yangvoodoo import TemplateNinja
@@ -52,7 +51,7 @@ class Node:
     """
     Constraints:
 
-    Node based access is provided for a particular yang module, whenever we run 'get_root'
+    Node based access is provided for a particular yang module, whenever we run 'get_node'
     we bind to a particular yang module.
 
     At 10,000ft level this module acts as a facade around the DataAccess methods get(), gets()

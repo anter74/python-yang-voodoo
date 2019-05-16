@@ -16,7 +16,7 @@ session = yangvoodoo.DataAccess(remote_log=False)
 timer('yangvoodoo-session')
 session.connect()
 timer('yangvoodoo-connect')
-root = session.get_root('integrationtest')
+root = session.get_node('integrationtest')
 backend = session.session
 timer('yangvoodoo-root')
 yanglist = root.web.bands

@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 import libyang
-import re
+import os
 import time
 import logging
 import socket
 import importlib
 import yangvoodoo.VoodooNode
-import warnings
 
 
 class LogWrap():
@@ -132,56 +131,7 @@ class DataAccess:
         except Exception:
             pass
 
-    def from_template(self, root, template, **kwargs):
-        """
-        Process a template with a number of data nodes. The result of processing the template
-        with Jinja2 must be a valid XML document.
-
-        Example:
-            session.from_template(root, 'template1.xml')
-
-            Process the template from the the path specified (i.e. template1.xml)
-            In the Jinja2 templates the root object is available as 'root.'
-
-            session.from_template(root, 'template1.xml', data_a=root.morecomplex)
-
-            In this case the Jinja2 template will receive both 'data_a' as the subset of
-            data at /morecomplex and root.
-
-        The path to the template may be specified as a relative path (to where the python
-        process is running (i.e. os.getcwd) or an exact path.
-
-        IMPORTANT to note is that variable and logic is processed in the template based upon
-        the data available at the time, then the result of the entire template is applied.
-        To be clear consdiering this template
-            <integrationtest>
-                <simpleleaf>HELLO</simpleleaf>
-                <default>{{ root.simpleleaf }}</default>
-            </integrationtest>
-
-            root.simpleleaf = 'GOODBYE'
-            session.from_template(root, 'hello-goodbye.xml')
-
-        The resulting value for simpleleaf will be 'GOODBYE' not hello.
-
-        """
-
-        variables = {'root': root}
-        for variable_name in kwargs:
-            variables[variable_name] = kwargs[variable_name]
-
-        xmlstr = ""
-        with open(template) as file_handle:
-            t = Template(file_handle.read())
-            xmlstr = t.render(variables)
-
-        xpaths = self._convert_xml_to_xpaths(root, xmlstr)
-
-        for xpath in xpaths:
-            (value, valuetype) = xpaths[xpath]
-            self.set(xpath, value, valuetype)
-
-    def get_root(self, module=None, yang_location="../yang/"):
+    def get_node(self):
         """
         Instantiate Node-based access to the data stored in the backend defined by a yang
         schema. The data access will be constraint to the YANG module chosen when invoking
@@ -190,33 +140,31 @@ class DataAccess:
         We must have access to the same YANG module loaded within in sysrepo, which can be
         set by modifying yang_location argument.
         """
-        if module:
-            self.data_abstraction_layer.module = module
-            warnings.warn("<module> should not be sent into get_root - send into connect instead.")
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
 
-        yang_ctx = libyang.Context(yang_location)
-        yang_schema = yang_ctx.load_module(self.module)
-
         self.data_abstraction_layer.setup_root()
 
-        context = yangvoodoo.VoodooNode.Context(self.module, self, yang_schema, yang_ctx, log=self.log)
+        context = yangvoodoo.VoodooNode.Context(self.module, self, self.yang_schema, self.yang_ctx, log=self.log)
 
         self.help = self._help
 
         return yangvoodoo.VoodooNode.Root(context)
 
-    def connect(self, module=None, tag='client'):
+    def connect(self, module=None,  yang_location="../yang/", tag='client'):
         """
         Connect to the datastore.
 
         returns: True
         """
-        if not module:
-            warnings.warn("<module> name should be sent into connect()")
+        if not os.path.exists(yang_location + "/" + module + ".yang"):
+            raise ValueError("YANG Module "+module+" not present in "+yang_location)
+
         self.module = module
+        self.yang_ctx = libyang.Context(yang_location)
+        self.yang_schema = self.yang_ctx.load_module(self.module)
         connect_status = self.data_abstraction_layer.connect(self.module)
+
         self.session = self.data_abstraction_layer.session
         self.conn = self.data_abstraction_layer.conn
         self.connected = True

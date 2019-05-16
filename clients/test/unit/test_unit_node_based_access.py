@@ -16,7 +16,7 @@ class test_node_based_access(unittest.TestCase):
         self.stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
         self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
         self.subject.connect('integrationtest')
-        self.root = self.subject.get_root()
+        self.root = self.subject.get_node()
 
     def test_root(self):
         self.assertEqual(repr(self.root), 'VoodooRoot{} YANG Module: integrationtest')

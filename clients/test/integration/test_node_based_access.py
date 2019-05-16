@@ -26,7 +26,7 @@ class test_node_based_access(unittest.TestCase):
         self.maxDiff = None
         self.subject = yangvoodoo.DataAccess()
         self.subject.connect('integrationtest')
-        self.root = self.subject.get_root()
+        self.root = self.subject.get_node()
 
     def test_root(self):
         self.assertEqual(repr(self.root), 'VoodooRoot{} YANG Module: integrationtest')

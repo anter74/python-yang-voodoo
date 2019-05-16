@@ -81,9 +81,9 @@ class test_getdata(unittest.TestCase):
         value = "Outside"
 
         self.subject1 = yangvoodoo.DataAccess()
-        self.subject1.connect('integrationtest', 'a')
+        self.subject1.connect('integrationtest', '../yang', 'a')
         self.subject2 = yangvoodoo.DataAccess()
-        self.subject2.connect('integrationtest', 'b')
+        self.subject2.connect('integrationtest', '../yang', 'b')
 
         self.subject1.set(xpath, value)
         self.assertEqual(self.subject1.get(xpath), 'Outside')

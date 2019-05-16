@@ -201,14 +201,16 @@ This is a proof of concept style quality of code at this stage.
 - Then `session.commit()` which wraps around sysrepo's commit will actually validate things like must, whens and leaf-ref pathss.
 
 
-When running `get_root(yang_module)` the directory `../yang` will be used to find the respective yang modules. There is a 1:1 mapping between a root object and yang module - this fits with the pattern of sysrepo. An optional argument `yang_location=<>` can be passed to get_root to specify an alternative location.
+When running `get_node(yang_module)` the directory `../yang` will be used to find the respective yang modules. There is a 1:1 mapping between a root object and yang module - this fits with the pattern of sysrepo. An optional argument `yang_location=<>` can be passed to get_node to specify an alternative location.
+
+
 
 ```python
 import yangvoodoo
 session = yangvoodoo.DataAccess()
 session.connect()
 # this will look in ../yang for the yang module integrationtest.yang and associated dependencies.
-root = session.get_root('integrationtest')
+root = session.get_node('integrationtest')
 
 # Set a value
 root.simpleleaf = 'abc'
@@ -313,7 +315,7 @@ class test_node_based_access(unittest.TestCase):
         self.stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
         self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
         self.subject.connect('integrationtest')
-        self.root = self.subject.get_root()
+        self.root = self.subject.get_node()
 ```
 
 
