@@ -47,7 +47,7 @@ class BaseDataAbstractionLayer:
     def create_container(self, xpath):
         raise NotImplementedError('create_container not implemented')
 
-    def create(self, xpath):
+    def create(self, xpath, keys=None, values=None, module=None):
         raise NotImplementedError("create not implemented")
 
     def set(self, xpath, value, valtype=18):

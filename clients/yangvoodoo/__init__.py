@@ -393,7 +393,7 @@ class DataAccess:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.create_container(xpath)
 
-    def create(self, xpath):
+    def create(self, xpath, keys=None, values=None, module=None):
         """
         Create a list item by XPATH including keys
          e.g. /path/to/list[key1='val1'][key2='val2'][key3='val3']
@@ -402,7 +402,7 @@ class DataAccess:
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.create(xpath)
+        return self.data_abstraction_layer.create(xpath, keys=keys, values=values, module=module)
 
     def set(self, xpath, value, valtype=18):
         """

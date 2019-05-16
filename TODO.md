@@ -1,6 +1,8 @@
 # TODO:
 
 - XPATH forming/decoding lazily forms key='value' - we need to be careful about having special characters/single quotes in the value.
+  - VoodooNode.get_keys
+  - yangvoodoo\_lookahead_for_list_keys
 - ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
 - ~~allow the location of yang's to be specified.~~
 - enumerations - should really be returned as an object not a string.

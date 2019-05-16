@@ -18,3 +18,4 @@
   - The Stub Datastore supports a `dump_xpaths` method, useful for asserting within unit tests.
   - Support for setting data using Jinja2 templates.
   - **CHANGE OF BEHAVIOUR** `session.connect()` should not be `session.connect('yang-module-name')`. `session.get_root('yang-mdoule-name')` should be `session.get_root()`. This forces a single session per yang module.
+  - FIX: stubdal to create /path[key='val']/key = val to match sysrepo implementation.

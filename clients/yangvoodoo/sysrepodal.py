@@ -99,10 +99,13 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
-    def create(self, xpath):
+    def create(self, xpath, keys=None, values=None, module=None):
         """
         Create a list item by XPATH including keys
          e.g. / path/to/list[key1 = ''][key2 = ''][key3 = '']
+
+        For the sysrepo mapping we don't require keys/values the xpath should be
+        formed with the predicates available.
         """
         try:
             self.set(xpath, None, sr.SR_LIST_T)

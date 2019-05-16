@@ -364,7 +364,8 @@ class List(Node):
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
 
-        context.dal.create(new_xpath)
+        keys = tuple(self.keys())
+        context.dal.create(new_xpath, keys=keys, values=args, module=context.module)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
 
@@ -398,8 +399,13 @@ class List(Node):
 
         This is currently not supported.
         """
-        # This will need to break apart the XPATH strings into tuples of values.
-        raise NotImplementedError("The keys() method is not supported")
+        spath = self.__dict__['_spath']
+        node_schema = self._get_schema_of_path(spath)
+
+        keys = []
+        for k in node_schema.keys():
+            keys.append(k.name())
+        return keys
 
     def get_last(self, sorted_by_xpath=False):
         """

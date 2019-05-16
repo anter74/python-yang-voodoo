@@ -62,11 +62,21 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     def _list_xpath(self, xpath):
         return self.REGEX_LIST_XPATH.sub(r'\g<1>', xpath)
 
-    def create(self, xpath):
+    def create(self, xpath, keys, values, module):
+        """
+        The xpath coming in should include the full predicates
+            /integrationtest:simplelist[integrationtest:simplekey='sdf']
+
+        The keys/values are used to create
+            /integrationtest:simplelist[integrationtest:simplekey='sdf']/integrationtest:<key0> = <value0>
+        """
         list_xpath = self._list_xpath(xpath)
         if list_xpath not in self.stub_store:
             self.stub_store[list_xpath] = []
         self.stub_store[list_xpath].append(xpath)
+
+        for index in range(len(keys)):
+            self.stub_store[list_xpath + "/" + module + ":" + keys[index]] = values[index]
 
     def has_item(self, xpath):
         list_xpath = self._list_xpath(xpath)
