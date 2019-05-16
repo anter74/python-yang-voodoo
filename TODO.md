@@ -41,11 +41,11 @@
   - This isn't a deal breaker if the pattern is asynchronous because the callback will just blindly accept syntax valid data and the trigger configuration, however if the implementation processes in a synchronous manner then we want to keep the ability to throw a bad error code to reject the overall NETCONF transaction.
  - Optimise Docker image so it doesn't compile the core packages, but instead sucks them in from somewhere else.
 - Packaging of the sysrepo into a deb for the minimal image is very naive.
-- ~~Implement disconnect() for the data_abstraction_layer.~~
+- ~~Implement disconnect() for the data\_abstraction\_layer.~~
 - Stubdal - should it satisfy default values - it probably can by looking at libyang but that may be quite intensive.
-- ~~Remove warnings for the connect/get_node change of behaviour.~~
+- ~~Remove warnings for the connect/get\_node change of behaviour.~~
 - Think about multiple top-level nodes appearing as multiple sysrepo backend datastore session. This could just be inevitable based on the way sysrepo operates.
-
+- `session.commit()` with no changes times out
 
 # Limitations:
 

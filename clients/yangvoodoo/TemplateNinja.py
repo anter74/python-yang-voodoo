@@ -20,11 +20,16 @@ class TemplateNinja:
         xpaths = self._convert_xml_to_xpaths(root, xmlstr)
 
         for xpath in xpaths:
-            (value, valuetype) = xpaths[xpath]
-            if not value:
-                root.__dict__['_context'].dal.create(xpath)
+            if isinstance(xpaths[xpath], list):
+                # At the moment lists are only used for leaf-lists
+                for (value, valuetype, nodetype) in xpaths[xpath]:
+                    root.__dict__['_context'].dal.add(xpath, value, valuetype)
             else:
-                root.__dict__['_context'].dal.set(xpath, value, valuetype)
+                (value, valuetype, nodetype) = xpaths[xpath]
+                if nodetype == 16:  # list
+                    root.__dict__['_context'].dal.create(xpath)
+                elif value:
+                    root.__dict__['_context'].dal.set(xpath, value, valuetype)
 
     def _convert_xml_to_xpaths(self, root, xmlstr):
         """
@@ -49,11 +54,6 @@ class TemplateNinja:
             if node == '.':
                 continue
 
-            print('there are %s paths in the list_predicates cache' % (len(list_predicates)))
-            for p in list_predicates:
-                print(p, list_predicates[p])
-            #
-            # # The schema never ever takes predicates in the path
             node_schema = root._get_schema_of_path(path)
             node_type = node_schema.nodetype()
 
@@ -64,14 +64,20 @@ class TemplateNinja:
             if node_schema.nodetype() == 16:
                 # believe this to be safe.
                 predicates = self._lookahead_for_list_keys(node_schema, xmldoc_iterator, module, path, list_predicates)
-                xpaths[value_path + predicates] = (None, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['LIST'])
+                xpaths[value_path + predicates] = (None, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['LIST'], node_type)
 
             if node_schema.nodetype() == 1 and not node_schema.presence():
                 continue
 
             if node_type == 4 or (node_type == 1 and node_schema.presence()):
                 type = root._get_yang_type(node_schema.type(), child.text, path)
-                xpaths[value_path] = (child.text, type)
+                xpaths[value_path] = (child.text, type, node_type)
+
+            elif node_type == 8:
+                type = root._get_yang_type(node_schema.type(), child.text, path)
+                if not value_path in xpaths:
+                    xpaths[value_path] = []
+                xpaths[value_path].append((child.text, type, node_type))
 
         return xpaths
 

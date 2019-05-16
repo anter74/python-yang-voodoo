@@ -223,9 +223,9 @@ class test_xml_to_xpath(unittest.TestCase):
         results = self.subject._convert_xml_to_xpaths(self.root, template)
         expected_answer = {
             ("/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']"):
-            (None, 2),
+            (None, 2, 16),
             ("/integrationtest:container-and-lists/integrationtest:multi-key-list[integrationtest:A='a']"
-             "[integrationtest:B='b']"): (None, 2),
+             "[integrationtest:B='b']"): (None, 2, 16),
         }
         self.assertEqual(results, expected_answer)
 
@@ -255,11 +255,11 @@ class test_xml_to_xpath(unittest.TestCase):
         # Assert
         l = "/integrationtest:container-and-lists/integrationtest:numberkey-list"
         expected_results = {
-            l + "[integrationtest:numberkey='5']": (None, 2),
-            l + "[integrationtest:numberkey='5'][integrationtest:numberkey='2']": (None, 2),
-            l + "[integrationtest:numberkey='2'][integrationtest:numberkey='6']": (None, 2),
-            l + "[integrationtest:numberkey='6']/integrationtest:description": ('SIX', 18),
-            l + "[integrationtest:numberkey='6'][integrationtest:numberkey='7']": (None, 2),
+            l + "[integrationtest:numberkey='5']": (None, 2, 16),
+            l + "[integrationtest:numberkey='5'][integrationtest:numberkey='2']": (None, 2, 16),
+            l + "[integrationtest:numberkey='2'][integrationtest:numberkey='6']": (None, 2, 16),
+            l + "[integrationtest:numberkey='6']/integrationtest:description": ('SIX', 18, 4),
+            l + "[integrationtest:numberkey='6'][integrationtest:numberkey='7']": (None, 2, 16),
         }
 
         self.assertDictEqual(results, expected_results)
