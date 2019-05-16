@@ -61,10 +61,6 @@ class test_node_based_access(unittest.TestCase):
         morecomplex = self.root.morecomplex
         self.assertEqual(repr(morecomplex), "VoodooContainer{/integrationtest:morecomplex}")
 
-        expected_children = ['extraboolean', 'extraboolean2', 'extraboolean3', 'inner', 'leaf2',
-                             'leaf3', 'leaf4', 'nonconfig', 'percentage', 'superstar']
-        self.assertEqual(dir(morecomplex), expected_children)
-
         self.assertEqual(morecomplex.leaf3, 12345)
         self.assertEqual(morecomplex.inner.leaf7, 'this-is-a-default')
 
@@ -332,3 +328,29 @@ class test_node_based_access(unittest.TestCase):
         outside_b.insidelist.create('3')
         self.assertEqual(len(outside_a.insidelist), 2)
         self.assertEqual(len(outside_b.insidelist), 1)
+
+    def test_leaf_lists(self):
+        self.assertEqual(repr(self.root.morecomplex.leaflists.simple),
+                         ("VoodooLeafList{/integrationtest:morecomplex/"
+                          "integrationtest:leaflists/integrationtest:simple}"))
+
+        ll = self.root.morecomplex.leaflists.simple
+        ll.create('A')
+        ll.create('Z')
+        ll.create('B')
+
+        expected = ['A', 'Z', 'B']
+        received = []
+        for x in self.root.morecomplex.leaflists.simple:
+            received.append(x)
+        self.assertEqual(received, expected)
+
+        self.assertEqual(3, len(self.root.morecomplex.leaflists.simple))
+
+        self.assertFalse('non-existant' in self.root.morecomplex.leaflists.simple)
+        self.assertTrue('A' in self.root.morecomplex.leaflists.simple)
+
+        del self.root.morecomplex.leaflists.simple['A']
+
+        self.assertEqual(2, len(self.root.morecomplex.leaflists.simple))
+        self.assertFalse('A' in self.root.morecomplex.leaflists.simple)

@@ -305,6 +305,38 @@ class DataAccess:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.gets_unsorted(xpath, ignore_empty_lists)
 
+    def gets(self, xpath):
+        """
+        For the given XPATH (of a leaflist) return an list of values from the datastore in the
+        order they were entered.
+
+        returns: generator of Values
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.gets(xpath)
+
+    def add(self, xpath, value, valtype=18):
+        """
+        For the given XPATH of a leaflist add an item to the datastore.
+
+        returns: the value
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.add(xpath, value, valtype)
+
+    def remove(self, xpath, value):
+        """
+        For the given XPATH of a leaflist remove the item from the datastore.
+        Note: the xpath points to the leaf-list not the item.
+
+        returns: None.
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.remove(xpath, value)
+
     def has_item(self, xpath):
         """
         Evaluate if the item is present in the datatsore, determines if a specific XPATH has been

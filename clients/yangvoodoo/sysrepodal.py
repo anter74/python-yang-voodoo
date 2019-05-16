@@ -180,6 +180,22 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
+    def add(self, xpath, value, valtype=sr.SR_STRING_T):
+        return self.set(xpath, value, valtype)
+
+    def remove(self, xpath, value):
+        xpath = xpath + "[.='" + value + "']"
+        return self.delete(xpath)
+
+    def gets(self, xpath):
+        """
+        Get a generator providing values for a simple list.
+        """
+        vals = self.session.get_items(xpath)
+        for i in range(vals.val_cnt()):
+            sysrepo_item = vals.val(i)
+            yield self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
+
     def delete(self, xpath):
         try:
             self.session.delete_item(xpath)

@@ -2,6 +2,17 @@
 
 ```
 module: integrationtest
+  +--rw validator
+  |  +--rw strings
+  |     +--rw nolen?                   string
+  |     +--rw non-quatre?              length-must-not-be-4-long
+  |     +--rw minlen?                  string
+  |     +--rw maxlen?                  string
+  |     +--rw minmaxlen?               string
+  |     +--rw sillylen?                string
+  |     +--rw pattern?                 string
+  |     +--rw patternerror?            string
+  |     +--rw patternandlengtherror?   string
   +--rw imports-in-here
   |  +--rw name?   string
   +--rw web
@@ -120,10 +131,15 @@ module: integrationtest
   +--rw container-and-lists
   |  +--rw just-a-key?       string
   |  +--rw multi-key-list* [A B]
-  |  |  +--rw A        string
-  |  |  +--rw B        string
+  |  |  +--rw A             string
+  |  |  +--rw B             string
   |  |  +--rw inner
-  |  |     +--rw C?   string
+  |  |  |  +--rw C?            string
+  |  |  |  +--rw level3list* [level3key]
+  |  |  |     +--rw level3key        string
+  |  |  |     +--rw level3-nonkey?   string
+  |  |  +--rw level2list* [level2key]
+  |  |     +--rw level2key    string
   |  +--rw numberkey-list* [numberkey]
   |     +--rw numberkey      uint8
   |     +--rw description?   string
@@ -149,6 +165,9 @@ module: integrationtest
   |  +--rw a?        string
   |  +--rw leaf-a?   type-a
   +--rw morecomplex
+     +--rw leaflists
+     |  +--rw simple*       string
+     |  +--rw viatypedef*   type3
      +--rw superstar?       percentile95th
      +--rw percentage?      decimal64
      +--ro nonconfig?       string
@@ -167,9 +186,13 @@ module: integrationtest
         +--rw leaf8?                       type8
         +--rw leaf666?                     type6
         +--rw leaf777?                     -> ../leaf7
-        +--rw leaf888?                     -> ../leaf666
+        +--rw leaf888?                     type8
+        +--rw leaf-union-of-union?         union
+        +--rw leaf888-withoutenum?         type8-noenum
+        +--rw leaf8888?                    -> ../leaf666
         +--rw leaf999?                     -> ../../leaf2
         +--rw leaf000?                     sillytypedef
+        +--rw leaf111?                     union
         +--rw ietf-inet-types
            +--rw ip
               +--rw address?   inet:ip-address

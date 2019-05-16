@@ -3,6 +3,7 @@
 - XPATH forming/decoding lazily forms key='value' - we need to be careful about having special characters/single quotes in the value.
   - VoodooNode.get_keys
   - yangvoodoo\_lookahead_for_list_keys
+  - leaflist iterator \__delitem__
 - ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
 - ~~allow the location of yang's to be specified.~~
 - enumerations - should really be returned as an object not a string.
@@ -11,7 +12,7 @@
 - typedef's (partly resolved by using libyang's type().base() - but unions don't provide a composite base type)
 - leafref's (as with typedefs type().base() from libyang doesn't tell us the type).
   - ~~leafrefs to non-unions~~
-  - leafrefs to union (Partially supported - to be fully supported with libyang(swig) vs yang(cffi) changes - (ref branch: libyang-cffi-vs-libyang-swig_for_validation)
+  - ~~leafrefs to union (Partially supported - to be fully supported with libyang(swig) vs yang(cffi) changes - (ref branch: libyang-cffi-vs-libyang-swig_for_validation)~~
 - ~~enumeration test cases~~
 - ~~underscore conversion~~
 - should support <object>[child-attr-name] for setting, getting data (i.e. where we want to use a variable to define child-attr-name])
@@ -21,7 +22,7 @@
 - testing membership of list elements is lazily done by asking for everything on the backend - implement a method to ask the backend datastore about membership.
 - ~~augmentation - augment seems to just work out of the box with libyang~~
 - deviations
-- leaf-lists are not implemented yet.
+- ~~leaf-lists are not implemented yet.~~
 - jinja2 templates are a little trickier accessing data on objects is trivial, invoking object (not sure how that works).
   - Consider list of bands, with a list of gis - if we want to find the the last gig we can do this.
   - In python we can do `list(root.web.bands._xpath_sorted)[-2].gigs.get_last()`

@@ -744,6 +744,20 @@ module integrationtest {
   }
 
   container morecomplex {
+    container leaflists {
+      leaf-list simple {
+        description "
+        - values must be unique
+        - should support min/max len
+        - should support if feature
+        ";
+        type string;
+      }
+      leaf-list viatypedef {
+        type type3;
+      }
+    }
+
 
     leaf superstar {
       type percentile95th;

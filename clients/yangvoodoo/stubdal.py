@@ -78,6 +78,25 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         for index in range(len(keys)):
             self.stub_store[list_xpath + "/" + module + ":" + keys[index]] = values[index]
 
+    def add(self, xpath, value, valtype):
+        if xpath not in self.stub_store:
+            self.stub_store[xpath] = []
+        self.stub_store[xpath].append(value)
+
+    def remove(self, xpath, value):
+        if xpath not in self.stub_store:
+            raise yangvoodoo.Errors.BackendDatastoreError([('path does not exist - cannot remove', xpath)])
+        if value not in self.stub_store[xpath]:
+            raise yangvoodoo.Errors.BackendDatastoreError([('values does not exist at path - cannot remove', xpath)])
+        self.stub_store[xpath].remove(value)
+
+    def gets(self, xpath):
+        items = []
+        if xpath in self.stub_store:
+            items = self.stub_store[xpath]
+        for item in items:
+            yield item
+
     def has_item(self, xpath):
         list_xpath = self._list_xpath(xpath)
         if list_xpath in self.stub_store:

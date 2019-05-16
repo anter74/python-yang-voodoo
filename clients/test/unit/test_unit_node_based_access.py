@@ -46,7 +46,7 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(repr(morecomplex), "VoodooContainer{/integrationtest:morecomplex}")
 
         expected_children = ['extraboolean', 'extraboolean2', 'extraboolean3', 'inner', 'leaf2', 'leaf3', 'leaf4',
-                             'nonconfig', 'percentage', 'superstar']
+                             'leaflists', 'nonconfig', 'percentage', 'superstar']
         self.assertEqual(dir(morecomplex), expected_children)
 
         inner = morecomplex.inner.create()
@@ -228,3 +228,36 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(dir(super_root), ['morecomplex', 'web'])
         self.assertEqual(repr(super_root.morecomplex), 'VoodooContainer{/integrationtest:morecomplex}')
         self.assertEqual(repr(super_root.web), 'VoodooContainer{/integrationtest:web}')
+
+    def test_leaf_lists(self):
+        self.assertEqual(repr(self.root.morecomplex.leaflists.simple),
+                         ("VoodooLeafList{/integrationtest:morecomplex/"
+                          "integrationtest:leaflists/integrationtest:simple}"))
+
+        ll = self.root.morecomplex.leaflists.simple
+        ll.create('A')
+        ll.create('Z')
+        ll.create('B')
+
+        expected_result = {
+            '/integrationtest:morecomplex/integrationtest:leaflists/integrationtest:simple':
+                ['A', 'Z', 'B']
+        }
+
+        self.assertEqual(expected_result, self.stub.stub_store)
+
+        expected = ['A', 'Z', 'B']
+        received = []
+        for x in self.root.morecomplex.leaflists.simple:
+            received.append(x)
+        self.assertEqual(received, expected)
+
+        self.assertEqual(3, len(self.root.morecomplex.leaflists.simple))
+
+        self.assertFalse('non-existant' in self.root.morecomplex.leaflists.simple)
+        self.assertTrue('A' in self.root.morecomplex.leaflists.simple)
+
+        del self.root.morecomplex.leaflists.simple['A']
+
+        self.assertEqual(2, len(self.root.morecomplex.leaflists.simple))
+        self.assertFalse('A' in self.root.morecomplex.leaflists.simple)

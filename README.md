@@ -135,6 +135,9 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **get(xpath)** - get specific data by XPATH, this will not apply to non-presence containers or lists
  - **gets_unsorted(xpath, ignore_empty_lists)** - get a list of XPATH's representing the items in the list, it is expected the datastore will maintain the order the user inserts the data and this MUST return the data in that order. If the list is empty this method will normally raise an ListDoesNotContainElement exception.
  - **gets_unsorted(xpath, ignore_empty_lists)** - as gets_unsorted, but the results will be sorted by XPATH.
+ - **gets(xpath)** - gets a generator back of values for a specific XPATH (leaf lists only)
+ - **add(xpath, value, valuetype)** - add a new entry to the end of a leaf-list at the given XPATH
+ - **remove(xpath, value)** - remvoes an entry from a leaf-list at the given XPATH - the XPATH given is the XPATH to the leaf-list itself, not the specific item.
  - **has_item(xpath)**- returns True if the item has been populated with data.
  - **create(xpath, key_tuple, value_tuple, yang_module)** - create a list item
  - **create_container(xpath)** - if a container is a presence container explicitly create the container.

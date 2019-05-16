@@ -56,6 +56,15 @@ class BaseDataAbstractionLayer:
     def gets_sorted(self, xpath, ignore_empty_lists=False):
         raise NotImplementedError("gets_sorted not implemented")
 
+    def gets(self, xpath):
+        raise NotImplementedError("gets not implemented")
+
+    def add(self, xpath, value, valtype=18):
+        raise NotImplementedError("add not implemented")
+
+    def remove(self, xpath, value):
+        raise NotImplementedError("remove not implemented")
+
     def gets_unsorted(self, xpath, ignore_empty_lists=False):
         raise NotImplementedError("gets_unsorted not implemented")
 

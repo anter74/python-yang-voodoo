@@ -6,3 +6,4 @@ libyang-cffi/
 .tox/
 *.egg-info/
 dist/
+*.pyc

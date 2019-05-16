@@ -172,6 +172,9 @@ class Node:
         elif node_type == 16:
             # Return Object
             return List(context, new_xpath, new_spath, self)
+        elif node_type == 8:
+            # Return Object
+            return LeafList(context, new_xpath, new_spath, self)
 
         raise ValueError('Get - not sure what the type is...%s' % (node_type))
 
@@ -343,7 +346,57 @@ class ContainingNode(Node):
         templater.from_template(self, template)
 
 
-class List(Node):
+class LeafList(Node):
+
+    """
+    Represents a Leaf List
+    """
+
+    _NODE_TYPE = "LeafList"
+
+    def __dir__(self):
+        return []
+
+    def create(self, value):
+        """
+        Create an entry into a leaf list, returning the value.
+
+        If the item already exists in the list this operation will silenty
+        do nothing.
+        """
+        context = self.__dict__['_context']
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+
+        node_schema = self._get_schema_of_path(spath)
+        backend_type = self._get_yang_type(node_schema.type(), value, path)
+
+        context.dal.add(path, value, backend_type)
+
+        return value
+
+    def __iter__(self):
+        context = self.__dict__['_context']
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+        # Return Object
+        return LeafListIterator(context, path, spath, self)
+
+    def __len__(self):
+        context = self.__dict__['_context']
+        path = self.__dict__['_path']
+        results = context.dal.gets(path)
+        return len(list(results))
+
+    def __delitem__(self, arg):
+        context = self.__dict__['_context']
+        path = self.__dict__['_path']
+        context.dal.remove(path, arg)
+
+        return None
+
+
+class List(LeafList):
 
     """
     Represents a list from a yang module.
@@ -371,17 +424,6 @@ class List(Node):
 
     _NODE_TYPE = 'List'
     _SORTED_LIST = False
-    #
-    # def _specific_init(self):
-    #     context = self.__dict__['_context']
-    #     path = self.__dict__['_path']
-    #     spath = self.__dict__['_spath']
-    #     # Return Object
-    #     self.__dict__['_xpath_sorted'] = SortedList(context, path, spath, self)
-    #
-
-    def __dir__(self):
-        return []
 
     def create(self, *args):
         """
@@ -649,6 +691,22 @@ class ListIterator(Node):
         if self.__dict__['_xpath_sorted']:
             return base_repr + " Sorted By XPATH"
         return base_repr + " Sorted By User (datastore)"
+
+
+class LeafListIterator(Node):
+
+    _NODE_TYPE = 'ListIterator'
+
+    def __init__(self, context, path, spath, parent_self, xpath_sorted=False):
+        self.__dict__['_context'] = context
+        self.__dict__['_path'] = path
+        self.__dict__['_spath'] = spath
+        self.__dict__['_parent'] = parent_self
+        self.__dict__['_xpath_sorted'] = xpath_sorted
+        self.__dict__['_iterator'] = context.dal.gets(path)
+
+    def __next__(self):
+        return next(self.__dict__['_iterator'])
 
 
 class ListElement(Node):

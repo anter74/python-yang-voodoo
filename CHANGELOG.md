@@ -23,3 +23,4 @@
   - **CHANGE OF BEHAVIOUR** `session.get_node()` does not take in `yang_location` this has now moved to `session.connect`
   - **EXPERIMENTAL** a 'SuperRoot' to organise together multiple sessions together
     - At this stage not considerations for ordering of commits(), rollbacks on failure, dependencies between sessions.
+  - Implemented leaf-list object type with integration to sysrepo backend and stub backend.
