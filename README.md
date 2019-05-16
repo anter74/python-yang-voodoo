@@ -293,7 +293,7 @@ It is important to note the template is rendered **first** with the existing dat
 
 ```python
 root.simpleleaf='Before Value'
-session.from_template(root, 'templates/sample.xml')
+root.from_template('templates/sample.xml')
 ```
 
 

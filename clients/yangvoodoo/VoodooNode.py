@@ -1,5 +1,7 @@
+import re
 import libyang
 import yangvoodoo.Errors
+from yangvoodoo import TemplateNinja
 from yangvoodoo import Types
 
 
@@ -300,6 +302,46 @@ class Node:
         except libyang.util.LibyangError:
             pass
         raise yangvoodoo.Errors.NonExistingNode(xpath)
+
+
+class ContainingNode(Node):
+
+    def from_template(self, template):
+        """
+        Process a template with a number of data nodes. The result of processing the template
+        with Jinja2 must be a valid XML document.
+
+        Example:
+            session.from_template(root, 'template1.xml')
+
+            Process the template from the the path specified (i.e. template1.xml)
+            In the Jinja2 templates the root object is available as 'root.'
+
+            session.from_template(root, 'template1.xml', data_a=root.morecomplex)
+
+            In this case the Jinja2 template will receive both 'data_a' as the subset of
+            data at /morecomplex and root.
+
+        The path to the template may be specified as a relative path (to where the python
+        process is running (i.e. os.getcwd) or an exact path.
+
+        IMPORTANT to note is that variable and logic is processed in the template based upon
+        the data available at the time, then the result of the entire template is applied.
+        To be clear consdiering this template
+            <integrationtest>
+                <simpleleaf>HELLO</simpleleaf>
+                <default>{{ root.simpleleaf }}</default>
+            </integrationtest>
+
+            root.simpleleaf = 'GOODBYE'
+            session.from_template(root, 'hello-goodbye.xml')
+
+        The resulting value for simpleleaf will be 'GOODBYE' not hello.
+
+        """
+
+        templater = TemplateNinja.TemplateNinja()
+        templater.from_template(self, template)
 
 
 class List(Node):
@@ -660,7 +702,7 @@ class PresenceContainer(Node):
         return base_repr + " Does Not Exist"
 
 
-class Root(Node):
+class Root(ContainingNode):
 
     _NODE_TYPE = 'Root'
 

@@ -7,9 +7,11 @@ class test_xml_to_xpath(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        self.subject = yangvoodoo.DataAccess()
-        self.subject.connect("integrationtest")
-        self.root = self.subject.get_root()
+        self.session = yangvoodoo.DataAccess()
+        self.session.connect("integrationtest")
+        self.root = self.session.get_root()
+        self.subject = yangvoodoo.TemplateNinja.TemplateNinja()
+
         self.schemactx = self.root._context.schemactx
 
     def test_look_ahead_for_list_keys(self):
@@ -153,7 +155,6 @@ class test_xml_to_xpath(unittest.TestCase):
 
         # Act
         result = self.subject._find_predicate_match(list_predicates, path)
-
         # Assert
         expected_result = ("/integrationtest:container-and-lists/integrationtest:multi-key-list[integrationtest:A='a']"
                            "[integrationtest:B='b']/integrationtest:level2list[integrationtest:level2key='22222']")
@@ -228,13 +229,37 @@ class test_xml_to_xpath(unittest.TestCase):
              "[integrationtest:B='b']"): (None, 2),
         }
         self.assertEqual(results, expected_answer)
+    #
+    # def test_from_template_with_only_two_list_items(self):
+    #     # Build
+    #
+    #     template = """<integrationtest>
+    #       <container-and-lists>
+    #         <numberkey-list>
+    #           <numberkey>5</numberkey>
+    #         </numberkey-list>
+    #         <numberkey-list>
+    #           <numberkey>6</numberkey>
+    #         </numberkey-list>
+    #       </container-and-lists>
+    #     </integrationtest>
+    #     """
+    #     # Act
+    #     results = self.subject._convert_xml_to_xpaths(self.root, template)
+    #     expected_answer = {
+    #         ("/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']"):
+    #         (None, 2),
+    #         ("/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='6']"):
+    #         (None, 2),
+    #     }
+    #     self.assertEqual(results, expected_answer)
 
     def test_from_template_with_jinja2_processing(self):
         # Build
         self.root.simpleleaf = 'GOODBYE'
 
         # Act
-        self.subject.from_template(self.root, 'test/unit/test.xml')
+        self.root.from_template('test/unit/test.xml')
 
         # Assert
         self.assertEqual(self.root.simpleleaf, 'HELLO')
