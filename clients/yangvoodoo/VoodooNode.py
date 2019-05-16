@@ -707,4 +707,32 @@ class Root(ContainingNode):
 
     def __repr__(self):
         context = self.__dict__['_context']
-        return "VoodooRoot{} YANG Module: " + context.module
+        return "VoodooNodeRoot{} YANG Module: " + context.module
+
+
+class SuperRoot:
+
+    _NODE_TYPE = "SuperRoot"
+
+    def __init__(self):
+        self._nodes = {}
+
+    def attach_node_from_session(self, session, attachment_point):
+        """
+        From the VooodooNode provided
+        """
+        node = session.get_node()
+        if not hasattr(node, attachment_point):
+            raise ValueError('thing isnthere')
+
+        setattr(self, attachment_point, getattr(node, attachment_point))
+        self._nodes[attachment_point] = session
+        return getattr(node, attachment_point)
+
+    def __dir__(self):
+        k = list(self._nodes.keys())
+        k.sort()
+        return k
+
+    def __repr__(self):
+        return "VoodooSuperRoot{}"

@@ -19,7 +19,7 @@ class test_node_based_access(unittest.TestCase):
         self.root = self.subject.get_node()
 
     def test_root(self):
-        self.assertEqual(repr(self.root), 'VoodooRoot{} YANG Module: integrationtest')
+        self.assertEqual(repr(self.root), 'VoodooNodeRoot{} YANG Module: integrationtest')
 
         expected_children = ['bronze', 'container_and_lists', 'default', 'dirty_secret', 'empty',
                              'hyphen_leaf', 'imports_in_here', 'list_to_leafref_against', 'lista', 'morecomplex',
@@ -214,3 +214,17 @@ class test_node_based_access(unittest.TestCase):
         outside_b.insidelist.create('3')
         self.assertEqual(len(outside_a.insidelist), 2)
         self.assertEqual(len(outside_b.insidelist), 1)
+
+    def test_super_root(self):
+        session1 = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
+        session1.connect('integrationtest')
+
+        session2 = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
+        session2.connect('integrationtest')
+
+        super_root = yangvoodoo.DataAccess.get_root(session1, 'web')
+        super_root.attach_node_from_session(session2, 'morecomplex')
+
+        self.assertEqual(dir(super_root), ['morecomplex', 'web'])
+        self.assertEqual(repr(super_root.morecomplex), 'VoodooContainer{/integrationtest:morecomplex}')
+        self.assertEqual(repr(super_root.web), 'VoodooContainer{/integrationtest:web}')

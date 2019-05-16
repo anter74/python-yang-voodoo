@@ -125,7 +125,7 @@ This project was written around sysrepo for data storage, however there is no st
 
 Implementing a new data_abastraction_layer is as simple as implementing the following methods.
 
- - **connect()** - connects to the datastore, it is expected that the datastore may provide and track a specific connection providing *transactionality*
+ - **connect()** - connects to the datastore, it is expected that the datastore may provide and track a specific connection providing *transactionality*. Takes in the arguments of `yang module` and `yang_location`
  - **validate()** - validate pending changes are valid based on the full data of the entire datastore (VoodooNode is limited to validating the yang schema itself).
  - **refresh()** - refresh the data from the datastore, the datastore may provide us with the data present in the datastore at the time we first connected, or it may refresh in realtime everytime we access a given set of data.
  - **commit()** - commit pending datastore.
@@ -136,7 +136,7 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **gets_unsorted(xpath, ignore_empty_lists)** - get a list of XPATH's representing the items in the list, it is expected the datastore will maintain the order the user inserts the data and this MUST return the data in that order. If the list is empty this method will normally raise an ListDoesNotContainElement exception.
  - **gets_unsorted(xpath, ignore_empty_lists)** - as gets_unsorted, but the results will be sorted by XPATH.
  - **has_item(xpath)**- returns True if the item has been populated with data.
- - **create(xpath)** - create a list item
+ - **create(xpath, key_tuple, value_tuple, yang_module)** - create a list item
  - **create_container(xpath)** - if a container is a presence container explicitly create the container.
  - **set(xpath, value, valuetype)** - sets the value of a specific xpath (supported for yang leaves). The valuetype is an integer (defined in Types.py/DATA_ABSTRACTION_MAPPING) based on the effective type of the yang field (*based on fuzzy matching in the case of unions*).
 
@@ -208,9 +208,8 @@ When running `get_node(yang_module)` the directory `../yang` will be used to fin
 ```python
 import yangvoodoo
 session = yangvoodoo.DataAccess()
-session.connect()
-# this will look in ../yang for the yang module integrationtest.yang and associated dependencies.
-root = session.get_node('integrationtest')
+session.connect('integrationtest', yang_location='../yang')
+root = session.get_node()
 
 # Set a value
 root.simpleleaf = 'abc'

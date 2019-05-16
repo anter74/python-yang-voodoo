@@ -42,7 +42,8 @@
 - Packaging of the sysrepo into a deb for the minimal image is very naive.
 - ~~Implement disconnect() for the data_abstraction_layer.~~
 - Stubdal - should it satisfy default values - it probably can by looking at libyang but that may be quite intensive.
- - Remove warnings for the connect/get_node change of behaviour.
+- ~~Remove warnings for the connect/get_node change of behaviour.~~
+- Think about multiple top-level nodes appearing as multiple sysrepo backend datastore session. This could just be inevitable based on the way sysrepo operates.
 
 
 # Limitations:

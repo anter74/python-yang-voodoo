@@ -131,6 +131,46 @@ class DataAccess:
         except Exception:
             pass
 
+    @classmethod
+    def get_root(self, session, attribute):
+        """
+        A simple wrapper which has very little intelligence other than the ability to hold other
+        VoodooNode's
+
+        Return a root container (SuperRoot), this is intended for cases where the are multiple
+        sibling YANG models each describing unique top-level nodes.
+
+        i.e.
+            recipes.yang       has a list of recipes
+            ingrredients.yang  has a list of ingredients
+
+        We can do the following:
+            recipe_session = yangvoodoo.DataAccess()
+            recipe_session.connect('recipes')
+
+            ingredients_session = yangvoodoo.DataAccess()
+            ingredients_session.connect('recipes')
+
+            root = yangvoodoo.DataAccess.get_root(recipe_session, 'recipes')
+            root.attach_node_from_session(ingredients_session, 'ingredients')
+
+        Now we have root.ingredients and root.recipes from their respective YANG models, however they
+        are independent instances and are validated(), committed() in their own ways. They currently
+        will use their own individual datastores.
+
+        It is also possible to use this method to restrict visibility.
+
+        OUT OF SCOPE (all left to the consumer right now):
+         - sharing datastores
+         - sharing of session (perhaps useful to restrict visibility to two top-level nodes)
+         - ordering of commits (session a creates new data that session b requires for a leafref)
+         - rollbacks if one commit fails.
+        """
+
+        super_root = yangvoodoo.VoodooNode.SuperRoot()
+        super_root.attach_node_from_session(session, attribute)
+        return super_root
+
     def get_node(self):
         """
         Instantiate Node-based access to the data stored in the backend defined by a yang
