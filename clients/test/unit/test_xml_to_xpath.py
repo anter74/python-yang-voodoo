@@ -5,6 +5,8 @@ from mock import Mock
 
 class test_xml_to_xpath(unittest.TestCase):
 
+    maxDiff = 23948230
+
     def setUp(self):
         self.maxDiff = None
         self.session = yangvoodoo.DataAccess()
@@ -185,25 +187,22 @@ class test_xml_to_xpath(unittest.TestCase):
           </container-and-lists>
         </integrationtest>
         """
+
         # Act
         results = self.subject._convert_xml_to_xpaths(self.root, template)
-        expected_answer = {
-            ("/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']"):
-            (None, 2),
-            ("/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']"
-             "/integrationtest:description"): ('FIVE', 18),
-            ("/integrationtest:container-and-lists/integrationtest:multi-key-list[integrationtest:A='a']"
-             "[integrationtest:B='b']"): (None, 2),
-            ("/integrationtest:container-and-lists/integrationtest:multi-key-list[integrationtest:A='a']"
-             "[integrationtest:B='b']/integrationtest:inner/integrationtest:level3list[integrationtest:"
-             "level3key='33333']"): (None, 2),
-            ("/integrationtest:container-and-lists/integrationtest:multi-key-list[integrationtest:A='a']"
-             "[integrationtest:B='b']/integrationtest:inner/integrationtest:level3list[integrationtest:"
-             "level3key='33333']/integrationtest:level3-nonkey"): ('three', 18),
-            ("/integrationtest:container-and-lists/integrationtest:multi-key-list[integrationtest:A='a']"
-             "[integrationtest:B='b']/integrationtest:level2list[integrationtest:level2key='22222']"): (None, 2)
-        }
-        self.assertEqual(results, expected_answer)
+
+        l = "/integrationtest:container-and-lists/integrationtest:numberkey-list"
+        l2 = "/integrationtest:container-and-lists/integrationtest:multi-key-list"
+        l2 = l2 + "[integrationtest:A='a'][integrationtest:B='b']"
+        expected_results = {
+            l + "[integrationtest:numberkey='5']": (None, 2),
+            l + "[integrationtest:numberkey='5']/integrationtest:description": ('FIVE', 18),
+            l2 + "": (None, 2),
+            l2 + "/integrationtest:inner/integrationtest:level3list[integrationtest:level3key='33333']": (None, 2),
+            l2 + "/integrationtest:inner/integrationtest:level3list/integrationtest:level3-nonkey": ('three', 18),
+            l2 + "/integrationtest:level2list[integrationtest:level2key='22222']": (None, 2),
+            l2 + "/integrationtest:level2list[integrationtest:level2key='20000']": (None, 2),
+        }        # Assert
 
     def test_from_template_with_only_keys(self):
         # Build
@@ -229,41 +228,78 @@ class test_xml_to_xpath(unittest.TestCase):
              "[integrationtest:B='b']"): (None, 2),
         }
         self.assertEqual(results, expected_answer)
-    #
-    # def test_from_template_with_only_two_list_items(self):
-    #     # Build
-    #
-    #     template = """<integrationtest>
-    #       <container-and-lists>
-    #         <numberkey-list>
-    #           <numberkey>5</numberkey>
-    #         </numberkey-list>
-    #         <numberkey-list>
-    #           <numberkey>6</numberkey>
-    #         </numberkey-list>
-    #       </container-and-lists>
-    #     </integrationtest>
-    #     """
-    #     # Act
-    #     results = self.subject._convert_xml_to_xpaths(self.root, template)
-    #     expected_answer = {
-    #         ("/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']"):
-    #         (None, 2),
-    #         ("/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='6']"):
-    #         (None, 2),
-    #     }
-    #     self.assertEqual(results, expected_answer)
 
-    def test_from_template_with_jinja2_processing(self):
-        # Build
-        self.root.simpleleaf = 'GOODBYE'
+    def test_from_template_with_multiple_entries_in_same_list(self):
+        template = """<integrationtest>
+          <container-and-lists>
+            <numberkey-list>
+              <numberkey>5</numberkey>
+            </numberkey-list>
+            <numberkey-list>
+              <numberkey>2</numberkey>
+            </numberkey-list>
+            <numberkey-list>
+              <numberkey>6</numberkey>
+              <description>SIX</description>
+            </numberkey-list>
+            <numberkey-list>
+              <numberkey>7</numberkey>
+            </numberkey-list>
+          </container-and-lists>
+        </integrationtest>
+        """
 
         # Act
-        self.root.from_template('test/unit/test.xml')
+        results = self.subject._convert_xml_to_xpaths(self.root, template)
 
         # Assert
-        self.assertEqual(self.root.simpleleaf, 'HELLO')
-        self.assertEqual(self.root.default, 'GOODBYE')
+        l = "/integrationtest:container-and-lists/integrationtest:numberkey-list"
+        expected_results = {
+            l + "[integrationtest:numberkey='5']": (None, 2),
+            l + "[integrationtest:numberkey='5'][integrationtest:numberkey='2']": (None, 2),
+            l + "[integrationtest:numberkey='2'][integrationtest:numberkey='6']": (None, 2),
+            l + "[integrationtest:numberkey='6']/integrationtest:description": ('SIX', 18),
+            l + "[integrationtest:numberkey='6'][integrationtest:numberkey='7']": (None, 2),
+        }
+
+        self.assertDictEqual(results, expected_results)
+
+
+def test_from_template_with_only_two_list_items(self):
+    # Build
+
+    template = """<integrationtest>
+      <container-and-lists>
+        <numberkey-list>
+          <numberkey>5</numberkey>
+        </numberkey-list>
+        <numberkey-list>
+          <numberkey>6</numberkey>
+        </numberkey-list>
+      </container-and-lists>
+    </integrationtest>
+    """
+    # Act
+    results = self.subject._convert_xml_to_xpaths(self.root, template)
+    expected_answer = {
+        ("/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']"):
+        (None, 2),
+        ("/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='6']"):
+        (None, 2),
+    }
+    self.assertEqual(results, expected_answer)
+
+
+def test_from_template_with_jinja2_processing(self):
+    # Build
+    self.root.simpleleaf = 'GOODBYE'
+
+    # Act
+    self.root.from_template('test/unit/test.xml')
+
+    # Assert
+    self.assertEqual(self.root.simpleleaf, 'HELLO')
+    self.assertEqual(self.root.default, 'GOODBYE')
 
 
 class dummy_iterator:

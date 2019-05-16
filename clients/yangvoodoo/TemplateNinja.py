@@ -48,6 +48,10 @@ class TemplateNinja:
             path = remove_squares.sub('', path)
             if node == '.':
                 continue
+
+            print('there are %s paths in the list_predicates cache' % (len(list_predicates)))
+            for p in list_predicates:
+                print(p, list_predicates[p])
             #
             # # The schema never ever takes predicates in the path
             node_schema = root._get_schema_of_path(path)
@@ -58,18 +62,20 @@ class TemplateNinja:
             value_path = self._find_predicate_match(list_predicates, value_path)
 
             if node_schema.nodetype() == 16:
-                predicates = self._lookahead_for_list_keys(node_schema, xmldoc_iterator, module, value_path, list_predicates)
+                # believe this to be safe.
+                predicates = self._lookahead_for_list_keys(node_schema, xmldoc_iterator, module, path, list_predicates)
                 xpaths[value_path + predicates] = (None, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['LIST'])
 
             if node_schema.nodetype() == 1 and not node_schema.presence():
                 continue
+
             if node_type == 4 or (node_type == 1 and node_schema.presence()):
                 type = root._get_yang_type(node_schema.type(), child.text, path)
                 xpaths[value_path] = (child.text, type)
 
         return xpaths
 
-    def _lookahead_for_list_keys(self, node_schema, xmldoc_iterator, module, value_path, list_predicates):
+    def _lookahead_for_list_keys(self, node_schema, xmldoc_iterator, module, path, list_predicates):
         """
         In the payloads for a NETCONF if we have the list /simplelist with a key of simplekey
         and a leaf of nonleafkey.
@@ -109,8 +115,22 @@ class TemplateNinja:
             if not next_xml_node.tag == key_required.name():
                 raise yangvoodoo.Errors.XmlTemplateParsingBadKeys(key_required.name(), next_xml_node.tag)
             predicates = predicates + "[" + module+':'+key_required.name() + "='" + next_xml_node.text + "']"
-        list_predicates[value_path] = predicates
+        # Note: this is the only place we set new predicates into the prefix matching dict
 
+        list_predicates[path] = predicates
+
+        """
+        The result of this preidctes above is is ok ....
+        And is respondible for working what to do with mlutple lists
+                before
+                after [integrationtest:numberkey='5']
+
+                before
+                after [integrationtest:numberkey='2']
+
+                before
+                after [integrationtest:numberkey='6']
+        """
         return predicates
 
     def _find_predicate_match(self, list_predicates, path):
@@ -139,11 +159,34 @@ class TemplateNinja:
 
         The value path is returned.
         """
+
+        """
+        In the broken case
+        -------------------------------------------------------------------------
+/integrationtest:container-and-lists
+-------------------------------------------------------------------------
+/integrationtest:container-and-lists/integrationtest:numberkey-list
+-------------------------------------------------------------------------
+/integrationtest:container-and-lists/integrationtest:numberkey-list
+POTENTIAL /integrationtest:container-and-lists/integrationtest:numberkey-list
+          /integrationtest:container-and-lists/integrationtest:numberkey-list
+-------------------------------------------------------------------------
+/integrationtest:container-and-lists/integrationtest:numberkey-list
+POTENTIAL /integrationtest:container-and-lists/integrationtest:numberkey-list
+          /integrationtest:container-and-lists/integrationtest:numberkey-list
+POTENTIAL /integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']
+          /integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']
+/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']
+/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5'][integrationtest:numberkey='2']
+/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5'][integrationtest:numberkey='2'][integrationtest:numberkey='6']
+        """
+
         value_path = path
         for predicate in list_predicates:
             if predicate in value_path:  # and predicate in list_predicates:
                 start_pos = value_path.find(predicate)
                 end_pos = start_pos + len(predicate)
                 value_path = value_path[start_pos:start_pos+len(predicate)] + list_predicates[predicate] + value_path[end_pos:]
+                last_answer = value_path[start_pos:start_pos+len(predicate)] + list_predicates[predicate] + value_path[end_pos:]
 
         return value_path
