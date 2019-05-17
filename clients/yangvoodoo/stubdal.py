@@ -29,7 +29,9 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
 
     """
-    REGEX_LIST_XPATH = re.compile('(.*:[A-Za-z0_-]+)(.*)')
+    # REGEX_LIST_XPATH = re.compile('(.*:[A-Za-z0_-]+)(.*)')
+
+    LIST_POINTER = 1
 
     def dump_xpaths(self):
         new_dict = {}
@@ -59,24 +61,55 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     def create_container(self, xpath):
         self.stub_store[xpath] = True
 
-    def _list_xpath(self, xpath):
-        return self.REGEX_LIST_XPATH.sub(r'\g<1>', xpath)
+    def _list_xpath(self, xpath, ignore_empty_lists=False):
+        """
+        Convert a list operation into a path without the last set of predictes
 
-    def create(self, xpath, keys, values, module):
+        This is specific to the way we organise lists in the stub node.
+        """
+        if xpath not in self.stub_store:
+            if ignore_empty_lists:
+                return None
+            raise ValueError('Path does not exist %s' % (xpath))
+        (itemtype, item) = self.stub_store[xpath]
+        if not itemtype == self.LIST_POINTER:
+            if ignore_empty_lists:
+                return None
+            raise ValueError('Path is not a list %s' % (xpath))
+
+        return item
+
+    def create(self, xpath, keys=[], values=[], module=None):
         """
         The xpath coming in should include the full predicates
             /integrationtest:simplelist[integrationtest:simplekey='sdf']
 
-        The keys/values are used to create
+        However in the stub to speed up iteration we create a structure
+            self.stub_store[xpath_without_predicates]
+
+        In the stub we create a python list, this holds precise XPATH's to each list element
+            /integrationtest:simplelist = []
+        The keys/values are used to create, this is a specific list element for each key and matches sysrepo
             /integrationtest:simplelist[integrationtest:simplekey='sdf']/integrationtest:<key0> = <value0>
+
+        We also create the following keys- pointing back the list without any predicates
+            "/integrationtest:simplelist[integrationtest:simplekey='sdf']": = (1, "list path")
+
         """
-        list_xpath = self._list_xpath(xpath)
+        predicates = ""
+        for index in range(len(keys)):
+            (value, valuetype) = values[index]
+            predicates = predicates + "["+keys[index]+"='"+str(value)+"']"
+
+        list_xpath = xpath.replace(predicates, '')
         if list_xpath not in self.stub_store:
             self.stub_store[list_xpath] = []
         self.stub_store[list_xpath].append(xpath)
+        self.stub_store[xpath] = (self.LIST_POINTER, list_xpath)
 
         for index in range(len(keys)):
-            self.stub_store[list_xpath + "/" + module + ":" + keys[index]] = values[index]
+            (value, valuetype) = values[index]
+            self.set(xpath + "/" + module+":"+keys[index], value, valuetype)
 
     def add(self, xpath, value, valtype):
         if xpath not in self.stub_store:
@@ -98,22 +131,16 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             yield item
 
     def has_item(self, xpath):
-        list_xpath = self._list_xpath(xpath)
+        list_xpath = self._list_xpath(xpath, ignore_empty_lists=True)
         if list_xpath in self.stub_store:
             if xpath in self.stub_store[list_xpath]:
                 return True
         return False
 
     def set(self, xpath, value, valtype=0):
-        if xpath[-1] == '[':
-            if xpath not in self.stub_store:
-                raise ValueError('Tried to set data on a listelement before it was created:\n%s' % (xpath))
-            self.stub_store[xpath].append(value)
-        else:
-            self.stub_store[xpath] = value
+        self.stub_store[xpath] = value
 
-    def gets_sorted(self, xpath, ignore_empty_lists=False):
-        list_xpath = self._list_xpath(xpath)
+    def gets_sorted(self, list_xpath, ignore_empty_lists=False):
         if list_xpath in self.stub_store:
             items = []
             for item in self.stub_store[list_xpath]:
@@ -122,8 +149,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             for item in items:
                 yield item
 
-    def gets_unsorted(self, xpath, ignore_empty_lists=False):
-        list_xpath = self._list_xpath(xpath)
+    def gets_unsorted(self, list_xpath, ignore_empty_lists=False):
         if list_xpath in self.stub_store:
             items = []
             for item in self.stub_store[list_xpath]:
@@ -139,15 +165,17 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         return self.stub_store[xpath]
 
     def delete(self, xpath):
-        if xpath not in self.stub_store:
-            list_xpath = self._list_xpath(xpath)
-            if list_xpath not in self.stub_store:
-                raise yangvoodoo.Errors.BackendDatastoreError([('path does not exist - cannot get', xpath)])
-            elif xpath not in self.stub_store[list_xpath]:
-                raise yangvoodoo.Errors.BackendDatastoreError([('path does not exist - cannot get', xpath)])
-            else:
-                self.stub_store[list_xpath].remove(xpath)
-                return True
+        if xpath in self.stub_store:
+            # Logic for lists
+            if xpath[-1] == "]":
+                list_xpath = self._list_xpath(xpath)
+                if list_xpath not in self.stub_store:
+                    raise yangvoodoo.Errors.BackendDatastoreError([('path does not exist - cannot get', xpath)])
+                elif xpath not in self.stub_store[list_xpath]:
+                    raise yangvoodoo.Errors.BackendDatastoreError([('path does not exist - cannot get', xpath)])
+                else:
+                    self.stub_store[list_xpath].remove(xpath)
+                    return True
 
         del self.stub_store[xpath]
         return True

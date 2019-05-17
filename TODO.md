@@ -4,6 +4,9 @@
   - VoodooNode.get_keys
   - yangvoodoo\_lookahead_for_list_keys
   - leaflist iterator \__delitem__
+- libyang provides us with a datapath which provides us the XPATH format reuqired ready for string substitution.
+  - "/integrationtest:container-and-lists/lots-of-keys[A='%s'][Z='%s'][Y='%s'][X='%s'][B='%s'][C='%s']"
+  - there is some XPATH escaping with single quotes still to cover off
 - ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
 - ~~allow the location of yang's to be specified.~~
 - enumerations - should really be returned as an object not a string.
@@ -46,12 +49,16 @@
 - ~~Remove warnings for the connect/get\_node change of behaviour.~~
 - Think about multiple top-level nodes appearing as multiple sysrepo backend datastore session. This could just be inevitable based on the way sysrepo operates.
 - `session.commit()` with no changes times out
+- STUB node still not correct
+   - need a fix for template applier....
+   - when stub creates list keys it isn't whacking predicates on
+
 
 # Limitations:
 
 The following list of known limitations are not planned to be handled until there is a strong use case, they are viewd as corner cases at this moment in time.
 
-- Types, binary, bits, identity
+- Types, binary, bits, identity, feature
   - `Types.py` will require updates, `yangvoodoo/__init__.py` and potentially `VoodooNode/__getattr__` and `VoodooNode/_get_yang_type`
 - Union's containing leafref's
   - This will lead to `VoodooNode/_get_yang_type` needing updates to recursively follow unions and leafrefs.

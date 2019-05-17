@@ -617,6 +617,27 @@ module integrationtest {
     leaf just-a-key {
       type string;
     }
+    list lots-of-keys {
+      key "A Z Y X B C";
+      leaf "C" {
+        type string;
+      }
+      leaf "B" {
+        type string;
+      }
+      leaf "X" {
+        type string;
+      }
+      leaf "A" {
+        type string;
+      }
+      leaf "Z" {
+        type string;
+      }
+      leaf "Y" {
+        type string;
+      }
+    }
     list multi-key-list {
       key "A B";
 

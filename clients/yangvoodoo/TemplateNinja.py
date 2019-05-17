@@ -2,6 +2,27 @@ import re
 import yangvoodoo
 from jinja2 import Template
 from lxml import etree
+from yangvoodoo import Common
+
+
+class PlainObject:
+    pass
+
+
+class PlainIterator:
+
+    def __init__(self, children):
+        self.children = children
+        self.index = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if len(self.children) > self.index:
+            self.index = self.index + 1
+            return self.children[self.index-1]
+        raise StopIteration
 
 
 class TemplateNinja:
@@ -17,182 +38,108 @@ class TemplateNinja:
             t = Template(file_handle.read())
             xmlstr = t.render(variables)
 
-        xpaths = self._convert_xml_to_xpaths(root, xmlstr)
+        dal = root.__dict__['_context'].dal
+        yangctx = root.__dict__['_context'].schemactx
+        module = root.__dict__['_context'].module
 
-        for xpath in xpaths:
-            if isinstance(xpaths[xpath], list):
-                # At the moment lists are only used for leaf-lists
-                for (value, valuetype, nodetype) in xpaths[xpath]:
-                    root.__dict__['_context'].dal.add(xpath, value, valuetype)
-            else:
-                (value, valuetype, nodetype) = xpaths[xpath]
-                if nodetype == 16:  # list
-                    root.__dict__['_context'].dal.create(xpath)
-                elif value:
-                    root.__dict__['_context'].dal.set(xpath, value, valuetype)
+        self._import_xml_to_datastore(module, yangctx, xmlstr, dal)
 
-    def _convert_xml_to_xpaths(self, root, xmlstr):
+    def _import_xml_to_datastore(self, module, yangctx, xmlstr, dal):
         """
-        TODO: move these methods into a new utility class.
+        The state object contains flags to help us traverse and build paths through
+        the xmldocument.
         """
-        xpaths = {}
+        state = PlainObject()
+        state.path = []
+        state.spath = []
+        state.next_time_loop = ""
+        state.module = module
+        state.yangctx = yangctx
+        state.dal = dal
+
         xmldoc = etree.fromstring(xmlstr)
-        tree = etree.ElementTree(xmldoc)
+        self._recurse_xmldoc(xmldoc,  state)
 
-        module = xmldoc.tag
-        path = "//"
-        xmldoc_iterator = xmldoc.iter()
+    def _recurse_xmldoc(self,  xmldoc, state):
+        """
+        Each time we _recurse_xmldoc we will take a list of etree nodes.
+        We will keep building state.path up with the current path, as we come back up we will
+        pop off the end of the path. (Hopefully this gives us consistent lists throughout)
 
-        remove_squares = re.compile(r'\[\d+\]', re.UNICODE)
-        list_predicates = {}
+        We have to maintatin two lists of paths, one with predicates (path) and one without (spath)
+        they are used to interact with the datstore and libyang respectively.
+        """
+        children = PlainIterator(xmldoc.getchildren())
+        for child in children:
 
-        for child in xmldoc_iterator:
-            node = tree.getelementpath(child)
-            path = '/' + node
-            path = path.replace('/', '/' + module + ':')
-            path = remove_squares.sub('', path)
-            if node == '.':
+            if state.next_time_loop:
+                (list_nodeschema, list_path) = state.next_time_loop
+                state.next_time_loop = None
+                (predicates, keys, values) = self._build_predicates(list_nodeschema, list_path, child, children, state)
+                state.dal.create(list_path + predicates, keys, values, state.module)
+                state.path[-1] = state.path[-1] + predicates
                 continue
 
-            node_schema = root._get_schema_of_path(path)
+            this_node = state.module + ':' + child.tag
+            this_path = ''.join(state.spath) + '/' + this_node
+            value_path = ''.join(state.path) + '/' + this_node
+
+            node_schema = next(state.yangctx.find_path(this_path))
             node_type = node_schema.nodetype()
 
-            value_path = path
-
-            value_path = self._find_predicate_match(list_predicates, value_path)
-
-            if node_schema.nodetype() == 16:
-                # believe this to be safe.
-                predicates = self._lookahead_for_list_keys(node_schema, xmldoc_iterator, module, path, list_predicates)
-                xpaths[value_path + predicates] = (None, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['LIST'], node_type)
-
-            if node_schema.nodetype() == 1 and not node_schema.presence():
-                continue
-
-            if node_type == 4 or (node_type == 1 and node_schema.presence()):
-                type = root._get_yang_type(node_schema.type(), child.text, path)
-                xpaths[value_path] = (child.text, type, node_type)
-
+            if node_type == 1:  # Container / Lis
+                pass
+            elif node_type == 16:
+                state.next_time_loop = (node_schema, this_path)
             elif node_type == 8:
-                type = root._get_yang_type(node_schema.type(), child.text, path)
-                if not value_path in xpaths:
-                    xpaths[value_path] = []
-                xpaths[value_path].append((child.text, type, node_type))
+                yang_type = Common.Utils.get_yang_type(node_schema.type(), child.text, this_path)
+                state.dal.add(value_path, Common.Utils.convert_string_to_python_val(child.text, yang_type), yang_type)
+            else:
+                yang_type = Common.Utils.get_yang_type(node_schema.type(), child.text, this_path)
+                state.dal.set(value_path, Common.Utils.convert_string_to_python_val(child.text, yang_type), yang_type)
 
-        return xpaths
+            state.path.append('/' + this_node)
+            state.spath.append('/' + this_node)
 
-    def _lookahead_for_list_keys(self, node_schema, xmldoc_iterator, module, path, list_predicates):
+            self._recurse_xmldoc(child, state)
+
+            state.path.pop()
+            state.spath.pop()
+
+        # for child in xmldoc.getchildren():
+
+    def _build_predicates(self, node_schema, this_path,  child, children, state):
         """
-        In the payloads for a NETCONF if we have the list /simplelist with a key of simplekey
-        and a leaf of nonleafkey.
+        Return a tuple of:
+         - predicate string for the list element
+         - tuple of keys
+         - tuple of values with the associated value type)
 
-        The XML payload would look like
-
-        <integrationtest>
-            <simplelist>
-                <simplekey>ThisIsTheKey</simplekey>
-                <nonleafkey>NotTheKey</nonleafkey>
-            </simplelist>
-        </integrationtest>
-
-        The XPATH for the LIST would be
-
-            /integrationtest:simplelist[integrationtest:simplekey]
-
-        The XPATH for the non leaf key would be
-
-            /integrationtest:simplelist[integrationtest:simplekey]/integrationtest:nonleafkey
-
-
-        Given a none_schema, this method will based on the YANG schema look for the required number
-        of keys and attempt to read them from the XML.
-
-        If we have the right number of keys we will add an entry to list_predicates
-
-            list_predicates["/integrationtest:simplelist"] = "[integrationtest:simplekey]"
+        Example:
+         ("[integrationtest:numberkey='5']", ['numberkey'], [(5, 19)])
 
         """
+
+        keys = []
+        values = []
+        value_types = []
         predicates = ""
-        for key_required in node_schema.keys():
-            try:
-                next_xml_node = next(xmldoc_iterator)
-            except StopIteration:
-                raise yangvoodoo.Errors.XmlTemplateParsingBadKeys(key_required.name(), None)
-            if not next_xml_node.tag == key_required.name():
-                raise yangvoodoo.Errors.XmlTemplateParsingBadKeys(key_required.name(), next_xml_node.tag)
-            predicates = predicates + "[" + module+':'+key_required.name() + "='" + next_xml_node.text + "']"
-        # Note: this is the only place we set new predicates into the prefix matching dict
+        first_key = True
+        for k in node_schema.keys():
+            keys.append(k.name())
 
-        list_predicates[path] = predicates
+            if first_key:
+                xml_key = child
+                first_key = False
+            else:
+                xml_key = next(children)
+            if not xml_key.tag == k.name():
+                raise ValueError('Expecting key name %s, got %s at %s' % (k.name(), xml_key.tag, this_path))
+            # next_xml_node = next(children)
+            # print(next_xml_node.tag, k.name())
+            yang_type = Common.Utils.get_yang_type(k.type())
+            # key_node_schema = next(yangctx.find_path(this_path + "/" + module+":"+k.name()))
+            values.append((Common.Utils.convert_string_to_python_val(xml_key.text, yang_type), yang_type))
 
-        """
-        The result of this preidctes above is is ok ....
-        And is respondible for working what to do with mlutple lists
-                before
-                after [integrationtest:numberkey='5']
-
-                before
-                after [integrationtest:numberkey='2']
-
-                before
-                after [integrationtest:numberkey='6']
-        """
-        return predicates
-
-    def _find_predicate_match(self, list_predicates, path):
-        """
-        Finds if the leading part of our path has any predicates and tries to add them in.
-
-        We expect to take in a path without any predicates (the input path), our goal is to
-        return a value_path with the right predicates stitched in.
-        e.g. /integrationtest:container-and-lists/integrationtest:multi-key-list/integrationtest:level2list
-
-        In this case we have two lists, firstly 'multi-key-list' and secondly 'level2list'
-
-        The list of predicates in list_predicates should contain, keys
-         key: /integrationtest:container-and-lists/integrationtest:multi-key-list
-         value: [integrationtest:A='a'][integrationtest:B='b']
-
-        First time around the loop we will start tackle the first set of predicates for multi-key-list
-         (i.e. we stitch in [integrationtest:A='a'][integrationtest:B='b'])
-
-        Second time we lookup for a matching path with the result of our first loop
-           ("/integrationtest:container-and-lists/integrationtest:multi-key-list[integrationtest:A='a']"
-           "[integrationtest:B='b']/integrationtest:level2list")
-
-        This should give us a new bit of predicates for the next list in the chain.
-        "[integrationtest:level2key='22222']"
-
-        The value path is returned.
-        """
-
-        """
-        In the broken case
-        -------------------------------------------------------------------------
-/integrationtest:container-and-lists
--------------------------------------------------------------------------
-/integrationtest:container-and-lists/integrationtest:numberkey-list
--------------------------------------------------------------------------
-/integrationtest:container-and-lists/integrationtest:numberkey-list
-POTENTIAL /integrationtest:container-and-lists/integrationtest:numberkey-list
-          /integrationtest:container-and-lists/integrationtest:numberkey-list
--------------------------------------------------------------------------
-/integrationtest:container-and-lists/integrationtest:numberkey-list
-POTENTIAL /integrationtest:container-and-lists/integrationtest:numberkey-list
-          /integrationtest:container-and-lists/integrationtest:numberkey-list
-POTENTIAL /integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']
-          /integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']
-/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5']
-/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5'][integrationtest:numberkey='2']
-/integrationtest:container-and-lists/integrationtest:numberkey-list[integrationtest:numberkey='5'][integrationtest:numberkey='2'][integrationtest:numberkey='6']
-        """
-
-        value_path = path
-        for predicate in list_predicates:
-            if predicate in value_path:  # and predicate in list_predicates:
-                start_pos = value_path.find(predicate)
-                end_pos = start_pos + len(predicate)
-                value_path = value_path[start_pos:start_pos+len(predicate)] + list_predicates[predicate] + value_path[end_pos:]
-                last_answer = value_path[start_pos:start_pos+len(predicate)] + list_predicates[predicate] + value_path[end_pos:]
-
-        return value_path
+            predicates = predicates + Common.Utils.encode_xpath_predicate(xml_key.tag, xml_key.text)
+        return (predicates, keys, values)

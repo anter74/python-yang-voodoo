@@ -32,6 +32,32 @@ class BaseDataAbstractionLayer:
         """
         pass
 
+    def load_xpaths(self, xpaths):
+        """
+        Given a dictionary of XPATH's import them to the datastore.
+
+        xpath[key] = (value, valuetype, nodetype)
+
+        valuetype  - see Types.DATA_ABSTRACTION_MAPPING
+        nodetype   - see Types.LIBYANG_NODETYPE
+        """
+        for xpath in xpaths:
+            (value, valuetype, nodetype) = xpaths[xpath]
+            if isinstance(value, list):
+                for (value, valuetype, nodetype) in xpaths[xpath]:
+                    print('INNIN Leaf list add required', xpath)
+                    self.add(xpath, value, valuetype)
+            else:
+                print('INNIN', xpath, nodetype)
+                (value, valuetype, nodetype) = xpaths[xpath]
+                if nodetype == 16:  # list
+
+                    self.create(xpath)
+                    print('INNIN - list create', xpath)
+                elif value:
+                    print('INNIN - value', xpath, value)
+                    self.set(xpath, value, valuetype)
+
     def connect(self, tag='client'):
         raise NotImplementedError('connect not implemented')
 
