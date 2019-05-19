@@ -1,7 +1,7 @@
 import libyang
 import yangvoodoo.Errors
 from yangvoodoo import TemplateNinja
-from yangvoodoo import Types
+from yangvoodoo import Common
 
 
 class Context:
@@ -178,82 +178,6 @@ class Node:
 
         raise ValueError('Get - not sure what the type is...%s' % (node_type))
 
-    def _get_yang_type(self, node_schema, value=None, xpath=None):
-        """
-        Map a given yang-type (e.g. string, decimal64) to a type code for the backend.
-
-        Sysrepo has a few cases- centered around the sr.Val() class
-         1) For most types we can provide just the value
-         2) For enumerations we must provide sr.SR_ENUM_T
-         3) For uint32 (and other uints) we need to provide the type still (we can form the Val object without, but
-            sysrepo will not accept the data)
-         4) For decimal64 we must not provide any type
-         5) As long as a uint8/16/32/64 int8/16/32/64 fits the range constraints sysrepo doesn't strictly enforce it
-            (when considering a union of all 8 types). For simple leaves sysrepo is strict.
-
-        Libyang gives us the following type from
-          node = next(yangctx.find_path(`'/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf666'`))
-          node.type().base()
-
-
-        Unless we find a Union (11) or leafref (9) then we can just map directly.
-        """
-        base_type = node_schema.base()
-        if base_type in Types.LIBYANG_MAPPING:
-            return Types.LIBYANG_MAPPING[base_type]
-
-        if base_type == 9:  # LEAF REF
-            base_type = node_schema.leafref_type().base()
-            node_schema = node_schema.leafref_type()
-            if base_type in Types.LIBYANG_MAPPING:
-                return Types.LIBYANG_MAPPING[base_type]
-
-        if base_type == 11:  # Uninon
-            """
-            Note: for sysrepo if we are a union of enumerations and other types
-            then we must set the data as sr.SR_ENUM_T if it matches the enumeration.
-            e.g. leaf666/type6
-            """
-
-            u_types = []
-            for union_type in node_schema.union_types():
-                if union_type.base() == 11:
-                    raise NotImplementedError('Union containing unions not supported (see README.md)')
-                elif union_type.base() == 9:
-                    raise NotImplementedError('Union containing leafrefs not supported (see README.md)')
-                elif union_type.base() == 6:
-                    # TODO: we need to lookup enumerations
-                    for (val, validx) in union_type.enums():
-                        if str(val) == str(value):
-                            return Types.DATA_ABSTRACTION_MAPPING['ENUM']
-                u_types.append(union_type.base())
-
-            if 10 in u_types and isinstance(value, str):
-                return Types.DATA_ABSTRACTION_MAPPING['STRING']
-            elif isinstance(value, float):
-                return Types.DATA_ABSTRACTION_MAPPING['DECIMAL64']
-            if isinstance(value, int):
-                if 12 in u_types and value >= -127 and value <= 128:
-                    return Types.DATA_ABSTRACTION_MAPPING['INT8']
-                elif 13 in u_types and value >= 0 and value <= 255:
-                    return Types.DATA_ABSTRACTION_MAPPING['UINT8']
-                elif 14 in u_types and value >= -32768 and value <= 32767:
-                    return Types.DATA_ABSTRACTION_MAPPING['INT16']
-                elif 15 in u_types and value >= 0 and value <= 65535:
-                    return Types.DATA_ABSTRACTION_MAPPING['UINT16']
-                elif 16 in u_types and value >= -2147483648 and value <= 2147483647:
-                    return Types.DATA_ABSTRACTION_MAPPING['INT32']
-                elif 17 in u_types and value >= 0 and value <= 4294967295:
-                    return Types.DATA_ABSTRACTION_MAPPING['UINT32']
-                elif 19 in u_types and value >= 0:
-                    return Types.DATA_ABSTRACTION_MAPPING['UINT64']
-                else:
-                    return Types.DATA_ABSTRACTION_MAPPING['INT64']
-
-        msg = 'Unable to handle the yang type at path ' + xpath
-        msg += ' (this may be listed as a corner-case on the README already'
-        raise NotImplementedError(msg)
-
     def __setattr__(self, attr, val):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
@@ -268,7 +192,7 @@ class Node:
             context.dal.delete(xpath)
             return
 
-        backend_type = self._get_yang_type(node_schema.type(), val, xpath)
+        backend_type = Common.Utils.get_yang_type(node_schema.type(), val, xpath)
 
         context.dal.set(xpath, val, backend_type)
 
@@ -369,7 +293,7 @@ class LeafList(Node):
         spath = self.__dict__['_spath']
 
         node_schema = self._get_schema_of_path(spath)
-        backend_type = self._get_yang_type(node_schema.type(), value, path)
+        backend_type = Common.Utils.get_yang_type(node_schema.type(), value, path)
 
         context.dal.add(path, value, backend_type)
 
@@ -448,7 +372,13 @@ class List(LeafList):
         new_spath = spath   # Note: we deliberartely won't use conditionals here
 
         keys = tuple(self.keys())
-        context.dal.create(new_xpath, keys=keys, values=args, module=context.module)
+        values = []
+        i = 0
+        for arg in args:
+            node_schema = self._get_schema_of_path(self._form_xpath(spath, keys[i]))
+            yangtype = yangvoodoo.Common.Utils.get_yang_type(node_schema.type(), arg, self._form_xpath(spath, keys[i]))
+            values.append((arg, yangtype))
+        context.dal.create(new_xpath, keys=keys, values=values, module=context.module)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
 
@@ -614,6 +544,7 @@ class List(LeafList):
     def _get_keys(self, *args):
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
+        context = self.__dict__['_context']
         node_schema = self._get_schema_of_path(spath)
         keys = list(node_schema.keys())
 
@@ -624,6 +555,8 @@ class List(LeafList):
         for i in range(len(keys)):
             value = self._get_xpath_value_from_python_value(args[0][i], keys[i].type())
 
+            # Sysrepo doesn't like this version
+            #conditional = conditional + "[%s:%s='%s']" % (context.module, keys[i].name(), value)
             conditional = conditional + "[%s='%s']" % (keys[i].name(), value)
         return conditional
 

@@ -1,6 +1,7 @@
 import unittest
 from mock import Mock
 import yangvoodoo
+import yangvoodoo.sysrepodal
 
 
 class test_sysrepodal(unittest.TestCase):
