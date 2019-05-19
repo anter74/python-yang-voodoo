@@ -7,6 +7,13 @@ module integrationtest {
   import testchild { prefix testchild; }
   import ietf-inet-types { prefix inet; }
 
+  extension hide {
+    description "Hide this element - defined in integration test";
+    argument boolean {
+      yin-element true;
+    }
+  }
+
 
   typedef date {
     description "date format YYYY-MM-DD - this isn't super precise validation";
@@ -292,8 +299,11 @@ module integrationtest {
   }
 
   container underscoretests {
+    crux:info "underscores help text for the container";
+
     leaf underscore_only {
       type string;
+      crux:info "underscores help text";
     }
     leaf hyphen-only {
       type string;
@@ -319,6 +329,7 @@ module integrationtest {
 
   leaf default {
     type string;
+    integrationtest:hide true;
     default "stausquo";
   }
 

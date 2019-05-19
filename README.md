@@ -246,6 +246,9 @@ root.bronze.silver.gold.platinum.deep = 'abc'
 # Accessing parents (this is root.bronze (use with care - it's intended for interactive debug)
 root.bronze.silver._parent
 
+# Return the argument of the extnesion 'info' if it exists on teh child node dirty_secret (otherwise None)
+root.get_exension('info', 'dirty_secret')
+
 # A special method on lists allows us to retrieve items sorted by XPATH
 # instead of by the order they were added to the datastore.
 
@@ -323,176 +326,10 @@ class test_node_based_access(unittest.TestCase):
 
 
 
-# Development/System version
+# Install
 
-If the `import yangvoodoo` is carried out in the `clients/` subdirectory the version of the library from the GIT repository will be used. If the import is carried out anywhere else the system version will be used.
+[Installing local versions](Install.md)
 
-
-# Updating libyang cffi bindings (Robin Jarry's bindings)
-
-- Important reference - libyang class definitions. [https://netopeer.liberouter.org/doc/libyang/master/group__schematree.html#structlys__type__info__str](https://netopeer.liberouter.org/doc/libyang/master/group__schematree.html#structlys__type__info__str) - forked into https://github.com/allena29/libyang-cffi
-
-First use case missing constraints for leaves in a yang mode.
-
-### cffi/cdefs.h
-
-
-```c++
-// added this based on the documentation in the class reference (it has to line up)
-struct lys_restr {
-	const char* expr;
-	const char* dsc;
-	const char* ref;
-	const char* eapptag;
-	const char* emsg;
-	...;
-};
-
-// added this based on the documentation in the class reference (it has to line up)
-struct lys_type_info_str {  
-	struct lys_restr* length;
-	struct lys_restr* patterns;
-	int pat_count;
-	...;
-};
-
-// added a type_info_str.
-union lys_type_info {
-	struct lys_type_info_bits bits;
-	struct lys_type_info_enums enums;
-	struct lys_type_info_lref lref;
-	struct lys_type_info_union uni;
-	struct lys_type_info_str str;  
-	...;
-};
-
-```
-
-### class Leaf: in libyang/schema.py
-
-```python
-def constraints(self):
-    return self.type().leaf_constraints()
-```
-
-### class Leaf: in libyang/schema.py
-```python
-def leaf_constraints(self):
-    t = self._type
-    yield c2str(t.info.str.length.emsg)
-    # return t.info.str.length
-```
-
-
-Quick and ditry results from this are consistent without yang model.
-
-```python
-next(next(yangctx.find_path('/integrationtest:validator/integrationtest:strings/integrationtest:sillylen')).constraints())
-'BOO!'
-```
-
-
-
-# Local development environment (without Docker)
-
-## Dependencies
-
-#### Linux
-
-```
-see Dockerfile - see below for sysrepo install.
-```
-
-#### Mac OSX
-
-Tested with Mojave 10.14.3
-
-```bash
-xcode-select --install
-brew install cmake        # tested with version 3.14.3
-brew install protobuf-c   # tested with version 1.3.1.2
-brew install libev        # tested with version 4.24
-brew install pcre         # tested with version 8.43
-wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
-tar xvfz swig-3.0.12.tar.gz
-cd swig-3.0.12
-./configure
-make && sudo make install
-cd ../
-git clone --branch v1.0-r2  https://github.com/CESNET/libyang.git
-cd libyang
-mkdir build && cd build
-cmake ..
-make && sudo make install
-cd ../
-git clone https://github.com/sysrepo/libredblack.git
-cd libredblack
-./configure && make && sudo make install
-```
-
-## pyenv/virtualenv
-
-The git clone has a `.python-version` file which is only important if pyenv is used for a virtual environment. To create a virtual-env the following will clone and add to a bash shell.
-
-```bash
-
-git clone https://github.com/pyenv/pyenv.git ~/.pyenv
-PATH=~/.pyenv/bin:$PATH
-  eval "$(pyenv init -)"
-export PYENV_ROOT="$HOME/.pyenv"
-git clone https://github.com/pyenv/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
-  # For MAC-OSX Mojave
-  export PYTHON_CONFIGURE_OPTS="--enable-framework"
-  export LDFLAGS="-L/usr/local/opt/zlib/lib -L/usr/local/opt/sqlite3/lib"
-  export CPPFLAGS="-I/usr/local/opt/zlib/include -I/usr/local/opt/sqlite3/include"
-  export CFLAGS="-I$(xcrun --show-sdk-path)/usr/include"
-pyenv install 3.6.7
-eval "$(pyenv virtualenv-init -)"
-pyenv virtualenv 3.6.7 yang-voodoo
-pip install -r requirements.lock
-
-echo 'export PYENV_ROOT="$HOME/.pyenv"' >>~/.bashrc
-echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >>~/.bashrc
-echo 'eval "$(pyenv init -)"' >>~/.bashrc
-echo 'eval "$(pyenv virtualenv-init -)"' >>~/.bashrc
-echo 'export PS1="{\[\033[36m\]\u@\[\033[36m\]\h} \[\033[33;1m\]\w\[\033[m\] \$ "' >>~/.bashrc
-echo 'export PYENV_VIRTUALENV_DISABLE_PROMPT=1' >>~/.bashrc
-
-```
-
-## libyang/sysrepo and python bindings
-
-
-The following instructions install sysrepo bindings within a pyenv environment. If not using pyenv then follow the simpler steps from the docker file.
-
-```bash
-git clone --branch=v0.7.7 https://github.com/sysrepo/sysrepo.git
-cd sysrepo
-echo "3.6.7/envs/yang-voodoo" >.python-version
-sed  -e 's/unset/#/' -i.bak swig/CMakeLists.txt
-mkdir build
-cd build
-cmake -DPYTHON_EXECUTABLE=~/.pyenv/versions/yang-voodoo/bin/python3  -DPYTHON_LIBRARY=~/.pyenv/versions/3.6.7/lib/libpython3.6.dylib  -DPYTHON_INCLUDE_DIR=~/.pyenv/versions/3.6.7/include/python3.6m  -DGEN_LUA_BINDINGS=0 -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 ..
-make && sudo make install
-
-# Libyang
-cd /tmp
-git clone https://github.com/allena29/libyang-cffi
-cd libyang-cffi
-LIBYANG_INSTALL=system python3 setup.py install
-```
-
-
-
-# Debug Logging
-
-**Note: this is quick and dirty and should probably be replaced by syslog**
-
-It's quite distracting to see log messages pop-up when interactively using ipython.
-By default logging isn't enabled.   see... LogWrap() and logsink.py
-
-
-Note: launching sysrepod so that it runs with more logging in the foreground can help troubleshoot issues, `sysrepod -d -l 4`.
 
 
 # TODO LIST
@@ -505,3 +342,4 @@ see [TODO LIST](TODO.md)
 - [Sysrepo](http://www.sysrepo.org/)
 - [Libyang](https://github.com/CESNET/libyang)
 - [libyang python bindings](https://github.com/allena29/libyang-cffi)
+- [Low level C development notes](DEVEL.md)

@@ -261,3 +261,19 @@ class test_node_based_access(unittest.TestCase):
 
         self.assertEqual(2, len(self.root.morecomplex.leaflists.simple))
         self.assertFalse('A' in self.root.morecomplex.leaflists.simple)
+
+    def test_extensions(self):
+        expected_result = [('crux:hide', True)]
+        self.assertEqual(expected_result, list(self.root.get_extensions('dirty-secret')))
+
+        expected_result = [('integrationtest:hide', True)]
+        self.assertEqual(expected_result, list(self.root.get_extensions('default')))
+
+        expected_result = []
+        self.assertEqual(expected_result, list(self.root.get_extensions('default', module='crux')))
+
+        expected_result = "underscores help text for the container"
+        self.assertEqual(expected_result, self.root.underscoretests.get_extension('info'))
+
+        expected_result = "underscores help text"
+        self.assertEqual(expected_result, self.root.underscoretests.get_extension('info', 'underscore_only'))

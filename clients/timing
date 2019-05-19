@@ -1,9 +1,13 @@
 #!/usr/bin/python3
 import yangvoodoo
 import time
+import yangvoodoo.stubdal
 
 start = time.time()
 total_start = start
+
+stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
+#stub = None
 
 
 def timer(todo=''):
@@ -12,11 +16,16 @@ def timer(todo=''):
     start = time.time()
 
 
-session = yangvoodoo.DataAccess(remote_log=False)
+session = yangvoodoo.DataAccess(data_abstraction_layer=stub, remote_log=False)
 timer('yangvoodoo-session')
-session.connect()
+session.connect('integrationtest')
 timer('yangvoodoo-connect')
-root = session.get_node('integrationtest')
+root = session.get_node()
+
+if stub:
+    root.from_template('test/unit/bands.xml')
+
+
 backend = session.session
 timer('yangvoodoo-root')
 yanglist = root.web.bands

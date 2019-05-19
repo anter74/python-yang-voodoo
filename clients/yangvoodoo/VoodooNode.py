@@ -2,6 +2,7 @@ import libyang
 import yangvoodoo.Errors
 from yangvoodoo import TemplateNinja
 from yangvoodoo import Common
+from yangvoodoo import Cache
 
 
 class Context:
@@ -12,38 +13,11 @@ class Context:
         self.schemactx = yang_ctx
         self.dal = data_access_layer
         if cache is None:
-            self.schemacache = Cache()
+            self.schemacache = Cache.Cache()
         else:
             self.schemacache = cache
         self.log = log
         self.yang_module = module
-
-
-class Cache:
-
-    def __init__(self):
-        self.items = {}
-
-    def is_path_cached(self, path):
-        if path in self.items:
-            return True
-        return False
-
-    def get_item_from_cache(self, path):
-        return self.items[path]
-
-    def add_entry(self, path, cache_object):
-        """
-        Add an entry into the cache.
-
-        key = an XPATH path (e.g. /simpleleaf)
-        cache_object = Whatever it wants to be.
-        """
-
-        self.items[path] = cache_object
-
-    def empty(self):
-        self.items.clear()
 
 
 class Node:
@@ -232,42 +206,66 @@ class Node:
 
 class ContainingNode(Node):
 
-    def from_template(self, template):
+    def get_extensions(self, attr=None, module=None):
         """
-        Process a template with a number of data nodes. The result of processing the template
-        with Jinja2 must be a valid XML document.
+        Return a list of extension with the given name.
+
+        For the root node an child attribute name must be provided, for deeper nodes
+        the attribute name can be omitted which means 'this node'
 
         Example:
-            session.from_template(root, 'template1.xml')
+            root.get_extensions('dirty-secret')
 
-            Process the template from the the path specified (i.e. template1.xml)
-            In the Jinja2 templates the root object is available as 'root.'
-
-            session.from_template(root, 'template1.xml', data_a=root.morecomplex)
-
-            In this case the Jinja2 template will receive both 'data_a' as the subset of
-            data at /morecomplex and root.
-
-        The path to the template may be specified as a relative path (to where the python
-        process is running (i.e. os.getcwd) or an exact path.
-
-        IMPORTANT to note is that variable and logic is processed in the template based upon
-        the data available at the time, then the result of the entire template is applied.
-        To be clear consdiering this template
-            <integrationtest>
-                <simpleleaf>HELLO</simpleleaf>
-                <default>{{ root.simpleleaf }}</default>
-            </integrationtest>
-
-            root.simpleleaf = 'GOODBYE'
-            session.from_template(root, 'hello-goodbye.xml')
-
-        The resulting value for simpleleaf will be 'GOODBYE' not hello.
-
+            Looks for an extension named 'info' on root.dirty_secret
         """
 
-        templater = TemplateNinja.TemplateNinja()
-        templater.from_template(self, template)
+        if self._NODE_TYPE == "Root" and not attr:
+            raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
+
+        spath = self.__dict__['_spath']
+
+        if attr:
+            node_schema = self._get_schema_of_path(self._form_xpath(spath, attr))
+        else:
+            node_schema = self._get_schema_of_path(spath)
+
+        for extension in node_schema.extensions():
+            if not module or extension.module().name() == module:
+                arg = extension.argument()
+                if arg == 'true':
+                    arg = True
+                elif arg == 'false':
+                    arg = False
+                yield (extension.module().name()+":"+extension.name(), arg)
+
+    def get_extension(self, name, attr=None, module=None):
+        """
+        Look for an extension with the given name.
+
+        For the root node an child attribute name must be provided, for deeper nodes
+        the attribute name can be omitted which means 'this node'
+
+        Example:
+            root.has_extension('info', 'dirty-secret')
+            Looks for an extension named 'info' on root.dirty_secret
+
+        If the argument of the extnesion is a string 'true' or 'false' it will be converted
+        to a python boolean, otherwise the argument is returned as-is.
+
+        If the extension is not present None is returned.
+        """
+        if self._NODE_TYPE == "Root" and not attr:
+            raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
+
+        extensions = self.get_extensions(attr, module)
+        for (m, a) in extensions:
+            if module:
+                if m == module + ":" + name:
+                    return a
+            else:
+                if ":" + name in m:
+                    return a
+        return None
 
 
 class LeafList(Node):
@@ -320,7 +318,7 @@ class LeafList(Node):
         return None
 
 
-class List(LeafList):
+class List(ContainingNode):
 
     """
     Represents a list from a yang module.
@@ -652,7 +650,7 @@ class ListElement(Node):
     _NODE_TYPE = 'ListElement'
 
 
-class Container(Node):
+class Container(ContainingNode):
     """
     Represents a Container from a yang module, with access to the child
     elements.
@@ -661,7 +659,7 @@ class Container(Node):
     _NODE_TYPE = 'Container'
 
 
-class PresenceContainer(Node):
+class PresenceContainer(Container):
 
     """
     Represents a PresenceContainer from a yang module, with access to the child
@@ -699,6 +697,43 @@ class Root(ContainingNode):
     def __repr__(self):
         context = self.__dict__['_context']
         return "VoodooNodeRoot{} YANG Module: " + context.module
+
+    def from_template(self, template):
+        """
+        Process a template with a number of data nodes. The result of processing the template
+        with Jinja2 must be a valid XML document.
+
+        Example:
+            session.from_template(root, 'template1.xml')
+
+            Process the template from the the path specified (i.e. template1.xml)
+            In the Jinja2 templates the root object is available as 'root.'
+
+            session.from_template(root, 'template1.xml', data_a=root.morecomplex)
+
+            In this case the Jinja2 template will receive both 'data_a' as the subset of
+            data at /morecomplex and root.
+
+        The path to the template may be specified as a relative path (to where the python
+        process is running (i.e. os.getcwd) or an exact path.
+
+        IMPORTANT to note is that variable and logic is processed in the template based upon
+        the data available at the time, then the result of the entire template is applied.
+        To be clear consdiering this template
+            <integrationtest>
+                <simpleleaf>HELLO</simpleleaf>
+                <default>{{ root.simpleleaf }}</default>
+            </integrationtest>
+
+            root.simpleleaf = 'GOODBYE'
+            session.from_template(root, 'hello-goodbye.xml')
+
+        The resulting value for simpleleaf will be 'GOODBYE' not hello.
+
+        """
+
+        templater = TemplateNinja.TemplateNinja()
+        templater.from_template(self, template)
 
 
 class SuperRoot:
