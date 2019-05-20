@@ -21,6 +21,7 @@ cd /working/subscribers
 
 echo "Ready"
 cd /working/clients
+set -euo pipefail
 
 if [ -f "/builder" ]
 then

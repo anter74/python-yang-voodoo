@@ -79,6 +79,21 @@ module integrationtest {
     }
   }
 
+  container diff {
+
+    container deletes {
+      uses diff-group;
+    }
+
+    container adds {
+      uses diff-group;
+    }
+
+    container modifies {
+      uses diff-group;
+    }
+
+  }
   container validator {
     container strings {
       leaf nolen {
@@ -1087,5 +1102,34 @@ module integrationtest {
 
   typedef type888 {
     type type88;
+  }
+
+  grouping diff-group {
+    leaf a-leaf {
+      type string;
+    }
+    leaf a-2nd-leaf {
+      type string;
+    }
+
+    list a-list {
+      key listkey;
+
+      leaf listkey {
+        type string;
+      }
+
+      leaf listnonkey {
+        type string;
+      }
+    }
+
+    leaf-list a-leaf-list {
+      type string;
+    }
+
+    container presence-container {
+      presence true;
+    }
   }
 }
