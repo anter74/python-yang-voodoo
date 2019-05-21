@@ -28,20 +28,6 @@ class test_node_based_access(unittest.TestCase):
         self.subject.connect('integrationtest')
         self.root = self.subject.get_node()
 
-    def test_root(self):
-        self.assertEqual(repr(self.root), 'VoodooNodeRoot{} YANG Module: integrationtest')
-
-        expected_children = ['bronze', 'container_and_lists', 'default', 'dirty_secret', 'empty',
-                             'hyphen_leaf', 'imports_in_here', 'list_to_leafref_against', 'lista', 'morecomplex',
-                             'numberlist', 'outsidelist', 'patternstr', 'psychedelia', 'quad', 'quarter',
-                             'resolver', 'simplecontainer', 'simpleenum', 'simpleleaf', 'simplelist',
-                             'thing_that_is_a_list_based_leafref', 'thing_that_is_leafref',
-                             'thing_that_is_lit_up_for_A', 'thing_that_is_lit_up_for_B', 'thing_that_is_lit_up_for_C',
-                             'thing_that_is_used_for_when', 'thing_to_leafref_against', 'twokeylist',
-                             'underscoretests', 'validator', 'web', 'whencontainer']
-
-        self.assertEqual(dir(self.root), expected_children)
-
     def test_simplest_leaf(self):
         self.assertEqual(self.root.simpleleaf, 'duke')
 

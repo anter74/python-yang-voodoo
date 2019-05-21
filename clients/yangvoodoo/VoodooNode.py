@@ -206,66 +206,7 @@ class Node:
 
 class ContainingNode(Node):
 
-    def get_extensions(self, attr=None, module=None):
-        """
-        Return a list of extension with the given name.
-
-        For the root node an child attribute name must be provided, for deeper nodes
-        the attribute name can be omitted which means 'this node'
-
-        Example:
-            root.get_extensions('dirty-secret')
-
-            Looks for an extension named 'info' on root.dirty_secret
-        """
-
-        if self._NODE_TYPE == "Root" and not attr:
-            raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
-
-        spath = self.__dict__['_spath']
-
-        if attr:
-            node_schema = self._get_schema_of_path(self._form_xpath(spath, attr))
-        else:
-            node_schema = self._get_schema_of_path(spath)
-
-        for extension in node_schema.extensions():
-            if not module or extension.module().name() == module:
-                arg = extension.argument()
-                if arg == 'true':
-                    arg = True
-                elif arg == 'false':
-                    arg = False
-                yield (extension.module().name()+":"+extension.name(), arg)
-
-    def get_extension(self, name, attr=None, module=None):
-        """
-        Look for an extension with the given name.
-
-        For the root node an child attribute name must be provided, for deeper nodes
-        the attribute name can be omitted which means 'this node'
-
-        Example:
-            root.has_extension('info', 'dirty-secret')
-            Looks for an extension named 'info' on root.dirty_secret
-
-        If the argument of the extnesion is a string 'true' or 'false' it will be converted
-        to a python boolean, otherwise the argument is returned as-is.
-
-        If the extension is not present None is returned.
-        """
-        if self._NODE_TYPE == "Root" and not attr:
-            raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
-
-        extensions = self.get_extensions(attr, module)
-        for (m, a) in extensions:
-            if module:
-                if m == module + ":" + name:
-                    return a
-            else:
-                if ":" + name in m:
-                    return a
-        return None
+    pass
 
 
 class LeafList(Node):

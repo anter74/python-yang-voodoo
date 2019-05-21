@@ -2,6 +2,28 @@
 
 ```
 module: integrationtest
+  +--rw diff
+  |  +--rw deletes
+  |  |  +--rw a-leaf?               string
+  |  |  +--rw a-list* [listkey]
+  |  |  |  +--rw listkey       string
+  |  |  |  +--rw listnonkey?   string
+  |  |  +--rw a-leaf-list*          string
+  |  |  +--rw presence-container!
+  |  +--rw adds
+  |  |  +--rw a-leaf?               string
+  |  |  +--rw a-list* [listkey]
+  |  |  |  +--rw listkey       string
+  |  |  |  +--rw listnonkey?   string
+  |  |  +--rw a-leaf-list*          string
+  |  |  +--rw presence-container!
+  |  +--rw modifies
+  |     +--rw a-leaf?               string
+  |     +--rw a-list* [listkey]
+  |     |  +--rw listkey       string
+  |     |  +--rw listnonkey?   string
+  |     +--rw a-leaf-list*          string
+  |     +--rw presence-container!
   +--rw validator
   |  +--rw strings
   |     +--rw nolen?                   string
@@ -130,6 +152,13 @@ module: integrationtest
   |     +--rw k    testchild:percent-dot1
   +--rw container-and-lists
   |  +--rw just-a-key?       string
+  |  +--rw lots-of-keys* [A Z Y X B C]
+  |  |  +--rw C    string
+  |  |  +--rw B    string
+  |  |  +--rw X    string
+  |  |  +--rw A    string
+  |  |  +--rw Z    string
+  |  |  +--rw Y    string
   |  +--rw multi-key-list* [A B]
   |  |  +--rw A             string
   |  |  +--rw B             string

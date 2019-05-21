@@ -328,7 +328,7 @@ class test_node_based_access(unittest.TestCase):
 
 # Install
 
-[Installing local versions](Install.md)
+[Installing local versions](INSTALL.md)
 
 
 

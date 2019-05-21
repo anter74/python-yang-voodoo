@@ -200,10 +200,11 @@ RUN \
 
 
 RUN \
-    pip3 install mock coverage nose2 autopep8 pyflakes && \
+    pip3 install mock coverage nose2 autopep8 pyflakes dictdiffer && \
     cd /working && \
     echo "Git Pull (v2)" && \
-    git pull 
+    git config --global user.email "docker-user@localhost" && \
+    git pull
 
 RUN \
     touch /builder
