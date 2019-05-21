@@ -1,4 +1,6 @@
 - optimise with get_items() or sr_get_items_iter() so that list fetches are not painfuly slow
+  - Note: Stub works in 1x10-5 for iterating lots of items, sysrepo takes 0.3 seconds. It's consistent with no caching.
+  - TODO: work out if sysrepo operates in memory or on disk (if the latter it's quite good).
   - the former makes mention about having to call free_items. the latter probably doesn't
     - get_items()
     All data elements are transferred within one message from the datastore, which is much more efficient that calling multiple sr_get_item calls.

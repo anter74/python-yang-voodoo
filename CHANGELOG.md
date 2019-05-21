@@ -26,3 +26,4 @@
   - Implemented leaf-list object type with integration to sysrepo backend and stub backend.
   - Implement support for `yangvoodoo.DataAccess.get_extensions(<node>, <child-attribute>)` or `yangvoodoo.DataAccess.get_extension(<node>, <extension-name>, <child-attribute>)` for 'containing nodes' to receive list of extensions or the extension istelf.
     - Example of containing nodes, Lists (but not Leaf-Lists), Containers, Root. The name of a child attribute can be provided (mandatory for root). i.e. `root.morecomplex.get_extension('info')` will look for the extension info on `/root/morecomplex` itself.
+  - **EXPERIMENTAL** DiffEngine

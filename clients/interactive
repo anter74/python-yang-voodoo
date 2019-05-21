@@ -1,7 +1,20 @@
 #!/usr/bin/python3
-import IPython
 import yangvoodoo
 
+try:
+    import jinja2
+    from lxml import etree
+    import dictdiffer
+except ImportError as err:
+    print("")
+    print("WARNING")
+    print("=======")
+    print("")
+    print("Missing python libraries please 'pip install -r requirements.txt' or pull the")
+    print("latest docker image.")
+    print("")
+    print("")
+    raise
 
 # Using Sysrepo backend
 try:
@@ -22,6 +35,8 @@ backend = session.session
 yang = root._context.schema
 yangctx = root._context.schemactx
 
+
+import IPython
 print('Objects Ready to Play with')
 print('--------------------------')
 print('root << node based access')
@@ -33,4 +48,5 @@ print('   ', backend)
 print('yang    << libyang instance')
 print('yangctx << libyang context instance')
 print('   ', yangctx)
+
 IPython.embed(display_banner=False)
