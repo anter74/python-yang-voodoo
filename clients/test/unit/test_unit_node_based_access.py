@@ -264,16 +264,16 @@ class test_node_based_access(unittest.TestCase):
 
     def test_extensions(self):
         expected_result = [('crux:hide', True)]
-        self.assertEqual(expected_result, list(self.root.get_extensions('dirty-secret')))
+        self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'dirty-secret')))
 
         expected_result = [('integrationtest:hide', True)]
-        self.assertEqual(expected_result, list(self.root.get_extensions('default')))
+        self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'default')))
 
         expected_result = []
-        self.assertEqual(expected_result, list(self.root.get_extensions('default', module='crux')))
+        self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'default', module='crux')))
 
         expected_result = "underscores help text for the container"
-        self.assertEqual(expected_result, self.root.underscoretests.get_extension('info'))
+        self.assertEqual(expected_result, yangvoodoo.DataAccess.get_extension(self.root.underscoretests, 'info'))
 
         expected_result = "underscores help text"
-        self.assertEqual(expected_result, self.root.underscoretests.get_extension('info', 'underscore_only'))
+        self.assertEqual(expected_result, yangvoodoo.DataAccess.get_extension(self.root.underscoretests, 'info', 'underscore_only'))

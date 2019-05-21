@@ -24,5 +24,5 @@
   - **EXPERIMENTAL** a 'SuperRoot' to organise together multiple sessions together
     - At this stage not considerations for ordering of commits(), rollbacks on failure, dependencies between sessions.
   - Implemented leaf-list object type with integration to sysrepo backend and stub backend.
-  - Implement support for `get_extensions(<child-attribute>)` or `get_extension(<extension-name>, <child-attribute>)` on 'containing nodes' to receive list of extensions or the extension istelf.
+  - Implement support for `yangvoodoo.DataAccess.get_extensions(<node>, <child-attribute>)` or `yangvoodoo.DataAccess.get_extension(<node>, <extension-name>, <child-attribute>)` for 'containing nodes' to receive list of extensions or the extension istelf.
     - Example of containing nodes, Lists (but not Leaf-Lists), Containers, Root. The name of a child attribute can be provided (mandatory for root). i.e. `root.morecomplex.get_extension('info')` will look for the extension info on `/root/morecomplex` itself.
