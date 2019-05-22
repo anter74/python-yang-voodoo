@@ -52,8 +52,7 @@
 - STUB node still not correct
    - (possibly solved) need a fix for template applier....
    - (possibly solved) when stub creates list keys it isn't whacking predicates on
-   - STUB Node doesn't remove child nodes e.g.
-     - `l=stub.list.create('abc')`, `l.childthing = 'x'`, `del stub.list['abc']`-  in this case we keep `/stub/list[abc]/key=abc`
+   - ~~STUB Node doesn't remove child nodes e.g.~~ - STUB Node removes child nodes but the implementation is not optimal
 
 # Limitations:
 

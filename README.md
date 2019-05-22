@@ -85,38 +85,8 @@ Or Perhaps modelled as xml
 
 # Overall Structure
 
-```
-+-------------------------------------------+
-|                                           |
-|  yangvoodoo                               |
-|                                           |
-|  (object based access constrained by      |
-|   YANG models and mapped to specific      |
-|   xpath Key/Value pairs)                  |
-+------+----------------------------+-------+
-       |                            |
-       |                            |
-+-----------------------------v---------------+     +------+---------------------------------------------------+
-|                                             |     |                                                          |
-| libyang (C++ library, with python bindings) |     | data_abstraction_layer  (translation layer)              |
-| -  Describes the schema and constraints the |     |  - Primitive operations for setting/getting daata        |
-|    basic layout and types of the data.      |     |    based upon XPATH Key/Value Paris.                     |
-|                                             |     |  - Primitive transaction operations (validate, commit)   |
-+---------------------------------------------+     |  - Enforces schema and data (i.e. when, must, leafrefs)  |
-                                                    |    conditions of the YANG modules.                       |
-                                                    |  - 2 DAL's are provided (Sysrepo and Stub)               |
-                                    +---------------+                                                          |
-                                    |               +------+------------------------------+--------------------+
-                                    |                              ^
-                 +------------------v-----------------+   +--------+--------------------------+
-                 |                                    |   |                                   |
-                 | sysrepo                            |   | stub                              |
-                 |   - open source datastore.         |   |  - dictionary based datastore     |
-                 |                                    |   |  for unit tests/prototyping       |
-                 +------------------------------------+   +-----------------------------------+
 
-```
-
+![](Documentation/overview.png)
 
 
 ## Abstraction of Data Access

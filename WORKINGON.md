@@ -1,3 +1,11 @@
+
+ - Likely approach to solve the following is to wrap sysrepodal into a stubdal as a cache/proxy.
+   - In the case of a pure stub it's all managed natively.
+   - In the case of sysrepo (or other backend) each call will need to proxy to the realbackend - we rely on the backend to keep the data set the same after we connect..., until we explicitly call refresh(). The works to our advantage because we can flush to proxied values we stored once refresh() is called on the session object.
+   - In this case stub needs uplifiting to provide default values from the yang schema.
+
+
+
 - optimise with get_items() or sr_get_items_iter() so that list fetches are not painfuly slow
   - Note: Stub works in 1x10-5 for iterating lots of items, sysrepo takes 0.3 seconds. It's consistent with no caching.
   - TODO: work out if sysrepo operates in memory or on disk (if the latter it's quite good).
