@@ -44,6 +44,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     def _initdal(self):
         self.stub_store = {}
+        self.list_element_map = {}
 
     def connect(self, module, tag='<id-tag>'):
         self.module = module
@@ -102,9 +103,9 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             predicates = predicates + "["+keys[index]+"='"+str(value)+"']"
 
         list_xpath = xpath.replace(predicates, '')
-        if list_xpath not in self.stub_store:
-            self.stub_store[list_xpath] = []
-        self.stub_store[list_xpath].append(xpath)
+        if list_xpath not in self.list_element_map:
+            self.list_element_map[list_xpath] = []
+        self.list_element_map[list_xpath].append(xpath)
         self.stub_store[xpath] = (self.LIST_POINTER, list_xpath)
 
         for index in range(len(keys)):
@@ -132,8 +133,8 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     def has_item(self, xpath):
         list_xpath = self._list_xpath(xpath, ignore_empty_lists=True)
-        if list_xpath in self.stub_store:
-            if xpath in self.stub_store[list_xpath]:
+        if list_xpath in self.list_element_map:
+            if xpath in self.list_element_map[list_xpath]:
                 return True
         return False
 
@@ -141,23 +142,24 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.stub_store[xpath] = value
 
     def gets_sorted(self, list_xpath, ignore_empty_lists=False):
-        if list_xpath in self.stub_store:
+        if list_xpath in self.list_element_map:
             items = []
-            for item in self.stub_store[list_xpath]:
+            for item in self.list_element_map[list_xpath]:
                 items.append(item)
             items.sort()
             for item in items:
                 yield item
 
     def gets_unsorted(self, list_xpath, ignore_empty_lists=False):
-        if list_xpath in self.stub_store:
+        if list_xpath in self.list_element_map:
             items = []
-            for item in self.stub_store[list_xpath]:
+            for item in self.list_element_map[list_xpath]:
                 items.append(item)
             for item in items:
                 yield item
+            return
         if not ignore_empty_lists:
-            raise yangvoodoo.Errors.ListDoesNotContainElement(xpath)
+            raise yangvoodoo.Errors.ListDoesNotContainElement(list_xpath)
 
     def get(self, xpath):
         if xpath not in self.stub_store:
@@ -169,16 +171,29 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             # Logic for lists
             if xpath[-1] == "]":
                 list_xpath = self._list_xpath(xpath)
-                if list_xpath not in self.stub_store:
+                if list_xpath not in self.list_element_map:
                     raise yangvoodoo.Errors.BackendDatastoreError([('path does not exist - cannot get', xpath)])
-                elif xpath not in self.stub_store[list_xpath]:
+                elif xpath not in self.list_element_map[list_xpath]:
                     raise yangvoodoo.Errors.BackendDatastoreError([('path does not exist - cannot get', xpath)])
                 else:
-                    self.stub_store[list_xpath].remove(xpath)
+                    self.list_element_map[list_xpath].remove(xpath)
+                    del self.stub_store[xpath]
+                    self._delete_childern(xpath)
                     return True
 
-        del self.stub_store[xpath]
+            del self.stub_store[xpath]
+        self._delete_childern(xpath)
         return True
+
+    def _delete_childern(self, xpath):
+        children_to_remove = []
+        for x in self.stub_store.keys():
+            if x[0:len(xpath)] == xpath:
+                if not x in children_to_remove:
+                    children_to_remove.append(x)
+
+        for child in children_to_remove:
+            del self.stub_store[child]
 
     def refresh(self):
         pass

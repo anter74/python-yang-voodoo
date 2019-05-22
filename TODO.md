@@ -50,9 +50,10 @@
 - Think about multiple top-level nodes appearing as multiple sysrepo backend datastore session. This could just be inevitable based on the way sysrepo operates.
 - `session.commit()` with no changes times out
 - STUB node still not correct
-   - need a fix for template applier....
-   - when stub creates list keys it isn't whacking predicates on
-
+   - (possibly solved) need a fix for template applier....
+   - (possibly solved) when stub creates list keys it isn't whacking predicates on
+   - STUB Node doesn't remove child nodes e.g.
+     - `l=stub.list.create('abc')`, `l.childthing = 'x'`, `del stub.list['abc']`-  in this case we keep `/stub/list[abc]/key=abc`
 
 # Limitations:
 

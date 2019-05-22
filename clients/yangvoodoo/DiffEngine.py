@@ -33,7 +33,7 @@ class DiffIterator:
     MODIFY = 2
     REMOVE = 3
 
-    def __init__(self, dataset_a, dataset_b, filter='', ignore_tuple_list_vals=True):
+    def __init__(self, dataset_a, dataset_b, filter=''):
         self.a = dataset_a
         self.b = dataset_b
         self.filter = filter
@@ -48,7 +48,7 @@ class DiffIterator:
 
                 # This is specific to stub_store which uses lists/tuples for things it creates as covenient
                 # lookups.
-                if ignore_tuple_list_vals and (isinstance(new, list) or isinstance(new, tuple)):
+                if isinstance(new, tuple):
                     continue
                 self.results.append((path, old, new, self.MODIFY))
             else:
@@ -58,7 +58,7 @@ class DiffIterator:
 
                     # This is specific to stub_store which uses lists/tuples for things it creates as covenient
                     # lookups.
-                    if ignore_tuple_list_vals and (isinstance(value, list) or isinstance(value, tuple)):
+                    if isinstance(value, tuple):
                         continue
                     if op == 'remove':
                         self.results.append((path, value, None, self.REMOVE))
