@@ -48,9 +48,9 @@ class test_xml_to_xpath(unittest.TestCase):
         self.subject._import_xml_to_datastore(self.module, self.schemactx, template, self.stub)
 
         # assert
-        self.assertEqual(len(self.root.container_and_lists.multi_key_list.inner.level3list), 1)
-        self.assertEqual(self.root.container_and_lists.multi_key_list.inner.level3list['33333'].level3key, '33333')
-        self.assertEqual(self.root.container_and_lists.multi_key_list.level2list['22222'].level2key, '22222')
+        self.assertEqual(len(self.root.container_and_lists.multi_key_list['a', 'b'].inner.level3list), 1)
+        self.assertEqual(self.root.container_and_lists.multi_key_list['a', 'b'].inner.level3list['33333'].level3key, '33333')
+        self.assertEqual(self.root.container_and_lists.multi_key_list['a', 'b'].level2list['22222'].level2key, '22222')
         self.assertFalse('2' in self.root.container_and_lists.multi_key_list.level2list)
 
     def test_from_template_with_only_keys(self):

@@ -706,7 +706,7 @@ class SuperRoot:
     def __repr__(self):
         return "VoodooSuperRoot{}"
 
-    def from_template(self, template):
+    def from_template(self, template, **kwargs):
         """
         Process a template with a number of data nodes. The result of processing the template
         with Jinja2 must be a valid XML document.
@@ -741,4 +741,4 @@ class SuperRoot:
         """
 
         templater = TemplateNinja.TemplateNinja()
-        templater.from_template(self._node, template)
+        templater.from_template(self._node, template, **kwargs)

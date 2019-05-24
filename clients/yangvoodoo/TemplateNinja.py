@@ -90,7 +90,7 @@ class TemplateNinja:
             if node_type == 1:  # Container / Lis
                 pass
             elif node_type == 16:
-                state.next_time_loop = (node_schema, this_path)
+                state.next_time_loop = (node_schema, value_path)
             elif node_type == 8:
                 yang_type = Common.Utils.get_yang_type(node_schema.type(), child.text, this_path)
                 state.dal.add(value_path, Common.Utils.convert_string_to_python_val(child.text, yang_type), yang_type)
