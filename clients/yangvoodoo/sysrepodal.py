@@ -21,6 +21,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     """
 
     SYSREPO_DATASTORE_LOCATION = "/sysrepo/data"
+    DAL_ID = "SysrepDAL"
 
     def connect(self, module, tag='client'):
         """
@@ -121,7 +122,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         In the case of Decimal64 we cannot use a value type
             v=sr.Val(2.344)
         """
-        self.log.debug('SET: %s => %s (%s)' % (xpath, value, valtype))
+        self.log.trace('SET: %s => %s (%s)' % (xpath, value, valtype))
         if valtype == 10:
             valtype = None
         if valtype:

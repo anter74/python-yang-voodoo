@@ -6,80 +6,7 @@ import logging
 import socket
 import importlib
 import yangvoodoo.VoodooNode
-
-
-class LogWrap():
-
-    ENABLED_INFO = True
-    ENABLED_DEBUG = True
-
-    REMOTE_LOG_IP = "127.0.0.1"
-    REMOTE_LOG_PORT = 6666
-
-    def __init__(self, local_log=False, remote_log=False):
-        self.ENABLED = local_log
-        self.ENABLED_REMOTE = remote_log
-
-        if self.ENABLED:
-            format = "%(asctime)-15s - %(name)-20s %(levelname)-12s  %(message)s"
-            logging.basicConfig(level=logging.DEBUG, format=format)
-            self.log = logging.getLogger('blackhole')
-
-        if self.ENABLED_REMOTE:
-            self.log_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            message = self._pad_truncate_to_size("STARTED ("+str(time.time())+"):")
-            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
-
-    @staticmethod
-    def _args_wildcard_to_printf(*args):
-        if isinstance(args, tuple):
-            # (('Using cli startup to do %s', 'O:configure'),)
-            args = list(args[0])
-            if len(args) == 0:
-                return ''
-            message = args.pop(0)
-            if len(args) == 0:
-                pass
-            if len(args) == 1:
-                message = message % (args[0])
-            else:
-                message = message % tuple(args)
-        else:
-            message = args
-        return (message)
-
-    def _pad_truncate_to_size(self, message, size=1024):
-        if len(message) < size:
-            message = message + ' '*(1024-len(message))
-        elif len(message) > 1024:
-            message = message[:1024]
-        return message.encode()
-
-    def info(self, *args):
-        if self.ENABLED and self.ENABLED_INFO:
-            self.log.info(args)
-        if self.ENABLED_REMOTE and self.ENABLED_INFO:
-            print('a')
-            message = 'INFO ' + LogWrap._args_wildcard_to_printf(args)
-            message = self._pad_truncate_to_size('INFO: %s %s' % (str(time.time()), message))
-            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
-
-    def error(self, *args):
-        if self.ENABLED:
-            self.log.error(args)
-        if self.ENABLED_REMOTE:
-            message = 'INFO ' + LogWrap._args_wildcard_to_printf(args)
-            message = self._pad_truncate_to_size('INFO: %s %s' % (str(time.time()), message))
-            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
-
-    def debug(self, *args):
-        if self.ENABLED and self.ENABLED_DEBUG:
-            self.log.debug(args)
-
-        if self.ENABLED_REMOTE and self.ENABLED_DEBUG:
-            message = 'DEBUG ' + LogWrap._args_wildcard_to_printf(args)
-            message = self._pad_truncate_to_size('INFO: %s %s' % (str(time.time()), message))
-            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
+from yangvoodoo.Common import Utils
 
 
 class DataAccess:
@@ -105,7 +32,7 @@ class DataAccess:
 
     def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None):
         if not log:
-            log = LogWrap(local_log=local_log, remote_log=remote_log)
+            log = Utils.get_logger('yangvoodoo', 10)
         self.log = log
         self.session = None
         self.conn = None
@@ -113,7 +40,7 @@ class DataAccess:
         if data_abstraction_layer:
             self.data_abstraction_layer = data_abstraction_layer
         else:
-            self.data_abstraction_layer = self._get_data_abastraction_layer(log)
+            self.data_abstraction_layer = self._get_data_abastraction_layer(None)
 
     def _get_data_abastraction_layer(self, log):
         importlib.import_module('yangvoodoo.sysrepodal')

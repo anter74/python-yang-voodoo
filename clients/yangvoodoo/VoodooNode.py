@@ -157,7 +157,6 @@ class Node:
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
 
-        context.log.debug('spath for setattr %s', spath)
         spath = self._form_xpath(spath, attr)
         node_schema = self._get_schema_of_path(spath)
         xpath = self._form_xpath(path, attr, node_schema)

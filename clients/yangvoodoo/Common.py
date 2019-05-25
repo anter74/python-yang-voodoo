@@ -1,7 +1,29 @@
+import logging
 from yangvoodoo import Types
 
 
 class Utils:
+
+    LOG_INFO = logging.INFO
+    LOG_DEBUG = logging.DEBUG
+    LOG_SILENT = 99
+    LOG_ERROR = logging.ERROR
+    LOG_TRACE = 7
+
+    @staticmethod
+    def get_logger(name, level=logging.DEBUG):
+        format = "%(asctime)-15s - %(name)-15s %(levelname)-12s  %(message)s"
+        logging.basicConfig(level=99, format=format)
+        log = logging.getLogger(name)
+        log.setLevel(level)
+
+        logging.addLevelName(7, "TRACE")
+
+        def trace(self, message, *args, **kws):
+            if self.isEnabledFor(7):
+                self._log(7, message, args, **kws)
+        logging.Logger.trace = trace
+        return log
 
     @staticmethod
     def get_yang_type(node_schema, value=None, xpath=None):

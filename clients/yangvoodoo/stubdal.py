@@ -1,6 +1,5 @@
 import yangvoodoo
 import yangvoodoo.basedal
-import re
 
 
 class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
@@ -29,9 +28,9 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
 
     """
-    # REGEX_LIST_XPATH = re.compile('(.*:[A-Za-z0_-]+)(.*)')
 
     LIST_POINTER = 1
+    DAL_ID = "StubDAL"
 
     def dump_xpaths(self):
         new_dict = {}

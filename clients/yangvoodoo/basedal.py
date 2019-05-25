@@ -1,3 +1,5 @@
+from yangvoodoo.Common import Utils
+
 
 class BaseDataAbstractionLayer:
 
@@ -11,7 +13,11 @@ class BaseDataAbstractionLayer:
     dirty       - indicates a parallel transaction has changed data in the datastore.
     """
 
+    DAL_ID = "BASE"
+
     def __init__(self, log=None):
+        if not log:
+            log = Utils.get_logger(self.DAL_ID)
         self.log = log
         self.session = None
         self.conn = None
