@@ -495,7 +495,7 @@ class List(ContainingNode):
             value = self._get_xpath_value_from_python_value(args[0][i], keys[i].type())
 
             # Sysrepo doesn't like this version
-            #conditional = conditional + "[%s:%s='%s']" % (context.module, keys[i].name(), value)
+            # conditional = conditional + "[%s:%s='%s']" % (context.module, keys[i].name(), value)
             conditional = conditional + "[%s='%s']" % (keys[i].name(), value)
         return conditional
 

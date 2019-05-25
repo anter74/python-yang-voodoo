@@ -1,22 +1,24 @@
 language: python
+python:
+  - "3.7"
 dist: xenial
 cache: pip
 sudo: false
 
-addons:
-  apt:
-    packages:
-    - build-essential
-    - cmake
-    - libffi-dev
-    - libpcre3-dev
-    - tox
+services:
+  - docker
 
-matrix:
-  include:
-    - env: TOXENV=lint
-      python: 3.7.3
-    - env: TOXENV=py37
-      python: 3.7.3
+before_install:
+- docker pull allena29/yangvoodoo:devel
+- docker run -d -i --name working allena29/yangvoodoo:devel /bin/sh
+- docker exec -i working /bin/sh -c "git config --global user.email travis@builder"
+- docker exec -i working /bin/sh -c "git pull"
+- docker exec -i working /bin/sh -c "git status"
+- docker ps -a
 
-script: tox
+install:
+  - echo "skip pip install"
+
+script:
+  - docker exec -i working /bin/sh -c "cd /working; git checkout $TRAVIS_COMMIT"
+  - docker exec -i working /working/test-in-docker.sh

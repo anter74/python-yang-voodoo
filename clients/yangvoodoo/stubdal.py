@@ -189,7 +189,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         children_to_remove = []
         for x in self.stub_store.keys():
             if x[0:len(xpath)] == xpath:
-                if not x in children_to_remove:
+                if x not in children_to_remove:
                     children_to_remove.append(x)
 
         for child in children_to_remove:

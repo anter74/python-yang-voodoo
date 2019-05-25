@@ -9,6 +9,7 @@ RUN \
       libprotobuf-c1 \
       libev4 \
       libavl1 \
+      git \
       openssh-client \
       python3-distutils \
       screen
