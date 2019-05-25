@@ -6,6 +6,7 @@ import logging
 import socket
 import importlib
 import yangvoodoo.VoodooNode
+import yangvoodoo.proxydal
 from yangvoodoo.Common import Utils
 
 
@@ -30,7 +31,8 @@ class DataAccess:
      - lxml
     """
 
-    def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None):
+    def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None,
+                 disable_proxy=True):
         if not log:
             log = Utils.get_logger('yangvoodoo', 10)
         self.log = log
@@ -38,13 +40,22 @@ class DataAccess:
         self.conn = None
         self.connected = False
         if data_abstraction_layer:
-            self.data_abstraction_layer = data_abstraction_layer
+            non_proxy_data_abstraction_layer = data_abstraction_layer
         else:
-            self.data_abstraction_layer = self._get_data_abastraction_layer(None)
+            non_proxy_data_abstraction_layer = self._get_data_abastraction_layer(None)
+
+        if disable_proxy:
+            self.data_abstraction_layer = non_proxy_data_abstraction_layer
+        else:
+            self.data_abstraction_layer = self._proxify_data_abstraction_layer(non_proxy_data_abstraction_layer)
 
     def _get_data_abastraction_layer(self, log):
         importlib.import_module('yangvoodoo.sysrepodal')
         return yangvoodoo.sysrepodal.SysrepoDataAbstractionLayer(log)
+
+    def _proxify_data_abstraction_layer(self, dal):
+        # return dal
+        return yangvoodoo.proxydal.ProxyDataAbstractionLayer(dal)
 
     def _help(self, node):
         """
@@ -237,6 +248,14 @@ class DataAccess:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.validate()
 
+    def container(self, xpath):
+        """
+        Retrieve the status of the presence container. Returns True if it exists.
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.container(xpath)
+
     def create_container(self, xpath):
         """
         Create a presence container - only suitable for use on presence containers.
@@ -257,6 +276,17 @@ class DataAccess:
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.create(xpath, keys=keys, values=values, module=module)
+
+    def uncreate(self, xpath):
+        """
+        Remove a list item by XPATH including keys
+         e.g. /path/to/list[key1='val1'][key2='val2'][key3='val3']
+
+         returns: True
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.uncreate(xpath)
 
     def set(self, xpath, value, valtype=18):
         """

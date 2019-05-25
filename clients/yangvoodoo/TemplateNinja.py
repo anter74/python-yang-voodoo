@@ -5,26 +5,6 @@ from lxml import etree
 from yangvoodoo import Common
 
 
-class PlainObject:
-    pass
-
-
-class PlainIterator:
-
-    def __init__(self, children):
-        self.children = children
-        self.index = 0
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if len(self.children) > self.index:
-            self.index = self.index + 1
-            return self.children[self.index-1]
-        raise StopIteration
-
-
 class TemplateNinja:
 
     def from_template(self, root, template, **kwargs):
@@ -49,7 +29,7 @@ class TemplateNinja:
         The state object contains flags to help us traverse and build paths through
         the xmldocument.
         """
-        state = PlainObject()
+        state = yangvoodoo.Common.PlainObject()
         state.path = []
         state.spath = []
         state.next_time_loop = ""
@@ -69,7 +49,7 @@ class TemplateNinja:
         We have to maintatin two lists of paths, one with predicates (path) and one without (spath)
         they are used to interact with the datstore and libyang respectively.
         """
-        children = PlainIterator(xmldoc.getchildren())
+        children = yangvoodoo.Common.PlainIterator(xmldoc.getchildren())
         for child in children:
 
             if state.next_time_loop:

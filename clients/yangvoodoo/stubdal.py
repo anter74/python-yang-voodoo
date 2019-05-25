@@ -42,8 +42,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         return new_dict
 
     def _initdal(self):
-        self.stub_store = {}
-        self.list_element_map = {}
+        self.empty()
 
     def connect(self, module, tag='<id-tag>'):
         self.module = module
@@ -58,8 +57,11 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     def validate(self):
         return True
 
+    def container(self, xpath):
+        return xpath in self.containers
+
     def create_container(self, xpath):
-        self.stub_store[xpath] = True
+        self.containers[xpath] = True
 
     def _list_xpath(self, xpath, ignore_empty_lists=False):
         """
@@ -110,6 +112,9 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         for index in range(len(keys)):
             (value, valuetype) = values[index]
             self.set(xpath + "/" + module+":"+keys[index], value, valuetype)
+
+    def uncreate(self, xpath):
+        self.delete(xpath)
 
     def add(self, xpath, value, valtype):
         if xpath not in self.stub_store:
@@ -196,3 +201,8 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     def refresh(self):
         pass
+
+    def empty(self):
+        self.stub_store = {}
+        self.list_element_map = {}
+        self.containers = {}

@@ -8,9 +8,15 @@ class BaseDataAbstractionLayer:
 
     Log         - a standard python logger
     session     - represents the session to the data access layer
-
-    conneciton  - represents the socket/connection uses to access the data access layer.
+    conn        - represents the socket/connection uses to access the data access layer.
     dirty       - indicates a parallel transaction has changed data in the datastore.
+    module      - the name of the YANG module implemented by this session. Note: there is
+                  a 1:1 mapping between sessions and yang modules.
+
+    Value Types:
+        values are a tuple of the exact value and the type.
+        see Types.DATA_ABSTRACTION_MAPPING for the definition of types.
+
     """
 
     DAL_ID = "BASE"
@@ -76,11 +82,51 @@ class BaseDataAbstractionLayer:
     def validate(self):
         raise NotImplementedError('validate not implemented')
 
+    def container(self, xpath):
+        """
+        Returns if the presence container exists or not.
+
+        xpath:     /integrationtest:simplecontainer
+        """
+        raise NotImplementedError('container not implemented')
+
     def create_container(self, xpath):
+        """
+        To create a presence container.
+
+        xpath:     /integrationtest:simplecontainer
+        """
         raise NotImplementedError('create_container not implemented')
 
     def create(self, xpath, keys=None, values=None, module=None):
+        """
+        To create a list item in the list /simplelist
+
+        xpath:    /integrationtest:simplelist[simplekey='sdf']
+        keys:     ('simplekey',),
+                    tuple of keys in the order defined within yang.
+        values:   [('simpleval', 18)],
+                    list of (value, valtype) tuples
+
+        module:   integrationtest
+
+        Returns a generator providing a list of XPATH values for each ListElement
+            "/integrationtest:simplelist[simplekey='simpleval']",
+            "/integrationtest:simplelist[simplekey='zsimpleval']",
+            "/integrationtest:simplelist[simplekey='asimpleval']"
+
+        If there are multiple keys the predicates are combined (e.g.)
+            /integration:list[key1='val1'][key2='val2']
+        """
         raise NotImplementedError("create not implemented")
+
+    def uncreate(self, xpath):
+        """
+        To remove a list item from the list /simplelist with the key sf
+
+        xpath:   /integrationtest:simplelist[simplekey='sf']
+        """
+        raise NotImplementedError("uncreate not implemented")
 
     def set(self, xpath, value, valtype=18):
         raise NotImplementedError("set not implemented")
@@ -92,6 +138,13 @@ class BaseDataAbstractionLayer:
         raise NotImplementedError("gets not implemented")
 
     def add(self, xpath, value, valtype=18):
+        """
+        To create a leaf-list item in /morecomplex/leaflists/simple
+
+        xpath:       /integrationtest:morecomplex/integrationtest:leaflists/integrationtest:simple
+        value:       a
+        valtype:     18
+        """
         raise NotImplementedError("add not implemented")
 
     def remove(self, xpath, value):
@@ -101,6 +154,11 @@ class BaseDataAbstractionLayer:
         raise NotImplementedError("gets_unsorted not implemented")
 
     def has_item(self, xpath):
+        """
+        Check to see if the list-element of a YANG list exists.
+
+        xpath:          /integrationtest:simplelist[simplekey='b']
+        """
         raise NotImplementedError("has_item not implemented")
 
     def get(self, xpath):

@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import yangvoodoo
+import sys
 import time
 import yangvoodoo.stubdal
 
@@ -7,12 +8,12 @@ start = time.time()
 total_start = start
 
 stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
-#stub = None
+stub = None  # Use sysrepo
 
 
 def timer(todo=''):
     global start
-    print((time.time()-start)*1, 'milliseconds to-do', todo)
+    print((time.time()-start)*100, 'milliseconds to-do', todo)
     start = time.time()
 
 
@@ -25,6 +26,18 @@ root = session.get_node()
 if stub:
     root.from_template('test/unit/bands.xml')
 
+try:
+    root.web.bands['Idlewild']
+except Exception:
+    print("""
+Data is not present in the database.
+
+Try:
+cd ../init-data
+./init-xml.sh running
+
+""")
+    sys.exit(1)
 
 backend = session.session
 timer('yangvoodoo-root')
@@ -62,28 +75,26 @@ for x in root.web.bands:
     X = x
 timer('iterate but do nothign around the list')
 
-l = len(root.web.bands)
+li = len(root.web.bands)
 timer('get length of list')
 
+for c in range(1):
+    print('Iteration ', c)
+    for x in root.web.bands:
+        X = x.name
+    print('         ', ((time.time()-start)/li), 'per listelement.name for x itmes', li)
+    timer('iterate and get values - ')
 
-for x in root.web.bands:
-    X = x.name
-print('         ', ((time.time()-start)/l), 'per listelement.name for x itmes', l)
-timer('iterate and get values - ')
+    for x in root.web.bands:
+        X = x.name
+    print('         ', ((time.time()-start)/li), 'per listelement.name for x itmes', li)
+    timer('iterate and get values - same as before')
 
-for x in root.web.bands:
-    X = x.name
-print('         ', ((time.time()-start)/l), 'per listelement.name for x itmes', l)
-timer('iterate and get values - same as before')
+    for x in root.web.bands:
+        X = x.name
+        y = len(x.gigs)
+    print('         ', ((time.time()-start)/li), 'per listelement.name for x itmes', li)
+    timer('iterate and get values - ')
 
-for x in root.web.bands:
-    X = x.name
-    y = len(x.gigs)
-print('         ', ((time.time()-start)/l), 'per listelement.name for x itmes', l)
-timer('iterate and get values - ')
 
-for x in root.web.bands:
-    X = x.name
-    y = len(x.gigs)
-print('         ', ((time.time()-start)/l), 'per listelement.name for x itmes', l)
-timer('iterate and get values - ')
+print(time.time()-total_start, "seconds to do everything")

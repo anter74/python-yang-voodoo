@@ -1,5 +1,7 @@
 # Python access to YANG based Datastore (based on libyang/sysrepo)
 
+![](https://travis-ci.org/allena29/python-yang-voodoo.svg?branch=master)
+
 The aim of this project is to provide the ability to write python code where there is a strong YANG based data model.
 By providing an object based access layer it allows data to be traversed without worrying about lower level details, and
 allow a stronger focus on getting the 'value add' correct.
@@ -101,7 +103,7 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **commit()** - commit pending datastore.
  - **disconnect()** - disconnect from the datastore
  - **is_session_dirty()** - indicates changes have been made to the datastore from a different transaction. The datastore may provide the ability to register a callback to receive a notification when changes happen to the datastore. (In the case of sysrepo this is the `module_change_subscribe` callback)
-
+ - **container(xpath)** - returns True/False if the presence-container exists.
  - **get(xpath)** - get specific data by XPATH, this will not apply to non-presence containers or lists
  - **gets_unsorted(xpath, ignore_empty_lists)** - get a list of XPATH's representing the items in the list, it is expected the datastore will maintain the order the user inserts the data and this MUST return the data in that order. If the list is empty this method will normally raise an ListDoesNotContainElement exception.
  - **gets_unsorted(xpath, ignore_empty_lists)** - as gets_unsorted, but the results will be sorted by XPATH.
@@ -109,10 +111,11 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **add(xpath, value, valuetype)** - add a new entry to the end of a leaf-list at the given XPATH
  - **remove(xpath, value)** - remvoes an entry from a leaf-list at the given XPATH - the XPATH given is the XPATH to the leaf-list itself, not the specific item.
  - **has_item(xpath)**- returns True if the item has been populated with data.
- - **create(xpath, key_tuple, value_tuple, yang_module)** - create a list item
+ - **create(xpath, key_tuple, value_tuple, yang_module)** - create a list item, to remove use **uncreate**
+ - **uncreate(xpath** - delete a list element from the datastore.
  - **create_container(xpath)** - if a container is a presence container explicitly create the container.
  - **set(xpath, value, valuetype)** - sets the value of a specific xpath (supported for yang leaves). The valuetype is an integer (defined in Types.py/DATA_ABSTRACTION_MAPPING) based on the effective type of the yang field (*based on fuzzy matching in the case of unions*).
-
+ - **delete(xpath** - delete a value or container, this method must not be used for lists.
 
 ### SCHEMA vs DATA level constraints
 

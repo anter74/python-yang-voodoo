@@ -94,6 +94,16 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             self._handle_error(None, err)
         return True
 
+    def container(self, xpath):
+        sysrepo_item = self.session.get_item(xpath)
+        try:
+            v = self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
+            if v is not None:
+                return True
+        except RuntimeError as err:
+            self._handle_error(xpath, err)
+        return False
+
     def create_container(self, xpath):
         try:
             self.set(xpath, None, sr.SR_CONTAINER_PRESENCE_T)
@@ -112,6 +122,9 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             self.set(xpath, None, sr.SR_LIST_T)
         except RuntimeError as err:
             self._handle_error(xpath, err)
+
+    def uncreate(self, xpath):
+        self.delete(xpath)
 
     def set(self, xpath, value, valtype=sr.SR_STRING_T):
         """
@@ -132,7 +145,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
         try:
             self.session.set_item(xpath, v)
-            return v
+            return value
         except RuntimeError as err:
             self._handle_error(xpath, err)
 

@@ -147,11 +147,6 @@ class test_getdata(unittest.TestCase):
         xpath = "/integrationtest:empty"
         self.subject.set(xpath, None, sr.SR_LEAF_EMPTY_T)
 
-        with self.assertRaises(yangvoodoo.Errors.NodeHasNoValue) as context:
-            xpath = "/integrationtest:empty"
-            self.subject.get(xpath)
-        self.assertEqual(str(context.exception), 'The node: empty-leaf at /integrationtest:empty has no value')
-
     def test_numbers(self):
         with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             xpath = "/integrationtest:bronze/silver/gold/platinum/deep"
@@ -206,7 +201,7 @@ class test_getdata(unittest.TestCase):
         """
 
         xpath = "/integrationtest:container-and-lists/multi-key-list[A='a'][B='B']"  # [B='b']"
-        self.subject.create(xpath)
+        self.subject.create(xpath, keys=('A', 'B'), values=(('a', 18), ('B', 18)), module='integrationtest')
 
         xpath = "/integrationtest:container-and-lists/multi-key-list[A='a'][B='B']"  # [B='b']"
         self.subject.set(xpath,  None, sr.SR_LIST_T)
@@ -263,16 +258,16 @@ class test_getdata(unittest.TestCase):
     def test_lists_ordering(self):
 
         xpath = "/integrationtest:simplelist[simplekey='A']"
-        self.subject.create(xpath)
+        self.subject.create(xpath, keys=('simplekey',), values=(('A', 18),), module="integrationtest")
 
         xpath = "/integrationtest:simplelist[simplekey='Z']"
-        self.subject.create(xpath)
+        self.subject.create(xpath, keys=('simplekey',), values=(('Z', 18),), module="integrationtest")
 
         xpath = "/integrationtest:simplelist[simplekey='middle']"
-        self.subject.create(xpath)
+        self.subject.create(xpath, keys=('simplekey',), values=(('middle', 18),), module="integrationtest")
 
         xpath = "/integrationtest:simplelist[simplekey='M']"
-        self.subject.create(xpath)
+        self.subject.create(xpath, keys=('simplekey',), values=(('M', 18),), module="integrationtest")
 
         xpath = "/integrationtest:simplelist"
 

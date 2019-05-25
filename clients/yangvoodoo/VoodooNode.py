@@ -233,6 +233,7 @@ class LeafList(Node):
         node_schema = self._get_schema_of_path(spath)
         backend_type = Common.Utils.get_yang_type(node_schema.type(), value, path)
 
+        context.log.debug("about to add: %s, %s, %s", path, value, backend_type)
         context.dal.add(path, value, backend_type)
 
         return value
@@ -316,6 +317,8 @@ class List(ContainingNode):
             node_schema = self._get_schema_of_path(self._form_xpath(spath, keys[i]))
             yangtype = yangvoodoo.Common.Utils.get_yang_type(node_schema.type(), arg, self._form_xpath(spath, keys[i]))
             values.append((arg, yangtype))
+
+        context.log.debug("about to create: %s, %s, %s, %s",  new_xpath, keys, values, context.module)
         context.dal.create(new_xpath, keys=keys, values=values, module=context.module)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
@@ -449,6 +452,7 @@ class List(ContainingNode):
 
         path = self.__dict__['_path']
         new_xpath = path + conditional
+        context.log.debug("has item: %s", new_xpath)
         return context.dal.has_item(new_xpath)
 
     def __getitem__(self, *args):
@@ -475,7 +479,7 @@ class List(ContainingNode):
         else:
             conditional = self._get_keys(list(args))
         new_xpath = path + conditional
-        context.dal.delete(new_xpath)
+        context.dal.uncreate(new_xpath)
 
         return None
 
@@ -612,12 +616,14 @@ class PresenceContainer(Container):
     def exists(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
-        return context.dal.get(path) is True
+        context.log.debug("Calling have container: %s", path)
+        return context.dal.container(path)
 
     def create(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
+        context.log.debug("Calling create container: %s", path)
         context.dal.create_container(path)
         return PresenceContainer(context, path, spath, self)
 
@@ -625,7 +631,7 @@ class PresenceContainer(Container):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         base_repr = self._base_repr()
-        if context.dal.get(path) is True:
+        if self.exists():
             return base_repr + " Exists"
         return base_repr + " Does Not Exist"
 
