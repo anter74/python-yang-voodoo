@@ -35,3 +35,4 @@
    - Proxy Layer speculatively creates list-keys to avoid a read operation to the the true backend.
    - **CHANGE OF BEHAVIOUR** `list.xpath()` now `list.elements()` - now uses the correct value path for list of lists.
    - FIX: setting a list key as a blank value must be prevented
+   - FIX: re-implement changing of list keys by using yang schema on \__setattr__ rather than trusting the backend to enforce it.

@@ -35,6 +35,12 @@ class ListKeyCannotBeBlank(Exception):
         super().__init__("The list key: %s for %s cannot be blank" % (key, xpath))
 
 
+class ListKeyCannotBeChanged(Exception):
+
+    def __init__(self, xpath, key):
+        super().__init__("The list key: %s for %s cannot be changed" % (key, xpath))
+
+
 class ListWrongNumberOfKeys(Exception):
 
     def __init__(self, xpath, require, given):

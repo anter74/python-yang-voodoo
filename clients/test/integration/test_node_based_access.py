@@ -165,12 +165,12 @@ class test_node_based_access(unittest.TestCase):
         """
         Note sysrepo gives us this protection for free in the backend.
         """
-        with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
+        with self.assertRaises(yangvoodoo.Errors.ListKeyCannotBeChanged) as context:
             x.band = 'list-keys-must-not-be-renamed'
         self.assertEqual(str(context.exception),
-                         ("1 Errors occured\nError 0: Value of the key can not be set (Path: "
-                          "/integrationtest:psychedelia/psychedelic-rock/bands"
-                          "[band='The 13th Floor Elevators']/band)\n"))
+                         ("The list key: band for "
+                          "/integrationtest:psychedelia/psychedelic-rock/bands[band='The 13th Floor Elevators']/band "
+                          "cannot be changed"))
 
         self.assertTrue(psychedelic_rock.stoner_rock.bands.get('Dead Meadow'))
         self.assertEqual(psychedelic_rock.stoner_rock.bands.get('Dead Meadow').albums.get('Old Growth').album,
