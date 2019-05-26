@@ -283,20 +283,21 @@ class List(ContainingNode):
         spath = self.__dict__['_spath']
         return context.dal.gets_len(path)
 
-    def xpaths(self, sorted_by_xpath=False):
+    def elements(self, sorted_by_xpath=False):
         """
-        Return a list of xpaths for each value in the list.
+        Return a generator of xpaths for each value in the list.
 
         The datastore will maintain the order entries were originally added into the list.
         The sorted_by_xpath argument can be used to sort the list by xpath.
         """
         context = self.__dict__['_context']
         spath = self.__dict__['_spath']
+        path = self.__dict__['_path']
 
         if sorted_by_xpath:
-            results = context.dal.gets_sorted(spath, spath,  ignore_empty_lists=True)
+            results = context.dal.gets_sorted(path, spath,  ignore_empty_lists=True)
         else:
-            results = context.dal.gets_unsorted(spath, spath, ignore_empty_lists=True)
+            results = context.dal.gets_unsorted(path, spath, ignore_empty_lists=True)
 
         # Return Object
         return results

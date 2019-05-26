@@ -33,3 +33,4 @@
  - optimisations
    - Access to Datastore is proxied via a cache layer - sysrepo is designed for memory constrained environments so doesn't hold the data in memory.
    - Proxy Layer speculatively creates list-keys to avoid a read operation to the the true backend.
+   - **CHANGE OF BEHAVIOUR** `list.xpath()` now `list.elements()` - now uses the correct value path for list of lists.

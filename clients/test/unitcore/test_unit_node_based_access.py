@@ -189,6 +189,12 @@ class test_node_based_access(unittest.TestCase):
         for i in range(len(items)):
             self.assertEqual(repr(items[i]), expected_results[i])
 
+        expected_result = ["/integrationtest:simplelist[simplekey='A']",
+                           "/integrationtest:simplelist[simplekey='Z']",
+                           "/integrationtest:simplelist[simplekey='middle']",
+                           "/integrationtest:simplelist[simplekey='M']"]
+        self.assertEqual(list(self.root.simplelist.elements()), expected_result)
+
         # GETS_SORTED is based on xpath sorted order
         # Act
         items = list(self.root.simplelist._xpath_sorted)
