@@ -1,5 +1,6 @@
 import logging
-from yangvoodoo import Types
+from yangvoodoo import Types, Errors
+import re
 
 
 class PlainObject:
@@ -29,6 +30,11 @@ class Utils:
     LOG_SILENT = 99
     LOG_ERROR = logging.ERROR
     LOG_TRACE = 7
+
+    LAST_LEAF_AND_PREDICTAES = re.compile(r"(.*/)([A-Za-z]+[A-Za-z0-9_:-]*)(\[.*\])$")
+    PREDICATE_KEY_VALUES_SINGLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)='([^']*)'\]")
+    PREDICATE_KEY_VALUES_DOUBLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)=\"([^\"]*)\"\]")
+    FIND_KEYS = re.compile(r"\[([A-Za-z]+[A-Za-z0-9_-]*)=.*?\]")
 
     @staticmethod
     def get_logger(name, level=logging.DEBUG):
@@ -131,6 +137,34 @@ class Utils:
         example - [x='X'X'] is not safe.
         """
         return "[%s='%s']" % (k, v)
+
+    @classmethod
+    def decode_xpath_predicate(self, path):
+        """
+        TODO: xpath predciates need some kind of encoding/escaping to make them safe (or complain
+        they are not.
+        example - [x='X'X'] is not safe.
+        """
+
+        results = self.LAST_LEAF_AND_PREDICTAES.findall(path)
+        if not len(results) == 1:
+            raise Errors.XpathDecodingError(path)
+
+        (list_element_path_a, list_element_path_b, predicates) = results[0]
+
+        predicates = {}
+        for (key, val) in self.PREDICATE_KEY_VALUES_SINGLE.findall(path):
+            predicates[key] = val
+        for (key, val) in self.PREDICATE_KEY_VALUES_DOUBLE.findall(path):
+            predicates[key] = val
+
+        keys = []
+        values = []
+        for key in self.FIND_KEYS.findall(path):
+            keys.append(key)
+            values.append(predicates[key])
+
+        return (list_element_path_a + list_element_path_b, tuple(keys), tuple(values))
 
     @staticmethod
     def convert_string_to_python_val(value, valtype):

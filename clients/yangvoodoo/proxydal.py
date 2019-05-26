@@ -1,3 +1,4 @@
+import time
 import yangvoodoo
 import yangvoodoo.basedal
 import yangvoodoo.stubdal
@@ -19,10 +20,12 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.log = log
         self.cache = yangvoodoo.stubdal.StubDataAbstractionLayer()
         self.store = realstore
+        self.module = None
         self.refresh()
 
     def connect(self, module, tag='<id-tag>'):
         self.cache.connect(module, tag)
+        self.module = module
         return self.store.connect(module, tag)
 
     def disconnect(self):
@@ -100,7 +103,17 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         if list_xpath not in self.unsorted_cached:
             items = list(self.store.gets_unsorted(list_xpath, ignore_empty_lists=ignore_empty_lists))
             self.unsorted_cached[list_xpath] = items
+
         for xpath in self.unsorted_cached[list_xpath]:
+
+            """
+            Pre cache
+            /integrationtest:web/bands[name='Hunck']/name => Hunck
+            """
+            (p, keys, vals) = yangvoodoo.Common.Utils.decode_xpath_predicate(xpath)
+            for index in range(len(keys)):
+                key_path = p + "/" + str(self.module) + ":" + keys[index]
+                self.value_cached[key_path] = vals[index]
             yield xpath
 
     def get(self, xpath):

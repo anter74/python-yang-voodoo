@@ -82,3 +82,11 @@ class XmlTemplateParsingBadKeys(Exception):
         message = "Expecting to find list key '%s' but found '%s' instead" % (key_expected, key_found)
 
         super().__init__(message)
+
+
+class XpathDecodingError(Exception):
+
+    def __init__(self, path):
+        message = "Unable to decode the following XPATH: %s" % (path)
+
+        super().__init__(message)

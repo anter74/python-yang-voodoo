@@ -32,7 +32,7 @@ class DataAccess:
     """
 
     def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None,
-                 disable_proxy=True):
+                 disable_proxy=False):
         if not log:
             log = Utils.get_logger('yangvoodoo', 10)
         self.log = log

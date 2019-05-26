@@ -1,3 +1,14 @@
+ - NOTE:
+
+    the precaching list keys usings regular expressions is kind of expensive time wise
+      (1085 items = .1 seconds saved if we disable the " or ' check)
+
+    The paths created by voodoonode is not always consitent.
+     - list predicates should not have 'prefix:' but pretty sure that every other thing.
+
+     This means that at the moment we are caching things which turn-out to be misses as it's
+     not the exact format syrepo wants.
+
 
  - Likely approach to solve the following is to wrap sysrepodal into a stubdal as a cache/proxy.
    - In the case of a pure stub it's all managed natively.

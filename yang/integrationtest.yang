@@ -229,7 +229,10 @@ module integrationtest {
         type string;
       }
 
-
+      leaf genre {
+        type string;
+      }
+      
       list gigs {
         key "year month day venue location";
 
