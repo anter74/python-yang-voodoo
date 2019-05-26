@@ -27,3 +27,8 @@
   - Implement support for `yangvoodoo.DataAccess.get_extensions(<node>, <child-attribute>)` or `yangvoodoo.DataAccess.get_extension(<node>, <extension-name>, <child-attribute>)` for 'containing nodes' to receive list of extensions or the extension istelf.
     - Example of containing nodes, Lists (but not Leaf-Lists), Containers, Root. The name of a child attribute can be provided (mandatory for root). i.e. `root.morecomplex.get_extension('info')` will look for the extension info on `/root/morecomplex` itself.
   - **EXPERIMENTAL** DiffEngine
+ - devel
+   - FIX: for template applier when using lists within lists
+   - Travis now working on commits.
+ - optimisations
+   - Access to Datastore is proxied via a cache layer - sysrepo is designed for memory constrained environments so doesn't hold the data in memory.

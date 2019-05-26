@@ -1,3 +1,4 @@
+import libyang
 import logging
 from yangvoodoo import Types, Errors
 import re
@@ -183,3 +184,57 @@ class Utils:
                 return False
             return True
         return value
+
+    @staticmethod
+    def form_value_xpath(path, attr, module, node_schema=None):
+        """
+        Sysrepo is much less strict compared to libyang, it only requires the first node
+        to be prefixed within the module. Moreover sysrepo returns XPATH's in this
+        form to us when calling for the list elements.
+
+        Inside the integrationtest which imports from the yang module teschild we still
+        reference those imported elements by the parent module.
+         '/integrationtest:imports-in-here/integrationtest:name'
+        """
+        if node_schema and node_schema.underscore_translated:
+            return path + '/' + module + ":" + attr.replace('_', '-')
+
+        return path + '/' + module + ":" + attr
+
+    @staticmethod
+    def form_schema_xpath(path, attr, module, node_schema=None):
+        """
+        When using the schema xpath lookup we need to use the module prefix
+        across every part of the path for the libyang library.
+
+        Inside the integrationtest which imports from the yang module teschild we still
+        reference those imported elements by the parent module.
+         '/integrationtest:imports-in-here/integrationtest:name'
+        """
+        if node_schema and node_schema.underscore_translated:
+            return path + '/' + module + ":" + attr.replace('_', '-')
+
+        return path + '/' + module + ":" + attr
+
+    @staticmethod
+    def get_schema_of_path(xpath, context):
+        if xpath == "":
+            # Root object won't be a valid XPATH
+            return context.schema
+
+        if context.schemacache.is_path_cached(xpath):
+            return context.schemacache.get_item_from_cache(xpath)
+        try:
+            schema_for_path = next(context.schemactx.find_path(xpath))
+            schema_for_path.underscore_translated = False
+            return schema_for_path
+        except libyang.util.LibyangError:
+            pass
+
+        try:
+            schema_for_path = next(context.schemactx.find_path(xpath.replace('_', '-')))
+            schema_for_path.underscore_translated = True
+            return schema_for_path
+        except libyang.util.LibyangError:
+            pass
+        raise Errors.NonExistingNode(xpath)

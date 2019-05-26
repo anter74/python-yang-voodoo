@@ -1,8 +1,6 @@
 import libyang
 import yangvoodoo.Errors
-from yangvoodoo import TemplateNinja
-from yangvoodoo import Common
-from yangvoodoo import Cache
+from yangvoodoo import Cache, Common, TemplateNinja
 
 
 class Context:
@@ -92,21 +90,6 @@ class Node:
     def _specific_init(self):
         pass
 
-    def _form_xpath(self, path, attr, node_schema=None):
-        """
-        When using the schema xpath lookup we need to use the module prefix
-        across every part of the path.
-
-        Inside the integrationtest which imports from the yang module teschild we still
-        reference those imported elements by the parent module.
-         '/integrationtest:imports-in-here/integrationtest:name'
-        """
-        context = self.__dict__['_context']
-        if node_schema and node_schema.underscore_translated:
-            return path + '/' + context.module + ":" + attr.replace('_', '-')
-
-        return path + '/' + context.module + ":" + attr
-
     def __getattr__(self, attr):
         if attr in ('_ipython_canary_method_should_not_exist_', '_repr_mimebundle_'):
             raise AttributeError('Go Away!')
@@ -118,18 +101,10 @@ class Node:
             # Return Object
             return SortedList(context, path, spath, self)
 
-        # Schema Path is a combination of the previous schema path + the attribute
-        # This order of things is pretty important
-        # - get_schema_of_path lets us convert '_' to '-' if the leaf doesn't exist
-        # to take account of the conversions
-        node_schema = self._get_schema_of_path(self._form_xpath(spath, attr))
+        new_spath = Common.Utils.form_schema_xpath(spath, attr, context.module)
+        node_schema = Common.Utils.get_schema_of_path(new_spath, context)
 
-        # Note: when we call get_schema_of_path we will be given a <libyang> instance
-        # with an additioanl attribute 'underscore_translated'
-        # format_xpath understands this and if it sees underscore_translated it will
-        # then adjust this on the fly.
-        new_spath = self._form_xpath(spath, attr, node_schema)
-        new_xpath = self._form_xpath(path, attr, node_schema)
+        new_xpath = Common.Utils.form_value_xpath(path, attr, context.module, node_schema)
         node_type = node_schema.nodetype()
 
         if node_type == 1:
@@ -157,9 +132,9 @@ class Node:
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
 
-        spath = self._form_xpath(spath, attr)
-        node_schema = self._get_schema_of_path(spath)
-        xpath = self._form_xpath(path, attr, node_schema)
+        spath = Common.Utils.form_schema_xpath(spath, attr, context.module)
+        node_schema = Common.Utils.get_schema_of_path(spath, context)
+        xpath = Common.Utils.form_value_xpath(path, attr, context.module, node_schema)
 
         if val is None:
             context.dal.delete(xpath)
@@ -171,36 +146,14 @@ class Node:
 
     def __dir__(self):
         spath = self.__dict__['_spath']
-        node_schema = self._get_schema_of_path(spath)
+        context = self.__dict__['_context']
+        node_schema = Common.Utils.get_schema_of_path(spath, context)
 
         answer = []
         for child in node_schema.children():
             answer.append(child.name().replace('-', '_'))
         answer.sort()
         return answer
-
-    def _get_schema_of_path(self, xpath):
-        context = self.__dict__['_context']
-        if xpath == "":
-            # Root object won't be a valid XPATH
-            return context.schema
-
-        if context.schemacache.is_path_cached(xpath):
-            return context.schemacache.get_item_from_cache(xpath)
-        try:
-            schema_for_path = next(context.schemactx.find_path(xpath))
-            schema_for_path.underscore_translated = False
-            return schema_for_path
-        except libyang.util.LibyangError:
-            pass
-
-        try:
-            schema_for_path = next(context.schemactx.find_path(xpath.replace('_', '-')))
-            schema_for_path.underscore_translated = True
-            return schema_for_path
-        except libyang.util.LibyangError:
-            pass
-        raise yangvoodoo.Errors.NonExistingNode(xpath)
 
 
 class ContainingNode(Node):
@@ -230,7 +183,7 @@ class LeafList(Node):
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
 
-        node_schema = self._get_schema_of_path(spath)
+        node_schema = Common.Utils.get_schema_of_path(spath, context)
         backend_type = Common.Utils.get_yang_type(node_schema.type(), value, path)
 
         context.log.debug("about to add: %s, %s, %s", path, value, backend_type)
@@ -314,8 +267,9 @@ class List(ContainingNode):
         values = []
         i = 0
         for arg in args:
-            node_schema = self._get_schema_of_path(self._form_xpath(spath, keys[i]))
-            yangtype = yangvoodoo.Common.Utils.get_yang_type(node_schema.type(), arg, self._form_xpath(spath, keys[i]))
+            node_schema = Common.Utils.get_schema_of_path(Common.Utils.form_schema_xpath(spath, keys[i], context.module), context)
+            yangtype = Common.Utils.get_yang_type(node_schema.type(), arg,
+                                                  Common.Utils.form_schema_xpath(spath, keys[i], context.module))
             values.append((arg, yangtype))
 
         context.log.debug("about to create: %s, %s, %s, %s",  new_xpath, keys, values, context.module)
@@ -354,7 +308,8 @@ class List(ContainingNode):
         This is currently not supported.
         """
         spath = self.__dict__['_spath']
-        node_schema = self._get_schema_of_path(spath)
+        context = self.__dict__['_context']
+        node_schema = Common.Utils.get_schema_of_path(spath, context)
 
         keys = []
         for k in node_schema.keys():
@@ -487,7 +442,7 @@ class List(ContainingNode):
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
         context = self.__dict__['_context']
-        node_schema = self._get_schema_of_path(spath)
+        node_schema = Common.Utils.get_schema_of_path(spath, context)
         keys = list(node_schema.keys())
 
         if not len(args[0]) == len(keys):

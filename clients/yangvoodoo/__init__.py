@@ -1,9 +1,6 @@
 #!/usr/bin/python3
 import libyang
 import os
-import time
-import logging
-import socket
 import importlib
 import yangvoodoo.VoodooNode
 import yangvoodoo.proxydal
@@ -87,11 +84,12 @@ class DataAccess:
             raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
 
         spath = node.__dict__['_spath']
+        context = node.__dict__['_context']
 
         if attr:
-            node_schema = node._get_schema_of_path(node._form_xpath(spath, attr))
+            node_schema = Utils.get_schema_of_path(Utils.form_schema_xpath(spath, attr, context.module), context)
         else:
-            node_schema = node._get_schema_of_path(spath)
+            node_schema = Utils.get_schema_of_path(spath, context)
 
         for extension in node_schema.extensions():
             if not module or extension.module().name() == module:
