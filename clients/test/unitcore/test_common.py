@@ -23,15 +23,15 @@ class test_common(unittest.TestCase):
 
     def test_form_value_path(self):
         result = Utils.form_value_xpath('/module:path', 'attr', 'module')
-        self.assertEqual(result, '/module:path/module:attr')
+        self.assertEqual(result, '/module:path/attr')
 
-        result = Utils.form_value_xpath('/module:path/module:subpath', 'attr', 'module')
-        self.assertEqual(result, '/module:path/module:subpath/module:attr')
+        result = Utils.form_value_xpath('/module:path/subpath', 'attr', 'module')
+        self.assertEqual(result, '/module:path/subpath/attr')
 
         node_schema = Mock()
         node_schema.underscore_translated = True
-        result = Utils.form_value_xpath('/module:path/module:subpath', 'attr_x', 'module', node_schema)
-        self.assertEqual(result, '/module:path/module:subpath/module:attr-x')
+        result = Utils.form_value_xpath('/module:path/subpath', 'attr_x', 'module', node_schema)
+        self.assertEqual(result, '/module:path/subpath/attr-x')
 
     def test_get_schema_of_path_cached(self):
         context = Mock()

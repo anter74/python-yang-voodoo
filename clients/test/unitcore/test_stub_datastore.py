@@ -24,9 +24,9 @@ class test_stub_datastore(unittest.TestCase):
 
         expected_result = {
             "/integrationtest:simplelist[simplekey='sdf']": (1, '/integrationtest:simplelist'),
-            "/integrationtest:simplelist[simplekey='sdf']/integrationtest:simplekey": 'sdf',
+            "/integrationtest:simplelist[simplekey='sdf']/simplekey": 'sdf',
             "/integrationtest:simplelist[simplekey='xyz']": (1, '/integrationtest:simplelist'),
-            "/integrationtest:simplelist[simplekey='xyz']/integrationtest:simplekey": 'xyz',
+            "/integrationtest:simplelist[simplekey='xyz']/simplekey": 'xyz',
             '/integrationetest:simpleleaf': 'ABC',
             '/integrationetest:morecomplex/integrationtest:leaflists/integrationtest:simple': ['ABC', 'XYZ'],
             '/integrationtest:underscoretests/integrationtest:underscore_only': 'A'
@@ -55,7 +55,7 @@ class test_stub_datastore(unittest.TestCase):
 
         expected_result = {
             "/integrationtest:simplelist[simplekey='xyz']": (1, '/integrationtest:simplelist'),
-            "/integrationtest:simplelist[simplekey='xyz']/integrationtest:simplekey": 'xyz',
+            "/integrationtest:simplelist[simplekey='xyz']/simplekey": 'xyz',
             '/integrationetest:simpleleaf': 'ABC',
             '/integrationetest:morecomplex/integrationtest:leaflists/integrationtest:simple': ['ABC']
         }

@@ -106,14 +106,16 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
         for xpath in self.unsorted_cached[list_xpath]:
 
-            """
-            Pre cache
-            /integrationtest:web/bands[name='Hunck']/name => Hunck
-            """
-            (p, keys, vals) = yangvoodoo.Common.Utils.decode_xpath_predicate(xpath)
-            for index in range(len(keys)):
-                key_path = p + "/" + str(self.module) + ":" + keys[index]
-                self.value_cached[key_path] = vals[index]
+            # """
+            # Pre cache
+            # /integrationtest:web/bands[name='Hunck']/name => Hunck
+            # """
+            # (p, keys, vals) = yangvoodoo.Common.Utils.decode_xpath_predicate(xpath)
+            #
+            #
+            # for index in range(len(keys)):
+            #     key_path = xpath + "/" + keys[index]
+            #     self.value_cached[key_path] = vals[index]
             yield xpath
 
     def get(self, xpath):

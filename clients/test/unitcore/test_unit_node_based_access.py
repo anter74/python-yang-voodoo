@@ -51,7 +51,7 @@ class test_node_based_access(unittest.TestCase):
 
         inner = morecomplex.inner.create()
         self.assertEqual(repr(inner),
-                         'VoodooPresenceContainer{/integrationtest:morecomplex/integrationtest:inner} Exists')
+                         'VoodooPresenceContainer{/integrationtest:morecomplex/inner} Exists')
         inner.leaf7 = 'this-is-not-a-default-now'
         self.assertEqual(morecomplex.inner.leaf7, 'this-is-not-a-default-now')
         self.assertTrue(morecomplex.inner.exists())
@@ -104,10 +104,8 @@ class test_node_based_access(unittest.TestCase):
 
         # Act.
         expected_answers = [
-            ("VoodooListElement{/integrationtest:psychedelia/integrationtest:psychedelic-rock/"
-             "integrationtest:stoner-rock/integrationtest:bands[band='Dead Meadow']}"),
-            ("VoodooListElement{/integrationtest:psychedelia/integrationtest:psychedelic-rock/"
-             "integrationtest:stoner-rock/integrationtest:bands[band='Wooden Shjips']}")
+            "VoodooListElement{/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']}",
+            "VoodooListElement{/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']}"
         ]
         for band in self.root.psychedelia.psychedelic_rock.stoner_rock.bands:
             expected_answer = expected_answers.pop(0)
@@ -141,16 +139,13 @@ class test_node_based_access(unittest.TestCase):
         element = number_list.create(3)
         number_list.create(4)
         self.assertEqual(repr(element),
-                         ("VoodooListElement{/integrationtest:container-and-lists/"
-                          "integrationtest:numberkey-list[numberkey='3']}"))
+                         "VoodooListElement{/integrationtest:container-and-lists/numberkey-list[numberkey='3']}")
         element = number_list.get(4)
         self.assertEqual(repr(element),
-                         ("VoodooListElement{/integrationtest:container-and-lists/"
-                          "integrationtest:numberkey-list[numberkey='4']}"))
+                         "VoodooListElement{/integrationtest:container-and-lists/numberkey-list[numberkey='4']}")
         element = number_list.get(3)
         self.assertEqual(repr(element),
-                         ("VoodooListElement{/integrationtest:container-and-lists/"
-                          "integrationtest:numberkey-list[numberkey='3']}"))
+                         "VoodooListElement{/integrationtest:container-and-lists/numberkey-list[numberkey='3']}")
 
         for x in self.root.morecomplex.inner.list_that_will_stay_empty:
             self.fail('Did not expect any data in the list')
@@ -174,7 +169,7 @@ class test_node_based_access(unittest.TestCase):
 
         obj = self.root.bronze.silver._parent.silver._parent.silver.gold
         self.assertEqual(repr(obj),
-                         "VoodooContainer{/integrationtest:bronze/integrationtest:silver/integrationtest:gold}")
+                         "VoodooContainer{/integrationtest:bronze/silver/gold}")
 
     def test_lists_ordering(self):
         self.root.simplelist.create('A')
@@ -231,8 +226,7 @@ class test_node_based_access(unittest.TestCase):
 
     def test_leaf_lists(self):
         self.assertEqual(repr(self.root.morecomplex.leaflists.simple),
-                         ("VoodooLeafList{/integrationtest:morecomplex/"
-                          "integrationtest:leaflists/integrationtest:simple}"))
+                         "VoodooLeafList{/integrationtest:morecomplex/leaflists/simple}")
 
         ll = self.root.morecomplex.leaflists.simple
         ll.create('A')
@@ -240,8 +234,7 @@ class test_node_based_access(unittest.TestCase):
         ll.create('B')
 
         expected_result = {
-            '/integrationtest:morecomplex/integrationtest:leaflists/integrationtest:simple':
-                ['A', 'Z', 'B']
+            '/integrationtest:morecomplex/leaflists/simple': ['A', 'Z', 'B']
         }
 
         self.assertEqual(expected_result, self.stub.stub_store)

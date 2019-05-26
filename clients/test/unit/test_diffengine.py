@@ -39,35 +39,35 @@ class test_diff_engine(unittest.TestCase):
                                                     filter="/integrationtest:diff")
 
         expected_results = [
-            ("/integrationtest:diff/integrationtest:modifies/integrationtest:a-list[listkey='Lissie']/integrationtest:listnonkey", 'earworm', 'earworm!', 2),
-            ('/integrationtest:diff/integrationtest:modifies/integrationtest:a-leaf', 'original value', 'new value', 2),
-            ('/integrationtest:diff/integrationtest:modifies/integrationtest:a-2nd-leaf', 'original value2', 'new value2', 2),
-            ("/integrationtest:diff/integrationtest:adds/integrationtest:a-list[listkey='Ghouls']/integrationtest:listkey", None, 'Ghouls', 1),
-            ("/integrationtest:diff/integrationtest:adds/integrationtest:a-list[listkey='Jim Lockey']/integrationtest:listkey", None, 'Jim Lockey', 1),
-            ('/integrationtest:diff/integrationtest:adds/integrationtest:a-leaf', None, 'b', 1),
-            ('/integrationtest:diff/integrationtest:adds/integrationtest:a-2nd-leaf', None, 'b2', 1),
-            ("/integrationtest:diff/integrationtest:deletes/integrationtest:a-list[listkey='Avril Lavigne']/integrationtest:listkey", 'Avril Lavigne', None, 3),
-            ('/integrationtest:diff/integrationtest:deletes/integrationtest:a-leaf', 'a', None, 3),
+            ("/integrationtest:diff/modifies/a-list[listkey='Lissie']/listnonkey", 'earworm', 'earworm!', 2),
+            ('/integrationtest:diff/modifies/a-leaf', 'original value', 'new value', 2),
+            ('/integrationtest:diff/modifies/a-2nd-leaf', 'original value2', 'new value2', 2),
+            ("/integrationtest:diff/adds/a-list[listkey='Ghouls']/listkey", None, 'Ghouls', 1),
+            ("/integrationtest:diff/adds/a-list[listkey='Jim Lockey']/listkey", None, 'Jim Lockey', 1),
+            ('/integrationtest:diff/adds/a-leaf', None, 'b', 1),
+            ('/integrationtest:diff/adds/a-2nd-leaf', None, 'b2', 1),
+            ("/integrationtest:diff/deletes/a-list[listkey='Avril Lavigne']/listkey", 'Avril Lavigne', None, 3),
+            ('/integrationtest:diff/deletes/a-leaf', 'a', None, 3)
         ]
         self.assertEqual(list(differ.all()), expected_results)
 
         expected_results = [
-            ("/integrationtest:diff/integrationtest:modifies/integrationtest:a-list[listkey='Lissie']/integrationtest:listnonkey", 'earworm', 'earworm!', 2),
-            ('/integrationtest:diff/integrationtest:modifies/integrationtest:a-leaf', 'original value', 'new value', 2),
-            ('/integrationtest:diff/integrationtest:modifies/integrationtest:a-2nd-leaf', 'original value2', 'new value2', 2),
+            ("/integrationtest:diff/modifies/a-list[listkey='Lissie']/listnonkey", 'earworm', 'earworm!', 2),
+            ('/integrationtest:diff/modifies/a-leaf', 'original value', 'new value', 2),
+            ('/integrationtest:diff/modifies/a-2nd-leaf', 'original value2', 'new value2', 2),
         ]
         self.assertEqual(list(differ.modified()), expected_results)
 
         expected_results = [
-            ("/integrationtest:diff/integrationtest:deletes/integrationtest:a-list[listkey='Avril Lavigne']/integrationtest:listkey", 'Avril Lavigne', None, 3),
-            ('/integrationtest:diff/integrationtest:deletes/integrationtest:a-leaf', 'a', None, 3),
+            ("/integrationtest:diff/deletes/a-list[listkey='Avril Lavigne']/listkey", 'Avril Lavigne', None, 3),
+            ('/integrationtest:diff/deletes/a-leaf', 'a', None, 3)
         ]
         self.assertEqual(list(differ.remove()), expected_results)
 
         expected_results = [
-            ("/integrationtest:diff/integrationtest:adds/integrationtest:a-list[listkey='Ghouls']/integrationtest:listkey", None, 'Ghouls', 1),
-            ("/integrationtest:diff/integrationtest:adds/integrationtest:a-list[listkey='Jim Lockey']/integrationtest:listkey", None, 'Jim Lockey', 1),
-            ('/integrationtest:diff/integrationtest:adds/integrationtest:a-leaf', None, 'b', 1),
-            ('/integrationtest:diff/integrationtest:adds/integrationtest:a-2nd-leaf', None, 'b2', 1),
+            ("/integrationtest:diff/adds/a-list[listkey='Ghouls']/listkey", None, 'Ghouls', 1),
+            ("/integrationtest:diff/adds/a-list[listkey='Jim Lockey']/listkey", None, 'Jim Lockey', 1),
+            ('/integrationtest:diff/adds/a-leaf', None, 'b', 1),
+            ('/integrationtest:diff/adds/a-2nd-leaf', None, 'b2', 1),
         ]
         self.assertEqual(list(differ.add()), expected_results)

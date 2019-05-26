@@ -196,10 +196,13 @@ class Utils:
         reference those imported elements by the parent module.
          '/integrationtest:imports-in-here/integrationtest:name'
         """
-        if node_schema and node_schema.underscore_translated:
-            return path + '/' + module + ":" + attr.replace('_', '-')
+        if path == '':
+            return Utils.form_schema_xpath(path, attr, module, node_schema)
 
-        return path + '/' + module + ":" + attr
+        if node_schema and node_schema.underscore_translated:
+            return path + '/' + attr.replace('_', '-')
+
+        return path + '/' + attr
 
     @staticmethod
     def form_schema_xpath(path, attr, module, node_schema=None):

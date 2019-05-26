@@ -111,7 +111,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
         for index in range(len(keys)):
             (value, valuetype) = values[index]
-            self.set(xpath + "/" + module+":"+keys[index], value, valuetype)
+            self.set(xpath + "/" + keys[index], value, valuetype)
 
     def uncreate(self, xpath):
         self.delete(xpath)

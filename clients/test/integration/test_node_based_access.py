@@ -52,7 +52,7 @@ class test_node_based_access(unittest.TestCase):
 
         inner = morecomplex.inner
         self.assertEqual(repr(inner),
-                         'VoodooPresenceContainer{/integrationtest:morecomplex/integrationtest:inner} Exists')
+                         'VoodooPresenceContainer{/integrationtest:morecomplex/inner} Exists')
         inner.leaf7 = 'this-is-not-a-default-now'
         self.assertEqual(morecomplex.inner.leaf7, 'this-is-not-a-default-now')
         self.assertTrue(morecomplex.inner.exists())
@@ -100,7 +100,7 @@ class test_node_based_access(unittest.TestCase):
         expected_children = ['language', 'otherlist1', 'otherlist2', 'otherlist3', 'otherlist4', 'otherlist5']
         self.assertEqual(repr(
             italian_numbers), ("VoodooListElement{/integrationtest:outsidelist[leafo='its cold outside']/"
-                               "integrationtest:otherinsidelist"
+                               "otherinsidelist"
                                "[otherlist1='uno'][otherlist2='due'][otherlist3='tre']}"))
         self.assertEqual(dir(italian_numbers), expected_children)
         self.assertEqual(italian_numbers.language, 'italian')
@@ -169,8 +169,8 @@ class test_node_based_access(unittest.TestCase):
             x.band = 'list-keys-must-not-be-renamed'
         self.assertEqual(str(context.exception),
                          ("1 Errors occured\nError 0: Value of the key can not be set (Path: "
-                          "/integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:bands"
-                          "[band='The 13th Floor Elevators']/integrationtest:band)\n"))
+                          "/integrationtest:psychedelia/psychedelic-rock/bands"
+                          "[band='The 13th Floor Elevators']/band)\n"))
 
         self.assertTrue(psychedelic_rock.stoner_rock.bands.get('Dead Meadow'))
         self.assertEqual(psychedelic_rock.stoner_rock.bands.get('Dead Meadow').albums.get('Old Growth').album,
@@ -190,12 +190,12 @@ class test_node_based_access(unittest.TestCase):
             psychedelic_rock.stoner_rock.bands.get('Taylor Swift').favourite = False
         self.assertEqual(str(context.exception),
                          ("The list does not contain the list element: "
-                          "/integrationtest:psychedelia/integrationtest:psychedelic-rock/integrationtest:stoner-rock/"
-                          "integrationtest:bands[band='Taylor Swift']"))
+                          "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/"
+                          "bands[band='Taylor Swift']"))
 
         self.assertEqual(len(psychedelic_rock.noise_pop.shoe_gaze.bands), 2)
         self.assertEqual(repr(psychedelic_rock),
-                         "VoodooContainer{/integrationtest:psychedelia/integrationtest:psychedelic-rock}")
+                         "VoodooContainer{/integrationtest:psychedelia/psychedelic-rock}")
 
     def test_iteration_of_lists(self):
 
@@ -235,15 +235,15 @@ class test_node_based_access(unittest.TestCase):
         number_list.create(4)
         self.assertEqual(repr(element),
                          ("VoodooListElement{/integrationtest:container-and-lists/"
-                          "integrationtest:numberkey-list[numberkey='3']}"))
+                          "numberkey-list[numberkey='3']}"))
         element = number_list.get(4)
         self.assertEqual(repr(element),
                          ("VoodooListElement{/integrationtest:container-and-lists/"
-                          "integrationtest:numberkey-list[numberkey='4']}"))
+                          "numberkey-list[numberkey='4']}"))
         element = number_list.get(3)
         self.assertEqual(repr(element),
                          ("VoodooListElement{/integrationtest:container-and-lists/"
-                          "integrationtest:numberkey-list[numberkey='3']}"))
+                          "numberkey-list[numberkey='3']}"))
 
         for x in self.root.morecomplex.inner.list_that_will_stay_empty:
             self.fail('Did not expect any data in the list')
@@ -273,7 +273,7 @@ class test_node_based_access(unittest.TestCase):
 
         obj = self.root.bronze.silver._parent.silver._parent.silver.gold
         self.assertEqual(repr(obj),
-                         "VoodooContainer{/integrationtest:bronze/integrationtest:silver/integrationtest:gold}")
+                         "VoodooContainer{/integrationtest:bronze/silver/gold}")
 
     def test_lists_ordering(self):
         self.root.simplelist.create('A')
@@ -317,8 +317,7 @@ class test_node_based_access(unittest.TestCase):
 
     def test_leaf_lists(self):
         self.assertEqual(repr(self.root.morecomplex.leaflists.simple),
-                         ("VoodooLeafList{/integrationtest:morecomplex/"
-                          "integrationtest:leaflists/integrationtest:simple}"))
+                         "VoodooLeafList{/integrationtest:morecomplex/leaflists/simple}")
 
         ll = self.root.morecomplex.leaflists.simple
         ll.create('A')

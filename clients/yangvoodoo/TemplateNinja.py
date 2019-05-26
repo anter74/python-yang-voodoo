@@ -7,6 +7,9 @@ from yangvoodoo import Common
 
 class TemplateNinja:
 
+    def __init__(self):
+        self.log = Common.Utils.get_logger("TemplateNinja")
+
     def from_template(self, root, template, **kwargs):
 
         variables = {'root': root}
@@ -56,13 +59,19 @@ class TemplateNinja:
                 (list_nodeschema, list_path) = state.next_time_loop
                 state.next_time_loop = None
                 (predicates, keys, values) = self._build_predicates(list_nodeschema, list_path, child, children, state)
+                self.log.debug('Creating %s %s, %s', list_path+predicates, keys, values)
                 state.dal.create(list_path + predicates, keys, values, state.module)
                 state.path[-1] = state.path[-1] + predicates
                 continue
 
             this_node = state.module + ':' + child.tag
             this_path = ''.join(state.spath) + '/' + this_node
-            value_path = ''.join(state.path) + '/' + this_node
+            # value_path = ''.join(state.path) + '/' + this_node
+
+            if len(state.path) == 0:
+                value_path = ''.join(state.path) + '/' + this_node
+            else:
+                value_path = ''.join(state.path) + '/' + child.tag
 
             node_schema = next(state.yangctx.find_path(this_path))
             node_type = node_schema.nodetype()
@@ -76,9 +85,15 @@ class TemplateNinja:
                 state.dal.add(value_path, Common.Utils.convert_string_to_python_val(child.text, yang_type), yang_type)
             else:
                 yang_type = Common.Utils.get_yang_type(node_schema.type(), child.text, this_path)
-                state.dal.set(value_path, Common.Utils.convert_string_to_python_val(child.text, yang_type), yang_type)
+                val = Common.Utils.convert_string_to_python_val(child.text, yang_type)
+                self.log.debug('setting. %s => %s %s', value_path, val, yang_type)
+                state.dal.set(value_path, val, yang_type)
 
-            state.path.append('/' + this_node)
+            if len(state.path) == 0:
+                state.path.append('/' + this_node)
+            else:
+                state.path.append('/' + child.tag)
+
             state.spath.append('/' + this_node)
 
             self._recurse_xmldoc(child, state)
