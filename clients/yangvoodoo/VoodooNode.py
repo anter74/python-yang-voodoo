@@ -183,6 +183,9 @@ class LeafList(Node):
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
 
+        if value == "":
+            raise yangvoodoo.Errors.ListItemCannotBeBlank(spath)
+
         node_schema = Common.Utils.get_schema_of_path(spath, context)
         backend_type = Common.Utils.get_yang_type(node_schema.type(), value, path)
 
@@ -267,6 +270,9 @@ class List(ContainingNode):
         values = []
         i = 0
         for arg in args:
+            if arg == "":
+                raise yangvoodoo.Errors.ListKeyCannotBeBlank(spath, keys[i])
+
             node_schema = Common.Utils.get_schema_of_path(Common.Utils.form_schema_xpath(spath, keys[i], context.module), context)
             yangtype = Common.Utils.get_yang_type(node_schema.type(), arg,
                                                   Common.Utils.form_schema_xpath(spath, keys[i], context.module))

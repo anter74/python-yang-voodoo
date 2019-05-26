@@ -23,6 +23,18 @@ class ListDoesNotContainElement(Exception):
         super().__init__("The list does not contain the list element: %s" % (xpath))
 
 
+class ListItemCannotBeBlank(Exception):
+
+    def __init__(self, xpath):
+        super().__init__("The list item for %s cannot be blank" % (xpath))
+
+
+class ListKeyCannotBeBlank(Exception):
+
+    def __init__(self, xpath, key):
+        super().__init__("The list key: %s for %s cannot be blank" % (key, xpath))
+
+
 class ListWrongNumberOfKeys(Exception):
 
     def __init__(self, xpath, require, given):

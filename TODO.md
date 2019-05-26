@@ -19,7 +19,7 @@
 - ~~enumeration test cases~~
 - ~~underscore conversion~~
 - should support <object>[child-attr-name] for setting, getting data (i.e. where we want to use a variable to define child-attr-name])
-- setting a list key as a blank value must be prevented.
+- ~~setting a list key as a blank value must be prevented.~~
 - deletes (of non-primitives)
 - choices
 - testing membership of list elements is lazily done by asking for everything on the backend - implement a method to ask the backend datastore about membership.
