@@ -280,8 +280,8 @@ class List(ContainingNode):
     def __len__(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
-        results = context.dal.gets_unsorted(path, ignore_empty_lists=True)
-        return len(list(results))
+        spath = self.__dict__['_spath']
+        return context.dal.gets_len(path)
 
     def xpaths(self, sorted_by_xpath=False):
         """
@@ -294,9 +294,9 @@ class List(ContainingNode):
         spath = self.__dict__['_spath']
 
         if sorted_by_xpath:
-            results = context.dal.gets_sorted(spath, ignore_empty_lists=True)
+            results = context.dal.gets_sorted(spath, spath,  ignore_empty_lists=True)
         else:
-            results = context.dal.gets_unsorted(spath, ignore_empty_lists=True)
+            results = context.dal.gets_unsorted(spath, spath, ignore_empty_lists=True)
 
         # Return Object
         return results
@@ -324,17 +324,10 @@ class List(ContainingNode):
         The optional argument sorted_by_xpath will sort the list by XPATH before returning the
         last item.
         """
-        # Note by default sysrepo stores list elements in the order they are put into the
-        # database.
-        # list(session.gets('/integrationtest:simplelist'))
-        # Out[1]:
-        # ["/integrationtest:simplelist[simplekey='A']",
-        #  "/integrationtest:simplelist[simplekey='Z']",
-        #  "/integrationtest:simplelist[simplekey='b']"]
         context = self.__dict__['_context']
         spath = self.__dict__['_spath']
 
-        results = list(context.dal.gets_sorted(spath, ignore_empty_lists=True))
+        results = list(context.dal.gets_sorted(spath, spath,  ignore_empty_lists=True))
 
         this_xpath = results[-1]
         # Return Object
@@ -348,17 +341,10 @@ class List(ContainingNode):
         The optional argument sorted_by_xpath will sort the list by XPATH before returning the
         first item.
         """
-        # Note by default sysrepo stores list elements in the order they are put into the
-        # database.
-        # list(session.gets('/integrationtest:simplelist'))
-        # Out[1]:
-        # ["/integrationtest:simplelist[simplekey='A']",
-        #  "/integrationtest:simplelist[simplekey='Z']",
-        #  "/integrationtest:simplelist[simplekey='b']"]
         context = self.__dict__['_context']
         spath = self.__dict__['_spath']
 
-        results = list(context.dal.gets_sorted(spath, ignore_empty_lists=True))
+        results = list(context.dal.gets_sorted(spath, spath, ignore_empty_lists=True))
 
         this_xpath = results[0]
         # Return Object
@@ -504,9 +490,9 @@ class ListIterator(Node):
         self.__dict__['_parent'] = parent_self
         self.__dict__['_xpath_sorted'] = xpath_sorted
         if xpath_sorted:
-            self.__dict__['_iterator'] = context.dal.gets_sorted(path, ignore_empty_lists=True)
+            self.__dict__['_iterator'] = context.dal.gets_sorted(path, spath, ignore_empty_lists=True)
         else:
-            self.__dict__['_iterator'] = context.dal.gets_unsorted(path, ignore_empty_lists=True)
+            self.__dict__['_iterator'] = context.dal.gets_unsorted(path, spath, ignore_empty_lists=True)
 
     def __next__(self):
         context = self.__dict__['_context']

@@ -143,6 +143,13 @@ class test_common(unittest.TestCase):
         result = Utils.FIND_KEYS.findall(input)
         self.assertEqual(result, ['KeY1', 'abc', 'abc3ABC'])
 
+        input = "/integrationtest:web/bands[name='Longpigs']/gigs[year='1999'][month='9'][day='1'][venue='SHU Nelson Mandella'][location='Sheffield']"
+        expected_match_result = [("/integrationtest:web/bands[name='Longpigs']/",
+                                  'gigs',
+                                  "[year='1999'][month='9'][day='1'][venue='SHU Nelson "
+                                  "Mandella'][location='Sheffield']")]
+        self.assertEqual(Utils.LAST_LEAF_AND_PREDICTAES.findall(input), expected_match_result)
+
     def test_decoding_xpath(self):
         input = "/abc:xyz/abc:abc[KeY1='val1'][abc=\"sdf\"][abc3ABC='val3']"
 
@@ -168,4 +175,13 @@ class test_common(unittest.TestCase):
                            ('val1',)
                            )
 
+        self.assertEqual(result, expected_result)
+
+        # Act
+        input = "/integrationtest:web/bands[name='Longpigs']/gigs[year='1999'][month='9'][day='1'][venue='SHU Nelson Mandella'][location='Sheffield']"
+        result = Utils.decode_xpath_predicate(input)
+
+        # Assert
+        expected_result = ("/integrationtest:web/bands[name='Longpigs']/gigs", ('year', 'month', 'day',
+                                                                                'venue', 'location'), ('1999', '9', '1', 'SHU Nelson Mandella', 'Sheffield'))
         self.assertEqual(result, expected_result)

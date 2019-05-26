@@ -131,11 +131,28 @@ class BaseDataAbstractionLayer:
     def set(self, xpath, value, valtype=18):
         raise NotImplementedError("set not implemented")
 
-    def gets_sorted(self, xpath, ignore_empty_lists=False):
+    def gets_sorted(self, xpath, schema_path, ignore_empty_lists=False):
+        """
+        To retrieve a list of XPATH's as a generator to each list element in the list.
+        The order is sorted by XPATH before getting returned.
+
+        xpath:       /integrationtest:web/bands[name='Idlewild']/gigs
+        schema_path: /integrationtest:web/integrationtest:bands/integrationtest:gigs
+
+        returns a generator.
+        """
         raise NotImplementedError("gets_sorted not implemented")
 
     def gets(self, xpath):
         raise NotImplementedError("gets not implemented")
+
+    def gets_len(self, xpath):
+        """
+        From a given XPATH list (not leaf-list) return the legnth of the list.
+
+        xpath:       /integrationtest:web/bands[name='Idlewild']/gigs
+        """
+        raise NotImplementedError("gets_len not implemented")
 
     def add(self, xpath, value, valtype=18):
         """
@@ -150,7 +167,16 @@ class BaseDataAbstractionLayer:
     def remove(self, xpath, value):
         raise NotImplementedError("remove not implemented")
 
-    def gets_unsorted(self, xpath, ignore_empty_lists=False):
+    def gets_unsorted(self, xpath, schema_path, ignore_empty_lists=False):
+        """
+        To retrieve a list of XPATH's as a generator to each list element in the list.
+        The order remains in the order the user added items to the list.
+
+        xpath:       /integrationtest:web/bands[name='Idlewild']/gigs
+        schema_path: /integrationtest:web/integrationtest:bands/integrationtest:gigs
+
+        returns a generator.
+        """
         raise NotImplementedError("gets_unsorted not implemented")
 
     def has_item(self, xpath):

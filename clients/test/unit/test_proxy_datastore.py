@@ -2,7 +2,7 @@ import unittest
 import yangvoodoo
 import yangvoodoo.stubdal
 import yangvoodoo.proxydal
-from mock import Mock
+from mock import Mock, patch
 
 
 class test_proxy_datastore(unittest.TestCase):
@@ -37,19 +37,23 @@ class test_proxy_datastore(unittest.TestCase):
         self.subject.refresh()
         self.assertFalse('/xpath' in self.subject.value_cached)
 
-    def test_reading_lists(self):
+    @patch("yangvoodoo.Common.Utils.get_yang_type")
+    def test_reading_lists(self, mockGetYangType):
         """
         Note: these tests use side_effects which help enforce the underlying
         datastore method is not called multiple types.
         """
+        self.subject.context = Mock()
+        self.subject.context.module = "integrationtest"
+        mockGetYangType.return_value = 18
 
         self.real.gets_unsorted.side_effect = [["/listxpath[key='value'][key2='value2']"]]
 
         # Uncached
         self.assertFalse('/listxpath' in self.subject.unsorted_cached)
-        result = self.subject.gets_unsorted('/listxpath')
+        result = self.subject.gets_unsorted('/listxpath', '/listxpath')
         self.assertEqual(list(result), ["/listxpath[key='value'][key2='value2']"])
 
         # Cached
         self.assertTrue('/listxpath' in self.subject.unsorted_cached)
-        result = self.subject.gets_unsorted('/listxpath')
+        result = self.subject.gets_unsorted('/listxpath', '/listxpath')

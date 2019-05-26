@@ -145,7 +145,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     def set(self, xpath, value, valtype=0):
         self.stub_store[xpath] = value
 
-    def gets_sorted(self, list_xpath, ignore_empty_lists=False):
+    def gets_sorted(self, list_xpath, schema_path, ignore_empty_lists=False):
         if list_xpath in self.list_element_map:
             items = []
             for item in self.list_element_map[list_xpath]:
@@ -154,7 +154,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             for item in items:
                 yield item
 
-    def gets_unsorted(self, list_xpath, ignore_empty_lists=False):
+    def gets_unsorted(self, list_xpath, schema_path, ignore_empty_lists=False):
         if list_xpath in self.list_element_map:
             items = []
             for item in self.list_element_map[list_xpath]:
@@ -164,6 +164,11 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             return
         if not ignore_empty_lists:
             raise yangvoodoo.Errors.ListDoesNotContainElement(list_xpath)
+
+    def gets_len(self, list_xpath):
+        if list_xpath in self.list_element_map:
+            return len(self.list_element_map[list_xpath])
+        return 0
 
     def get(self, xpath):
         if xpath not in self.stub_store:

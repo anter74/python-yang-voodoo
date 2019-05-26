@@ -32,3 +32,4 @@
    - Travis now working on commits.
  - optimisations
    - Access to Datastore is proxied via a cache layer - sysrepo is designed for memory constrained environments so doesn't hold the data in memory.
+   - Proxy Layer speculatively creates list-keys to avoid a read operation to the the true backend.

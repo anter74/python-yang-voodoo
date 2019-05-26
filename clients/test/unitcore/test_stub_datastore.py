@@ -44,10 +44,10 @@ class test_stub_datastore(unittest.TestCase):
 
         expected_result = ["/integrationtest:simplelist[simplekey='sdf']",
                            "/integrationtest:simplelist[simplekey='xyz']"]
-        self.assertEqual(list(self.subject.gets_sorted("/integrationtest:simplelist")), expected_result)
+        self.assertEqual(list(self.subject.gets_sorted("/integrationtest:simplelist", "/integrationtest:simplelist")), expected_result)
 
         self.subject.delete("/integrationtest:simplelist[simplekey='sdf']")
-        self.assertEqual(len(list(self.subject.gets_unsorted('/integrationtest:simplelist'))), 1)
+        self.assertEqual(len(list(self.subject.gets_unsorted('/integrationtest:simplelist', "/integrationtest:simplelist"))), 1)
 
         self.subject.remove("/integrationetest:morecomplex/integrationtest:leaflists/integrationtest:simple", "XYZ")
 

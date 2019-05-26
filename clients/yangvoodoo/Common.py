@@ -151,7 +151,7 @@ class Utils:
         if not len(results) == 1:
             raise Errors.XpathDecodingError(path)
 
-        (list_element_path_a, list_element_path_b, predicates) = results[0]
+        (list_element_path_a, list_element_path_b, last_set_of_predicates) = results[0]
 
         predicates = {}
         for (key, val) in self.PREDICATE_KEY_VALUES_SINGLE.findall(path):
@@ -161,7 +161,7 @@ class Utils:
 
         keys = []
         values = []
-        for key in self.FIND_KEYS.findall(path):
+        for key in self.FIND_KEYS.findall(last_set_of_predicates):
             keys.append(key)
             values.append(predicates[key])
 

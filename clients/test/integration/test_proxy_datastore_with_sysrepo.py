@@ -2,6 +2,7 @@ import unittest
 import yangvoodoo
 import yangvoodoo.stubdal
 import yangvoodoo.proxydal
+from mock import Mock, patch
 
 
 class test_proxy_datastore_with_sysrepo(unittest.TestCase):
@@ -14,6 +15,8 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
         self.session.connect('integrationtest')
         self.root = self.session.get_node()
         self.subject = yangvoodoo.proxydal.ProxyDataAbstractionLayer(self.session.data_abstraction_layer)
+        self.subject.context = Mock()
+        self.subject.context.module = "integrationtest"
 
     def test_reading(self):
         xpath = '/integrationtest:simpleleaf'
@@ -44,7 +47,9 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
         self.subject.refresh()
         self.assertFalse(xpath in self.subject.value_cached)
 
-    def test_lists(self):
+    @patch("yangvoodoo.Common.Utils.get_yang_type")
+    def test_lists(self, mockGetYangType):
+        mockGetYangType.return_value = 18
         xpath = "/integrationtest:simplelist"
         xpath1 = xpath + "[simplekey='simpleval']"
         xpath2 = xpath + "[simplekey='zsimpleval']"
@@ -57,7 +62,7 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
         # Uncached
         self.assertFalse(xpath in self.subject.unsorted_cached)
 
-        list(self.subject.gets_unsorted(xpath, True))
+        list(self.subject.gets_unsorted(xpath, xpath, True))
         self.assertTrue(xpath in self.subject.unsorted_cached)
 
         expected_result = {

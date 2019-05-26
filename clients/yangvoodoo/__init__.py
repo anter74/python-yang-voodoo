@@ -36,6 +36,7 @@ class DataAccess:
         self.session = None
         self.conn = None
         self.connected = False
+        self.context = None
         if data_abstraction_layer:
             non_proxy_data_abstraction_layer = data_abstraction_layer
         else:
@@ -184,11 +185,9 @@ class DataAccess:
 
         self.data_abstraction_layer.setup_root()
 
-        context = yangvoodoo.VoodooNode.Context(self.module, self, self.yang_schema, self.yang_ctx, log=self.log)
-
         self.help = self._help
 
-        return yangvoodoo.VoodooNode.Root(context)
+        return yangvoodoo.VoodooNode.Root(self.context)
 
     def connect(self, module=None,  yang_location="../yang/", tag='client'):
         """
@@ -207,6 +206,9 @@ class DataAccess:
         self.session = self.data_abstraction_layer.session
         self.conn = self.data_abstraction_layer.conn
         self.connected = True
+
+        self.context = yangvoodoo.VoodooNode.Context(self.module, self, self.yang_schema, self.yang_ctx, log=self.log)
+        self.data_abstraction_layer.context = self.context
         return connect_status
 
     def disconnect(self):
@@ -300,7 +302,15 @@ class DataAccess:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.set(xpath, value, valtype)
 
-    def gets_sorted(self, xpath, ignore_empty_lists=False):
+    def gets_len(self, xpath):
+        """
+        For the given XPATH of a list return the length
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.gets_len(xpath)
+
+    def gets_sorted(self, xpath, spath, ignore_empty_lists=False):
         """
         For the given XPATH (of a list) return an sorted list of XPATHS representing every
         list element within the list.
@@ -309,9 +319,9 @@ class DataAccess:
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.gets_sorted(xpath, ignore_empty_lists)
+        return self.data_abstraction_layer.gets_sorted(xpath, spath, ignore_empty_lists)
 
-    def gets_unsorted(self, xpath, ignore_empty_lists=False):
+    def gets_unsorted(self, xpath, spath, ignore_empty_lists=False):
         """
         For the given XPATH (of a list) return an unsorted list of XPATHS representing every
         list element within the list.
@@ -321,7 +331,7 @@ class DataAccess:
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.gets_unsorted(xpath, ignore_empty_lists)
+        return self.data_abstraction_layer.gets_unsorted(xpath, spath, ignore_empty_lists)
 
     def gets(self, xpath):
         """

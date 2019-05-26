@@ -11,9 +11,10 @@ These values come from sysrepo running within Docker on a Intel i7-7820HQ (appro
 |------------------------------|--------------------------------|
 | 1.21                         | sysrepo alone                  |
 | 0.66                         | with proxy lazy cache*         |
-| 0.21                         | with proxy and speculative creation of list keys\** |
-
-
+| 0.21                         | with proxy and type-blind speculative creation of list keys\** |
+| 0.38                         | with proxy and type-correct speculative creation of list keys  |
+| 0.12                         | stub based datastore (python dict based)       |
+| 0.14                         | stub based datastore with proxy and type-correct speculative creation of list keys |
 
 \* the first version of the proxy cache is lazy, when deleting, adding items to lists parts of the cache are flushed.
 \** around 20 us per key to pre-populate *if* we don't care about the type of keys, i.e. if we re-enable this we will show list-keys as, integers.

@@ -55,6 +55,7 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.has_item_cached = {}
         self.unsorted_cached = {}
         self.sorted_cached = {}
+        self.len_cached = {}
         self.cache.create(xpath, keys, values, module)
         return self.store.create(xpath, keys, values, module)
 
@@ -62,6 +63,7 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.has_item_cached = {}
         self.unsorted_cached = {}
         self.sorted_cached = {}
+        self.len_cached = {}
         self.cache.uncreate(xpath)
         return self.store.uncreate(xpath)
 
@@ -92,31 +94,52 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.value_cached[xpath] = value
         return self.store.set(xpath, value, valtype)
 
-    def gets_sorted(self, list_xpath, ignore_empty_lists=False):
+    def gets_sorted(self, list_xpath, schema_xpath, ignore_empty_lists=False):
         if list_xpath not in self.sorted_cached:
-            items = list(self.store.gets_sorted(list_xpath, ignore_empty_lists=ignore_empty_lists))
+            items = list(self.store.gets_sorted(list_xpath, schema_xpath, ignore_empty_lists=ignore_empty_lists))
             self.sorted_cached[list_xpath] = items
         for xpath in self.sorted_cached[list_xpath]:
+            self._speculative_create_list_keys(xpath, schema_xpath)
             yield xpath
 
-    def gets_unsorted(self, list_xpath, ignore_empty_lists=False):
+    def gets_unsorted(self, list_xpath, schema_xpath, ignore_empty_lists=False):
+        # raise ValueError(list_xpath + "  " + schema_xpath, self.)
+        """
+         ('/integrationtest:web/bands', '/integrationtest:web/integrationtest:bands')
+
+         ("/integrationtest:web/bands[name='Longpigs']/gigs", '/integrationtest:web/integrationtest:bands/integrationtest:gigs')
+
+         """
         if list_xpath not in self.unsorted_cached:
-            items = list(self.store.gets_unsorted(list_xpath, ignore_empty_lists=ignore_empty_lists))
+            items = list(self.store.gets_unsorted(list_xpath, schema_xpath, ignore_empty_lists=ignore_empty_lists))
             self.unsorted_cached[list_xpath] = items
 
         for xpath in self.unsorted_cached[list_xpath]:
-
-            # """
-            # Pre cache
-            # /integrationtest:web/bands[name='Hunck']/name => Hunck
-            # """
-            # (p, keys, vals) = yangvoodoo.Common.Utils.decode_xpath_predicate(xpath)
-            #
-            #
-            # for index in range(len(keys)):
-            #     key_path = xpath + "/" + keys[index]
-            #     self.value_cached[key_path] = vals[index]
+            self._speculative_create_list_keys(xpath, schema_xpath)
             yield xpath
+
+    def gets_len(self, list_xpath):
+        if list_xpath not in self.len_cached:
+            result = self.store.gets_len(list_xpath)
+            self.len_cached[list_xpath] = result
+        return self.len_cached[list_xpath]
+
+    def _speculative_create_list_keys(self, xpath, schema_xpath):
+        """
+
+        So gets_unsorted is called with
+                 ("/integrationtest:web/bands[name='Longpigs']/gigs", '/integrationtest:web/integrationtest:bands/integrationtest:gigs')
+
+        """
+        (p, keys, vals) = yangvoodoo.Common.Utils.decode_xpath_predicate(xpath)
+        for index in range(len(keys)):
+            key_spath = schema_xpath+"/" + self.context.module + ":"+keys[index]
+            node_schema = Utils.get_schema_of_path(key_spath, self.context)
+            valtype = Utils.get_yang_type(node_schema.type(), value=None, xpath=key_spath)
+            val = Utils.convert_string_to_python_val(vals[index], valtype)
+
+            key_path = xpath + "/" + keys[index]
+            self.value_cached[key_path] = val
 
     def get(self, xpath):
         if xpath not in self.value_cached:
@@ -135,3 +158,4 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.unsorted_cached = {}
         self.sorted_cached = {}
         self.has_item_cached = {}
+        self.len_cached = {}

@@ -156,17 +156,17 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         item = self.session.get_item(xpath)
         return item is not None
 
-    def gets_sorted(self, xpath, ignore_empty_lists=False):
+    def gets_sorted(self, xpath, schema_path, ignore_empty_lists=False):
         """
         Get a generator providing a sorted list of xpaths, which can then be used for fetch data frmo
         within the list.
         """
-        results = list(self.gets_unsorted(xpath, ignore_empty_lists))
+        results = list(self.gets_unsorted(xpath, schema_path, ignore_empty_lists))
         results.sort()
         for result in results:
             yield result
 
-    def gets_unsorted(self, xpath, ignore_empty_lists=False):
+    def gets_unsorted(self, xpath, schema_path, ignore_empty_lists=False):
         """
         Get a generator providing xpaths for each items in the list, this can then be used to fetch data
         from within the list.
@@ -186,6 +186,12 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
                     yield v.xpath()
                 except RuntimeError as err:
                     self._handle_error(xpath, err)
+
+    def gets_len(self, xpath):
+        vals = self.session.get_items(xpath)
+        if not vals:
+            return 0
+        return int(vals.val_cnt())
 
     def get(self, xpath):
         sysrepo_item = self.session.get_item(xpath)
