@@ -78,9 +78,9 @@ class test_xml_to_xpath(unittest.TestCase):
         self.assertEqual(dal.create.call_count, 2)
         dal.create.assert_has_calls([
             call(
-                "/integrationtest:container-and-lists/numberkey-list[numberkey='5']", ['numberkey'], [(5, 19)], 'integrationtest'),
+                "/integrationtest:container-and-lists/numberkey-list[numberkey='5']", ['numberkey'], [(5, 19)]),
             call("/integrationtest:container-and-lists/multi-key-list[A='a'][B='b']", [
-                 'A', 'B'], [('a', 18), ('b', 18)], 'integrationtest')
+                 'A', 'B'], [('a', 18), ('b', 18)])
         ])
 
     def test_from_template_with_leaflists(self):

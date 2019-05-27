@@ -118,7 +118,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
-    def create(self, xpath, keys=None, values=None, module=None):
+    def create(self, xpath, keys=None, values=None):
         """
         Create a list item by XPATH including keys
          e.g. / path/to/list[key1 = ''][key2 = ''][key3 = '']

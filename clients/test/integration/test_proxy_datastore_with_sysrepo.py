@@ -55,9 +55,9 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
         xpath2 = xpath + "[simplekey='zsimpleval']"
         xpath3 = xpath + "[simplekey='asimpleval']"
 
-        self.subject.create(xpath1, ('simplekey',), (('simpleval', 10),), 'integrationtest')
-        self.subject.create(xpath2, ('simplekey',), (('zsimpleval', 10),), 'integrationtest')
-        self.subject.create(xpath3, ('simplekey',), (('asimpleval', 10),), 'integrationtest')
+        self.subject.create(xpath1, ('simplekey',), (('simpleval', 10),))
+        self.subject.create(xpath2, ('simplekey',), (('zsimpleval', 10),))
+        self.subject.create(xpath3, ('simplekey',), (('asimpleval', 10),))
 
         # Uncached
         self.assertFalse(xpath in self.subject.unsorted_cached)

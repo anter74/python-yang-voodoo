@@ -51,13 +51,13 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.value_cached[xpath] = True
         return self.store.create_container(xpath)
 
-    def create(self, xpath, keys=[], values=[], module=None):
+    def create(self, xpath, keys=[], values=[]):
         self.has_item_cached = {}
         self.unsorted_cached = {}
         self.sorted_cached = {}
         self.len_cached = {}
-        self.cache.create(xpath, keys, values, module)
-        return self.store.create(xpath, keys, values, module)
+        self.cache.create(xpath, keys, values)
+        return self.store.create(xpath, keys, values)
 
     def uncreate(self, xpath, keys=[], values=[], module=None):
         self.has_item_cached = {}

@@ -12,30 +12,17 @@ These values come from sysrepo running within Docker on a Intel i7-7820HQ (appro
 | 1.21                         | sysrepo alone                  |
 | 0.66                         | with proxy lazy cache*         |
 | 0.21                         | with proxy and type-blind speculative creation of list keys\** |
-| 0.38                         | with proxy and type-correct speculative creation of list keys  |
+| 0.38                         | with proxy and type-correct speculative creation of list keys\***  |
 | 0.12                         | stub based datastore (python dict based)       |
-| 0.14                         | stub based datastore with proxy and type-correct speculative creation of list keys |
+| 0.14                         | stub based datastore with proxy and type-correct speculative creation of list keys\*** |
 
 \* the first version of the proxy cache is lazy, when deleting, adding items to lists parts of the cache are flushed.
-\** around 20 us per key to pre-populate *if* we don't care about the type of keys, i.e. if we re-enable this we will show list-keys as, integers.
-To make this more precise will narrow the gap.
+
+\** around 20 us per key to pre-populate *if* we don't care about the type of keys, i.e. if we re-enable this we will show list-keys as, integers
+
+\*** when we pre-populate list keys with the correct type it's a bit slower
 
 
-See `proxydal.py`
-
-```python
-# """
-# Pre cache
-# /integrationtest:web/bands[name='Hunck']/name => Hunck
-# """
-# (p, keys, vals) = yangvoodoo.Common.Utils.decode_xpath_predicate(xpath)
-#
-#
-# for index in range(len(keys)):
-#     key_path = xpath + "/" + keys[index]
-#     self.value_cached[key_path] = vals[index]
-
-```
 
 ## Test
 

@@ -282,7 +282,7 @@ class List(ContainingNode):
             values.append((arg, yangtype))
 
         context.log.debug("about to create: %s, %s, %s, %s",  new_xpath, keys, values, context.module)
-        context.dal.create(new_xpath, keys=keys, values=values, module=context.module)
+        context.dal.create(new_xpath, keys=keys, values=values)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
 

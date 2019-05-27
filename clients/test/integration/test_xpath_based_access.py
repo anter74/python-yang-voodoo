@@ -201,7 +201,7 @@ class test_getdata(unittest.TestCase):
         """
 
         xpath = "/integrationtest:container-and-lists/multi-key-list[A='a'][B='B']"  # [B='b']"
-        self.subject.create(xpath, keys=('A', 'B'), values=(('a', 18), ('B', 18)), module='integrationtest')
+        self.subject.create(xpath, keys=('A', 'B'), values=(('a', 18), ('B', 18)))
 
         xpath = "/integrationtest:container-and-lists/multi-key-list[A='a'][B='B']"  # [B='b']"
         self.subject.set(xpath,  None, sr.SR_LIST_T)
@@ -259,16 +259,16 @@ class test_getdata(unittest.TestCase):
     def test_lists_ordering(self):
 
         xpath = "/integrationtest:simplelist[simplekey='A']"
-        self.subject.create(xpath, keys=('simplekey',), values=(('A', 18),), module="integrationtest")
+        self.subject.create(xpath, keys=('simplekey',), values=(('A', 18),))
 
         xpath = "/integrationtest:simplelist[simplekey='Z']"
-        self.subject.create(xpath, keys=('simplekey',), values=(('Z', 18),), module="integrationtest")
+        self.subject.create(xpath, keys=('simplekey',), values=(('Z', 18),))
 
         xpath = "/integrationtest:simplelist[simplekey='middle']"
-        self.subject.create(xpath, keys=('simplekey',), values=(('middle', 18),), module="integrationtest")
+        self.subject.create(xpath, keys=('simplekey',), values=(('middle', 18),))
 
         xpath = "/integrationtest:simplelist[simplekey='M']"
-        self.subject.create(xpath, keys=('simplekey',), values=(('M', 18),), module="integrationtest")
+        self.subject.create(xpath, keys=('simplekey',), values=(('M', 18),))
 
         xpath = "/integrationtest:simplelist"
 

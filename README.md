@@ -113,7 +113,7 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **add(xpath, value, valuetype)** - add a new entry to the end of a leaf-list at the given XPATH
  - **remove(xpath, value)** - remvoes an entry from a leaf-list at the given XPATH - the XPATH given is the XPATH to the leaf-list itself, not the specific item.
  - **has_item(xpath)**- returns True if the item has been populated with data.
- - **create(xpath, key_tuple, value_tuple, yang_module)** - create a list item, to remove use **uncreate**
+ - **create(xpath, key_tuple, value_tuple)** - create a list item, to remove use **uncreate**
  - **uncreate(xpath** - delete a list element from the datastore.
  - **create_container(xpath)** - if a container is a presence container explicitly create the container.
  - **set(xpath, value, valuetype)** - sets the value of a specific xpath (supported for yang leaves). The valuetype is an integer (defined in Types.py/DATA_ABSTRACTION_MAPPING) based on the effective type of the yang field (*based on fuzzy matching in the case of unions*).

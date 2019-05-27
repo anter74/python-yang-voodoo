@@ -86,7 +86,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
         return item
 
-    def create(self, xpath, keys=[], values=[], module=None):
+    def create(self, xpath, keys=[], values=[]):
         """
         The xpath coming in should include the full predicates
             /integrationtest:simplelist[integrationtest:simplekey='sdf']

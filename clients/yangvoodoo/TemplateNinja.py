@@ -60,7 +60,7 @@ class TemplateNinja:
                 state.next_time_loop = None
                 (predicates, keys, values) = self._build_predicates(list_nodeschema, list_path, child, children, state)
                 self.log.debug('Creating %s %s, %s', list_path+predicates, keys, values)
-                state.dal.create(list_path + predicates, keys, values, state.module)
+                state.dal.create(list_path + predicates, keys, values)
                 state.path[-1] = state.path[-1] + predicates
                 continue
 
