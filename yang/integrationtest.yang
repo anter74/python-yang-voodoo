@@ -229,6 +229,9 @@ module integrationtest {
         type string;
       }
 
+      leaf genre {
+        type string;
+      }
 
       list gigs {
         key "year month day venue location";
@@ -345,7 +348,7 @@ module integrationtest {
   leaf default {
     type string;
     integrationtest:hide true;
-    default "stausquo";
+    default "statusquo";
   }
 
   container whencontainer {

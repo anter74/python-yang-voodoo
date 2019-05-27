@@ -1,16 +1,21 @@
 # Release History:
 
 
-- v0.0.1 - Initial version
+# v0.0.1 - Initial version
+
   -  Proof of concept implementation
-- v0.0.2 - Enhancements before
+
+# v0.0.2 - Enhancements before
+
   - FIX: accessing empty lists would raise exception
   - FIX: len(<OUTER_LIST>.<INNER_LIST>) return the total count of entries across both lists (becuase we used schema rather than value path)
   - FEATURE: `session.help(node)` returns YANG description if present.
   - FEATURE: `node._parent` returns the parent object
   - FEATURE: `for x in list._xpath_sorted` returns items sorted by xpath `for x in list` rerturns items based on the datastore order (which should be the order they were added)
   - Docker file split into `builder` for compiling everything from source and a smaller version (`docker/build.sh`) to build both images.
-- v0.0.3 - Un-optimised Version
+
+# v0.0.3 - Un-optimised Version
+
   - FIX: return a PresenceContainer object when calling create on a presence node path.
   - FIX: implement `has_item(xpath)` asking the datastore about existence rather than getting the full list back.
   - Renamed BlackArt to Voodoo for representation of objects.
@@ -27,3 +32,14 @@
   - Implement support for `yangvoodoo.DataAccess.get_extensions(<node>, <child-attribute>)` or `yangvoodoo.DataAccess.get_extension(<node>, <extension-name>, <child-attribute>)` for 'containing nodes' to receive list of extensions or the extension istelf.
     - Example of containing nodes, Lists (but not Leaf-Lists), Containers, Root. The name of a child attribute can be provided (mandatory for root). i.e. `root.morecomplex.get_extension('info')` will look for the extension info on `/root/morecomplex` itself.
   - **EXPERIMENTAL** DiffEngine
+
+# devel
+   - FIX: for template applier when using lists within lists
+   - Travis now working on commits.
+   - Access to Datastore is proxied via a cache layer - sysrepo is designed for memory constrained environments so doesn't hold the data in memory.
+   - Proxy Layer speculatively creates list-keys to avoid a read operation to the the true backend.
+   - **CHANGE OF BEHAVIOUR** `list.xpath()` now `list.elements()` - now uses the correct value path for list of lists.
+   - FIX: setting a list key as a blank value must be prevented
+   - FIX: re-implement changing of list keys by using yang schema on \__setattr__ rather than trusting the backend to enforce it.
+   - FIX: sysrepo dataa-abstraction layer dirty now captures if we have made changes (raises NoChangesToCommit) if there are no changes.
+   - FEATURE: stubdal now provides default values

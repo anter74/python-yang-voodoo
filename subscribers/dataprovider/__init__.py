@@ -130,8 +130,9 @@ class DataProvider:
                         xpath = change.old_val().xpath()
 
                     if old_val is not None or new_val is not None:
-                        self.process_path(dry_run, xpath, oper, old_val, new_val)
-
+                        status = self.process_path(dry_run, xpath, oper, old_val, new_val)
+                        if status is False:
+                            return sr.SR_ERR_OPERATION_FAILED 
         except Exception as e:
             print(e)
             print(tb.format_exc())

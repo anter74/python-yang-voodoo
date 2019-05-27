@@ -21,6 +21,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     """
 
     SYSREPO_DATASTORE_LOCATION = "/sysrepo/data"
+    DAL_ID = "SysrepDAL"
 
     def connect(self, module, tag='client'):
         """
@@ -58,6 +59,9 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         return os.stat(self.SYSREPO_DATASTORE_LOCATION + "/" + self.module + ".running").st_mtime
 
     def is_session_dirty(self):
+        return self.dirty
+
+    def has_datastore_changed(self):
         if not self.module:
             return False
         if not self._get_datstore_timestamp() == self.running_conf_last_changed:
@@ -70,6 +74,9 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         return True
 
     def commit(self):
+        if not self.dirty:
+            raise yangvoodoo.Errors.NothingToCommit()
+
         try:
             before_change_timestamp = self._get_datstore_timestamp()
             self.session.commit()
@@ -83,6 +90,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             # so because all we know is the data store has changed (either our or someone elses
             # transaction we break here)
             self.session.refresh()
+            self.dirty = False
         except RuntimeError as err:
             self._handle_error(None, err)
 
@@ -93,7 +101,18 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             self._handle_error(None, err)
         return True
 
+    def container(self, xpath):
+        sysrepo_item = self.session.get_item(xpath)
+        try:
+            v = self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
+            if v is not None:
+                return True
+        except RuntimeError as err:
+            self._handle_error(xpath, err)
+        return False
+
     def create_container(self, xpath):
+        self.dirty = True
         try:
             self.set(xpath, None, sr.SR_CONTAINER_PRESENCE_T)
         except RuntimeError as err:
@@ -107,10 +126,15 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         For the sysrepo mapping we don't require keys/values the xpath should be
         formed with the predicates available.
         """
+        self.dirty = True
         try:
             self.set(xpath, None, sr.SR_LIST_T)
         except RuntimeError as err:
             self._handle_error(xpath, err)
+
+    def uncreate(self, xpath):
+        self.dirty = True
+        self.delete(xpath)
 
     def set(self, xpath, value, valtype=sr.SR_STRING_T):
         """
@@ -121,7 +145,8 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         In the case of Decimal64 we cannot use a value type
             v=sr.Val(2.344)
         """
-        self.log.debug('SET: %s => %s (%s)' % (xpath, value, valtype))
+        self.log.trace('SET: %s => %s (%s)' % (xpath, value, valtype))
+        self.dirty = True
         if valtype == 10:
             valtype = None
         if valtype:
@@ -131,7 +156,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
         try:
             self.session.set_item(xpath, v)
-            return v
+            return value
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
@@ -142,17 +167,17 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         item = self.session.get_item(xpath)
         return item is not None
 
-    def gets_sorted(self, xpath, ignore_empty_lists=False):
+    def gets_sorted(self, xpath, schema_path, ignore_empty_lists=False):
         """
         Get a generator providing a sorted list of xpaths, which can then be used for fetch data frmo
         within the list.
         """
-        results = list(self.gets_unsorted(xpath, ignore_empty_lists))
+        results = list(self.gets_unsorted(xpath, schema_path, ignore_empty_lists))
         results.sort()
         for result in results:
             yield result
 
-    def gets_unsorted(self, xpath, ignore_empty_lists=False):
+    def gets_unsorted(self, xpath, schema_path, ignore_empty_lists=False):
         """
         Get a generator providing xpaths for each items in the list, this can then be used to fetch data
         from within the list.
@@ -173,7 +198,16 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
                 except RuntimeError as err:
                     self._handle_error(xpath, err)
 
-    def get(self, xpath):
+    def gets_len(self, xpath):
+        vals = self.session.get_items(xpath)
+        if not vals:
+            return 0
+        return int(vals.val_cnt())
+
+    def get(self, xpath, default_value=None):
+        """
+        Note: sysrepo will handle setting the default_value for us.
+        """
         sysrepo_item = self.session.get_item(xpath)
         try:
             return self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
@@ -181,9 +215,11 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             self._handle_error(xpath, err)
 
     def add(self, xpath, value, valtype=sr.SR_STRING_T):
+        self.dirty = True
         return self.set(xpath, value, valtype)
 
     def remove(self, xpath, value):
+        self.dirty = True
         xpath = xpath + "[.='" + value + "']"
         return self.delete(xpath)
 
@@ -198,6 +234,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     def delete(self, xpath):
         try:
+            self.dirty = True
             self.session.delete_item(xpath)
             return True
         except RuntimeError as err:
@@ -291,6 +328,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         """
         try:
             self.session.refresh()
+            self.dirty = False
             if self.module:
                 self.running_conf_last_changed = self._get_datstore_timestamp()
 

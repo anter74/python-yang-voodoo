@@ -1,3 +1,23 @@
+ - NOTE:
+
+    the precaching list keys usings regular expressions is kind of expensive time wise
+      (1085 items = .1 seconds saved if we disable the " or ' check)
+
+    The paths created by voodoonode is not always consitent.
+     - list predicates should not have 'prefix:' but pretty sure that every other thing.
+
+     This means that at the moment we are caching things which turn-out to be misses as it's
+     not the exact format syrepo wants.
+
+     root cause of this is sysrepo returns data like this
+     In [1]: x=list(root.web.bands['Idlewild'].gigs)
+      /integrationtest:web/bands[name='Idlewild']/gigs[year='2007'][month='3'][day='14'][venue='UEA'][location='Norwich']
+      /integrationtest:web/bands[name='Idlewild']/gigs[year='2009'][month='11'][day='19'][venue='Waterfront'][location='Norwich']
+      /integrationtest:web/bands[name='Idlewild']/gigs[year='2016'][month='3'][day='13'][venue='Roundhouse'][location='Camden']
+      /integrationtest:web/bands[name='Idlewild']/gigs[year='2015'][month='12'][day='11'][venue='Koko'][location='Camden']
+      /integrationtest:web/bands[name='Idlewild']/gigs[year='2017'][month='12'][day='20'][venue='O2 ABC'][location='Glasgow']
+      /integrationtest:web/bands[name='Idlewild']/gigs[year='2019'][month='4'][day='30'][venue='Waterfront'][location='Norwich']
+
 
  - Likely approach to solve the following is to wrap sysrepodal into a stubdal as a cache/proxy.
    - In the case of a pure stub it's all managed natively.

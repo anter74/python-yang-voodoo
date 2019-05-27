@@ -48,9 +48,9 @@ class test_xml_to_xpath(unittest.TestCase):
         self.subject._import_xml_to_datastore(self.module, self.schemactx, template, self.stub)
 
         # assert
-        self.assertEqual(len(self.root.container_and_lists.multi_key_list.inner.level3list), 1)
-        self.assertEqual(self.root.container_and_lists.multi_key_list.inner.level3list['33333'].level3key, '33333')
-        self.assertEqual(self.root.container_and_lists.multi_key_list.level2list['22222'].level2key, '22222')
+        self.assertEqual(len(self.root.container_and_lists.multi_key_list['a', 'b'].inner.level3list), 1)
+        self.assertEqual(self.root.container_and_lists.multi_key_list['a', 'b'].inner.level3list['33333'].level3key, '33333')
+        self.assertEqual(self.root.container_and_lists.multi_key_list['a', 'b'].level2list['22222'].level2key, '22222')
         self.assertFalse('2' in self.root.container_and_lists.multi_key_list.level2list)
 
     def test_from_template_with_only_keys(self):
@@ -78,8 +78,8 @@ class test_xml_to_xpath(unittest.TestCase):
         self.assertEqual(dal.create.call_count, 2)
         dal.create.assert_has_calls([
             call(
-                "/integrationtest:container-and-lists/integrationtest:numberkey-list[numberkey='5']", ['numberkey'], [(5, 19)], 'integrationtest'),
-            call("/integrationtest:container-and-lists/integrationtest:multi-key-list[A='a'][B='b']", [
+                "/integrationtest:container-and-lists/numberkey-list[numberkey='5']", ['numberkey'], [(5, 19)], 'integrationtest'),
+            call("/integrationtest:container-and-lists/multi-key-list[A='a'][B='b']", [
                  'A', 'B'], [('a', 18), ('b', 18)], 'integrationtest')
         ])
 
@@ -106,9 +106,9 @@ class test_xml_to_xpath(unittest.TestCase):
         self.assertEqual(dal.create.call_count, 0)
         self.assertEqual(dal.add.call_count, 3)
         dal.add.assert_has_calls([
-            call("/integrationtest:morecomplex/integrationtest:leaflists/integrationtest:simple", 'A', 18),
-            call("/integrationtest:morecomplex/integrationtest:leaflists/integrationtest:simple", 'Z', 18),
-            call("/integrationtest:morecomplex/integrationtest:leaflists/integrationtest:simple", 'M', 18)
+            call("/integrationtest:morecomplex/leaflists/simple", 'A', 18),
+            call("/integrationtest:morecomplex/leaflists/simple", 'Z', 18),
+            call("/integrationtest:morecomplex/leaflists/simple", 'M', 18)
         ])
 
     def test_from_template_with_leaflists_with_stub_dal(self):
@@ -164,7 +164,7 @@ class test_xml_to_xpath(unittest.TestCase):
         self.assertEqual(self.root.container_and_lists.numberkey_list[6].numberkey, 6)
         self.assertEqual(self.root.container_and_lists.numberkey_list[7].numberkey, 7)
         self.assertEqual(['description', 'numberkey'], list(dir(self.root.container_and_lists.numberkey_list[6])))
-        self.assertEqual(("/integrationtest:container-and-lists/integrationtest:numberkey-list"
+        self.assertEqual(("/integrationtest:container-and-lists/numberkey-list"
                           "[numberkey='6']"),
                          self.root.container_and_lists.numberkey_list[6]._path)
 

@@ -19,7 +19,7 @@
 - ~~enumeration test cases~~
 - ~~underscore conversion~~
 - should support <object>[child-attr-name] for setting, getting data (i.e. where we want to use a variable to define child-attr-name])
-- setting a list key as a blank value must be prevented.
+- ~~setting a list key as a blank value must be prevented.~~
 - deletes (of non-primitives)
 - choices
 - testing membership of list elements is lazily done by asking for everything on the backend - implement a method to ask the backend datastore about membership.
@@ -45,7 +45,7 @@
  - Optimise Docker image so it doesn't compile the core packages, but instead sucks them in from somewhere else.
 - Packaging of the sysrepo into a deb for the minimal image is very naive.
 - ~~Implement disconnect() for the data\_abstraction\_layer.~~
-- Stubdal - should it satisfy default values - it probably can by looking at libyang but that may be quite intensive.
+- ~~Stubdal - should it satisfy default values - it probably can by looking at libyang but that may be quite intensive.~~
 - ~~Remove warnings for the connect/get\_node change of behaviour.~~
 - Think about multiple top-level nodes appearing as multiple sysrepo backend datastore session. This could just be inevitable based on the way sysrepo operates.
 - `session.commit()` with no changes times out

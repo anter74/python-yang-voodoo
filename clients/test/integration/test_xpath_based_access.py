@@ -147,11 +147,6 @@ class test_getdata(unittest.TestCase):
         xpath = "/integrationtest:empty"
         self.subject.set(xpath, None, sr.SR_LEAF_EMPTY_T)
 
-        with self.assertRaises(yangvoodoo.Errors.NodeHasNoValue) as context:
-            xpath = "/integrationtest:empty"
-            self.subject.get(xpath)
-        self.assertEqual(str(context.exception), 'The node: empty-leaf at /integrationtest:empty has no value')
-
     def test_numbers(self):
         with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             xpath = "/integrationtest:bronze/silver/gold/platinum/deep"
@@ -206,7 +201,7 @@ class test_getdata(unittest.TestCase):
         """
 
         xpath = "/integrationtest:container-and-lists/multi-key-list[A='a'][B='B']"  # [B='b']"
-        self.subject.create(xpath)
+        self.subject.create(xpath, keys=('A', 'B'), values=(('a', 18), ('B', 18)), module='integrationtest')
 
         xpath = "/integrationtest:container-and-lists/multi-key-list[A='a'][B='B']"  # [B='b']"
         self.subject.set(xpath,  None, sr.SR_LIST_T)
@@ -225,7 +220,8 @@ class test_getdata(unittest.TestCase):
         self.assertEqual(str(context.exception), '1 Errors occured\nError 0: Invalid argument (Path: None)\n')
 
         xpath = "/integrationtest:container-and-lists/multi-key-list"
-        items = self.subject.gets_unsorted(xpath)
+        spath = "/integrationtest:container-and-lists/integrationtest:multi-key-list"
+        items = self.subject.gets_unsorted(xpath, spath)
         self.assertNotEqual(items, None)
 
         expected = [
@@ -255,7 +251,7 @@ class test_getdata(unittest.TestCase):
         # gets() works on leaves.
         # with self.assertRaises(datalayer.NodeNotAList) as context:
         xpath = "/integrationtest:simpleleaf"
-        items = self.subject.gets_unsorted(xpath)
+        items = self.subject.gets_unsorted(xpath, xpath)
         # However if we iterate around the answer we will get
         # each character of the string '/integrationtest:simpleleaf'
         # self.assertEqual(str(context.exception), "The path: /integrationtest:simpleleaf is not a list")
@@ -263,21 +259,21 @@ class test_getdata(unittest.TestCase):
     def test_lists_ordering(self):
 
         xpath = "/integrationtest:simplelist[simplekey='A']"
-        self.subject.create(xpath)
+        self.subject.create(xpath, keys=('simplekey',), values=(('A', 18),), module="integrationtest")
 
         xpath = "/integrationtest:simplelist[simplekey='Z']"
-        self.subject.create(xpath)
+        self.subject.create(xpath, keys=('simplekey',), values=(('Z', 18),), module="integrationtest")
 
         xpath = "/integrationtest:simplelist[simplekey='middle']"
-        self.subject.create(xpath)
+        self.subject.create(xpath, keys=('simplekey',), values=(('middle', 18),), module="integrationtest")
 
         xpath = "/integrationtest:simplelist[simplekey='M']"
-        self.subject.create(xpath)
+        self.subject.create(xpath, keys=('simplekey',), values=(('M', 18),), module="integrationtest")
 
         xpath = "/integrationtest:simplelist"
 
         # GETS is based on user defined order
-        items = self.subject.gets_unsorted(xpath)
+        items = self.subject.gets_unsorted(xpath, xpath)
         expected_results = ["/integrationtest:simplelist[simplekey='A']",
                             "/integrationtest:simplelist[simplekey='Z']",
                             "/integrationtest:simplelist[simplekey='middle']",
@@ -285,7 +281,7 @@ class test_getdata(unittest.TestCase):
         self.assertEqual(list(items), expected_results)
 
         # GETS_SORTED is based on xpath sorted order
-        items = self.subject.gets_sorted(xpath)
+        items = self.subject.gets_sorted(xpath, xpath)
         expected_results = ["/integrationtest:simplelist[simplekey='A']",
                             "/integrationtest:simplelist[simplekey='M']",
                             "/integrationtest:simplelist[simplekey='Z']",

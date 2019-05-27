@@ -23,6 +23,24 @@ class ListDoesNotContainElement(Exception):
         super().__init__("The list does not contain the list element: %s" % (xpath))
 
 
+class ListItemCannotBeBlank(Exception):
+
+    def __init__(self, xpath):
+        super().__init__("The list item for %s cannot be blank" % (xpath))
+
+
+class ListKeyCannotBeBlank(Exception):
+
+    def __init__(self, xpath, key):
+        super().__init__("The list key: %s for %s cannot be blank" % (key, xpath))
+
+
+class ListKeyCannotBeChanged(Exception):
+
+    def __init__(self, xpath, key):
+        super().__init__("The list key: %s for %s cannot be changed" % (key, xpath))
+
+
 class ListWrongNumberOfKeys(Exception):
 
     def __init__(self, xpath, require, given):
@@ -33,6 +51,12 @@ class NonExistingNode(Exception):
 
     def __init__(self, xpath):
         super().__init__("The path: %s does not point of a valid schema node in the yang module" % (xpath))
+
+
+class NothingToCommit(Exception):
+
+    def __innit__(self, message):
+        super().__init__("No channges to commit")
 
 
 class CommitFailed(Exception):
@@ -80,5 +104,13 @@ class XmlTemplateParsingBadKeys(Exception):
         if not key_found:
             key_found = "nothing"
         message = "Expecting to find list key '%s' but found '%s' instead" % (key_expected, key_found)
+
+        super().__init__(message)
+
+
+class XpathDecodingError(Exception):
+
+    def __init__(self, path):
+        message = "Unable to decode the following XPATH: %s" % (path)
 
         super().__init__(message)

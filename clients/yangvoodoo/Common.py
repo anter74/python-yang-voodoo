@@ -1,7 +1,56 @@
-from yangvoodoo import Types
+import libyang
+import logging
+from yangvoodoo import Types, Errors
+import re
+
+
+class PlainObject:
+    pass
+
+
+class PlainIterator:
+
+    def __init__(self, children):
+        self.children = children
+        self.index = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if len(self.children) > self.index:
+            self.index = self.index + 1
+            return self.children[self.index-1]
+        raise StopIteration
 
 
 class Utils:
+
+    LOG_INFO = logging.INFO
+    LOG_DEBUG = logging.DEBUG
+    LOG_SILENT = 99
+    LOG_ERROR = logging.ERROR
+    LOG_TRACE = 7
+
+    LAST_LEAF_AND_PREDICTAES = re.compile(r"(.*/)([A-Za-z]+[A-Za-z0-9_:-]*)(\[.*\])$")
+    PREDICATE_KEY_VALUES_SINGLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)='([^']*)'\]")
+    PREDICATE_KEY_VALUES_DOUBLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)=\"([^\"]*)\"\]")
+    FIND_KEYS = re.compile(r"\[([A-Za-z]+[A-Za-z0-9_-]*)=.*?\]")
+
+    @staticmethod
+    def get_logger(name, level=logging.DEBUG):
+        format = "%(asctime)-15s - %(name)-15s %(levelname)-12s  %(message)s"
+        logging.basicConfig(level=99, format=format)
+        log = logging.getLogger(name)
+        log.setLevel(level)
+
+        logging.addLevelName(7, "TRACE")
+
+        def trace(self, message, *args, **kws):
+            if self.isEnabledFor(7):
+                self._log(7, message, args, **kws)
+        logging.Logger.trace = trace
+        return log
 
     @staticmethod
     def get_yang_type(node_schema, value=None, xpath=None):
@@ -90,6 +139,34 @@ class Utils:
         """
         return "[%s='%s']" % (k, v)
 
+    @classmethod
+    def decode_xpath_predicate(self, path):
+        """
+        TODO: xpath predciates need some kind of encoding/escaping to make them safe (or complain
+        they are not.
+        example - [x='X'X'] is not safe.
+        """
+
+        results = self.LAST_LEAF_AND_PREDICTAES.findall(path)
+        if not len(results) == 1:
+            raise Errors.XpathDecodingError(path)
+
+        (list_element_path_a, list_element_path_b, last_set_of_predicates) = results[0]
+
+        predicates = {}
+        for (key, val) in self.PREDICATE_KEY_VALUES_SINGLE.findall(path):
+            predicates[key] = val
+        for (key, val) in self.PREDICATE_KEY_VALUES_DOUBLE.findall(path):
+            predicates[key] = val
+
+        keys = []
+        values = []
+        for key in self.FIND_KEYS.findall(last_set_of_predicates):
+            keys.append(key)
+            values.append(predicates[key])
+
+        return (list_element_path_a + list_element_path_b, tuple(keys), tuple(values))
+
     @staticmethod
     def convert_string_to_python_val(value, valtype):
         """
@@ -107,3 +184,60 @@ class Utils:
                 return False
             return True
         return value
+
+    @staticmethod
+    def form_value_xpath(path, attr, module, node_schema=None):
+        """
+        Sysrepo is much less strict compared to libyang, it only requires the first node
+        to be prefixed within the module. Moreover sysrepo returns XPATH's in this
+        form to us when calling for the list elements.
+
+        Inside the integrationtest which imports from the yang module teschild we still
+        reference those imported elements by the parent module.
+         '/integrationtest:imports-in-here/integrationtest:name'
+        """
+        if path == '':
+            return Utils.form_schema_xpath(path, attr, module, node_schema)
+
+        if node_schema and node_schema.underscore_translated:
+            return path + '/' + attr.replace('_', '-')
+
+        return path + '/' + attr
+
+    @staticmethod
+    def form_schema_xpath(path, attr, module, node_schema=None):
+        """
+        When using the schema xpath lookup we need to use the module prefix
+        across every part of the path for the libyang library.
+
+        Inside the integrationtest which imports from the yang module teschild we still
+        reference those imported elements by the parent module.
+         '/integrationtest:imports-in-here/integrationtest:name'
+        """
+        if node_schema and node_schema.underscore_translated:
+            return path + '/' + module + ":" + attr.replace('_', '-')
+
+        return path + '/' + module + ":" + attr
+
+    @staticmethod
+    def get_schema_of_path(xpath, context):
+        if xpath == "":
+            # Root object won't be a valid XPATH
+            return context.schema
+
+        if context.schemacache.is_path_cached(xpath):
+            return context.schemacache.get_item_from_cache(xpath)
+        try:
+            schema_for_path = next(context.schemactx.find_path(xpath))
+            schema_for_path.underscore_translated = False
+            return schema_for_path
+        except libyang.util.LibyangError:
+            pass
+
+        try:
+            schema_for_path = next(context.schemactx.find_path(xpath.replace('_', '-')))
+            schema_for_path.underscore_translated = True
+            return schema_for_path
+        except libyang.util.LibyangError:
+            pass
+        raise Errors.NonExistingNode(xpath)

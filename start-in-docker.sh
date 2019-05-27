@@ -21,11 +21,14 @@ cd /working/subscribers
 
 echo "Ready"
 cd /working/clients
-set -euo pipefail
 
 if [ -f "/builder" ]
 then
   ./run-test.sh
 fi
-./interactive
+
+if [ $? = 0 ]
+then
+  ./interactive
+fi
 /bin/bash

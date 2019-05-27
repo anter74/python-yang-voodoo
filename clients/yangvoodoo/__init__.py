@@ -1,85 +1,10 @@
 #!/usr/bin/python3
 import libyang
 import os
-import time
-import logging
-import socket
 import importlib
 import yangvoodoo.VoodooNode
-
-
-class LogWrap():
-
-    ENABLED_INFO = True
-    ENABLED_DEBUG = True
-
-    REMOTE_LOG_IP = "127.0.0.1"
-    REMOTE_LOG_PORT = 6666
-
-    def __init__(self, local_log=False, remote_log=False):
-        self.ENABLED = local_log
-        self.ENABLED_REMOTE = remote_log
-
-        if self.ENABLED:
-            format = "%(asctime)-15s - %(name)-20s %(levelname)-12s  %(message)s"
-            logging.basicConfig(level=logging.DEBUG, format=format)
-            self.log = logging.getLogger('blackhole')
-
-        if self.ENABLED_REMOTE:
-            self.log_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            message = self._pad_truncate_to_size("STARTED ("+str(time.time())+"):")
-            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
-
-    @staticmethod
-    def _args_wildcard_to_printf(*args):
-        if isinstance(args, tuple):
-            # (('Using cli startup to do %s', 'O:configure'),)
-            args = list(args[0])
-            if len(args) == 0:
-                return ''
-            message = args.pop(0)
-            if len(args) == 0:
-                pass
-            if len(args) == 1:
-                message = message % (args[0])
-            else:
-                message = message % tuple(args)
-        else:
-            message = args
-        return (message)
-
-    def _pad_truncate_to_size(self, message, size=1024):
-        if len(message) < size:
-            message = message + ' '*(1024-len(message))
-        elif len(message) > 1024:
-            message = message[:1024]
-        return message.encode()
-
-    def info(self, *args):
-        if self.ENABLED and self.ENABLED_INFO:
-            self.log.info(args)
-        if self.ENABLED_REMOTE and self.ENABLED_INFO:
-            print('a')
-            message = 'INFO ' + LogWrap._args_wildcard_to_printf(args)
-            message = self._pad_truncate_to_size('INFO: %s %s' % (str(time.time()), message))
-            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
-
-    def error(self, *args):
-        if self.ENABLED:
-            self.log.error(args)
-        if self.ENABLED_REMOTE:
-            message = 'INFO ' + LogWrap._args_wildcard_to_printf(args)
-            message = self._pad_truncate_to_size('INFO: %s %s' % (str(time.time()), message))
-            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
-
-    def debug(self, *args):
-        if self.ENABLED and self.ENABLED_DEBUG:
-            self.log.debug(args)
-
-        if self.ENABLED_REMOTE and self.ENABLED_DEBUG:
-            message = 'DEBUG ' + LogWrap._args_wildcard_to_printf(args)
-            message = self._pad_truncate_to_size('INFO: %s %s' % (str(time.time()), message))
-            self.log_socket.sendto(message, (self.REMOTE_LOG_IP, self.REMOTE_LOG_PORT))
+import yangvoodoo.proxydal
+from yangvoodoo.Common import Utils
 
 
 class DataAccess:
@@ -103,21 +28,32 @@ class DataAccess:
      - lxml
     """
 
-    def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None):
+    def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None,
+                 disable_proxy=False):
         if not log:
-            log = LogWrap(local_log=local_log, remote_log=remote_log)
+            log = Utils.get_logger('yangvoodoo', 10)
         self.log = log
         self.session = None
         self.conn = None
         self.connected = False
+        self.context = None
         if data_abstraction_layer:
-            self.data_abstraction_layer = data_abstraction_layer
+            non_proxy_data_abstraction_layer = data_abstraction_layer
         else:
-            self.data_abstraction_layer = self._get_data_abastraction_layer(log)
+            non_proxy_data_abstraction_layer = self._get_data_abastraction_layer(None)
+
+        if disable_proxy:
+            self.data_abstraction_layer = non_proxy_data_abstraction_layer
+        else:
+            self.data_abstraction_layer = self._proxify_data_abstraction_layer(non_proxy_data_abstraction_layer)
 
     def _get_data_abastraction_layer(self, log):
         importlib.import_module('yangvoodoo.sysrepodal')
         return yangvoodoo.sysrepodal.SysrepoDataAbstractionLayer(log)
+
+    def _proxify_data_abstraction_layer(self, dal):
+        # return dal
+        return yangvoodoo.proxydal.ProxyDataAbstractionLayer(dal)
 
     def _help(self, node):
         """
@@ -149,11 +85,12 @@ class DataAccess:
             raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
 
         spath = node.__dict__['_spath']
+        context = node.__dict__['_context']
 
         if attr:
-            node_schema = node._get_schema_of_path(node._form_xpath(spath, attr))
+            node_schema = Utils.get_schema_of_path(Utils.form_schema_xpath(spath, attr, context.module), context)
         else:
-            node_schema = node._get_schema_of_path(spath)
+            node_schema = Utils.get_schema_of_path(spath, context)
 
         for extension in node_schema.extensions():
             if not module or extension.module().name() == module:
@@ -248,11 +185,9 @@ class DataAccess:
 
         self.data_abstraction_layer.setup_root()
 
-        context = yangvoodoo.VoodooNode.Context(self.module, self, self.yang_schema, self.yang_ctx, log=self.log)
-
         self.help = self._help
 
-        return yangvoodoo.VoodooNode.Root(context)
+        return yangvoodoo.VoodooNode.Root(self.context)
 
     def connect(self, module=None,  yang_location="../yang/", tag='client'):
         """
@@ -271,6 +206,9 @@ class DataAccess:
         self.session = self.data_abstraction_layer.session
         self.conn = self.data_abstraction_layer.conn
         self.connected = True
+
+        self.context = yangvoodoo.VoodooNode.Context(self.module, self, self.yang_schema, self.yang_ctx, log=self.log)
+        self.data_abstraction_layer.context = self.context
         return connect_status
 
     def disconnect(self):
@@ -310,6 +248,14 @@ class DataAccess:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.validate()
 
+    def container(self, xpath):
+        """
+        Retrieve the status of the presence container. Returns True if it exists.
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.container(xpath)
+
     def create_container(self, xpath):
         """
         Create a presence container - only suitable for use on presence containers.
@@ -331,6 +277,17 @@ class DataAccess:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.create(xpath, keys=keys, values=values, module=module)
 
+    def uncreate(self, xpath):
+        """
+        Remove a list item by XPATH including keys
+         e.g. /path/to/list[key1='val1'][key2='val2'][key3='val3']
+
+         returns: True
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.uncreate(xpath)
+
     def set(self, xpath, value, valtype=18):
         """
         Set an individual item by XPATH.
@@ -345,7 +302,15 @@ class DataAccess:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.set(xpath, value, valtype)
 
-    def gets_sorted(self, xpath, ignore_empty_lists=False):
+    def gets_len(self, xpath):
+        """
+        For the given XPATH of a list return the length
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.gets_len(xpath)
+
+    def gets_sorted(self, xpath, spath, ignore_empty_lists=False):
         """
         For the given XPATH (of a list) return an sorted list of XPATHS representing every
         list element within the list.
@@ -354,9 +319,9 @@ class DataAccess:
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.gets_sorted(xpath, ignore_empty_lists)
+        return self.data_abstraction_layer.gets_sorted(xpath, spath, ignore_empty_lists)
 
-    def gets_unsorted(self, xpath, ignore_empty_lists=False):
+    def gets_unsorted(self, xpath, spath, ignore_empty_lists=False):
         """
         For the given XPATH (of a list) return an unsorted list of XPATHS representing every
         list element within the list.
@@ -366,7 +331,7 @@ class DataAccess:
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.gets_unsorted(xpath, ignore_empty_lists)
+        return self.data_abstraction_layer.gets_unsorted(xpath, spath, ignore_empty_lists)
 
     def gets(self, xpath):
         """
@@ -411,12 +376,15 @@ class DataAccess:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.has_item(xpath)
 
-    def get(self, xpath):
+    def get(self, xpath, default_value=None):
         """
         Get a specific path (leaf nodes or presence containers), in the case of leaves a python
         primitive is returned (i.e. strings, booleans, integers).
         In the case of non-terminating nodes (i.e. Lists, Containers, PresenceContainers) this
         method will return a Voodoo object of the relevant type.
+
+        If the caller of this method knows about a default_value that can be used to change
+        the behaviour if the key does not exist in the datastore.
 
         FUTURE CHANGE: in future enumerations should be returned as a specific object type
 
@@ -425,7 +393,8 @@ class DataAccess:
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.get(xpath)
+
+        return self.data_abstraction_layer.get(xpath, default_value)
 
     def delete(self, xpath):
         """
@@ -452,7 +421,16 @@ class DataAccess:
 
     def is_session_dirty(self):
         """
-        The definition of a dirty session is one which has had data changed since we opened
+        Returns if we have changed our dataset since the time we connected, last committed
+        or last refreshed against the baceknd.
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.is_session_dirty()
+
+    def has_datastore_changed(self):
+        """
+        The definition of a changed backend session is one which has had data changed since we opened
         our own session.
 
         Example1:
@@ -464,25 +442,26 @@ class DataAccess:
                                                  will overwrite those of the first session
                                                  where there are overlaps.
           ---                                    session2.commit()
-          This session is now considered dirty
+
+          This session is now considered changed on the backend
           print(root1.simpleleaf)
 
         In this case the value 'simpleleaf' is set to 2, as session2 was committed last. There is
         no mechanism implemented to detect the conflict. The data from the first session was set
         for the moment in time between it's commit and session2's commit.
 
-        This method 'is_session_dirty' can be used by application to decide if they wish to
+        This method 'has_datastore_changed' can be used by application to decide if they wish to
         commit.
 
         Example2:
           session1.connect()                     session2.commit()
           root1.simplelist.create('A')           root2.simplelist.create('B')
           root1.commit()                         ---
-                                                 This session is now considered dirty
+                                                 This session is now considered changed
                                                  session2.commit()
           len(root.simplelist)
 
           In this case the commit from session2 doesn't remove ListElement 'A' because the
           transaction for session2 did not make any changes.
         """
-        return self.data_abstraction_layer.is_session_dirty()
+        return self.data_abstraction_layer.has_datastore_changed()
