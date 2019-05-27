@@ -67,6 +67,8 @@ class test_node_based_access(unittest.TestCase):
         simplecontainer.create()
         self.assertTrue(simplecontainer.exists())
 
+        self.assertEqual(repr(self.root.morecomplex['inner']), "VoodooPresenceContainer{/integrationtest:morecomplex/inner} Exists")
+
     def test_list(self):
         # Build
         self.root.twokeylist.create(True, False).tertiary = True

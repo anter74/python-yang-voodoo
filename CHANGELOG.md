@@ -44,3 +44,4 @@
    - FIX: sysrepo dataa-abstraction layer dirty now captures if we have made changes (raises NoChangesToCommit) if there are no changes.
    - FEATURE: stubdal now provides default values
    - REMOVE: un-used module from list create operation
+   - FEATURE: support \__getitem__ to retrieve child nodes

@@ -197,6 +197,8 @@ root.simpleleaf = None
 
 # Access a leaf inside a container
 print(root.morecomplex.leaf3)
+# or
+print(root.morecomplex['leaf3'])
 
 # Create (or return) a list element - this list has two boolean keys
 listelement = root.twokeylist.create(True, True)

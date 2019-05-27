@@ -90,6 +90,11 @@ class Node:
     def _specific_init(self):
         pass
 
+    def __getitem__(self, arg):
+        if not isinstance(arg, str):
+            raise ValueError("node['child'] only supports a single argument.")
+        return self.__getattr__(arg)
+
     def __getattr__(self, attr):
         if attr in ('_ipython_canary_method_should_not_exist_', '_repr_mimebundle_'):
             raise AttributeError('Go Away!')
