@@ -1,0 +1,14 @@
+module secondmodule {
+
+  namespace "http://brewerslabng.mellon-collie.net/yang/integration-secondmodule";
+  prefix "secondmodule";
+
+  container second {
+    description "This is not integrationtest.yang but secondmodule.";
+
+    leaf second {
+      type string;
+    }
+  }
+
+}

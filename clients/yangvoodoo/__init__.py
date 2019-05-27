@@ -132,7 +132,7 @@ class DataAccess:
         return None
 
     @classmethod
-    def get_root(self, session, attribute):
+    def get_root(self, session=None, attribute=None):
         """
         A simple wrapper which has very little intelligence other than the ability to hold other
         VoodooNode's
@@ -168,7 +168,8 @@ class DataAccess:
         """
 
         super_root = yangvoodoo.VoodooNode.SuperRoot()
-        super_root.attach_node_from_session(session, attribute)
+        if session and attribute:
+            super_root.attach_node_from_session(session, attribute)
         return super_root
 
     def get_node(self):

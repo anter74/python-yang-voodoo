@@ -244,6 +244,29 @@ session.commit()
 session.disconnect()
 ```
 
+
+#### Session to YANG
+
+A session maps exactly to one YANG module (including it's child nodes), in terms of the datastore we expect it will manage each module as a separate transactional boundary.
+
+The `SuperRoot` object provides a container for multiple top-level nodes from YANG modules, the transactional boundary remains with the resepective sessions.
+
+```python
+import yangvoodoo
+root = yangvoodoo.DataAccess.get_root()
+
+session1 = yangvoodoo.DataAccess()
+session1.connect("integrationtest")
+session2 = yangvoodoo.DataAccess()
+session2.connect("secondmodule")
+
+root.attach_node_from_session(session1, 'morecomplex')
+root.attach_node_from_session(session1, 'web')
+root.attach_node_from_session(session2, 'second')
+dir(root)
+```
+
+
 #### Templates
 
 It is possible to apply templates to set data instead of manually setting every element of data individually. [Jinja2](http://jinja.pocoo.org/docs/2.10/) is used to provide the ability to make templates less static.
