@@ -117,7 +117,7 @@ class Node:
                 return PresenceContainer(context, new_xpath, new_spath, self)
         elif node_type == 4:
             # Assume this is always a primitive
-            return context.dal.get(new_xpath)
+            return context.dal.get(new_xpath, default_value=node_schema.default())
         elif node_type == 16:
             # Return Object
             return List(context, new_xpath, new_spath, self)

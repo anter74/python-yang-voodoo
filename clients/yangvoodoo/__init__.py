@@ -376,12 +376,15 @@ class DataAccess:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.has_item(xpath)
 
-    def get(self, xpath):
+    def get(self, xpath, default_value=None):
         """
         Get a specific path (leaf nodes or presence containers), in the case of leaves a python
         primitive is returned (i.e. strings, booleans, integers).
         In the case of non-terminating nodes (i.e. Lists, Containers, PresenceContainers) this
         method will return a Voodoo object of the relevant type.
+
+        If the caller of this method knows about a default_value that can be used to change
+        the behaviour if the key does not exist in the datastore.
 
         FUTURE CHANGE: in future enumerations should be returned as a specific object type
 
@@ -390,7 +393,8 @@ class DataAccess:
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.get(xpath)
+
+        return self.data_abstraction_layer.get(xpath, default_value)
 
     def delete(self, xpath):
         """

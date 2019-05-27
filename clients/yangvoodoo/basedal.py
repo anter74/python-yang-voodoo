@@ -188,7 +188,7 @@ class BaseDataAbstractionLayer:
         """
         raise NotImplementedError("has_item not implemented")
 
-    def get(self, xpath):
+    def get(self, xpath, default_value=None):
         raise NotImplementedError("get not implemented")
 
     def delete(self, xpath):

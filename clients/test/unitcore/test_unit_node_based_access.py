@@ -39,6 +39,9 @@ class test_node_based_access(unittest.TestCase):
         self.root.simpleleaf = None
         self.assertEqual(self.root.simpleleaf, None)
 
+        result = self.root.default
+        self.assertEqual(result, "statusquo")
+
         self.subject.commit()
 
     def test_containers(self):

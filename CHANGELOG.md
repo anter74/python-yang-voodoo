@@ -42,4 +42,4 @@
    - FIX: setting a list key as a blank value must be prevented
    - FIX: re-implement changing of list keys by using yang schema on \__setattr__ rather than trusting the backend to enforce it.
    - FIX: sysrepo dataa-abstraction layer dirty now captures if we have made changes (raises NoChangesToCommit) if there are no changes.
-   
+   - FEATURE: stubdal now provides default values

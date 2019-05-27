@@ -11,6 +11,15 @@ class test_stub_datastore(unittest.TestCase):
         self.maxDiff = None
         self.subject = yangvoodoo.stubdal.StubDataAbstractionLayer()
 
+    def test_get(self):
+        result = self.subject.get("/xxxx", "default")
+        self.assertEqual(result, "default")
+
+        self.subject.stub_store["/xxxx"] = "not-default"
+        result = self.subject.get("/xxxx", "default")
+
+        self.assertEqual(result, "not-default")
+
     def test_create(self):
         self.subject.create("/integrationtest:simplelist[simplekey='sdf']",
                             keys=('simplekey',), values=(('sdf', 10),), module='integrationtest')

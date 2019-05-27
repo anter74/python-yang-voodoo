@@ -141,9 +141,9 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             key_path = xpath + "/" + keys[index]
             self.value_cached[key_path] = val
 
-    def get(self, xpath):
+    def get(self, xpath, default_value=None):
         if xpath not in self.value_cached:
-            item = self.store.get(xpath)
+            item = self.store.get(xpath, default_value)
             self.value_cached[xpath] = item
         return self.value_cached[xpath]
 

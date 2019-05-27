@@ -180,8 +180,10 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             return len(self.list_element_map[list_xpath])
         return 0
 
-    def get(self, xpath):
+    def get(self, xpath, default_value=None):
         if xpath not in self.stub_store:
+            if default_value:
+                return default_value
             return None
         return self.stub_store[xpath]
 

@@ -204,7 +204,10 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             return 0
         return int(vals.val_cnt())
 
-    def get(self, xpath):
+    def get(self, xpath, default_value=None):
+        """
+        Note: sysrepo will handle setting the default_value for us.
+        """
         sysrepo_item = self.session.get_item(xpath)
         try:
             return self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)

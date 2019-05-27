@@ -105,7 +105,7 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **is_session_dirty()** - indicates we have made changes
  - **has_datastore_changed()** - indicates changes have been made to the datastore from a different transaction.
  - **container(xpath)** - returns True/False if the presence-container exists.
- - **get(xpath)** - get specific data by XPATH, this will not apply to non-presence containers or lists
+ - **get(xpath, default_value)** - get specific data by XPATH, this will not apply to non-presence containers or lists
  - **gets_unsorted(xpath, schema_path, ignore_empty_lists)** - get a list of XPATH's representing the items in the list, it is expected the datastore will maintain the order the user inserts the data and this MUST return the data in that order. If the list is empty this method will normally raise an ListDoesNotContainElement exception.
  - **gets_unsorted(xpath, schema_path, ignore_empty_lists)** - as gets_unsorted, but the results will be sorted by XPATH.
  - **gets_len(xpath)** - gets back number of list elements available in the list (Not for leaf-lists)
