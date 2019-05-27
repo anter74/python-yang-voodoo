@@ -29,7 +29,7 @@ class DataAccess:
     """
 
     def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None,
-                 disable_proxy=False):
+                 disable_proxy=False, use_stub=False):
         if not log:
             log = Utils.get_logger('yangvoodoo', 10)
         self.log = log
@@ -40,14 +40,18 @@ class DataAccess:
         if data_abstraction_layer:
             non_proxy_data_abstraction_layer = data_abstraction_layer
         else:
-            non_proxy_data_abstraction_layer = self._get_data_abastraction_layer(None)
+            non_proxy_data_abstraction_layer = self._get_data_abastraction_layer(use_stub, None)
 
-        if disable_proxy:
+        if disable_proxy or use_stub:
             self.data_abstraction_layer = non_proxy_data_abstraction_layer
         else:
             self.data_abstraction_layer = self._proxify_data_abstraction_layer(non_proxy_data_abstraction_layer)
 
-    def _get_data_abastraction_layer(self, log):
+    def _get_data_abastraction_layer(self, use_stub, log):
+        if use_stub:
+            importlib.import_module('yangvoodoo.stubdal')
+            return yangvoodoo.stubdal.StubDataAbstractionLayer(log)
+
         importlib.import_module('yangvoodoo.sysrepodal')
         return yangvoodoo.sysrepodal.SysrepoDataAbstractionLayer(log)
 
