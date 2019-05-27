@@ -102,7 +102,8 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **refresh()** - refresh the data from the datastore, the datastore may provide us with the data present in the datastore at the time we first connected, or it may refresh in realtime everytime we access a given set of data.
  - **commit()** - commit pending datastore.
  - **disconnect()** - disconnect from the datastore
- - **is_session_dirty()** - indicates changes have been made to the datastore from a different transaction. The datastore may provide the ability to register a callback to receive a notification when changes happen to the datastore. (In the case of sysrepo this is the `module_change_subscribe` callback)
+ - **is_session_dirty()** - indicates we have made changes
+ - **has_datastore_changed()** - indicates changes have been made to the datastore from a different transaction.
  - **container(xpath)** - returns True/False if the presence-container exists.
  - **get(xpath)** - get specific data by XPATH, this will not apply to non-presence containers or lists
  - **gets_unsorted(xpath, schema_path, ignore_empty_lists)** - get a list of XPATH's representing the items in the list, it is expected the datastore will maintain the order the user inserts the data and this MUST return the data in that order. If the list is empty this method will normally raise an ListDoesNotContainElement exception.

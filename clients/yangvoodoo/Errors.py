@@ -53,6 +53,12 @@ class NonExistingNode(Exception):
         super().__init__("The path: %s does not point of a valid schema node in the yang module" % (xpath))
 
 
+class NothingToCommit(Exception):
+
+    def __innit__(self, message):
+        super().__init__("No channges to commit")
+
+
 class CommitFailed(Exception):
 
     def __init__(self, message):

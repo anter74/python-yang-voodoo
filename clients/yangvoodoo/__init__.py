@@ -417,7 +417,16 @@ class DataAccess:
 
     def is_session_dirty(self):
         """
-        The definition of a dirty session is one which has had data changed since we opened
+        Returns if we have changed our dataset since the time we connected, last committed
+        or last refreshed against the baceknd.
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.is_session_dirty()
+
+    def has_datastore_changed(self):
+        """
+        The definition of a changed backend session is one which has had data changed since we opened
         our own session.
 
         Example1:
@@ -429,25 +438,26 @@ class DataAccess:
                                                  will overwrite those of the first session
                                                  where there are overlaps.
           ---                                    session2.commit()
-          This session is now considered dirty
+
+          This session is now considered changed on the backend
           print(root1.simpleleaf)
 
         In this case the value 'simpleleaf' is set to 2, as session2 was committed last. There is
         no mechanism implemented to detect the conflict. The data from the first session was set
         for the moment in time between it's commit and session2's commit.
 
-        This method 'is_session_dirty' can be used by application to decide if they wish to
+        This method 'has_datastore_changed' can be used by application to decide if they wish to
         commit.
 
         Example2:
           session1.connect()                     session2.commit()
           root1.simplelist.create('A')           root2.simplelist.create('B')
           root1.commit()                         ---
-                                                 This session is now considered dirty
+                                                 This session is now considered changed
                                                  session2.commit()
           len(root.simplelist)
 
           In this case the commit from session2 doesn't remove ListElement 'A' because the
           transaction for session2 did not make any changes.
         """
-        return self.data_abstraction_layer.is_session_dirty()
+        return self.data_abstraction_layer.has_datastore_changed()

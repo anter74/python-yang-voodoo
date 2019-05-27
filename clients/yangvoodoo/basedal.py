@@ -28,6 +28,7 @@ class BaseDataAbstractionLayer:
         self.session = None
         self.conn = None
         self.dirty = None
+        self.datastore_changed = None
         self.module = None
         self._initdal()
 
@@ -198,3 +199,6 @@ class BaseDataAbstractionLayer:
 
     def is_session_dirty(self):
         raise NotImplementedError("is_session_dirty not implemented")
+
+    def has_datastore_changed(self):
+        raise NotImplementedError("has_datastore_changed not implemented")

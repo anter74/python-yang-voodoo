@@ -159,3 +159,9 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.sorted_cached = {}
         self.has_item_cached = {}
         self.len_cached = {}
+
+    def is_session_dirty(self):
+        return self.real.is_session_dirty()
+
+    def has_datastore_changed(self):
+        return self.real.has_datastore_changed()
