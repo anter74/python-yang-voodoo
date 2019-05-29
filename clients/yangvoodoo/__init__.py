@@ -470,3 +470,9 @@ class DataAccess:
           transaction for session2 did not make any changes.
         """
         return self.data_abstraction_layer.has_datastore_changed()
+
+    def dump_xpaths(self):
+        """
+        dump the datastore in xpath format.
+        """
+        return self.data_abstraction_layer.dump_xpaths()

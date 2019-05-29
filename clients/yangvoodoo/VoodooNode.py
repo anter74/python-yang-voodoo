@@ -1,6 +1,4 @@
-import libyang
-import yangvoodoo.Errors
-from yangvoodoo import Cache, Common, TemplateNinja
+from yangvoodoo import Cache, Common, Errors, TemplateNinja, Types
 
 
 class Context:
@@ -120,17 +118,29 @@ class Node:
             else:
                 # Return Object
                 return PresenceContainer(context, new_xpath, new_spath, self)
-        elif node_type == 4:
-            # Assume this is always a primitive
+        elif node_type == Types.LIBYANG_NODETYPE['LEAF']:
             return context.dal.get(new_xpath, default_value=node_schema.default())
-        elif node_type == 16:
+        elif node_type == Types.LIBYANG_NODETYPE['LIST']:
             # Return Object
             return List(context, new_xpath, new_spath, self)
-        elif node_type == 8:
+        elif node_type == Types.LIBYANG_NODETYPE['LEAFLIST']:
             # Return Object
             return LeafList(context, new_xpath, new_spath, self)
+        elif node_type == Types.LIBYANG_NODETYPE['CHOICE']:
+            """
+            Note: for choices in terms of data we don't render the 'case'
+            beertype = "/integrationtest:morecomplex/integrationtest:inner/integrationtest:beer-type/"
+            list(yangctx.find_path(beertype + "integrationtest:craft/integrationtest:brewdog"))
 
-        raise ValueError('Get - not sure what the type is...%s' % (node_type))
+            However: when rendering the lookups for libyang schema we must include the case, which
+            means the following is invalid.
+            list(yangctx.find_path(beertype + "integrationtest:brewdog"))
+            """
+            return Choice(context, path, new_spath, self)
+        elif node_type == Types.LIBYANG_NODETYPE['CASE']:
+            return Case(context, path, new_spath, self)
+
+        raise NotImplementedError("The YANG structure at %s of type %s is not supported." % (new_spath, node_type))
 
     def __setattr__(self, attr, val):
         context = self.__dict__['_context']
@@ -141,8 +151,11 @@ class Node:
         node_schema = Common.Utils.get_schema_of_path(spath, context)
         xpath = Common.Utils.form_value_xpath(path, attr, context.module, node_schema)
 
+        if not node_schema.nodetype() == Types.LIBYANG_NODETYPE['LEAF']:
+            raise Errors.CannotAssignValueToContainingNode(attr)
+
         if node_schema.is_key():
-            raise yangvoodoo.Errors.ListKeyCannotBeChanged(xpath, attr)
+            raise Errors.ListKeyCannotBeChanged(xpath, attr)
 
         if val is None:
             context.dal.delete(xpath)
@@ -155,10 +168,15 @@ class Node:
     def __dir__(self):
         spath = self.__dict__['_spath']
         context = self.__dict__['_context']
-        node_schema = Common.Utils.get_schema_of_path(spath, context)
+
+        if spath == "":
+            search_path = "/" + context.module + ":*"
+        else:
+            node_schema = Common.Utils.get_schema_of_path(spath, context)
+            search_path = node_schema.schema_path() + "/*"
 
         answer = []
-        for child in node_schema.children():
+        for child in context.schemactx.find_path(search_path):
             answer.append(child.name().replace('-', '_'))
         answer.sort()
         return answer
@@ -167,6 +185,26 @@ class Node:
 class ContainingNode(Node):
 
     pass
+
+
+class Choice(Node):
+
+    _NODE_TYPE = "Choice"
+
+    def __repr__(self):
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+        return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, path, spath.split(":")[-1])
+
+
+class Case(Node):
+
+    _NODE_TYPE = "Case"
+
+    def __repr__(self):
+        path = self.__dict__['_path']
+        spath = self.__dict__['_spath']
+        return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, path, spath.split(":")[-1])
 
 
 class LeafList(Node):
@@ -192,12 +230,12 @@ class LeafList(Node):
         spath = self.__dict__['_spath']
 
         if value == "":
-            raise yangvoodoo.Errors.ListItemCannotBeBlank(spath)
+            raise Errors.ListItemCannotBeBlank(spath)
 
         node_schema = Common.Utils.get_schema_of_path(spath, context)
         backend_type = Common.Utils.get_yang_type(node_schema.type(), value, path)
 
-        context.log.debug("about to add: %s, %s, %s", path, value, backend_type)
+        context.log.trace("about to add: %s, %s, %s", path, value, backend_type)
         context.dal.add(path, value, backend_type)
 
         return value
@@ -279,14 +317,14 @@ class List(ContainingNode):
         i = 0
         for arg in args:
             if arg == "":
-                raise yangvoodoo.Errors.ListKeyCannotBeBlank(spath, keys[i])
+                raise Errors.ListKeyCannotBeBlank(spath, keys[i])
 
             node_schema = Common.Utils.get_schema_of_path(Common.Utils.form_schema_xpath(spath, keys[i], context.module), context)
             yangtype = Common.Utils.get_yang_type(node_schema.type(), arg,
                                                   Common.Utils.form_schema_xpath(spath, keys[i], context.module))
             values.append((arg, yangtype))
 
-        context.log.debug("about to create: %s, %s, %s, %s",  new_xpath, keys, values, context.module)
+        context.log.trace("about to create: %s, %s, %s, %s",  new_xpath, keys, values, context.module)
         context.dal.create(new_xpath, keys=keys, values=values)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
@@ -385,7 +423,7 @@ class List(ContainingNode):
         new_xpath = path + conditional
         new_spath = spath   # Note: we deliberartely won't use conditionals here
         if not context.dal.has_item(new_xpath):
-            raise yangvoodoo.Errors.ListDoesNotContainElement(new_xpath)
+            raise Errors.ListDoesNotContainElement(new_xpath)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
 
@@ -408,7 +446,7 @@ class List(ContainingNode):
 
         path = self.__dict__['_path']
         new_xpath = path + conditional
-        context.log.debug("has item: %s", new_xpath)
+        context.log.trace("has item: %s", new_xpath)
         return context.dal.has_item(new_xpath)
 
     def __getitem__(self, *args):
@@ -423,7 +461,7 @@ class List(ContainingNode):
         new_spath = spath   # Note: we deliberartely won't use conditionals here
 
         if not context.dal.has_item(new_xpath):
-            raise yangvoodoo.Errors.ListDoesNotContainElement(new_xpath)
+            raise Errors.ListDoesNotContainElement(new_xpath)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
 
@@ -447,7 +485,7 @@ class List(ContainingNode):
         keys = list(node_schema.keys())
 
         if not len(args[0]) == len(keys):
-            raise yangvoodoo.Errors.ListWrongNumberOfKeys(path, len(keys), len(args[0]))
+            raise Errors.ListWrongNumberOfKeys(path, len(keys), len(args[0]))
 
         conditional = ""
         for i in range(len(keys)):
@@ -572,14 +610,14 @@ class PresenceContainer(Container):
     def exists(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
-        context.log.debug("Calling have container: %s", path)
+        context.log.trace("Calling have container: %s", path)
         return context.dal.container(path)
 
     def create(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-        context.log.debug("Calling create container: %s", path)
+        context.log.trace("Calling create container: %s", path)
         context.dal.create_container(path)
         return PresenceContainer(context, path, spath, self)
 

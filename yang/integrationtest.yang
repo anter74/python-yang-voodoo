@@ -857,6 +857,25 @@ module integrationtest {
     container inner {
       presence true;
 
+      choice beer-type {
+        case macro {
+          leaf fosters {
+            type string;
+          }
+        }
+
+        case craft {
+          leaf brewdog {
+            type string;
+          }
+        }
+
+        case ale {
+          leaf adnams {
+            type string;
+          }
+        }
+      }
       list list-that-will-stay-empty {
         key akey;
 

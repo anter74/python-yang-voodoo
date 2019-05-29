@@ -59,7 +59,7 @@ class TemplateNinja:
                 (list_nodeschema, list_path) = state.next_time_loop
                 state.next_time_loop = None
                 (predicates, keys, values) = self._build_predicates(list_nodeschema, list_path, child, children, state)
-                self.log.debug('Creating %s %s, %s', list_path+predicates, keys, values)
+                self.log.trace('Creating %s %s, %s', list_path+predicates, keys, values)
                 state.dal.create(list_path + predicates, keys, values)
                 state.path[-1] = state.path[-1] + predicates
                 continue
@@ -86,7 +86,7 @@ class TemplateNinja:
             else:
                 yang_type = Common.Utils.get_yang_type(node_schema.type(), child.text, this_path)
                 val = Common.Utils.convert_string_to_python_val(child.text, yang_type)
-                self.log.debug('setting. %s => %s %s', value_path, val, yang_type)
+                self.log.trace('setting. %s => %s %s', value_path, val, yang_type)
                 state.dal.set(value_path, val, yang_type)
 
             if len(state.path) == 0:
