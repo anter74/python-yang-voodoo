@@ -161,10 +161,10 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.len_cached = {}
 
     def is_session_dirty(self):
-        return self.real.is_session_dirty()
+        return self.store.is_session_dirty()
 
     def has_datastore_changed(self):
-        return self.real.has_datastore_changed()
+        return self.store.has_datastore_changed()
 
     def dump_xpaths(self):
-        return self.real.dump_xpaths()
+        return self.store.dump_xpaths()

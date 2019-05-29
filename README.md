@@ -229,6 +229,9 @@ root.bronze.silver.gold.platinum.deep = 'abc'
 # Accessing parents (this is root.bronze (use with care - it's intended for interactive debug)
 root.bronze.silver._parent
 
+# Get helptext from the YANG node
+session.decsribe(root.bronze)
+
 # Return the argument of the extnesion 'info' if it exists on teh child node dirty_secret (otherwise None)
 root.get_exension('info', 'dirty_secret')
 

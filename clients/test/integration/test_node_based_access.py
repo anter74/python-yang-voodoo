@@ -262,19 +262,6 @@ class test_node_based_access(unittest.TestCase):
         with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError):
             self.root.morecomplex.inner.ietf_inet_types.ip.address = '1.2.3.444'
 
-    def test_parents_and_help_text(self):
-        great_grandparent = self.root.bronze.silver.gold.platinum._parent._parent._parent
-
-        self.assertEqual(repr(great_grandparent), "VoodooContainer{/integrationtest:bronze}")
-        self.assertEqual(self.subject.help(great_grandparent), "The metallics are used to test container nesting")
-
-        list_element = self.root.simplelist.create('newlistitem')
-        self.assertEqual(repr(list_element._parent), "VoodooList{/integrationtest:simplelist}")
-
-        obj = self.root.bronze.silver._parent.silver._parent.silver.gold
-        self.assertEqual(repr(obj),
-                         "VoodooContainer{/integrationtest:bronze/silver/gold}")
-
     def test_lists_ordering(self):
         self.root.simplelist.create('A')
         self.root.simplelist.create('Z')

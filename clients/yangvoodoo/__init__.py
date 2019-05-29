@@ -59,7 +59,8 @@ class DataAccess:
         # return dal
         return yangvoodoo.proxydal.ProxyDataAbstractionLayer(dal)
 
-    def _help(self, node):
+    @classmethod
+    def describe(self, node):
         """
         Provide help text from the yang module if available.
         """
@@ -189,8 +190,6 @@ class DataAccess:
             raise yangvoodoo.Errors.NotConnect()
 
         self.data_abstraction_layer.setup_root()
-
-        self.help = self._help
 
         return yangvoodoo.VoodooNode.Root(self.context)
 
