@@ -41,6 +41,12 @@ class ListKeyCannotBeChanged(Exception):
         super().__init__("The list key: %s for %s cannot be changed" % (key, xpath))
 
 
+class CannotAssignValueToContainingNode(Exception):
+
+    def __init__(self, xpath):
+        super().__init__("Cannot assign a value to %s" % (xpath))
+
+
 class ListWrongNumberOfKeys(Exception):
 
     def __init__(self, xpath, require, given):

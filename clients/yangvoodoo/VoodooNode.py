@@ -151,6 +151,9 @@ class Node:
         node_schema = Common.Utils.get_schema_of_path(spath, context)
         xpath = Common.Utils.form_value_xpath(path, attr, context.module, node_schema)
 
+        if not node_schema.nodetype() == Types.LIBYANG_NODETYPE['LEAF']:
+            raise Errors.CannotAssignValueToContainingNode(attr)
+
         if node_schema.is_key():
             raise Errors.ListKeyCannotBeChanged(xpath, attr)
 

@@ -289,3 +289,9 @@ class test_node_based_access(unittest.TestCase):
         self.root.morecomplex.inner.beer_type.craft.brewdog = "PUNK IPA"
         self.assertEqual(self.root.morecomplex.inner.beer_type.craft.brewdog, "PUNK IPA")
         self.assertEqual(self.stub.stub_store['/integrationtest:morecomplex/inner/brewdog'], 'PUNK IPA')
+
+    def test_silly_things(self):
+        with self.assertRaises(yangvoodoo.Errors.CannotAssignValueToContainingNode) as context:
+            self.root.morecomplex = 'ssdfsdf'
+        self.assertEqual(str(context.exception), "Cannot assign a value to morecomplex")
+        self.assertNotEqual(self.root.morecomplex.inner.beer_type.craft.brewdog, "PUNK IPA")

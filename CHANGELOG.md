@@ -47,3 +47,4 @@
    - FEATURE: support \__getitem__ to retrieve child nodes
    - FEATURE: support for choice/case statements (initial support with no validation)
    - FEATURE: support UINT64/INT64 values.
+   - FEATURE: raise an exception `Cannot assign a value to ......` when trying to assign values to containing nodes.
