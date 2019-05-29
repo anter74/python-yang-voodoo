@@ -1,6 +1,8 @@
 # Python access to YANG based Datastore (based on libyang/sysrepo)
 
-![](https://travis-ci.org/allena29/python-yang-voodoo.svg?branch=master)
+[![](https://travis-ci.org/allena29/python-yang-voodoo.svg?branch=master)](https://travis-ci.org/allena29/python-yang-voodoo)
+
+
 
 The aim of this project is to provide the ability to write python code where there is a strong YANG based data model.
 By providing an object based access layer it allows data to be traversed without worrying about lower level details, and
@@ -10,6 +12,10 @@ To see screencasts demonstrating the concepts see:
 
  - [36 second spinning up docker](https://asciinema.org/a/246485) - uses this [yang model](https://raw.githubusercontent.com/allena29/python-yang-voodoo/master/yang/integrationtest.yang) and [initial data](https://raw.githubusercontent.com/allena29/python-yang-voodoo/master/init-data/integrationtest__webdata.xml)
  - [12min showing details usage](https://asciinema.org/a/246248)
+
+A powerpoint slide:
+
+[https://app.box.com/s/lzwmumytlbbo83eew0etcpq6qtqjmywl](https://app.box.com/s/lzwmumytlbbo83eew0etcpq6qtqjmywl)
 
 
 Taking the very basic yang module below, we can imagine how it might look in a few different ways.
