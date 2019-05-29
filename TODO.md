@@ -22,6 +22,8 @@
 - ~~setting a list key as a blank value must be prevented.~~
 - deletes (of non-primitives)
 - choices
+  - ~~first pass implementation in place to be able to find children and set data~~
+  - second pass implementation required to validate to ensure there is only one choice - the datastore should ultimately enforce this.
 - testing membership of list elements is lazily done by asking for everything on the backend - implement a method to ask the backend datastore about membership.
 - ~~augmentation - augment seems to just work out of the box with libyang~~
 - deviations

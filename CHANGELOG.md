@@ -45,3 +45,4 @@
    - FEATURE: stubdal now provides default values
    - REMOVE: un-used module from list create operation
    - FEATURE: support \__getitem__ to retrieve child nodes
+   - FEATURE: support for choice/case statements (initial support with no validation)

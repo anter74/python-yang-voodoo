@@ -45,11 +45,15 @@ LIBYANG_MAPPING = {
 # To populate from lys_nodetype
 LIBYANG_NODETYPE = {
     1: 'CONTAINER',
+    2: 'CHOICE',
     4: 'LEAF',
     8: 'LEAFLIST',
     16: 'LIST',
+    64: 'CASE',
     'CONTAINER': 1,
+    'CHOICE': 2,
     'LEAF': 4,
     'LEAFLIST': 8,
-    'LIST': 16
+    'LIST': 16,
+    'CASE': 64
 }

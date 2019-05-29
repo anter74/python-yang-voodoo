@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import yangvoodoo
+from yangvoodoo.Common import Utils
 
 try:
     import jinja2
@@ -31,22 +32,25 @@ except ImportError:
 
 session.connect('integrationtest')
 root = session.get_node()
-backend = session.session
 yang = root._context.schema
 yangctx = root._context.schemactx
-
+context = root._context
+backend = root._context.dal.data_abstraction_layer
 
 import IPython
 print('Objects Ready to Play with')
 print('--------------------------')
+print('yangvoodoo.Common.Utils - imported as Utils')
+print('')
 print('root << node based access')
 print('   ', root)
 print('sesssion << xpath based access (this is dal on root._context)')
 print('   ', session)
-print('backend << sysrepo session (this is what session wraps up for us)')
+print('backend << datastore(may be proxy)')
 print('   ', backend)
 print('yang    << libyang instance')
 print('yangctx << libyang context instance')
+print('context << yangvoodoo internal context object')
 print('   ', yangctx)
 
 IPython.embed(display_banner=False)
