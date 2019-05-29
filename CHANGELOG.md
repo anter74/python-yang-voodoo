@@ -46,3 +46,4 @@
    - REMOVE: un-used module from list create operation
    - FEATURE: support \__getitem__ to retrieve child nodes
    - FEATURE: support for choice/case statements (initial support with no validation)
+   - FEATURE: support UINT64/INT64 values.

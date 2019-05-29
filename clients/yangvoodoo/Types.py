@@ -3,9 +3,11 @@ DATA_ABSTRACTION_MAPPING = {
     # Note: if the backend does not like these values
     # mapping into more acceptable values should be
     # done in the respective data_abstraction_layer
+    'UINT64': 22,
     'UINT32': 21,
     'UINT16': 20,
     'UINT8': 19,
+    'INT64': 17,
     'INT32': 16,
     'INT16': 15,
     'INT8': 14,
@@ -25,6 +27,9 @@ INT_CONVERSION = {
     DATA_ABSTRACTION_MAPPING['UINT32'],
     DATA_ABSTRACTION_MAPPING['UINT16'],
     DATA_ABSTRACTION_MAPPING['UINT8'],
+    DATA_ABSTRACTION_MAPPING['INT64'],
+    DATA_ABSTRACTION_MAPPING['UINT64']
+
 }
 
 LIBYANG_MAPPING = {
@@ -38,7 +43,9 @@ LIBYANG_MAPPING = {
     14: DATA_ABSTRACTION_MAPPING['INT16'],
     15: DATA_ABSTRACTION_MAPPING['UINT16'],
     16: DATA_ABSTRACTION_MAPPING['INT32'],
-    17: DATA_ABSTRACTION_MAPPING['UINT32']
+    17: DATA_ABSTRACTION_MAPPING['UINT32'],
+    18: DATA_ABSTRACTION_MAPPING['INT64'],
+    19: DATA_ABSTRACTION_MAPPING['UINT64']
 }
 
 
