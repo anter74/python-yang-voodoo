@@ -12,6 +12,7 @@ module: integrationtest
   |  |  +--rw presence-container!
   |  +--rw adds
   |  |  +--rw a-leaf?               string
+  |  |  +--rw a-2nd-leaf?           string
   |  |  +--rw a-list* [listkey]
   |  |  |  +--rw listkey       string
   |  |  |  +--rw listnonkey?   string
@@ -19,6 +20,7 @@ module: integrationtest
   |  |  +--rw presence-container!
   |  +--rw modifies
   |     +--rw a-leaf?               string
+  |     +--rw a-2nd-leaf?           string
   |     +--rw a-list* [listkey]
   |     |  +--rw listkey       string
   |     |  +--rw listnonkey?   string
@@ -52,7 +54,8 @@ module: integrationtest
   |  +--rw promoters* [name]
   |  |  +--rw name    string
   |  +--rw bands* [name]
-  |  |  +--rw name    string
+  |  |  +--rw name     string
+  |  |  +--rw genre?   string
   |  |  +--rw gigs* [year month day venue location]
   |  |     +--rw year        uint16
   |  |     +--rw month       uint8
@@ -207,6 +210,13 @@ module: integrationtest
      +--rw leaf3?           type2
      +--rw leaf4?           type4
      +--rw inner!
+        +--rw (beer-type)?
+        |  +--:(macro)
+        |  |  +--rw fosters?               string
+        |  +--:(craft)
+        |  |  +--rw brewdog?               string
+        |  +--:(ale)
+        |     +--rw adnams?                string
         +--rw list-that-will-stay-empty* [akey]
         |  +--rw akey    string
         +--rw leaf5                        string
