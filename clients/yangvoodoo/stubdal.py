@@ -35,10 +35,11 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     def dump_xpaths(self):
         new_dict = {}
         for key in self.stub_store:
-            if isinstance(self.stub_store[key], list):
-                new_dict[key] = None
+            if isinstance(self.stub_store[key], tuple):
+                pass
+                # new_dict[key] = self.stub_store[key][1]
             else:
-                new_dict[key] = str(self.stub_store[key])
+                new_dict[key] = self.stub_store[key]
         return new_dict
 
     def _initdal(self):

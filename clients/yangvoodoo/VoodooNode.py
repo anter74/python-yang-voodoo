@@ -197,7 +197,7 @@ class LeafList(Node):
         node_schema = Common.Utils.get_schema_of_path(spath, context)
         backend_type = Common.Utils.get_yang_type(node_schema.type(), value, path)
 
-        context.log.debug("about to add: %s, %s, %s", path, value, backend_type)
+        context.log.trace("about to add: %s, %s, %s", path, value, backend_type)
         context.dal.add(path, value, backend_type)
 
         return value
@@ -286,7 +286,7 @@ class List(ContainingNode):
                                                   Common.Utils.form_schema_xpath(spath, keys[i], context.module))
             values.append((arg, yangtype))
 
-        context.log.debug("about to create: %s, %s, %s, %s",  new_xpath, keys, values, context.module)
+        context.log.trace("about to create: %s, %s, %s, %s",  new_xpath, keys, values, context.module)
         context.dal.create(new_xpath, keys=keys, values=values)
         # Return Object
         return ListElement(context, new_xpath, new_spath, self)
@@ -408,7 +408,7 @@ class List(ContainingNode):
 
         path = self.__dict__['_path']
         new_xpath = path + conditional
-        context.log.debug("has item: %s", new_xpath)
+        context.log.trace("has item: %s", new_xpath)
         return context.dal.has_item(new_xpath)
 
     def __getitem__(self, *args):
@@ -572,14 +572,14 @@ class PresenceContainer(Container):
     def exists(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
-        context.log.debug("Calling have container: %s", path)
+        context.log.trace("Calling have container: %s", path)
         return context.dal.container(path)
 
     def create(self):
         context = self.__dict__['_context']
         path = self.__dict__['_path']
         spath = self.__dict__['_spath']
-        context.log.debug("Calling create container: %s", path)
+        context.log.trace("Calling create container: %s", path)
         context.dal.create_container(path)
         return PresenceContainer(context, path, spath, self)
 

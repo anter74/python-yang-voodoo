@@ -165,3 +165,6 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     def has_datastore_changed(self):
         return self.real.has_datastore_changed()
+
+    def dump_xpaths(self):
+        return self.real.dump_xpaths()
