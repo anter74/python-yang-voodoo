@@ -27,6 +27,18 @@ class TemplateNinja:
 
         self._import_xml_to_datastore(module, yangctx, xmlstr, dal)
 
+    def from_xmlstr(self, root, xmlstr, **kwargs):
+
+        variables = {'root': root}
+        for variable_name in kwargs:
+            variables[variable_name] = kwargs[variable_name]
+
+        dal = root.__dict__['_context'].dal
+        yangctx = root.__dict__['_context'].schemactx
+        module = root.__dict__['_context'].module
+
+        self._import_xml_to_datastore(module, yangctx, xmlstr, dal)
+
     def _import_xml_to_datastore(self, module, yangctx, xmlstr, dal):
         """
         The state object contains flags to help us traverse and build paths through

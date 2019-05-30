@@ -660,6 +660,9 @@ class Root(ContainingNode):
         IMPORTANT to note is that variable and logic is processed in the template based upon
         the data available at the time, then the result of the entire template is applied.
         To be clear consdiering this template
+
+        This template isn't quite the same as NETCONF - we don't have any namespaces in it,
+        instead the contents are wrapped in a node matching the name of the yang module.
             <integrationtest>
                 <simpleleaf>HELLO</simpleleaf>
                 <default>{{ root.simpleleaf }}</default>
@@ -674,6 +677,20 @@ class Root(ContainingNode):
 
         templater = TemplateNinja.TemplateNinja()
         templater.from_template(self, template)
+
+    def from_xmlstr(self, xmlstr):
+        """
+        This template isn't quite the same as NETCONF - we don't have any namespaces in it,
+        instead the contents are wrapped in a node matching the name of the yang module.
+            xmlstr = "<integrationtest><simpleleaf>HELLO</simpleleaf></integrationtest>"
+
+            root.simpleleaf = 'GOODBYE'
+            session.from_xmlstr(root, xmlstr)
+
+        """
+
+        templater = TemplateNinja.TemplateNinja()
+        templater.from_xmlstr(self, xmlstr)
 
 
 class SuperRoot:
