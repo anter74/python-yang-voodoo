@@ -17,7 +17,7 @@ class test_common(unittest.TestCase):
         self.assertEqual(result, '/module:path/module:subpath/module:attr')
 
         node_schema = Mock()
-        node_schema.underscore_translated = True
+        node_schema.under_pre_translated_name = "attr-x"
         result = Utils.form_schema_xpath('/module:path/module:subpath', 'attr_x', 'module', node_schema)
         self.assertEqual(result, '/module:path/module:subpath/module:attr-x')
 
@@ -29,7 +29,7 @@ class test_common(unittest.TestCase):
         self.assertEqual(result, '/module:path/subpath/attr')
 
         node_schema = Mock()
-        node_schema.underscore_translated = True
+        node_schema.under_pre_translated_name = 'attr-x'
         result = Utils.form_value_xpath('/module:path/subpath', 'attr_x', 'module', node_schema)
         self.assertEqual(result, '/module:path/subpath/attr-x')
 
@@ -71,26 +71,6 @@ class test_common(unittest.TestCase):
         # Assert
         context.schemacache.get_item_from_cache.assert_not_called()
         self.assertEqual(result, schema_node_from_libyang)
-        self.assertFalse(result.underscore_translated)
-        # This assert fails but the unit test does go through thins.
-        # context.schemacache.schemactx.find_path.assert_called_once_with('/module:path')
-
-    def test_get_schema_of_path_not_cached_with_underscore_translation(self):
-        context = Mock()
-        context.schemacache.is_path_cached.return_value = False
-
-        schema_node_from_libyang = Mock()
-        context.schemactx.find_path.side_effect = [libyang.util.LibyangError(),
-                                                   PlainIterator([schema_node_from_libyang])]
-
-        # Act
-        result = Utils.get_schema_of_path('/module:path', context)
-
-        # Assert
-        context.schemacache.get_item_from_cache.assert_not_called()
-        self.assertEqual(result, schema_node_from_libyang)
-        self.assertTrue(result.underscore_translated)
-
         # This assert fails but the unit test does go through thins.
         # context.schemacache.schemactx.find_path.assert_called_once_with('/module:path')
 

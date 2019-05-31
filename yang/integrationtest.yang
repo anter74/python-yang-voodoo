@@ -79,6 +79,10 @@ module integrationtest {
     }
   }
 
+  leaf underscore_and-hyphen {
+    type empty;
+  }
+
   container diff {
 
     container deletes {
@@ -329,6 +333,11 @@ module integrationtest {
     leaf underscore_and-hyphen {
       type string;
       description "NO SUPPORTED";
+    }
+    container deeper_down-here {
+      leaf simple {
+        type string;
+      }
     }
   }
 
@@ -857,6 +866,18 @@ module integrationtest {
     container inner {
       presence true;
 
+      leaf brewdog-beer {
+        type numstr;
+      }
+
+      list brewdog-beers {
+        key beer;
+
+        leaf beer {
+          type numstr;
+        }
+      }
+
       choice beer-type {
         case macro {
           leaf fosters {
@@ -1126,6 +1147,20 @@ module integrationtest {
     type type88;
   }
 
+  typedef numstr {
+    type union {
+      type uint8 {
+        range 1..5;
+      }
+      type enumeration {
+        enum albion-squid-assassin;
+        enum black-hammer;
+        enum cloud-cartel;
+        enum death-or-glory;
+        enum eight-bit;
+      }
+    }
+  }
   grouping diff-group {
     leaf a-leaf {
       type string;

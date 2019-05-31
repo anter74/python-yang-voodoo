@@ -210,6 +210,9 @@ module: integrationtest
      +--rw leaf3?           type2
      +--rw leaf4?           type4
      +--rw inner!
+        +--rw brewdog-beer?                numstr
+        +--rw brewdog-beers* [beer]
+        |  +--rw beer    numstr
         +--rw (beer-type)?
         |  +--:(macro)
         |  |  +--rw fosters?               string

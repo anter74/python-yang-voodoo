@@ -15,6 +15,8 @@ class Context:
         self.log = log
         self.yang_module = module
 
+        self.underscore_translations = {}
+
 
 class Node:
 
@@ -162,7 +164,6 @@ class Node:
             return
 
         backend_type = Common.Utils.get_yang_type(node_schema.type(), val, xpath)
-
         context.dal.set(xpath, val, backend_type)
 
     def __dir__(self):
@@ -177,7 +178,12 @@ class Node:
 
         answer = []
         for child in context.schemactx.find_path(search_path):
-            answer.append(child.name().replace('-', '_'))
+            child_name = child.name()
+            if '-' in child_name:
+                new_child_name = child_name.replace('-', '_')
+                # context.underscore_translations[spath+"/"+context.module+":"+new_child_name] = child_name
+                child_name = new_child_name
+            answer.append(child_name)
         answer.sort()
         return answer
 

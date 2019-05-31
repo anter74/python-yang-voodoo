@@ -197,10 +197,10 @@ class Utils:
          '/integrationtest:imports-in-here/integrationtest:name'
         """
         if path == '':
-            return Utils.form_schema_xpath(path, attr, module, node_schema)
+            return Utils.form_schema_xpath(path, attr, module)
 
-        if node_schema and node_schema.underscore_translated:
-            return path + '/' + attr.replace('_', '-')
+        if node_schema and node_schema.under_pre_translated_name:
+            return path + '/' + node_schema.under_pre_translated_name
 
         return path + '/' + attr
 
@@ -214,30 +214,101 @@ class Utils:
         reference those imported elements by the parent module.
          '/integrationtest:imports-in-here/integrationtest:name'
         """
-        if node_schema and node_schema.underscore_translated:
-            return path + '/' + module + ":" + attr.replace('_', '-')
+
+        if node_schema and node_schema.under_pre_translated_name:
+            return path + '/' + module + ":" + node_schema.under_pre_translated_name
 
         return path + '/' + module + ":" + attr
 
     @staticmethod
-    def get_schema_of_path(xpath, context):
-        if xpath == "":
+    def get_schema_of_path(spath, context):
+        if spath == "":
             # Root object won't be a valid XPATH
             return context.schema
 
-        if context.schemacache.is_path_cached(xpath):
-            return context.schemacache.get_item_from_cache(xpath)
+        if context.schemacache.is_path_cached(spath):
+            return context.schemacache.get_item_from_cache(spath)
+
+        if '_' in spath:
+            Utils.underscore_handling(spath, context)
+            raise ValueError("This implementation needs extending to work across the whole path came in with %s" % (spath))
+        #
+        # first_part_of_path = '/'.join(spath.split('/')[0:-1])
+        # last_part_of_path = spath.split('/')[-1]
+        # last_node_name = last_part_of_path.split(':')[-1]
+        # if '_' in last_part_of_path:
+        #     real_path = None
+        #     if first_part_of_path == "":
+        #
+        #         children = context.schemactx.find_path("/" + context.module + ":*")
+        #     else:
+        #         children = context.schemactx.find_path(first_part_of_path + "/*")
+        #     for child in children:
+        #         if child.name().replace('-', '_') == last_node_name:
+        #             real_path = first_part_of_path + "/" + context.module + ":" + child.name()
+        #         try:
+        #             schema_for_path = next(context.schemactx.find_path(real_path))
+        #             schema_for_path.under_pre_translated_name = child.name()
+        #             context.schemacache.add_entry(spath, schema_for_path)
+        #             return schema_for_path
+        #         except libyang.util.LibyangError:
+        #             pass
+        #
+        #     raise NotImplementedError("Underscore translation for path %s failed (calculated path %s)" % (spath, real_path))
+
         try:
-            schema_for_path = next(context.schemactx.find_path(xpath))
-            schema_for_path.underscore_translated = False
+            schema_for_path = next(context.schemactx.find_path(spath))
+            schema_for_path.under_pre_translated_name = None
+            context.schemacache.add_entry(spath, schema_for_path)
             return schema_for_path
         except libyang.util.LibyangError:
             pass
 
-        try:
-            schema_for_path = next(context.schemactx.find_path(xpath.replace('_', '-')))
-            schema_for_path.underscore_translated = True
-            return schema_for_path
-        except libyang.util.LibyangError:
-            pass
-        raise Errors.NonExistingNode(xpath)
+        raise Errors.NonExistingNode(spath)
+
+    @staticmethod
+    def underscore_handling(spath, context):
+        spath_split = spath.split('/')[1:]
+
+        current_path_inspecting = []
+        for path_component in spath_split:
+            print('Considering path_componeent', path_component)
+            print('sdsfsfdsf', current_path_inspecting)
+            path_to_search = '/' + '/'.join(current_path_inspecting)
+            print('/'.join(['sd']))
+            print('path_to-search', path_to_search)
+            if path_to_search == '/':
+                path_to_search = '/' + context.module + ':*'
+
+            children = context.schemactx.find_path(path_to_search)
+            real_name = path_component
+            for child in children:
+                print('have child', child.name(), child, path_component)
+                if child.name().replace('-', '_') == path_component:
+                    real_name = child.name()
+
+            current_path_inspecting.append(real_name)
+            print('path_to_search', path_to_search)
+
+        first_part_of_path = '/'.join(spath.split('/')[0:-1])
+        last_part_of_path = spath.split('/')[-1]
+        last_node_name = last_part_of_path.split(':')[-1]
+        if '_' in last_part_of_path:
+            real_path = None
+            if first_part_of_path == "":
+
+                children = context.schemactx.find_path("/" + context.module + ":*")
+            else:
+                children = context.schemactx.find_path(first_part_of_path + "/*")
+            for child in children:
+                if child.name().replace('-', '_') == last_node_name:
+                    real_path = first_part_of_path + "/" + context.module + ":" + child.name()
+                try:
+                    schema_for_path = next(context.schemactx.find_path(real_path))
+                    schema_for_path.under_pre_translated_name = child.name()
+                    context.schemacache.add_entry(spath, schema_for_path)
+                    return schema_for_path
+                except libyang.util.LibyangError:
+                    pass
+
+        raise NotImplementedError("Underscore translation for path %s failed (calculated path %s)" % (spath, real_path))

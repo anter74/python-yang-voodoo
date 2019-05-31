@@ -31,3 +31,6 @@ These values come from sysrepo running within Docker on a Intel i7-7820HQ (appro
  - Spin around a list CACHE-MISS (4.3ms for a list of 250 elements)
  - Spin around a list CACHE-HIT (0.3ms for a list of 250 elements)
  - Length of a list CACHE-HIT (0.1ms)
+
+
+# Slight improvement with caching the schema nodes - 30 microseconds 

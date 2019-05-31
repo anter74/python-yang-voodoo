@@ -27,7 +27,7 @@ class test_node_based_access(unittest.TestCase):
                              'resolver', 'simplecontainer', 'simpleenum', 'simpleleaf', 'simplelist',
                              'thing_that_is_a_list_based_leafref', 'thing_that_is_leafref',
                              'thing_that_is_lit_up_for_A', 'thing_that_is_lit_up_for_B', 'thing_that_is_lit_up_for_C',
-                             'thing_that_is_used_for_when', 'thing_to_leafref_against', 'twokeylist',
+                             'thing_that_is_used_for_when', 'thing_to_leafref_against', 'twokeylist', 'underscore_and_hyphen',
                              'underscoretests', 'validator', 'web', 'whencontainer']
 
         self.assertEqual(dir(self.root), expected_children)
@@ -295,3 +295,12 @@ class test_node_based_access(unittest.TestCase):
             self.root.morecomplex = 'ssdfsdf'
         self.assertEqual(str(context.exception), "Cannot assign a value to morecomplex")
         self.assertNotEqual(self.root.morecomplex.inner.beer_type.craft.brewdog, "PUNK IPA")
+
+    def test_underscore_and_hyphens(self):
+        self.root.underscoretests.underscore_and_hyphen = 'sdf'
+        self.root.underscore_and_hyphen = '123'
+        self.assertEqual(self.root.underscoretests.underscore_and_hyphen, "sdf")
+        self.assertEqual(self.root.underscore_and_hyphen, "123")
+        xpaths = self.stub.dump_xpaths()
+        self.assertEqual(xpaths["/integrationtest:underscoretests/underscore_and-hyphen"], "sdf")
+        self.assertEqual(xpaths["/integrationtest:underscore_and_hyphen"], "123")
