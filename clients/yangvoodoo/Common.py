@@ -53,6 +53,14 @@ class Utils:
         return log
 
     @staticmethod
+    def get_yang_type_from_path(context, schema_path,  value, child_attr=None):
+        print('...get', schema_path, value, child_attr, context.module)
+        if child_attr:
+            schema_path = schema_path + "/" + context.module + ":" + child_attr
+        node_schema = next(context.schemactx.find_path(schema_path))
+        return Utils.get_yang_type(node_schema.type(), value, schema_path)
+
+    @staticmethod
     def get_yang_type(node_schema, value=None, xpath=None):
         """
         Map a given yang-type (e.g. string, decimal64) to a type code for the backend.
@@ -139,6 +147,18 @@ class Utils:
         """
         return "[%s='%s']" % (k, v)
 
+    @staticmethod
+    def encode_xpath_predicates(attr, keys, values):
+        if not isinstance(keys, list):
+            raise NotImplementedError("encode_attribute_with_xpath_predicates does not work with non-list input - %s" % (keys))
+        if not isinstance(values, list):
+            raise NotImplementedError("encode_attribute_with_xpath_predicates does not work with non-list input - %s" % (values))
+        answer = attr
+        for i in range(len(keys)):
+            (val, _) = values[i]
+            answer = answer + Utils.encode_xpath_predicate(keys[i], val)
+        return answer
+
     @classmethod
     def decode_xpath_predicate(self, path):
         """
@@ -186,85 +206,87 @@ class Utils:
         return value
 
     @staticmethod
-    def form_value_xpath(path, attr, module, node_schema=None):
+    def get_schema_and_set_paths(node, context, attr='', keys=[], values=[], predicates=""):
         """
-        Sysrepo is much less strict compared to libyang, it only requires the first node
-        to be prefixed within the module. Moreover sysrepo returns XPATH's in this
-        form to us when calling for the list elements.
+        Given a node, with a child attribute name, and list of key/values return a libyang schema object
+        and the value path.
 
-        Inside the integrationtest which imports from the yang module teschild we still
-        reference those imported elements by the parent module.
-         '/integrationtest:imports-in-here/integrationtest:name'
-        """
-        if path == '':
-            return Utils.form_schema_xpath(path, attr, module)
+        Each time we return a node we will store the following on the yang node to help with underscore
+        translations. The input to this method will have hyphens converted to underscores.
+        - real_schema_path
+        - real_data_path
 
-        if node_schema and node_schema.under_pre_translated_name:
-            return path + '/' + node_schema.under_pre_translated_name
+        Libyang itself has schema_path and data_path but these do not know about the underscore translations.
 
-        return path + '/' + attr
-
-    @staticmethod
-    def form_schema_xpath(path, attr, module, node_schema=None):
-        """
-        When using the schema xpath lookup we need to use the module prefix
-        across every part of the path for the libyang library.
-
-        Inside the integrationtest which imports from the yang module teschild we still
-        reference those imported elements by the parent module.
-         '/integrationtest:imports-in-here/integrationtest:name'
+        Remember:
+         - schemapaths must have the yang module at every component
+         - values paths only require the yang module prefix at the first component.
+        The cache entries are built deliberately not to be a valid path (designated by the %).
+        This is done so that we can lookup the cache without having to carry out processing.
         """
 
-        if node_schema and node_schema.under_pre_translated_name:
-            return path + '/' + module + ":" + node_schema.under_pre_translated_name
+        if len(keys) and len(values):
+            predicates = Utils.encode_xpath_predicates('', keys, values)
+            print('PREDICATES', predicates)
 
-        return path + '/' + module + ":" + attr
+        if context.schemacache.is_path_cached("!"+node.real_schema_path + attr + predicates+"!"):
+            return context.schemacache.get_item_from_cache("!"+node.real_schema_path+attr + predicates+"!")
 
-    @staticmethod
-    def get_schema_of_path(spath, context):
-        if spath == "":
-            # Root object won't be a valid XPATH
-            return context.schema
+        print('..._get_schema_and_path_of_node', node.real_schema_path, node.real_data_path, attr, keys, values)
 
-        if context.schemacache.is_path_cached(spath):
-            return context.schemacache.get_item_from_cache(spath)
-
-        if '_' in spath:
-            Utils.underscore_handling(spath, context)
-            raise ValueError("This implementation needs extending to work across the whole path came in with %s" % (spath))
-        #
-        # first_part_of_path = '/'.join(spath.split('/')[0:-1])
-        # last_part_of_path = spath.split('/')[-1]
-        # last_node_name = last_part_of_path.split(':')[-1]
-        # if '_' in last_part_of_path:
-        #     real_path = None
-        #     if first_part_of_path == "":
-        #
-        #         children = context.schemactx.find_path("/" + context.module + ":*")
-        #     else:
-        #         children = context.schemactx.find_path(first_part_of_path + "/*")
-        #     for child in children:
-        #         if child.name().replace('-', '_') == last_node_name:
-        #             real_path = first_part_of_path + "/" + context.module + ":" + child.name()
-        #         try:
-        #             schema_for_path = next(context.schemactx.find_path(real_path))
-        #             schema_for_path.under_pre_translated_name = child.name()
-        #             context.schemacache.add_entry(spath, schema_for_path)
-        #             return schema_for_path
-        #         except libyang.util.LibyangError:
-        #             pass
-        #
-        #     raise NotImplementedError("Underscore translation for path %s failed (calculated path %s)" % (spath, real_path))
+        real_schema_path = node.real_schema_path
+        if not attr == '':
+            real_attribute_name = Utils.get_original_name(real_schema_path, context, attr)
+            # print('... attr now', real_attribute_name)
+            real_schema_path = real_schema_path + '/' + context.module + ":" + real_attribute_name
 
         try:
-            schema_for_path = next(context.schemactx.find_path(spath))
-            schema_for_path.under_pre_translated_name = None
-            context.schemacache.add_entry(spath, schema_for_path)
-            return schema_for_path
+            node_schema = next(context.schemactx.find_path(real_schema_path))
         except libyang.util.LibyangError:
-            pass
+            raise Errors.NonExistingNode(node.real_schema_path + '/'+context.module+":"+attr)
 
-        raise Errors.NonExistingNode(spath)
+        if not attr == '':
+            real_data_path = node.real_data_path
+            if node_schema.nodetype() not in (Types.LIBYANG_NODETYPE['CHOICE'], Types.LIBYANG_NODETYPE['CASE']):
+                if node.real_data_path == '':
+                    real_data_path = '/' + context.module + ':' + real_attribute_name + predicates
+                else:
+                    real_data_path = real_data_path + '/' + real_attribute_name + predicates
+            #    print('... now ', real_schema_path, real_data_path)
+
+        if not attr:
+            real_data_path = node.real_data_path + predicates
+            real_schema_path = node.real_schema_path
+            node_schema = node
+
+        node_schema.real_data_path = real_data_path
+        node_schema.real_schema_path = real_schema_path
+
+        # For now we have disabled the cache - because it's giving us the same object back each time.
+        # Without this we are ok.... so we will extend libyang properly in order to re-enable the cache
+        # which might noe be worth the effort after all.
+        context.schemacache.add_entry("TODO!"+node.real_schema_path + attr + predicates + "!", node_schema)
+
+        return node_schema
+
+    @staticmethod
+    def get_original_name(schema_path, context, attr):
+        """
+        Given a schema-path return the original name.
+        """
+        if '_' not in attr:
+            return attr
+
+        if schema_path == "":
+            schema_path = "/" + context.module + ":*/*"
+        else:
+            schema_path = schema_path + "/*"
+        print("about to libyang serach for", schema_path, '--', attr)
+        for child in context.schemactx.find_path(schema_path):
+            if child.name().replace('-', '_') == attr:
+                return child.name()
+
+        raise NotImplementedError("get_original_name could not find a matching node name for %s" % (attr))
 
     @staticmethod
     def underscore_handling(spath, context):
@@ -312,3 +334,28 @@ class Utils:
                     pass
 
         raise NotImplementedError("Underscore translation for path %s failed (calculated path %s)" % (spath, real_path))
+    #
+    # @staticmethod
+    # def underscore_handling_method_1(spath, context):
+    #     first_part_of_path = '/'.join(spath.split('/')[0:-1])
+    #     last_part_of_path = spath.split('/')[-1]
+    #     last_node_name = last_part_of_path.split(':')[-1]
+    #     if '_' in last_part_of_path:
+    #         real_path = None
+    #         if first_part_of_path == "":
+    #
+    #             children = context.schemactx.find_path("/" + context.module + ":*")
+    #         else:
+    #             children = context.schemactx.find_path(first_part_of_path + "/*")
+    #         for child in children:
+    #             if child.name().replace('-', '_') == last_node_name:
+    #                 real_path = first_part_of_path + "/" + context.module + ":" + child.name()
+    #             try:
+    #                 schema_for_path = next(context.schemactx.find_path(real_path))
+    #                 schema_for_path.under_pre_translated_name = child.name()
+    #                 context.schemacache.add_entry(spath, schema_for_path)
+    #                 return schema_for_path
+    #             except libyang.util.LibyangError:
+    #                 pass
+    #
+    #         raise NotImplementedError("Underscore translation for path %s failed (calculated path %s)" % (spath, real_path))

@@ -4,7 +4,7 @@ import os
 import importlib
 import yangvoodoo.VoodooNode
 import yangvoodoo.proxydal
-from yangvoodoo.Common import Utils
+from yangvoodoo.Common import PlainObject, Utils
 
 
 class DataAccess:
@@ -71,70 +71,69 @@ class DataAccess:
             return schema.description()
         except Exception:
             pass
-
-    @classmethod
-    def get_extensions(self, node, attr=None, module=None):
-        """
-        Return a list of extension with the given name.
-
-        For the root node an child attribute name must be provided, for deeper nodes
-        the attribute name can be omitted which means 'this node'
-
-        Example:
-            yangvoodoo.DataAccess.get_extensions(root, 'dirty-secret')
-
-            Looks for an extension named 'info' on root.dirty_secret
-        """
-
-        if node._NODE_TYPE == "Root" and not attr:
-            raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
-
-        spath = node.__dict__['_spath']
-        context = node.__dict__['_context']
-
-        if attr:
-            node_schema = Utils.get_schema_of_path(Utils.form_schema_xpath(spath, attr, context.module), context)
-        else:
-            node_schema = Utils.get_schema_of_path(spath, context)
-
-        for extension in node_schema.extensions():
-            if not module or extension.module().name() == module:
-                arg = extension.argument()
-                if arg == 'true':
-                    arg = True
-                elif arg == 'false':
-                    arg = False
-                yield (extension.module().name()+":"+extension.name(), arg)
-
-    @classmethod
-    def get_extension(self,  node, name, attr=None, module=None):
-        """
-        Look for an extension with the given name.
-
-        For the root node an child attribute name must be provided, for deeper nodes
-        the attribute name can be omitted which means 'this node'
-
-        Example:
-            yangvoodoo.DataAccess.has_extension(root, 'info', 'dirty-secret')
-            Looks for an extension named 'info' on root.dirty_secret
-
-        If the argument of the extnesion is a string 'true' or 'false' it will be converted
-        to a python boolean, otherwise the argument is returned as-is.
-
-        If the extension is not present None is returned.
-        """
-        if node._NODE_TYPE == "Root" and not attr:
-            raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
-
-        extensions = yangvoodoo.DataAccess.get_extensions(node, attr, module)
-        for (m, a) in extensions:
-            if module:
-                if m == module + ":" + name:
-                    return a
-            else:
-                if ":" + name in m:
-                    return a
-        return None
+    #
+    # @classmethod
+    # def get_extensions(self, node, attr=None, module=None):
+    #     """
+    #     Return a list of extension with the given name.
+    #
+    #     For the root node an child attribute name must be provided, for deeper nodes
+    #     the attribute name can be omitted which means 'this node'
+    #
+    #     Example:
+    #         yangvoodoo.DataAccess.get_extensions(root, 'dirty-secret')
+    #
+    #         Looks for an extension named 'info' on root.dirty_secret
+    #     """
+    #
+    #     if node._NODE_TYPE == "Root" and not attr:
+    #         raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
+    #
+    #     context = node._context
+    #     print(node)
+    #     if attr:
+    #         node_schema = Utils.get_schema_and_set_paths(node, context, attr=attr)
+    #     else:
+    #         node_schema = Utils.get_schema_and_set_paths(node, context)
+    #
+    #     for extension in node_schema.extensions():
+    #         if not module or extension.module().name() == module:
+    #             arg = extension.argument()
+    #             if arg == 'true':
+    #                 arg = True
+    #             elif arg == 'false':
+    #                 arg = False
+    #             yield (extension.module().name()+":"+extension.name(), arg)
+    #
+    # @classmethod
+    # def get_extension(self,  node, name, attr=None, module=None):
+    #     """
+    #     Look for an extension with the given name.
+    #
+    #     For the root node an child attribute name must be provided, for deeper nodes
+    #     the attribute name can be omitted which means 'this node'
+    #
+    #     Example:
+    #         yangvoodoo.DataAccess.has_extension(root, 'info', 'dirty-secret')
+    #         Looks for an extension named 'info' on root.dirty_secret
+    #
+    #     If the argument of the extnesion is a string 'true' or 'false' it will be converted
+    #     to a python boolean, otherwise the argument is returned as-is.
+    #
+    #     If the extension is not present None is returned.
+    #     """
+    #     if node._NODE_TYPE == "Root" and not attr:
+    #         raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
+    #
+    #     extensions = yangvoodoo.DataAccess.get_extensions(node, attr, module)
+    #     for (m, a) in extensions:
+    #         if module:
+    #             if m == module + ":" + name:
+    #                 return a
+    #         else:
+    #             if ":" + name in m:
+    #                 return a
+    #     return None
 
     @classmethod
     def get_root(self, session=None, attribute=None):
@@ -191,7 +190,13 @@ class DataAccess:
 
         self.data_abstraction_layer.setup_root()
 
-        return yangvoodoo.VoodooNode.Root(self.context)
+        self.help = self._help
+
+        node = PlainObject()
+        node.real_schema_path = ''
+        node.real_data_path = ''
+
+        return yangvoodoo.VoodooNode.Root(self.context, node)
 
     def connect(self, module=None,  yang_location="../yang/", tag='client'):
         """

@@ -66,10 +66,9 @@ class Node:
 
     _NODE_TYPE = 'Node'
 
-    def __init__(self, context, path='', spath='', parent_self=None):
+    def __init__(self, context, node, parent_self=None):
         self.__dict__['_context'] = context
-        self.__dict__['_path'] = path
-        self.__dict__['_spath'] = spath
+        self.__dict__['_node'] = node
         self.__dict__['_parent'] = parent_self
         self._specific_init()
 
@@ -80,8 +79,7 @@ class Node:
         return self._base_repr()
 
     def _base_repr(self):
-        path = self.__dict__['_path']
-        return 'Voodoo%s{%s}' % (self._NODE_TYPE, path)
+        return 'Voodoo%s{%s}' % (self._NODE_TYPE, self._node.real_data_path)
 
     def __del__(self):
         pass
@@ -99,35 +97,35 @@ class Node:
         if attr in ('_ipython_canary_method_should_not_exist_', '_repr_mimebundle_'):
             raise AttributeError('Go Away!')
         context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
+        node = self.__dict__['_node']
+
+        # path = self.__dict__['_path']
+        # spath = self.__dict__['_spath']
 
         if attr == '_xpath_sorted' and self._NODE_TYPE == 'List':
             # Return Object
-            return SortedList(context, path, spath, self)
+            return SortedList(context, node, self)
 
-        new_spath = Common.Utils.form_schema_xpath(spath, attr, context.module)
-        node_schema = Common.Utils.get_schema_of_path(new_spath, context)
-
-        new_xpath = Common.Utils.form_value_xpath(path, attr, context.module, node_schema)
+        print('__getattr__', attr, node.real_schema_path, node.real_data_path)
+        node_schema = Common.Utils.get_schema_and_set_paths(node, context, attr)
         node_type = node_schema.nodetype()
 
         if node_type == 1:
             # assume this is a container (or a presence container)
             if node_schema.presence() is None:
                 # Return Object
-                return Container(context, new_xpath, new_spath, self)
+                return Container(context, node_schema, self)
             else:
                 # Return Object
-                return PresenceContainer(context, new_xpath, new_spath, self)
+                return PresenceContainer(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['LEAF']:
-            return context.dal.get(new_xpath, default_value=node_schema.default())
+            return context.dal.get(node_schema.real_data_path, default_value=node_schema.default())
         elif node_type == Types.LIBYANG_NODETYPE['LIST']:
             # Return Object
-            return List(context, new_xpath, new_spath, self)
+            return List(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['LEAFLIST']:
             # Return Object
-            return LeafList(context, new_xpath, new_spath, self)
+            return LeafList(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['CHOICE']:
             """
             Note: for choices in terms of data we don't render the 'case'
@@ -138,33 +136,30 @@ class Node:
             means the following is invalid.
             list(yangctx.find_path(beertype + "integrationtest:brewdog"))
             """
-            return Choice(context, path, new_spath, self)
+            return Choice(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['CASE']:
-            return Case(context, path, new_spath, self)
+            return Case(context, node_schema, self)
 
         raise NotImplementedError("The YANG structure at %s of type %s is not supported." % (new_spath, node_type))
 
     def __setattr__(self, attr, val):
         context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-
-        spath = Common.Utils.form_schema_xpath(spath, attr, context.module)
-        node_schema = Common.Utils.get_schema_of_path(spath, context)
-        xpath = Common.Utils.form_value_xpath(path, attr, context.module, node_schema)
+        node = self.__dict__['_node']
+        print('__setattr__', attr, node.real_schema_path, node.real_data_path)
+        node_schema = Common.Utils.get_schema_and_set_paths(node, context, attr)
 
         if not node_schema.nodetype() == Types.LIBYANG_NODETYPE['LEAF']:
             raise Errors.CannotAssignValueToContainingNode(attr)
 
         if node_schema.is_key():
-            raise Errors.ListKeyCannotBeChanged(xpath, attr)
+            raise Errors.ListKeyCannotBeChanged(node_schema.real_data_path, attr)
 
         if val is None:
-            context.dal.delete(xpath)
+            context.dal.delete(node_schema.real_data_path)
             return
 
-        backend_type = Common.Utils.get_yang_type(node_schema.type(), val, xpath)
-        context.dal.set(xpath, val, backend_type)
+        backend_type = Common.Utils.get_yang_type(node_schema.type(), val, node_schema.real_data_path)
+        context.dal.set(node_schema.real_data_path, val, backend_type)
 
     def __dir__(self):
         spath = self.__dict__['_spath']
@@ -198,9 +193,9 @@ class Choice(Node):
     _NODE_TYPE = "Choice"
 
     def __repr__(self):
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, path, spath.split(":")[-1])
+        node = self.__dict__['_node']
+        data_path = node.real_data_path[0:node.real_data_path.rfind('/')]
+        return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, node.real_data_path, node.real_schema_path.split(":")[-1])
 
 
 class Case(Node):
@@ -208,9 +203,8 @@ class Case(Node):
     _NODE_TYPE = "Case"
 
     def __repr__(self):
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, path, spath.split(":")[-1])
+        node = self.__dict__['_node']
+        return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, node.real_data_path, node.real_schema_path.split(":")[-1])
 
 
 class LeafList(Node):
@@ -311,35 +305,39 @@ class List(ContainingNode):
 
         Calling the create method a second time will not overwrite/remove data.
         """
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        conditional = self._get_keys(list(args))
-        new_xpath = path + conditional
-        new_spath = spath   # Note: we deliberartely won't use conditionals here
+        context = self._context
+        node = self._node
+        print('__create__ %s %s', node.real_schema_path, str(args))
+        print(node)
 
-        keys = tuple(self.keys())
+        # conditional = self._get_keys(list(args))
+
+        list_keys = tuple(node.keys())
         values = []
+        keys = []
         i = 0
         for arg in args:
+            keys.append(list_keys[i].name())
             if arg == "":
-                raise Errors.ListKeyCannotBeBlank(spath, keys[i])
+                raise Errors.ListKeyCannotBeBlank(node.real_schema_path, keys[i].name())
 
-            node_schema = Common.Utils.get_schema_of_path(Common.Utils.form_schema_xpath(spath, keys[i], context.module), context)
-            yangtype = Common.Utils.get_yang_type(node_schema.type(), arg,
-                                                  Common.Utils.form_schema_xpath(spath, keys[i], context.module))
-            values.append((arg, yangtype))
+            key_yang_type = Common.Utils.get_yang_type_from_path(context, node.real_schema_path, arg, keys[i])
+            context.log.info("Found yang type of key.... %s/%s" % (keys[i], key_yang_type))
+            # node_schema = Common.Utils.get_schema_of_path(Common.Utils.form_schema_xpath(spath, keys[i], context.module), context)
+            # yangtype = Common.Utils.get_yang_type(node_schema.type(), arg,
+            #                                      Common.Utils.form_schema_xpath(spath, keys[i], context.module))
+            values.append((arg, key_yang_type))
+        node = Common.Utils.get_schema_and_set_paths(node, context, keys=keys, values=values)
 
-        context.log.trace("about to create: %s, %s, %s, %s",  new_xpath, keys, values, context.module)
-        context.dal.create(new_xpath, keys=keys, values=values)
+        print(node)
+        context.log.trace("about to create: %s, %s, %s, %s",  node.real_data_path, keys, values, context.module)
+        context.dal.create(node.real_data_path, keys=keys, values=values)
         # Return Object
-        return ListElement(context, new_xpath, new_spath, self)
+        return ListElement(context, node, self)
 
     def __len__(self):
         context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        return context.dal.gets_len(path)
+        return context.dal.gets_len(self._node.real_data_path)
 
     def elements(self, sorted_by_xpath=False):
         """
@@ -375,40 +373,40 @@ class List(ContainingNode):
             keys.append(k.name())
         return keys
 
-    def get_last(self, sorted_by_xpath=False):
-        """
-        Return the last element from the list, the datastore will store elements in a list in
-        the order they have been created.
-
-        The optional argument sorted_by_xpath will sort the list by XPATH before returning the
-        last item.
-        """
-        context = self.__dict__['_context']
-        spath = self.__dict__['_spath']
-
-        results = list(context.dal.gets_sorted(spath, spath,  ignore_empty_lists=True))
-
-        this_xpath = results[-1]
-        # Return Object
-        return ListElement(context, this_xpath, spath, self)
-
-    def get_first(self, sorted_by_xpath=False):
-        """
-        Return the first element from the list, the datastore will store elements in a list in
-        the order they have been created.
-
-        The optional argument sorted_by_xpath will sort the list by XPATH before returning the
-        first item.
-        """
-        context = self.__dict__['_context']
-        spath = self.__dict__['_spath']
-
-        results = list(context.dal.gets_sorted(spath, spath, ignore_empty_lists=True))
-
-        this_xpath = results[0]
-        # Return Object
-        return ListElement(context, this_xpath, spath, self)
-
+    # def get_last(self, sorted_by_xpath=False):
+    #     """
+    #     Return the last element from the list, the datastore will store elements in a list in
+    #     the order they have been created.
+    #
+    #     The optional argument sorted_by_xpath will sort the list by XPATH before returning the
+    #     last item.
+    #     """
+    #     context = self.__dict__['_context']
+    #     spath = self.__dict__['_spath']
+    #
+    #     results = list(context.dal.gets_sorted(spath, spath,  ignore_empty_lists=True))
+    #
+    #     this_xpath = results[-1]
+    #     # Return Object
+    #     return ListElement(context, this_xpath, spath, self)
+    #
+    # def get_first(self, sorted_by_xpath=False):
+    #     """
+    #     Return the first element from the list, the datastore will store elements in a list in
+    #     the order they have been created.
+    #
+    #     The optional argument sorted_by_xpath will sort the list by XPATH before returning the
+    #     first item.
+    #     """
+    #     context = self.__dict__['_context']
+    #     spath = self.__dict__['_spath']
+    #
+    #     results = list(context.dal.gets_sorted(spath, spath, ignore_empty_lists=True))
+    #
+    #     this_xpath = results[0]
+    #     # Return Object
+    #     return ListElement(context, this_xpath, spath, self)
+    #
     def get(self, *args):
         """
         Get an item from the list
@@ -434,11 +432,10 @@ class List(ContainingNode):
         return ListElement(context, new_xpath, new_spath, self)
 
     def __iter__(self):
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
+        context = self._context
+        node = self._node
         # Return Object
-        return ListIterator(context, path, spath, self, xpath_sorted=self._SORTED_LIST)
+        return ListIterator(context, node, self, xpath_sorted=self._SORTED_LIST)
 
     def __contains__(self, *args):
         context = self.__dict__['_context']
@@ -483,25 +480,25 @@ class List(ContainingNode):
 
         return None
 
-    def _get_keys(self, *args):
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        context = self.__dict__['_context']
-        node_schema = Common.Utils.get_schema_of_path(spath, context)
-        keys = list(node_schema.keys())
-
-        if not len(args[0]) == len(keys):
-            raise Errors.ListWrongNumberOfKeys(path, len(keys), len(args[0]))
-
-        conditional = ""
-        for i in range(len(keys)):
-            value = self._get_xpath_value_from_python_value(args[0][i], keys[i].type())
-
-            # Sysrepo doesn't like this version
-            # conditional = conditional + "[%s:%s='%s']" % (context.module, keys[i].name(), value)
-            conditional = conditional + "[%s='%s']" % (keys[i].name(), value)
-        return conditional
-
+    # def _get_keys(self, *args):
+    #     path = self.__dict__['_path']
+    #     spath = self.__dict__['_spath']
+    #     context = self.__dict__['_context']
+    #     node_schema = Common.Utils.get_schema_of_path(spath, context)
+    #     keys = list(node_schema.keys())
+    #
+    #     if not len(args[0]) == len(keys):
+    #         raise Errors.ListWrongNumberOfKeys(path, len(keys), len(args[0]))
+    #
+    #     conditional = ""
+    #     for i in range(len(keys)):
+    #         value = self._get_xpath_value_from_python_value(args[0][i], keys[i].type())
+    #
+    #         # Sysrepo doesn't like this version
+    #         # conditional = conditional + "[%s:%s='%s']" % (context.module, keys[i].name(), value)
+    #         conditional = conditional + "[%s='%s']" % (keys[i].name(), value)
+    #     return conditional
+    #
     def _get_xpath_value_from_python_value(self, v, t):
         if str(t) == 'boolean':
             return str(v).lower()
@@ -542,24 +539,25 @@ class ListIterator(Node):
 
     _NODE_TYPE = 'ListIterator'
 
-    def __init__(self, context, path, spath, parent_self, xpath_sorted=False):
+    def __init__(self, context, node, parent_self, xpath_sorted=False):
         self.__dict__['_context'] = context
-        self.__dict__['_path'] = path
-        self.__dict__['_spath'] = spath
+        self.__dict__['_node'] = node
         self.__dict__['_parent'] = parent_self
         self.__dict__['_xpath_sorted'] = xpath_sorted
         if xpath_sorted:
-            self.__dict__['_iterator'] = context.dal.gets_sorted(path, spath, ignore_empty_lists=True)
+            self.__dict__['_iterator'] = context.dal.gets_sorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True)
         else:
-            self.__dict__['_iterator'] = context.dal.gets_unsorted(path, spath, ignore_empty_lists=True)
+            self.__dict__['_iterator'] = context.dal.gets_unsorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True)
 
     def __next__(self):
-        context = self.__dict__['_context']
-        spath = self.__dict__['_spath']
-        parent = self.__dict__['_parent']
-        this_xpath = next(self.__dict__['_iterator'])
+        context = self._context
+        node = self._node
+        parent = self._parent
+        this_xpath = next(self._iterator)
         # Return Object
-        return ListElement(context, this_xpath, spath, parent)
+
+        print('__next__', node.real_data_path, this_xpath)
+        return ListElement(context, node, parent)
 
     def __repr__(self):
         base_repr = self._base_repr()

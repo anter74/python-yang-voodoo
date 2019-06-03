@@ -99,7 +99,7 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             items = list(self.store.gets_sorted(list_xpath, schema_xpath, ignore_empty_lists=ignore_empty_lists))
             self.sorted_cached[list_xpath] = items
         for xpath in self.sorted_cached[list_xpath]:
-            self._speculative_create_list_keys(xpath, schema_xpath)
+            #self._speculative_create_list_keys(xpath, schema_xpath)
             yield xpath
 
     def gets_unsorted(self, list_xpath, schema_xpath, ignore_empty_lists=False):
@@ -115,7 +115,7 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             self.unsorted_cached[list_xpath] = items
 
         for xpath in self.unsorted_cached[list_xpath]:
-            self._speculative_create_list_keys(xpath, schema_xpath)
+            #self._speculative_create_list_keys(xpath, schema_xpath)
             yield xpath
 
     def gets_len(self, list_xpath):
