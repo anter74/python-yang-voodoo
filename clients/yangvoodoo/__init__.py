@@ -70,7 +70,7 @@ class DataAccess:
             raise yangvoodoo.Errors.NodeProvidedIsNotAContainer()
 
         node_schema = node._node
-        context = node.__dict__['_context']
+        context = node._context
 
         spath = node_schema.real_schema_path
         path = node_schema.real_data_path
@@ -95,6 +95,7 @@ class DataAccess:
         description = """Schema Path: {schema_path}
 Value Path: {value_path}
 NodeType: {type}
+
 Description:
   {description}
 """.format(**values)

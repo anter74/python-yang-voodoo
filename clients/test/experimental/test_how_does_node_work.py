@@ -53,17 +53,18 @@ class test_node_based_access(unittest.TestCase):
 
         result = Utils.get_original_name('', context, 'attribute_here')
         self.assertEqual(result, 'attribute-here')
-
-    def test_underscore(self):
-        print(self.root.underscore_and_hyphen)
-        self.root.underscore_and_hyphen = 'dsf'
-        self.assertEqual(self.root.underscore_and_hyphen, 'dsf')
-        expected_result = ['!underscore_and_hyphen']
-        self.assertEqual(list(self.root._context.schemacache.items.keys()), expected_result)
-
-        expected_result = {'/integrationtest:underscore_and-hyphen': 'dsf'}
-
-        self.assertDictEqual(self.stub.stub_store, expected_result)
+    #
+    # def test_underscore(self):
+    #     print(self.root.underscore_and_hyphen)
+    #     self.root.underscore_and_hyphen.create()
+    #     print(self.root.underscore_and_hyphen)
+    #     self.assertEqual(repr(self.root.underscore_and_hyphen), 'VoodooEmpty{/integrationtest:underscore_and-hyphen} - Exists')
+    #     expected_result = ['!underscore_and_hyphen']
+    #     self.assertEqual(list(self.root._context.schemacache.items.keys()), expected_result)
+    #
+    #     expected_result = {'/integrationtest:underscore_and-hyphen': True}
+    #
+    #     self.assertDictEqual(self.stub.stub_store, expected_result)
 #     def test_root(self):
 #         print(self.root.bronze.silver.gold.platinum)
 #

@@ -64,5 +64,8 @@ Work out this stuff without updating voodoonode first.
 ```
 
 
-Trying to stop us setting attributes on a container, and the 'keys' validation.
-- overriding \__setattr__ didn't look right
+- keys that are typedefs - fails (definetely in template ninja but propbably elsewhere)
+
+
+
+Readonly dataaccess

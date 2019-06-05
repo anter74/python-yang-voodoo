@@ -43,6 +43,12 @@ class test_node_based_access(unittest.TestCase):
 
         self.subject.commit()
 
+        self.assertFalse(self.root.empty.exists())
+        self.root.empty.create()
+        self.assertTrue(self.root.empty.exists())
+        self.root.empty.remove()
+        self.assertFalse(self.root.empty.exists())
+
     def test_containers(self):
         morecomplex = self.root.morecomplex
         self.assertEqual(repr(morecomplex), "VoodooContainer{/integrationtest:morecomplex}")

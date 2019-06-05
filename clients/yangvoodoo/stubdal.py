@@ -153,6 +153,9 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         return False
 
     def set(self, xpath, value, valtype=0):
+        # if an empty Node stub will store this as True (sysrepo will not want a value)
+        if valtype == 5:
+            value = True
         self.dirty = True
         self.stub_store[xpath] = value
 

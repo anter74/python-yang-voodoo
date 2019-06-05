@@ -332,7 +332,7 @@ module integrationtest {
     }
     leaf underscore_and-hyphen {
       type string;
-      description "NO SUPPORTED";
+      description "NOW SUPPORTED!!!";
     }
     container deeper_down-here {
       leaf simple {

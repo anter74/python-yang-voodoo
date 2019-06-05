@@ -48,6 +48,31 @@ LIBYANG_MAPPING = {
     19: DATA_ABSTRACTION_MAPPING['UINT64']
 }
 
+LIBYANG_LEAF_TYPES = {
+    3: "BOOLEAN",
+    4: "DECIMAL64",
+    5: "EMPTY",
+    6: "ENUM",
+    10: "STRING",
+    12: "INT8",
+    13: "UINT8",
+    14: "INT16",
+    15: "UINT16",
+    16: "INT32",
+    17: "UINT32",
+    18: "INT64",
+    19: "UINT64",
+}
+
+LIBYANG_LEAFTYPE = {
+    5: 'EMPTY',
+    6: 'ENUM'
+}
+
+LIBYANG_LEAF_LIKE_NODES = {
+    4: 'LEAF',
+    8: 'LEAFLIST',
+}
 
 # To populate from lys_nodetype
 LIBYANG_NODETYPE = {

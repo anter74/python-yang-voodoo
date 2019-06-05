@@ -9,7 +9,8 @@
   - there is some XPATH escaping with single quotes still to cover off
 - ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
 - ~~allow the location of yang's to be specified.~~
-- enumerations - should really be returned as an object not a string.
+- ~~enumerations - should really be returned as an object not a string. - Don't think this is required anymore~~
+- \__setattr__() should be properly implemented taking account of unions of uint32/enumerations.
 - define (with tests) further yang types in Types class (and handle a fallback better than 'keyerror')
 - session revert() and session compare() would be useful functions.
 - typedef's (partly resolved by using libyang's type().base() - but unions don't provide a composite base type)

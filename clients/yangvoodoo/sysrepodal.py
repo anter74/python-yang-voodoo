@@ -311,7 +311,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         elif type == sr.SR_CONTAINER_T:
             raise yangvoodoo.Errors.NodeHasNoValue('container', xpath)
         elif type == sr.SR_LEAF_EMPTY_T:
-            raise yangvoodoo.Errors.NodeHasNoValue('empty-leaf', xpath)
+            return True
         elif type == sr.SR_LIST_T:
             return None
         elif type == sr.SR_DECIMAL64_T:

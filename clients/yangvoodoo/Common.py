@@ -140,8 +140,7 @@ class Utils:
         node_schema = next(context.schemactx.find_path(schema_path))
         return Utils.get_yang_type(node_schema.type(), value, schema_path)
 
-    @staticmethod
-    def get_yang_type(node_schema, value=None, xpath=None):
+    def get_yang_type(node_schema, value=None, xpath=None, default_to_string=False):
         """
         Map a given yang-type (e.g. string, decimal64) to a type code for the backend.
 
@@ -214,7 +213,10 @@ class Utils:
                 else:
                     return Types.DATA_ABSTRACTION_MAPPING['INT64']
 
-        msg = 'Unable to handle the yang type at path ' + xpath
+        if default_to_string:
+            return Types.DATA_ABSTRACTION_MAPPING['STRING']
+
+        msg = 'Unable to handle the yang type at path ' + str(xpath)
         msg += ' (this may be listed as a corner-case on the README already'
         raise NotImplementedError(msg)
 

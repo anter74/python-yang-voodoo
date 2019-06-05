@@ -120,3 +120,19 @@ class XpathDecodingError(Exception):
         message = "Unable to decode the following XPATH: %s" % (path)
 
         super().__init__(message)
+
+
+class ValueDoesMatchEnumeration(Exception):
+
+    def __init__(self, path, val):
+        message = "The value %s is not valid for the enumeration at path %s" % (val, path)
+
+        super().__init__(message)
+
+
+class NodeProvidedIsNotAContainer(Exception):
+
+    def __init__(self):
+        message = "Require a containing node not a leaf"
+
+        super().__init__(message)

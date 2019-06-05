@@ -1,4 +1,3 @@
-import time
 import yangvoodoo
 import yangvoodoo.basedal
 import yangvoodoo.stubdal
@@ -33,7 +32,10 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         return self.store.disconnect()
 
     def commit(self):
-        self.cache.commit()
+        try:
+            self.cache.commit()
+        except yangvoodoo.Errors.NothingToCommit:
+            pass
         return self.store.commit()
 
     def validate(self):
@@ -91,7 +93,11 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     def set(self, xpath, value, valtype=0):
         self.cache.set(xpath, value, valtype)
+        if valtype == 5:
+            value = True
         self.value_cached[xpath] = value
+        if valtype == 5:
+            value = None
         return self.store.set(xpath, value, valtype)
 
     def gets_sorted(self, list_xpath, schema_xpath, ignore_empty_lists=False):

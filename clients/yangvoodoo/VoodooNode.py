@@ -121,7 +121,12 @@ class Node:
                 # Return Object
                 return PresenceContainer(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['LEAF']:
-            print('dal.get', node_schema.real_data_path)
+            # TODO: need to consider unions of enum's in future - there is already a plan for a formalValidator class
+            leaf_type = node_schema.type().base()
+            if leaf_type == 5:
+                return Empty(context, node_schema)
+            # if leaf_type == 6:
+            #    return Enum(context, new_xpath, new_spath, node_schema)
             return context.dal.get(node_schema.real_data_path, default_value=node_schema.default())
         elif node_type == Types.LIBYANG_NODETYPE['LIST']:
             # Return Object
@@ -157,6 +162,16 @@ class Node:
         if node_schema.is_key():
             raise Errors.ListKeyCannotBeChanged(node_schema.real_data_path, attr)
 
+        leaf_type = node_schema.type().base()
+        # Enumeration:
+        if leaf_type == 6:
+            match = False
+            for (enum_valid_val, _) in node_schema.type().enums():
+                if str(enum_valid_val) == str(val):
+                    match = True
+            if not match:
+                raise Errors.ValueDoesMatchEnumeration(node_schema.real_data_path, val)
+
         if val is None:
             context.dal.delete(node_schema.real_data_path)
             return
@@ -184,9 +199,77 @@ class Node:
         return answer
 
 
+class Empty():
+
+    """
+    This represents a YANG Empty Leaf, which can be create()d, and remove()d, however they do
+    not actually store a value.
+
+    The presence of the empty leaf can be tested with exists()
+
+    In an XML representation they appear as
+        <emptyleaf/>
+
+    """
+
+    _NODE_TYPE = "Empty"
+
+    def __init__(self, context, node_schema):
+        self.__dict__['_context'] = context
+        self.__dict__['_node'] = node_schema
+
+        print('EMPTY', node_schema.real_data_path)
+
+    def __dir__(self):
+        return []
+
+    def create(self):
+        context = self._context
+        node = self._node
+        context.dal.set(node.real_data_path, None, 5)
+
+    def exists(self):
+        context = self._context
+        node = self._node
+        exists = context.dal.get(node.real_data_path)
+        return exists is not None
+
+    def remove(self):
+        context = self._context
+        node = self._node
+        context.dal.delete(node.real_data_path)
+
+    def __repr__(self):
+        node = self._node
+        path = node.real_data_path
+        if self.exists():
+            return "VoodooEmpty{%s} - Exists" % (path)
+        return "VoodooEmpty{%s} - Does Not Exist" % (path)
+
+
 class ContainingNode(Node):
 
-    pass
+    def _from_template(self, template, **kwargs):
+        """
+        TODO: decide if this is good here or if it should move to session.
+
+        This is misleading because the template still applies from root (although
+        potentially we cahnge templater to handle an abritary node)
+
+        """
+        templater = TemplateNinja.TemplateNinja()
+        templater.from_template(self, template, **kwargs)
+
+    def _from_xmlstr(self, xmlstr):
+        """
+        TODO: decide if this is good here or if it should move to session.
+
+        This is misleading because the template still applies from root (although
+        potentially we cahnge templater to handle an abritary node)
+
+        """
+        templater = TemplateNinja.TemplateNinja()
+        templater.from_xmlstr(self, xmlstr)
 
 
 class Choice(Node):
@@ -195,7 +278,6 @@ class Choice(Node):
 
     def __repr__(self):
         node = self.__dict__['_node']
-        data_path = node.real_data_path[0:node.real_data_path.rfind('/')]
         return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, node.real_data_path, node.real_schema_path.split(":")[-1])
 
 
@@ -582,7 +664,7 @@ class Root(ContainingNode):
         context = self.__dict__['_context']
         return "VoodooNodeRoot{} YANG Module: " + context.module
 
-    def from_template(self, template):
+    def from_template(self, template, **kwargs):
         """
         Process a template with a number of data nodes. The result of processing the template
         with Jinja2 must be a valid XML document.
@@ -620,7 +702,7 @@ class Root(ContainingNode):
         """
 
         templater = TemplateNinja.TemplateNinja()
-        templater.from_template(self, template)
+        templater.from_template(self, template, **kwargs)
 
     def from_xmlstr(self, xmlstr):
         """

@@ -49,3 +49,4 @@
    - FEATURE: support UINT64/INT64 values.
    - FEATURE: raise an exception `Cannot assign a value to ......` when trying to assign values to containing nodes.
    - FEATURE: add `session.from_xmlstr` to import data without jinja2 processing from disk.
+   - FEATURE: support for yang empty leaf type - returns an object with `create()`, `exists()` and `remove()` 

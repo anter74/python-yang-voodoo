@@ -44,6 +44,20 @@ class test_node_based_access(unittest.TestCase):
 
         self.subject.commit()
 
+        self.root.simpleenum = 'A'
+
+        with self.assertRaises(yangvoodoo.Errors.ValueDoesMatchEnumeration) as context:
+            self.root.simpleenum = 'B'
+        self.assertEqual(str(context.exception), "The value B is not valid for the enumeration at path /integrationtest:simpleenum")
+
+        self.assertFalse(self.root.empty.exists())
+        self.root.empty.create()
+        self.assertEqual(repr(self.root.empty), "VoodooEmpty{/integrationtest:empty} - Exists")
+        self.assertTrue(self.root.empty.exists())
+        self.root.empty.remove()
+        self.assertEqual(repr(self.root.empty), "VoodooEmpty{/integrationtest:empty} - Does Not Exist")
+        self.assertFalse(self.root.empty.exists())
+
     def test_containers(self):
         morecomplex = self.root.morecomplex
         self.assertEqual(repr(morecomplex), "VoodooContainer{/integrationtest:morecomplex}")
@@ -170,13 +184,18 @@ class test_node_based_access(unittest.TestCase):
         great_grandparent = self.root.bronze.silver.gold.platinum._parent._parent._parent
 
         self.assertEqual(repr(great_grandparent), "VoodooContainer{/integrationtest:bronze}")
-        help_text = """Schema Path: /integrationtest:bronze
+
+        description = self.subject.describe(great_grandparent)
+
+        expected_description = """Schema Path: /integrationtest:bronze
 Value Path: /integrationtest:bronze
 NodeType: Container
+
 Description:
   The metallics are used to test container nesting
 """
-        self.assertEqual(self.subject.describe(great_grandparent), help_text)
+
+        self.assertEqual(description, expected_description)
 
         list_element = self.root.simplelist.create('newlistitem')
         self.assertEqual(repr(list_element._parent), "VoodooList{/integrationtest:simplelist}")
@@ -307,9 +326,9 @@ Description:
 
     def test_underscore_and_hyphens(self):
         self.root.underscoretests.underscore_and_hyphen = 'sdf'
-        self.root.underscore_and_hyphen = '123'
+        self.root.underscore_and_hyphen.create()
         self.assertEqual(self.root.underscoretests.underscore_and_hyphen, "sdf")
-        self.assertEqual(self.root.underscore_and_hyphen, "123")
+        self.assertEqual(repr(self.root.underscore_and_hyphen), "VoodooEmpty{/integrationtest:underscore_and-hyphen} - Exists")
         xpaths = self.stub.dump_xpaths()
         self.assertEqual(xpaths["/integrationtest:underscoretests/underscore_and-hyphen"], "sdf")
-        self.assertEqual(xpaths["/integrationtest:underscore_and-hyphen"], "123")
+        self.assertEqual(xpaths["/integrationtest:underscore_and-hyphen"], True)
