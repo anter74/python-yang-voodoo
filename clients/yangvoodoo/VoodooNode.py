@@ -108,7 +108,6 @@ class Node:
             # Return Object
             return SortedList(context, node, self)
 
-        print('__getattr__', attr, node.real_schema_path, node.real_data_path)
         node_schema = Common.Utils.get_yangnode(node, context, attr)
         node_type = node_schema.nodetype()
 
@@ -153,7 +152,6 @@ class Node:
     def __setattr__(self, attr, val):
         context = self.__dict__['_context']
         node = self.__dict__['_node']
-        print('__setattr__', attr, node.real_schema_path, node.real_data_path)
         node_schema = Common.Utils.get_yangnode(node, context, attr)
 
         if not node_schema.nodetype() == Types.LIBYANG_NODETYPE['LEAF']:
@@ -217,8 +215,6 @@ class Empty():
     def __init__(self, context, node_schema):
         self.__dict__['_context'] = context
         self.__dict__['_node'] = node_schema
-
-        print('EMPTY', node_schema.real_data_path)
 
     def __dir__(self):
         return []
@@ -308,38 +304,34 @@ class LeafList(Node):
         If the item already exists in the list this operation will silenty
         do nothing.
         """
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
+        context = self._context
+        node = self._node
 
         if value == "":
-            raise Errors.ListItemCannotBeBlank(spath)
+            raise Errors.ListItemCannotBeBlank(node.real_data_path)
 
-        node_schema = Common.Utils.get_schema_of_path(spath, context)
-        backend_type = Common.Utils.get_yang_type(node_schema.type(), value, path)
-
-        context.log.trace("about to add: %s, %s, %s", path, value, backend_type)
-        context.dal.add(path, value, backend_type)
+        backend_type = Common.Utils.get_yang_type_from_path(context, node.real_schema_path, value)
+        context.log.trace("about to add: %s, %s, %s", node.real_data_path, value, backend_type)
+        context.dal.add(node.real_data_path, value, backend_type)
 
         return value
 
     def __iter__(self):
         context = self._context
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
+        node = self._node
         # Return Object
-        return LeafListIterator(context, path, spath, self)
+        return LeafListIterator(context, node,  self)
 
     def __len__(self):
         context = self._context
-        path = self.__dict__['_path']
-        results = context.dal.gets(path)
+        node = self._node
+        results = context.dal.gets(node.real_data_path)
         return len(list(results))
 
     def __delitem__(self, arg):
         context = self._context
-        path = self.__dict__['_path']
-        context.dal.remove(path, arg)
+        node = self._node
+        context.dal.remove(node.real_data_path, arg)
 
         return None
 
@@ -390,7 +382,6 @@ class List(ContainingNode):
         """
         context = self._context
         node = self._node
-        print('__create__ %s %s', node.real_schema_path, str(args))
         (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
 
         node = Common.Utils.get_yangnode(node, context, keys=keys, values=values)
@@ -484,7 +475,6 @@ class List(ContainingNode):
         node = self._node
         (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
         predicates = Common.Utils.encode_xpath_predicates('', keys, values)
-        print('__getitem__', node.real_data_path + predicates)
         if not context.dal.has_item(node.real_data_path + predicates):
             raise Errors.ListDoesNotContainElement(node.real_data_path + predicates)
         # Return Object
@@ -502,8 +492,6 @@ class List(ContainingNode):
         node = self._node
         (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
         predicates = Common.Utils.encode_xpath_predicates('', keys, values)
-        print(values, keys, predicates)
-        print('__contains__', node.real_data_path + predicates)
 
         context.log.trace("has item: %s",  node.real_data_path + predicates)
         return context.dal.has_item(node.real_data_path + predicates)
@@ -513,7 +501,6 @@ class List(ContainingNode):
         node = self._node
         (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
         predicates = Common.Utils.encode_xpath_predicates('', keys, values)
-        print('__getitem__', node.real_data_path + predicates)
         if not context.dal.has_item(node.real_data_path + predicates):
             raise Errors.ListDoesNotContainElement(node.real_data_path + predicates)
 
@@ -526,7 +513,6 @@ class List(ContainingNode):
         node = self._node
         (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
         predicates = Common.Utils.encode_xpath_predicates('', keys, values)
-        print('__delitem__', node.real_data_path + predicates)
         context.dal.uncreate(node.real_data_path + predicates)
 
         return None
@@ -595,13 +581,12 @@ class LeafListIterator(Node):
 
     _NODE_TYPE = 'ListIterator'
 
-    def __init__(self, context, path, spath, parent_self, xpath_sorted=False):
+    def __init__(self, context, node, parent_self, xpath_sorted=False):
         self.__dict__['_context'] = context
-        self.__dict__['_path'] = path
-        self.__dict__['_spath'] = spath
+        self.__dict__['_node'] = node
         self.__dict__['_parent'] = parent_self
         self.__dict__['_xpath_sorted'] = xpath_sorted
-        self.__dict__['_iterator'] = context.dal.gets(path)
+        self.__dict__['_iterator'] = context.dal.gets(node.real_data_path)
 
     def __next__(self):
         return next(self.__dict__['_iterator'])

@@ -134,7 +134,6 @@ class Utils:
 
     @staticmethod
     def get_yang_type_from_path(context, schema_path,  value, child_attr=None):
-        print('...get', schema_path, value, child_attr, context.module)
         if child_attr:
             schema_path = schema_path + "/" + context.module + ":" + child_attr
         node_schema = next(context.schemactx.find_path(schema_path))
@@ -303,7 +302,6 @@ class Utils:
         """
         Given a properly formed data path return a corresponding schema node.
         """
-        print('###########', path)
         (schema_path, _) = Utils.convert_path_to_schema_path(path, context.module)
 
         try:
@@ -338,14 +336,11 @@ class Utils:
 
         if len(keys) and len(values):
             predicates = Utils.encode_xpath_predicates('', keys, values)
-            print('PREDICATES', predicates)
 
         cache_entry = "!"+node.real_data_path + attr + predicates
 
         if context.schemacache.is_path_cached(cache_entry):
             return context.schemacache.get_item_from_cache(cache_entry)
-
-        print('..._get_schema_and_path_of_node', node.real_schema_path, node.real_data_path, attr, keys, values)
 
         real_schema_path = node.real_schema_path
         if not attr == '':
@@ -388,7 +383,6 @@ class Utils:
             schema_path = "/" + context.module + ":*/*"
         else:
             schema_path = schema_path + "/*"
-        print("about to libyang serach for", schema_path, '--', attr)
         for child in context.schemactx.find_path(schema_path):
             if child.name().replace('-', '_') == attr:
                 return child.name()

@@ -151,13 +151,8 @@ class test_node_based_access(unittest.TestCase):
         self.root.underscoretests.underscore_only
         self.root.underscoretests.hyphen_only
 
-        # Note a node can either have hyphen's or underscore's. If we have both the basic
-        # translation logic will fail. This can be seen from get_schema_for_path and __diir__
-        with self.assertRaises(yangvoodoo.Errors.NonExistingNode) as context:
-            self.root.underscoretests.underscore_and_hyphen
-        self.assertEqual(str(context.exception),
-                         ("The path: /integrationtest:underscoretests/integrationtest:underscore_and_hyphen does not "
-                          "point of a valid schema node in the yang module"))
+        self.root.underscoretests.underscore_and_hyphen = 'HELLO-Hyphen-And-Underscore'
+        self.assertEqual(self.root.underscoretests.underscore_and_hyphen, 'HELLO-Hyphen-And-Underscore')
 
         psychedelia = self.root.psychedelia
         psychedelic_rock = psychedelia.psychedelic_rock

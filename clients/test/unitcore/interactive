@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+import yangvoodoo
+from yangvoodoo.Common import Utils
+
+try:
+    import jinja2
+    from lxml import etree
+    import dictdiffer
+except ImportError as err:
+    print("")
+    print("WARNING")
+    print("=======")
+    print("")
+    print("Missing python libraries please 'pip install -r requirements.txt' or pull the")
+    print("latest docker image.")
+    print("")
+    print("")
+    raise
+
+# Using Sysrepo backend
+try:
+    session = yangvoodoo.DataAccess(remote_log=True)
+except ImportError:
+    print(" WARNING: Unable to import libraries for the default sysrepo backend- defaulting to stub data abstraction layer")
+    print(" - YANG operations on data (when's, must's and leafref paths not implemented)")
+    print("   SCHEMA based validation will still occur.")
+    print()
+    # Using Stub backend
+    import yangvoodoo.stubdal
+    stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
+    session = yangvoodoo.DataAccess(remote_log=True, data_abstraction_layer=stub)
+
+session.connect('integrationtest')
+root = session.get_node()
+yang = root._context.schema
+yangctx = root._context.schemactx
+context = root._context
+backend = root._context.dal.data_abstraction_layer
+
+import IPython
+print('Objects Ready to Play with')
+print('--------------------------')
+print('yangvoodoo.Common.Utils - imported as Utils')
+print('')
+print('root << node based access')
+print('   ', root)
+print('sesssion << xpath based access (this is dal on root._context)')
+print('   ', session)
+print('backend << datastore(may be proxy)')
+print('   ', backend)
+print('yang    << libyang instance')
+print('yangctx << libyang context instance')
+print('context << yangvoodoo internal context object')
+print('   ', yangctx)
+
+IPython.embed(display_banner=False)

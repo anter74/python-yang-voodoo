@@ -37,7 +37,7 @@ class test_proxy_datastore(unittest.TestCase):
         self.subject.refresh()
         self.assertFalse('/xpath' in self.subject.value_cached)
 
-    @patch("yangvoodoo.Common.Utils.get_yang_type")
+    @patch("yangvoodoo.Common.Utils.get_yang_type_from_path")
     def test_reading_lists(self, mockGetYangType):
         """
         Note: these tests use side_effects which help enforce the underlying
@@ -45,15 +45,16 @@ class test_proxy_datastore(unittest.TestCase):
         """
         self.subject.context = Mock()
         self.subject.context.module = "integrationtest"
+        self.subject.module = "integrationtest"
         mockGetYangType.return_value = 18
 
         self.real.gets_unsorted.side_effect = [["/listxpath[key='value'][key2='value2']"]]
 
         # Uncached
         self.assertFalse('/listxpath' in self.subject.unsorted_cached)
-        result = self.subject.gets_unsorted('/listxpath', '/listxpath')
+        result = self.subject.gets_unsorted('/listxpath', '/integrationtest:listxpath')
         self.assertEqual(list(result), ["/listxpath[key='value'][key2='value2']"])
 
         # Cached
         self.assertTrue('/listxpath' in self.subject.unsorted_cached)
-        result = self.subject.gets_unsorted('/listxpath', '/listxpath')
+        result = self.subject.gets_unsorted('/listxpath', '/integrationtest:listxpath')

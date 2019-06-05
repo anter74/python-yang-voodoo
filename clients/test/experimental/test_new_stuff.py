@@ -17,6 +17,3 @@ class test_new_stuff(unittest.TestCase):
         self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
         self.subject.connect('integrationtest')
         self.root = self.subject.get_node()
-
-    def test_x(self):
-        pass

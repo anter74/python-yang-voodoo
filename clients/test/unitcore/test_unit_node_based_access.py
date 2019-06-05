@@ -130,8 +130,6 @@ class test_node_based_access(unittest.TestCase):
             expected_answer = expected_answers.pop(0)
             self.assertEqual(repr(band), expected_answer)
 
-        for x in self.stub.dump_xpaths():
-            print('DEADMEADOW', x)
         self.assertTrue("Dead Meadow" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)
         self.assertFalse("Taylor Swift" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)
 
