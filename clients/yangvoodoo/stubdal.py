@@ -31,6 +31,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     LIST_POINTER = 1
     DAL_ID = "StubDAL"
+    DAL_IN_MEMORY = True
 
     def dump_xpaths(self):
         new_dict = {}

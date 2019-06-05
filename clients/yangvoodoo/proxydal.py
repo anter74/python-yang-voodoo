@@ -105,7 +105,8 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             items = list(self.store.gets_sorted(list_xpath, schema_xpath, ignore_empty_lists=ignore_empty_lists))
             self.sorted_cached[list_xpath] = items
         for xpath in self.sorted_cached[list_xpath]:
-            # self._speculative_create_list_keys(xpath, schema_xpath)
+            if not self.store.DAL_IN_MEMORY:
+                self._speculative_create_list_keys(xpath, schema_xpath)
             yield xpath
 
     def gets_unsorted(self, list_xpath, schema_xpath, ignore_empty_lists=False):
@@ -121,7 +122,8 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             self.unsorted_cached[list_xpath] = items
 
         for xpath in self.unsorted_cached[list_xpath]:
-            # self._speculative_create_list_keys(xpath, schema_xpath)
+            if not self.store.DAL_IN_MEMORY:
+                self._speculative_create_list_keys(xpath, schema_xpath)
             yield xpath
 
     def gets_len(self, list_xpath):
@@ -139,9 +141,8 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         """
         (p, keys, vals) = yangvoodoo.Common.Utils.decode_xpath_predicate(xpath)
         for index in range(len(keys)):
-            key_spath = schema_xpath+"/" + self.context.module + ":"+keys[index]
-            node_schema = Utils.get_schema_of_path(key_spath, self.context)
-            valtype = Utils.get_yang_type(node_schema.type(), value=None, xpath=key_spath)
+            key_schema_path = schema_xpath + "/" + self.module+":"+keys[index]
+            valtype = Utils.get_yang_type_from_path(self.context, key_schema_path, vals[index])
             val = Utils.convert_string_to_python_val(vals[index], valtype)
 
             key_path = xpath + "/" + keys[index]

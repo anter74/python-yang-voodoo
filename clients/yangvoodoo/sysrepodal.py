@@ -22,6 +22,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     SYSREPO_DATASTORE_LOCATION = "/sysrepo/data"
     DAL_ID = "SysrepDAL"
+    DAL_IN_MEMORY = False
 
     def connect(self, module, tag='client'):
         """

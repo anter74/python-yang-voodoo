@@ -1,9 +1,7 @@
 # Disabled
 
-- Caching of schema lookups might be slower - the reason being is libyang-cffi actually caches for us.
 
 - validation of number of keys has dropped
-- speculative creating of list keys (proxydal)
 - `get_extensions`
 - list get\_first get\_last
 - help test has been lost somewhere in another branch probably in chocies/cases
