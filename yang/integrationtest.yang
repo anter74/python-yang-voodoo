@@ -553,7 +553,10 @@ module integrationtest {
   leaf simpleenum {
     type enumeration {
       enum "A" {
-        value "1";
+        value 1;
+      }
+      enum "B" {
+        value 2;
       }
     }
   }

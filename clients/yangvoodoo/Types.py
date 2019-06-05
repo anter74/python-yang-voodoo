@@ -66,7 +66,9 @@ LIBYANG_LEAF_TYPES = {
 
 LIBYANG_LEAFTYPE = {
     5: 'EMPTY',
-    6: 'ENUM'
+    6: 'ENUM',
+    'EMPTY': 5,
+    'ENUM': 6
 }
 
 LIBYANG_LEAF_LIKE_NODES = {
@@ -88,15 +90,4 @@ LIBYANG_NODETYPE = {
     'LEAFLIST': 8,
     'LIST': 16,
     'CASE': 64
-}
-
-
-LIBYANG_LEAFTYPE = {
-    5: 'EMPTY',
-    6: 'ENUM'
-}
-
-LIBYANG_LEAF_LIKE_NODES = {
-    4: 'LEAF',
-    8: 'LEAFLIST',
 }

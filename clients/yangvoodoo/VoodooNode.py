@@ -15,8 +15,6 @@ class Context:
         self.log = log
         self.yang_module = module
 
-        self.underscore_translations = {}
-
 
 class Node:
 
@@ -425,40 +423,48 @@ class List(ContainingNode):
         keys.sort()
         return keys
 
-    # def get_last(self, sorted_by_xpath=False):
-    #     """
-    #     Return the last element from the list, the datastore will store elements in a list in
-    #     the order they have been created.
-    #
-    #     The optional argument sorted_by_xpath will sort the list by XPATH before returning the
-    #     last item.
-    #     """
-    #     context = self.__dict__['_context']
-    #     spath = self.__dict__['_spath']
-    #
-    #     results = list(context.dal.gets_sorted(spath, spath,  ignore_empty_lists=True))
-    #
-    #     this_xpath = results[-1]
-    #     # Return Object
-    #     return ListElement(context, this_xpath, spath, self)
-    #
-    # def get_first(self, sorted_by_xpath=False):
-    #     """
-    #     Return the first element from the list, the datastore will store elements in a list in
-    #     the order they have been created.
-    #
-    #     The optional argument sorted_by_xpath will sort the list by XPATH before returning the
-    #     first item.
-    #     """
-    #     context = self.__dict__['_context']
-    #     spath = self.__dict__['_spath']
-    #
-    #     results = list(context.dal.gets_sorted(spath, spath, ignore_empty_lists=True))
-    #
-    #     this_xpath = results[0]
-    #     # Return Object
-    #     return ListElement(context, this_xpath, spath, self)
-    #
+    def get_last(self, sorted_by_xpath=False):
+        """
+        Return the last element from the list, the datastore will store elements in a list in
+        the order they have been created.
+
+        The optional argument sorted_by_xpath will sort the list by XPATH before returning the
+        last item.
+        """
+        context = self._context
+        node = self._node
+
+        if sorted_by_xpath:
+            results = list(context.dal.gets_sorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True))
+        else:
+            results = list(context.dal.gets_unsorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True))
+        this_xpath = results[-1]
+
+        # Return Object
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, this_xpath)
+        return ListElement(context, new_node, self)
+
+    def get_first(self, sorted_by_xpath=False):
+        """
+        Return the first element from the list, the datastore will store elements in a list in
+        the order they have been created.
+
+        The optional argument sorted_by_xpath will sort the list by XPATH before returning the
+        first item.
+        """
+        context = self._context
+        node = self._node
+
+        if sorted_by_xpath:
+            results = list(context.dal.gets_sorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True))
+        else:
+            results = list(context.dal.gets_unsorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True))
+        this_xpath = results[0]
+
+        # Return Object
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, this_xpath)
+        return ListElement(context, new_node, self)
+
     def get(self, *args):
         """
         Get an item from the list

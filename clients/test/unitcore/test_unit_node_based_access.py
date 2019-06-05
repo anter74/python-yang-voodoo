@@ -47,8 +47,8 @@ class test_node_based_access(unittest.TestCase):
         self.root.simpleenum = 'A'
 
         with self.assertRaises(yangvoodoo.Errors.ValueDoesMatchEnumeration) as context:
-            self.root.simpleenum = 'B'
-        self.assertEqual(str(context.exception), "The value B is not valid for the enumeration at path /integrationtest:simpleenum")
+            self.root.simpleenum = 'Z'
+        self.assertEqual(str(context.exception), "The value Z is not valid for the enumeration at path /integrationtest:simpleenum")
 
         self.assertFalse(self.root.empty.exists())
         self.root.empty.create()
@@ -185,7 +185,10 @@ class test_node_based_access(unittest.TestCase):
 
         description = self.subject.describe(great_grandparent)
 
-        expected_description = """Schema Path: /integrationtest:bronze
+        expected_description = """Description of bronze
+---------------------
+
+Schema Path: /integrationtest:bronze
 Value Path: /integrationtest:bronze
 NodeType: Container
 
@@ -292,21 +295,21 @@ Description:
         self.assertEqual(2, len(self.root.morecomplex.leaflists.simple))
         self.assertFalse('A' in self.root.morecomplex.leaflists.simple)
 
-    # def test_extensions(self):
-    #     expected_result = [('crux:hide', True)]
-    #     self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'dirty-secret')))
-    #
-    #     expected_result = [('integrationtest:hide', True)]
-    #     self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'default')))
-    #
-    #     expected_result = []
-    #     self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'default', module='crux')))
-    #
-    #     expected_result = "underscores help text for the container"
-    #     self.assertEqual(expected_result, yangvoodoo.DataAccess.get_extension(self.root.underscoretests, 'info'))
-    #
-    #     expected_result = "underscores help text"
-    #     self.assertEqual(expected_result, yangvoodoo.DataAccess.get_extension(self.root.underscoretests, 'info', 'underscore_only'))
+    def test_extensions(self):
+        expected_result = [('crux:hide', True)]
+        self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'dirty-secret')))
+
+        expected_result = [('integrationtest:hide', True)]
+        self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'default')))
+
+        expected_result = []
+        self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'default', module='crux')))
+
+        expected_result = "underscores help text for the container"
+        self.assertEqual(expected_result, yangvoodoo.DataAccess.get_extension(self.root.underscoretests, 'info'))
+
+        expected_result = "underscores help text"
+        self.assertEqual(expected_result, yangvoodoo.DataAccess.get_extension(self.root.underscoretests, 'info', 'underscore_only'))
 
     def test_choices(self):
         self.assertEqual(repr(self.root.morecomplex.inner.beer_type), "VoodooChoice{/integrationtest:morecomplex/inner/...beer-type}")
