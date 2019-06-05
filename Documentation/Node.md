@@ -1,11 +1,13 @@
 # Internal notes about how voodoo node works.
 
-Every node is instantiated with a **context** - (yangctx, log, module name etc), and **node**, a result of looking up a particular single node from libyang. The libyang node object has two extra attributes:
+Every node is instantiated with a **context** - (yangctx, log, module name etc), and **node**, (<yangvoodoo.Common.YangNode object at 0x10dfbb1d0>) The YangNode is 98% a wrapper around libyang, however there are two extra attributes.
 
  - real\_data\_path - the full path to use in a datastore, the yang module name appears only in the first node, and the predicates to specify a particular list element will be included. The node names will not have underscores translated.
  - real\_schema\_path - the full path to use when looking up with libyang, every node is prefixed with the yang module and there will be no predicates specifying a particular list element.
 
 The most important method is `Common.get_schema_and_set_paths()` which takes a node, context, list of keys and list of values.
+
+Values are usually a tuple of (value + the datastore type id).
 
 
 ### Set a value

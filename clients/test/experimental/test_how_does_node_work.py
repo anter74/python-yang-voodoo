@@ -21,13 +21,10 @@ class test_node_based_access(unittest.TestCase):
 
     def test(self):
         l = self.root.simplelist.create('sdf')
-        print(l._node.real_data_path)
+        self.assertEqual(l._node.real_data_path, "/integrationtest:simplelist[simplekey='sdf']")
         m = self.root.simplelist.create('abc')
-
-        n = self.root.simplelist.create('xyz')
-        print('cache...', l._node.real_data_path)
-        print('cache...', m._node.real_data_path)
-        print('cache...', n._node.real_data_path)
+        self.assertEqual(m._node.real_data_path, "/integrationtest:simplelist[simplekey='abc']")
+        self.assertEqual(l._node.real_data_path, "/integrationtest:simplelist[simplekey='sdf']")
 
     def test_encode_xpath_predciates(self):
         result = Utils.encode_xpath_predicates('attri-bute', keys=['k1', 'k2'], values=[('v1', 10), ('v2', 10)])
@@ -61,7 +58,7 @@ class test_node_based_access(unittest.TestCase):
         print(self.root.underscore_and_hyphen)
         self.root.underscore_and_hyphen = 'dsf'
         self.assertEqual(self.root.underscore_and_hyphen, 'dsf')
-        expected_result = ['TODO!underscore_and_hyphen!']
+        expected_result = ['!underscore_and_hyphen']
         self.assertEqual(list(self.root._context.schemacache.items.keys()), expected_result)
 
         expected_result = {'/integrationtest:underscore_and-hyphen': 'dsf'}

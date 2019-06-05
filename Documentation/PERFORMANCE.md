@@ -15,6 +15,9 @@ These values come from sysrepo running within Docker on a Intel i7-7820HQ (appro
 | 0.38                         | with proxy and type-correct speculative creation of list keys\***  |
 | 0.12                         | stub based datastore (python dict based)       |
 | 0.14                         | stub based datastore with proxy and type-correct speculative creation of list keys\*** |
+| 0.9                          | sysrepo with proxy lazy cache and refactored libyang lookups - but no speculative creating of list keys |
+| 0.07                         | stub with proxy lazy cache and refactored libyang lookups - but no speculative creating of list keys |
+
 
 \* the first version of the proxy cache is lazy, when deleting, adding items to lists parts of the cache are flushed.
 
@@ -33,4 +36,4 @@ These values come from sysrepo running within Docker on a Intel i7-7820HQ (appro
  - Length of a list CACHE-HIT (0.1ms)
 
 
-# Slight improvement with caching the schema nodes - 30 microseconds 
+# Slight improvement with caching the schema nodes - 30 microseconds

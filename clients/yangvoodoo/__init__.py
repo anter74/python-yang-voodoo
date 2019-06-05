@@ -4,7 +4,7 @@ import os
 import importlib
 import yangvoodoo.VoodooNode
 import yangvoodoo.proxydal
-from yangvoodoo.Common import PlainObject, Utils
+from yangvoodoo.Common import PlainObject, Types, Utils, YangNode
 
 
 class DataAccess:
@@ -60,17 +60,45 @@ class DataAccess:
         return yangvoodoo.proxydal.ProxyDataAbstractionLayer(dal)
 
     @classmethod
-    def describe(self, node):
+    def describe(self, node, attr=None):
         """
         Provide help text from the yang module if available.
         """
-        if node.__dict__['_spath'] == '':
-            return None
-        try:
-            schema = next(node.__dict__['_context'].schemactx.find_path(node.__dict__['_spath']))
-            return schema.description()
-        except Exception:
-            pass
+        if not isinstance(node, yangvoodoo.VoodooNode.Node):
+            raise yangvoodoo.Errors.NodeProvidedIsNotAContainer()
+        if node._NODE_TYPE == "Empty":
+            raise yangvoodoo.Errors.NodeProvidedIsNotAContainer()
+
+        node_schema = node._node
+        context = node.__dict__['_context']
+
+        spath = node_schema.real_schema_path
+        path = node_schema.real_data_path
+        if attr:
+            spath = spath + "/" + context.module + ":"+attr
+            path = path + "/"+attr
+
+        node_type = node_schema.nodetype()
+        description = node_schema.description()
+        type = Types.LIBYANG_NODETYPE[node_type][0] + Types.LIBYANG_NODETYPE[node_type][1:].lower()
+        if node_type in Types.LIBYANG_LEAF_LIKE_NODES:
+            leaf_type = node_schema.type().base()
+            type = type + " of type " + Types.LIBYANG_LEAF_TYPES[leaf_type][0] + Types.LIBYANG_LEAF_TYPES[leaf_type][1:].lower()
+        if not description:
+            description = "N/A"
+        values = {
+            'schema_path': spath,
+            'value_path': path,
+            'description': str(description).replace('\n', '\n  '),
+            'type': type,
+        }
+        description = """Schema Path: {schema_path}
+Value Path: {value_path}
+NodeType: {type}
+Description:
+  {description}
+""".format(**values)
+        return description
     #
     # @classmethod
     # def get_extensions(self, node, attr=None, module=None):
@@ -89,12 +117,13 @@ class DataAccess:
     #     if node._NODE_TYPE == "Root" and not attr:
     #         raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
     #
-    #     context = node._context
     #     print(node)
+    #     print(node._node)
+    #     context = node._context
     #     if attr:
-    #         node_schema = Utils.get_schema_and_set_paths(node, context, attr=attr)
+    #         node_schema = Utils.get_yangnode(node, context, attr=attr)
     #     else:
-    #         node_schema = Utils.get_schema_and_set_paths(node, context)
+    #         node_schema = Utils.get_yangnode(node, context)
     #
     #     for extension in node_schema.extensions():
     #         if not module or extension.module().name() == module:
@@ -190,13 +219,8 @@ class DataAccess:
 
         self.data_abstraction_layer.setup_root()
 
-        self.help = self._help
-
-        node = PlainObject()
-        node.real_schema_path = ''
-        node.real_data_path = ''
-
-        return yangvoodoo.VoodooNode.Root(self.context, node)
+        yang_node = YangNode(PlainObject(), '', '')
+        return yangvoodoo.VoodooNode.Root(self.context, yang_node)
 
     def connect(self, module=None,  yang_location="../yang/", tag='client'):
         """

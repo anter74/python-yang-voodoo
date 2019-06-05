@@ -116,6 +116,8 @@ class test_node_based_access(unittest.TestCase):
             expected_answer = expected_answers.pop(0)
             self.assertEqual(repr(band), expected_answer)
 
+        for x in self.stub.dump_xpaths():
+            print('DEADMEADOW', x)
         self.assertTrue("Dead Meadow" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)
         self.assertFalse("Taylor Swift" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)
 
@@ -123,13 +125,14 @@ class test_node_based_access(unittest.TestCase):
         self.assertTrue((True, True) in twolist)
 
         other_list = self.root.container_and_lists.multi_key_list
+        self.assertEqual(repr(other_list), "VoodooList{/integrationtest:container-and-lists/multi-key-list}")
         self.assertFalse(('A', 'Z') in other_list)
 
         item = other_list.create('A', 'Z')
         self.assertTrue(('A', 'Z') in other_list)
 
         # Test __getitem__
-        self.assertEqual(repr(other_list['A', 'Z']), repr(item))
+        self.assertEqual(repr(item), "VoodooListElement{/integrationtest:container-and-lists/multi-key-list[A='A'][B='Z']}")
         #
         # # Test delete item
         self.assertEqual(len(other_list), 1)
@@ -167,7 +170,13 @@ class test_node_based_access(unittest.TestCase):
         great_grandparent = self.root.bronze.silver.gold.platinum._parent._parent._parent
 
         self.assertEqual(repr(great_grandparent), "VoodooContainer{/integrationtest:bronze}")
-        self.assertEqual(self.subject.describe(great_grandparent), "The metallics are used to test container nesting")
+        help_text = """Schema Path: /integrationtest:bronze
+Value Path: /integrationtest:bronze
+NodeType: Container
+Description:
+  The metallics are used to test container nesting
+"""
+        self.assertEqual(self.subject.describe(great_grandparent), help_text)
 
         list_element = self.root.simplelist.create('newlistitem')
         self.assertEqual(repr(list_element._parent), "VoodooList{/integrationtest:simplelist}")
@@ -266,24 +275,24 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(2, len(self.root.morecomplex.leaflists.simple))
         self.assertFalse('A' in self.root.morecomplex.leaflists.simple)
 
-    def test_extensions(self):
-        expected_result = [('crux:hide', True)]
-        self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'dirty-secret')))
-
-        expected_result = [('integrationtest:hide', True)]
-        self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'default')))
-
-        expected_result = []
-        self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'default', module='crux')))
-
-        expected_result = "underscores help text for the container"
-        self.assertEqual(expected_result, yangvoodoo.DataAccess.get_extension(self.root.underscoretests, 'info'))
-
-        expected_result = "underscores help text"
-        self.assertEqual(expected_result, yangvoodoo.DataAccess.get_extension(self.root.underscoretests, 'info', 'underscore_only'))
+    # def test_extensions(self):
+    #     expected_result = [('crux:hide', True)]
+    #     self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'dirty-secret')))
+    #
+    #     expected_result = [('integrationtest:hide', True)]
+    #     self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'default')))
+    #
+    #     expected_result = []
+    #     self.assertEqual(expected_result, list(yangvoodoo.DataAccess.get_extensions(self.root, 'default', module='crux')))
+    #
+    #     expected_result = "underscores help text for the container"
+    #     self.assertEqual(expected_result, yangvoodoo.DataAccess.get_extension(self.root.underscoretests, 'info'))
+    #
+    #     expected_result = "underscores help text"
+    #     self.assertEqual(expected_result, yangvoodoo.DataAccess.get_extension(self.root.underscoretests, 'info', 'underscore_only'))
 
     def test_choices(self):
-        self.assertEqual(repr(self.root.morecomplex.inner.beer_type), "VoodooChoice{/integrationtest:morecomplex/inner/...beer_type}")
+        self.assertEqual(repr(self.root.morecomplex.inner.beer_type), "VoodooChoice{/integrationtest:morecomplex/inner/...beer-type}")
         self.assertEqual(repr(self.root.morecomplex.inner.beer_type.craft), "VoodooCase{/integrationtest:morecomplex/inner/...craft}")
 
         self.root.morecomplex.inner.beer_type.craft.brewdog = "PUNK IPA"
@@ -303,4 +312,4 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(self.root.underscore_and_hyphen, "123")
         xpaths = self.stub.dump_xpaths()
         self.assertEqual(xpaths["/integrationtest:underscoretests/underscore_and-hyphen"], "sdf")
-        self.assertEqual(xpaths["/integrationtest:underscore_and_hyphen"], "123")
+        self.assertEqual(xpaths["/integrationtest:underscore_and-hyphen"], "123")

@@ -1,10 +1,14 @@
 # Disabled
 
+- Caching of schema lookups might be slower - the reason being is libyang-cffi actually caches for us.
+
+- validation of number of keys has dropped
 - speculative creating of list keys (proxydal)
-- caching of schema lookups `Common.get_schema_and_set_paths`
 - `get_extensions`
+- list get\_first get\_last
+- help test has been lost somewhere in another branch probably in chocies/cases
 
-
+- encode xpath predicates won't convert boolean True to XPATH true
 # Common/get_schema_for_path
 
 This is definetely not right..

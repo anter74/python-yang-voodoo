@@ -64,3 +64,14 @@ LIBYANG_NODETYPE = {
     'LIST': 16,
     'CASE': 64
 }
+
+
+LIBYANG_LEAFTYPE = {
+    5: 'EMPTY',
+    6: 'ENUM'
+}
+
+LIBYANG_LEAF_LIKE_NODES = {
+    4: 'LEAF',
+    8: 'LEAFLIST',
+}

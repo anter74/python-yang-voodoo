@@ -4,6 +4,30 @@ from yangvoodoo import Types, Errors
 import re
 
 
+class YangNode:
+
+    """
+    This object wraps together a libyang schema node and the real formed paths
+    for further searching against libyang or setting/reading data from a backend
+    datastore.
+
+    This object is instantiated to avoid mis-caching the value path which will differ
+    for every list-element.
+
+    This object will be returned by get_schema_node_from_libyang()
+    """
+
+    def __init__(self, libyang_node, real_schema_path, real_data_path):
+        self.libyang_node = libyang_node
+        self.real_data_path = real_data_path
+        self.real_schema_path = real_schema_path
+
+    def __getattr__(self, attr):
+        if attr in ('real_schema_path', 'real_data_path'):
+            return getattr(self, attr)
+        return getattr(self.libyang_node, attr)
+
+
 class PlainObject:
     pass
 
@@ -205,15 +229,26 @@ class Utils:
 
     @staticmethod
     def encode_xpath_predicates(attr, keys, values):
+        """
+        This method takes a list of keys and a list of value/value-type tuples)
+        """
         if not isinstance(keys, list):
             raise NotImplementedError("encode_attribute_with_xpath_predicates does not work with non-list input - %s" % (keys))
         if not isinstance(values, list):
             raise NotImplementedError("encode_attribute_with_xpath_predicates does not work with non-list input - %s" % (values))
         answer = attr
+
         for i in range(len(keys)):
-            (val, _) = values[i]
-            answer = answer + Utils.encode_xpath_predicate(keys[i], val)
+            (val, valtype) = values[i]
+            answer = answer + Utils.encode_xpath_predicate(keys[i], Utils.get_xpath_value_from_python_value(val, valtype))
         return answer
+
+    @staticmethod
+    def get_xpath_value_from_python_value(v, t):
+        if t == Types.DATA_ABSTRACTION_MAPPING['BOOLEAN']:
+            return str(v).lower()
+        else:
+            return str(v)
 
     @classmethod
     def decode_xpath_predicate(self, path):
@@ -262,7 +297,25 @@ class Utils:
         return value
 
     @staticmethod
-    def get_schema_and_set_paths(node, context, attr='', keys=[], values=[], predicates=""):
+    def get_nodeschema_from_data_path(context, path):
+        """
+        Given a properly formed data path return a corresponding schema node.
+        """
+        print('###########', path)
+        (schema_path, _) = Utils.convert_path_to_schema_path(path, context.module)
+
+        try:
+            node_schema = next(context.schemactx.find_path(schema_path))
+        except libyang.util.LibyangError:
+            raise Errors.NonExistingNode(schema_path)
+
+        node_schema.real_schema_path = schema_path
+        node_schema.real_data_path = path
+
+        return node_schema
+
+    @staticmethod
+    def get_yangnode(node, context, attr='', keys=[], values=[], predicates=""):
         """
         Given a node, with a child attribute name, and list of key/values return a libyang schema object
         and the value path.
@@ -285,15 +338,16 @@ class Utils:
             predicates = Utils.encode_xpath_predicates('', keys, values)
             print('PREDICATES', predicates)
 
-        if context.schemacache.is_path_cached("!"+node.real_schema_path + attr + predicates+"!"):
-            return context.schemacache.get_item_from_cache("!"+node.real_schema_path+attr + predicates+"!")
+        cache_entry = "!"+node.real_data_path + attr + predicates
+
+        if context.schemacache.is_path_cached(cache_entry):
+            return context.schemacache.get_item_from_cache(cache_entry)
 
         print('..._get_schema_and_path_of_node', node.real_schema_path, node.real_data_path, attr, keys, values)
 
         real_schema_path = node.real_schema_path
         if not attr == '':
             real_attribute_name = Utils.get_original_name(real_schema_path, context, attr)
-            # print('... attr now', real_attribute_name)
             real_schema_path = real_schema_path + '/' + context.module + ":" + real_attribute_name
 
         try:
@@ -308,22 +362,17 @@ class Utils:
                     real_data_path = '/' + context.module + ':' + real_attribute_name + predicates
                 else:
                     real_data_path = real_data_path + '/' + real_attribute_name + predicates
-            #    print('... now ', real_schema_path, real_data_path)
 
         if not attr:
             real_data_path = node.real_data_path + predicates
             real_schema_path = node.real_schema_path
             node_schema = node
 
-        node_schema.real_data_path = real_data_path
-        node_schema.real_schema_path = real_schema_path
+        item = YangNode(node_schema, real_schema_path, real_data_path)
 
-        # For now we have disabled the cache - because it's giving us the same object back each time.
-        # Without this we are ok.... so we will extend libyang properly in order to re-enable the cache
-        # which might noe be worth the effort after all.
-        context.schemacache.add_entry("TODO!"+node.real_schema_path + attr + predicates + "!", node_schema)
+        context.schemacache.add_entry(cache_entry, item)
 
-        return node_schema
+        return item
 
     @staticmethod
     def get_original_name(schema_path, context, attr):
@@ -345,73 +394,31 @@ class Utils:
         raise NotImplementedError("get_original_name could not find a matching node name for %s" % (attr))
 
     @staticmethod
-    def underscore_handling(spath, context):
-        spath_split = spath.split('/')[1:]
+    def get_keys_from_a_node(node_schema):
+        keys = []
+        for k in node_schema.keys():
+            keys.append(k.name())
+        return keys
 
-        current_path_inspecting = []
-        for path_component in spath_split:
-            print('Considering path_componeent', path_component)
-            print('sdsfsfdsf', current_path_inspecting)
-            path_to_search = '/' + '/'.join(current_path_inspecting)
-            print('/'.join(['sd']))
-            print('path_to-search', path_to_search)
-            if path_to_search == '/':
-                path_to_search = '/' + context.module + ':*'
+    @staticmethod
+    def convert_args_to_list(node, *args):
+        if isinstance(args[0], tuple):
+            return list(args[0])
+        return list(args)
 
-            children = context.schemactx.find_path(path_to_search)
-            real_name = path_component
-            for child in children:
-                print('have child', child.name(), child, path_component)
-                if child.name().replace('-', '_') == path_component:
-                    real_name = child.name()
+    @staticmethod
+    def get_key_val_tuples(context, node,  values):
+        real_values = []
+        keys = Utils.get_keys_from_a_node(node)
 
-            current_path_inspecting.append(real_name)
-            print('path_to_search', path_to_search)
+        i = 0
+        if isinstance(values[0], tuple):
+            values = values[0]
 
-        first_part_of_path = '/'.join(spath.split('/')[0:-1])
-        last_part_of_path = spath.split('/')[-1]
-        last_node_name = last_part_of_path.split(':')[-1]
-        if '_' in last_part_of_path:
-            real_path = None
-            if first_part_of_path == "":
+        if not len(keys) == len(values):
+            raise Errors.ListWrongNumberOfKeys(node.real_data_path, len(keys), len(values))
+        for value in values:
+            key_yang_type = Utils.get_yang_type_from_path(context, node.real_schema_path, value, keys[i])
+            real_values.append((value, key_yang_type))
 
-                children = context.schemactx.find_path("/" + context.module + ":*")
-            else:
-                children = context.schemactx.find_path(first_part_of_path + "/*")
-            for child in children:
-                if child.name().replace('-', '_') == last_node_name:
-                    real_path = first_part_of_path + "/" + context.module + ":" + child.name()
-                try:
-                    schema_for_path = next(context.schemactx.find_path(real_path))
-                    schema_for_path.under_pre_translated_name = child.name()
-                    context.schemacache.add_entry(spath, schema_for_path)
-                    return schema_for_path
-                except libyang.util.LibyangError:
-                    pass
-
-        raise NotImplementedError("Underscore translation for path %s failed (calculated path %s)" % (spath, real_path))
-    #
-    # @staticmethod
-    # def underscore_handling_method_1(spath, context):
-    #     first_part_of_path = '/'.join(spath.split('/')[0:-1])
-    #     last_part_of_path = spath.split('/')[-1]
-    #     last_node_name = last_part_of_path.split(':')[-1]
-    #     if '_' in last_part_of_path:
-    #         real_path = None
-    #         if first_part_of_path == "":
-    #
-    #             children = context.schemactx.find_path("/" + context.module + ":*")
-    #         else:
-    #             children = context.schemactx.find_path(first_part_of_path + "/*")
-    #         for child in children:
-    #             if child.name().replace('-', '_') == last_node_name:
-    #                 real_path = first_part_of_path + "/" + context.module + ":" + child.name()
-    #             try:
-    #                 schema_for_path = next(context.schemactx.find_path(real_path))
-    #                 schema_for_path.under_pre_translated_name = child.name()
-    #                 context.schemacache.add_entry(spath, schema_for_path)
-    #                 return schema_for_path
-    #             except libyang.util.LibyangError:
-    #                 pass
-    #
-    #         raise NotImplementedError("Underscore translation for path %s failed (calculated path %s)" % (spath, real_path))
+        return keys, real_values
