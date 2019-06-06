@@ -17,11 +17,11 @@ except ImportError as err:
     print("")
     raise
 
-# Using Sysrepo backend
-print(" WARNING: Unable to import libraries for the default sysrepo backend- defaulting to stub data abstraction layer")
+print("Using  stub data abstraction layer")
 print(" - YANG operations on data (when's, must's and leafref paths not implemented)")
 print("   SCHEMA based validation will still occur.")
 print()
+
 # Using Stub backend
 import yangvoodoo.stubdal
 stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
@@ -35,19 +35,8 @@ context = root._context
 backend = root._context.dal.data_abstraction_layer
 
 import IPython
-print('Objects Ready to Play with')
-print('--------------------------')
-print('yangvoodoo.Common.Utils - imported as Utils')
-print('')
-print('root << node based access')
-print('   ', root)
-print('sesssion << xpath based access (this is dal on root._context)')
-print('   ', session)
-print('backend << datastore(may be proxy)')
-print('   ', backend)
-print('yang    << libyang instance')
-print('yangctx << libyang context instance')
-print('context << yangvoodoo internal context object')
-print('   ', yangctx)
 
+yangvoodoo.DataAccess._welcome()
+print('YANGVOOODOO Version %s' % (session.__version__))
+print('')
 IPython.embed(display_banner=False)

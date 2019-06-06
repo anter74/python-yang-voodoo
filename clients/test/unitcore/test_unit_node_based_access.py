@@ -183,7 +183,7 @@ class test_node_based_access(unittest.TestCase):
 
         self.assertEqual(repr(great_grandparent), "VoodooContainer{/integrationtest:bronze}")
 
-        description = self.subject.describe(great_grandparent)
+        description = self.subject.describe(great_grandparent, print_description=False)
 
         expected_description = """Description of bronze
 ---------------------
@@ -194,7 +194,8 @@ NodeType: Container
 
 Description:
   The metallics are used to test container nesting
-"""
+
+Children: 'silver'"""
 
         self.assertEqual(description, expected_description)
 

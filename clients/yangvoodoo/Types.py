@@ -54,6 +54,7 @@ LIBYANG_LEAF_TYPES = {
     5: "EMPTY",
     6: "ENUM",
     10: "STRING",
+    11: "UNION",
     12: "INT8",
     13: "UINT8",
     14: "INT16",

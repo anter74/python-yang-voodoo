@@ -175,7 +175,7 @@ class Node:
         backend_type = Common.Utils.get_yang_type(node_schema.type(), val, node_schema.real_data_path)
         context.dal.set(node_schema.real_data_path, val, backend_type)
 
-    def __dir__(self):
+    def __dir__(self, no_translations=False):
         node = self._node
         context = self._context
 
@@ -187,7 +187,7 @@ class Node:
         answer = []
         for child in context.schemactx.find_path(search_path):
             child_name = child.name()
-            if '-' in child_name:
+            if '-' in child_name and not no_translations:
                 new_child_name = child_name.replace('-', '_')
                 child_name = new_child_name
             answer.append(child_name)

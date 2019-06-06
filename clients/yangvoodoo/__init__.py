@@ -28,7 +28,7 @@ class DataAccess:
      - lxml
     """
 
-    __version__ = "0.0.3-develbranch"
+    __version__ = "0.0.4"
 
     def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None,
                  disable_proxy=False, use_stub=False):
@@ -61,8 +61,19 @@ class DataAccess:
         # return dal
         return yangvoodoo.proxydal.ProxyDataAbstractionLayer(dal)
 
+    def tree(self, print_tree=True):
+        """
+        Print a tree representation of the YANG Schema.
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        if print_tree:
+            print(self.context.schema.dump_str())
+        else:
+            return self.context.schema.dump_str()
+
     @classmethod
-    def describe(self, node, attr=''):
+    def describe(self, node, attr='', print_description=True):
         """
         Provide help text from the yang module if available.
         """
@@ -113,6 +124,17 @@ Description:
   {description}
 """.format(**values)
 
+        if attr == '':
+            children = node.__dir__(no_translations=True)
+        else:
+            children = node.__dir__(no_translations=True)
+        if children and children[0] == '__bool__':
+            children = '[No children]'
+        description = description + """
+Children: %s""" % (str(children)[1:-1])
+        if print_description:
+            print(description)
+            return
         return description
 
     @classmethod
@@ -517,3 +539,12 @@ Description:
         dump the datastore in xpath format.
         """
         return self.data_abstraction_layer.dump_xpaths()
+
+    @staticmethod
+    def _welcome():
+        if 'TERM' in os.environ and 'xterm' in os.environ['TERM']:
+            with open('.colour') as fh:
+                print(fh.read())
+        else:
+            with open('.black') as fh:
+                print(fh.read())

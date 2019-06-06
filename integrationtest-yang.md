@@ -75,6 +75,8 @@ module: integrationtest
   |  +--rw underscore_only?         string
   |  +--rw hyphen-only?             string
   |  +--rw underscore_and-hyphen?   string
+  |  +--rw deeper_down-here
+  |     +--rw simple?   string
   +--rw empty?                                empty
   +--rw simpleleaf?                           string
   +--rw dirty-secret?                         string

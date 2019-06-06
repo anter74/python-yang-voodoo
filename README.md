@@ -230,8 +230,8 @@ root.bronze.silver.gold.platinum.deep = 'abc'
 root.bronze.silver._parent
 
 # Get helptext from the YANG node, there are two formats depending on how the data is represnted.
-print(session.decsribe(root.bronze))
-print(session.describe(root,'simpleleaf'))
+session.decsribe(root.bronze)
+session.describe(root,'simpleleaf')
 
 # Return the argument of the extnesion 'info' if it exists on teh child node dirty_secret (otherwise None)
 root.get_exension('info', 'dirty_secret')
