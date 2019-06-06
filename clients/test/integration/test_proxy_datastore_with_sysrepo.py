@@ -11,7 +11,7 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        self.session = yangvoodoo.DataAccess()
+        self.session = yangvoodoo.DataAccess(disable_proxy=True)
         self.session.connect('integrationtest')
         self.root = self.session.get_node()
         self.subject = yangvoodoo.proxydal.ProxyDataAbstractionLayer(self.session.data_abstraction_layer)
@@ -47,8 +47,9 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
         self.subject.refresh()
         self.assertFalse(xpath in self.subject.value_cached)
 
-    @patch("yangvoodoo.Common.Utils.get_yang_type")
+    @patch("yangvoodoo.Common.Utils.get_yang_type_from_path")
     def test_lists(self, mockGetYangType):
+        self.subject.module = "integrationtest"
         mockGetYangType.return_value = 18
         xpath = "/integrationtest:simplelist"
         xpath1 = xpath + "[simplekey='simpleval']"

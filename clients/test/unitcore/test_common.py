@@ -1,5 +1,5 @@
 import libyang
-from yangvoodoo.Common import Utils, PlainIterator
+from yangvoodoo.Common import Utils, PlainIterator, PlainObject
 from mock import Mock
 import unittest
 
@@ -8,91 +8,6 @@ class test_common(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
-
-    def test_form_schema_path(self):
-        result = Utils.form_schema_xpath('/module:path', 'attr', 'module')
-        self.assertEqual(result, '/module:path/module:attr')
-
-        result = Utils.form_schema_xpath('/module:path/module:subpath', 'attr', 'module')
-        self.assertEqual(result, '/module:path/module:subpath/module:attr')
-
-        node_schema = Mock()
-        node_schema.underscore_translated = True
-        result = Utils.form_schema_xpath('/module:path/module:subpath', 'attr_x', 'module', node_schema)
-        self.assertEqual(result, '/module:path/module:subpath/module:attr-x')
-
-    def test_form_value_path(self):
-        result = Utils.form_value_xpath('/module:path', 'attr', 'module')
-        self.assertEqual(result, '/module:path/attr')
-
-        result = Utils.form_value_xpath('/module:path/subpath', 'attr', 'module')
-        self.assertEqual(result, '/module:path/subpath/attr')
-
-        node_schema = Mock()
-        node_schema.underscore_translated = True
-        result = Utils.form_value_xpath('/module:path/subpath', 'attr_x', 'module', node_schema)
-        self.assertEqual(result, '/module:path/subpath/attr-x')
-
-    def test_get_schema_of_path_cached(self):
-        context = Mock()
-        context.schemacache.is_path_cached.return_value = True
-        cached_node = Mock()
-        context.schemacache.get_item_from_cache.side_effect = [cached_node]
-        # Act
-        result = Utils.get_schema_of_path('/module:path', context)
-
-        # Assert
-        context.schemacache.get_item_from_cache.assert_called_once_with('/module:path')
-        context.schemacache.schemactx.find_path.assert_not_called()
-        self.assertEqual(result, cached_node)
-
-    def test_get_schema_of_empty_path_for_root(self):
-        context = Mock()
-        context.schema = 'this-is-schema-in'
-
-        # Act
-        result = Utils.get_schema_of_path('', context)
-
-        # Assert
-        self.assertEqual(result, 'this-is-schema-in')
-        context.schemacache.get_item_from_cache.assert_not_called()
-        context.schemacache.schemactx.find_path.assert_not_called()
-
-    def test_get_schema_of_path_not_cached(self):
-        context = Mock()
-        context.schemacache.is_path_cached.return_value = False
-
-        schema_node_from_libyang = Mock()
-        context.schemactx.find_path.side_effect = [PlainIterator([schema_node_from_libyang])]
-
-        # Act
-        result = Utils.get_schema_of_path('/module:path', context)
-
-        # Assert
-        context.schemacache.get_item_from_cache.assert_not_called()
-        self.assertEqual(result, schema_node_from_libyang)
-        self.assertFalse(result.underscore_translated)
-        # This assert fails but the unit test does go through thins.
-        # context.schemacache.schemactx.find_path.assert_called_once_with('/module:path')
-
-    def test_get_schema_of_path_not_cached_with_underscore_translation(self):
-        context = Mock()
-        context.schemacache.is_path_cached.return_value = False
-
-        schema_node_from_libyang = Mock()
-        context.schemactx.find_path.side_effect = [libyang.util.LibyangError(),
-                                                   PlainIterator([schema_node_from_libyang])]
-
-        # Act
-        result = Utils.get_schema_of_path('/module:path', context)
-
-        # Assert
-        context.schemacache.get_item_from_cache.assert_not_called()
-        self.assertEqual(result, schema_node_from_libyang)
-        self.assertTrue(result.underscore_translated)
-
-        # This assert fails but the unit test does go through thins.
-        # context.schemacache.schemactx.find_path.assert_called_once_with('/module:path')
 
     def test_regex(self):
 
@@ -185,3 +100,67 @@ class test_common(unittest.TestCase):
         expected_result = ("/integrationtest:web/bands[name='Longpigs']/gigs", ('year', 'month', 'day',
                                                                                 'venue', 'location'), ('1999', '9', '1', 'SHU Nelson Mandella', 'Sheffield'))
         self.assertEqual(result, expected_result)
+
+    def test_encode_xpath_predciates(self):
+        result = Utils.encode_xpath_predicates('attri-bute', keys=['k1', 'k2'], values=[('v1', 10), ('v2', 10)])
+        self.assertEqual(result, "attri-bute[k1='v1'][k2='v2']")
+
+    def test_get_original_name(self):
+        # Setup
+        context = PlainObject()
+        context.module = "module"
+        context.schemactx = Mock()
+        context.schemactx.find_path = Mock()
+
+        result = Utils.get_original_name('', context, 'attribute')
+        self.assertEqual(result, 'attribute')
+        context.schemactx.find_path.assert_not_called()
+
+    def test_get_original_name_with_underscore(self):
+        # Setup
+        node = Mock()
+        node.name.return_value = 'attribute-here'
+        context = PlainObject()
+        context.module = "module"
+        context.schemactx = Mock()
+        context.schemactx.find_path = Mock()
+        context.schemactx.find_path.return_value = PlainIterator([node])
+
+        result = Utils.get_original_name('', context, 'attribute_here')
+        self.assertEqual(result, 'attribute-here')
+
+    def test_convert_path_to_schema_path(self):
+        result = Utils.convert_path_to_schema_path("/path/abc/def[g='sdf']/xyz/sdf[fdsf='fg']/zzz", 'module')
+        expected_result = ("/module:path/module:abc/module:def/module:xyz/module:sdf/module:zzz",
+                           "/module:path/module:abc/module:def/module:xyz/module:sdf")
+        self.assertEqual(result, expected_result)
+
+        result = Utils.convert_path_to_schema_path("/path/abc/def[g='sdf']", 'module')
+        expected_result = ("/module:path/module:abc/module:def", "/module:path/module:abc")
+        self.assertEqual(result, expected_result)
+
+        result = Utils.convert_path_to_schema_path("/path/abc", 'module')
+        expected_result = ("/module:path/module:abc", "/module:path")
+        self.assertEqual(result, expected_result)
+
+        with self.assertRaises(ValueError) as context:
+            result = Utils.convert_path_to_schema_path("/path/abc/", 'module')
+        self.assertEqual(str(context.exception), "Path is not valid as it ends with a trailing slash. (/path/abc/)")
+
+    def test_convert_path_to_value_path(self):
+        result = Utils.convert_path_to_value_path("/path/abc/def[g='sdf']/xyz/sdf[fdsf='fg'][hhhh='hh']/zzz", 'module')
+        expected_result = ("/module:path/abc/def[g='sdf']/xyz/sdf[fdsf='fg'][hhhh='hh']/zzz", "/module:path/abc/def[g='sdf']/xyz/sdf")
+
+        self.assertEqual(result, expected_result)
+
+        result = Utils.convert_path_to_value_path("/path/abc/def[g='sdf'][h='sdf']/sdsd", 'module')
+        expected_result = ("/module:path/abc/def[g='sdf'][h='sdf']/sdsd", '/module:path/abc/def')
+        self.assertEqual(result, expected_result)
+
+        result = Utils.convert_path_to_value_path("/path/abc", 'module')
+        expected_result = ("/module:path/abc", "/module:path")
+        self.assertEqual(result, expected_result)
+
+        with self.assertRaises(ValueError) as context:
+            result = Utils.convert_path_to_value_path("/path/abc/", 'module')
+        self.assertEqual(str(context.exception), "Path is not valid as it ends with a trailing slash. (/path/abc/)")

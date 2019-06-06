@@ -75,6 +75,8 @@ module: integrationtest
   |  +--rw underscore_only?         string
   |  +--rw hyphen-only?             string
   |  +--rw underscore_and-hyphen?   string
+  |  +--rw deeper_down-here
+  |     +--rw simple?   string
   +--rw empty?                                empty
   +--rw simpleleaf?                           string
   +--rw dirty-secret?                         string
@@ -210,6 +212,9 @@ module: integrationtest
      +--rw leaf3?           type2
      +--rw leaf4?           type4
      +--rw inner!
+        +--rw brewdog-beer?                numstr
+        +--rw brewdog-beers* [beer]
+        |  +--rw beer    numstr
         +--rw (beer-type)?
         |  +--:(macro)
         |  |  +--rw fosters?               string

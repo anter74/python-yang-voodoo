@@ -27,7 +27,7 @@ class test_node_based_access(unittest.TestCase):
                              'resolver', 'simplecontainer', 'simpleenum', 'simpleleaf', 'simplelist',
                              'thing_that_is_a_list_based_leafref', 'thing_that_is_leafref',
                              'thing_that_is_lit_up_for_A', 'thing_that_is_lit_up_for_B', 'thing_that_is_lit_up_for_C',
-                             'thing_that_is_used_for_when', 'thing_to_leafref_against', 'twokeylist',
+                             'thing_that_is_used_for_when', 'thing_to_leafref_against', 'twokeylist', 'underscore_and_hyphen',
                              'underscoretests', 'validator', 'web', 'whencontainer']
 
         self.assertEqual(dir(self.root), expected_children)
@@ -43,6 +43,20 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(result, "statusquo")
 
         self.subject.commit()
+
+        self.root.simpleenum = 'A'
+
+        with self.assertRaises(yangvoodoo.Errors.ValueDoesMatchEnumeration) as context:
+            self.root.simpleenum = 'Z'
+        self.assertEqual(str(context.exception), "The value Z is not valid for the enumeration at path /integrationtest:simpleenum")
+
+        self.assertFalse(self.root.empty.exists())
+        self.root.empty.create()
+        self.assertEqual(repr(self.root.empty), "VoodooEmpty{/integrationtest:empty} - Exists")
+        self.assertTrue(self.root.empty.exists())
+        self.root.empty.remove()
+        self.assertEqual(repr(self.root.empty), "VoodooEmpty{/integrationtest:empty} - Does Not Exist")
+        self.assertFalse(self.root.empty.exists())
 
     def test_containers(self):
         morecomplex = self.root.morecomplex
@@ -123,13 +137,14 @@ class test_node_based_access(unittest.TestCase):
         self.assertTrue((True, True) in twolist)
 
         other_list = self.root.container_and_lists.multi_key_list
+        self.assertEqual(repr(other_list), "VoodooList{/integrationtest:container-and-lists/multi-key-list}")
         self.assertFalse(('A', 'Z') in other_list)
 
         item = other_list.create('A', 'Z')
         self.assertTrue(('A', 'Z') in other_list)
 
         # Test __getitem__
-        self.assertEqual(repr(other_list['A', 'Z']), repr(item))
+        self.assertEqual(repr(item), "VoodooListElement{/integrationtest:container-and-lists/multi-key-list[A='A'][B='Z']}")
         #
         # # Test delete item
         self.assertEqual(len(other_list), 1)
@@ -167,7 +182,22 @@ class test_node_based_access(unittest.TestCase):
         great_grandparent = self.root.bronze.silver.gold.platinum._parent._parent._parent
 
         self.assertEqual(repr(great_grandparent), "VoodooContainer{/integrationtest:bronze}")
-        self.assertEqual(self.subject.describe(great_grandparent), "The metallics are used to test container nesting")
+
+        description = self.subject.describe(great_grandparent, print_description=False)
+
+        expected_description = """Description of bronze
+---------------------
+
+Schema Path: /integrationtest:bronze
+Value Path: /integrationtest:bronze
+NodeType: Container
+
+Description:
+  The metallics are used to test container nesting
+
+Children: 'silver'"""
+
+        self.assertEqual(description, expected_description)
 
         list_element = self.root.simplelist.create('newlistitem')
         self.assertEqual(repr(list_element._parent), "VoodooList{/integrationtest:simplelist}")
@@ -283,7 +313,7 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(expected_result, yangvoodoo.DataAccess.get_extension(self.root.underscoretests, 'info', 'underscore_only'))
 
     def test_choices(self):
-        self.assertEqual(repr(self.root.morecomplex.inner.beer_type), "VoodooChoice{/integrationtest:morecomplex/inner/...beer_type}")
+        self.assertEqual(repr(self.root.morecomplex.inner.beer_type), "VoodooChoice{/integrationtest:morecomplex/inner/...beer-type}")
         self.assertEqual(repr(self.root.morecomplex.inner.beer_type.craft), "VoodooCase{/integrationtest:morecomplex/inner/...craft}")
 
         self.root.morecomplex.inner.beer_type.craft.brewdog = "PUNK IPA"
@@ -295,3 +325,12 @@ class test_node_based_access(unittest.TestCase):
             self.root.morecomplex = 'ssdfsdf'
         self.assertEqual(str(context.exception), "Cannot assign a value to morecomplex")
         self.assertNotEqual(self.root.morecomplex.inner.beer_type.craft.brewdog, "PUNK IPA")
+
+    def test_underscore_and_hyphens(self):
+        self.root.underscoretests.underscore_and_hyphen = 'sdf'
+        self.root.underscore_and_hyphen.create()
+        self.assertEqual(self.root.underscoretests.underscore_and_hyphen, "sdf")
+        self.assertEqual(repr(self.root.underscore_and_hyphen), "VoodooEmpty{/integrationtest:underscore_and-hyphen} - Exists")
+        xpaths = self.stub.dump_xpaths()
+        self.assertEqual(xpaths["/integrationtest:underscoretests/underscore_and-hyphen"], "sdf")
+        self.assertEqual(xpaths["/integrationtest:underscore_and-hyphen"], True)

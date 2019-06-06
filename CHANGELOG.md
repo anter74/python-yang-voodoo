@@ -33,7 +33,8 @@
     - Example of containing nodes, Lists (but not Leaf-Lists), Containers, Root. The name of a child attribute can be provided (mandatory for root). i.e. `root.morecomplex.get_extension('info')` will look for the extension info on `/root/morecomplex` itself.
   - **EXPERIMENTAL** DiffEngine
 
-# devel
+# v0.0.4 - Optimisations and Cleanup
+
    - FIX: for template applier when using lists within lists
    - Travis now working on commits.
    - Access to Datastore is proxied via a cache layer - sysrepo is designed for memory constrained environments so doesn't hold the data in memory.
@@ -49,3 +50,7 @@
    - FEATURE: support UINT64/INT64 values.
    - FEATURE: raise an exception `Cannot assign a value to ......` when trying to assign values to containing nodes.
    - FEATURE: add `session.from_xmlstr` to import data without jinja2 processing from disk.
+   - FEATURE: support for yang empty leaf type - returns an object with `create()`, `exists()` and `remove()`
+   - FEATURE: nodes can now have underscore and hyphens.
+   - FEATURE: `session.describe()` now shows children
+   - FEATURE: `session.tree()` to print a pyang style tree

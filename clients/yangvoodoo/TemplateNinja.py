@@ -95,6 +95,10 @@ class TemplateNinja:
             elif node_type == 8:
                 yang_type = Common.Utils.get_yang_type(node_schema.type(), child.text, this_path)
                 state.dal.add(value_path, Common.Utils.convert_string_to_python_val(child.text, yang_type), yang_type)
+            elif node_type == 2:    # Choice
+                pass
+            elif node_type == 64:   # Case
+                pass
             else:
                 yang_type = Common.Utils.get_yang_type(node_schema.type(), child.text, this_path)
                 val = Common.Utils.convert_string_to_python_val(child.text, yang_type)
@@ -144,7 +148,7 @@ class TemplateNinja:
                 raise ValueError('Expecting key name %s, got %s at %s' % (k.name(), xml_key.tag, this_path))
             # next_xml_node = next(children)
             # print(next_xml_node.tag, k.name())
-            yang_type = Common.Utils.get_yang_type(k.type())
+            yang_type = Common.Utils.get_yang_type(k.type(), default_to_string=True)
             # key_node_schema = next(yangctx.find_path(this_path + "/" + module+":"+k.name()))
             values.append((Common.Utils.convert_string_to_python_val(xml_key.text, yang_type), yang_type))
 

@@ -38,9 +38,12 @@ RUN \
 RUN \
       python3 /get-pip.py && \
       rm -f /get-pip.py && \
-      pip3 install mock coverage nose2 autopep8  && \
-      pip3 install lxml jinja2 dictdiffer
+      pip3 install lxml jinja2 dictdiffer six asn1crypto
 
+
+
+RUN \
+      pip3 install mock coverage nose2 autopep8  && \
 
 
 EXPOSE 830 5000

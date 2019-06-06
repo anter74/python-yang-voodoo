@@ -51,24 +51,25 @@ class Node:
                     to cache that data.
       - log       = A Log instance which behaves like the python standard logging library.
 
-    Things specific to a particular node
-    ------------------------------------
-      - path      = an XPATH expression for the path - with prefixes and values pointing to exact instances
-                    of data. This is used for fetching data.... e.g.
-                    integrationtest:outsidelist[leafo='its cold outside']/integrationtest:otherinsidelist
-                          [otherlist1='uno'][otherlist2='due'][otherlist3='tre']/integrationtest:language
-      - spath     = an XPATH expression for the path - with prefixes but no specific instances of data
-                    included. This is used for looking up schema definitions.... e.g.
-                    /integrationtest:outsidelist/integrationtest:otherinsidelist/integrationtest:language
+    Things held on node
+    --------------------
+      - real_data_path   = an XPATH expression for the path - with prefixes and values pointing to exact instances
+                           of data. This is used for fetching data.... e.g.
+                           integrationtest:outsidelist[leafo='its cold outside']/integrationtest:otherinsidelist
+                           [otherlist1='uno'][otherlist2='due'][otherlist3='tre']/integrationtest:language
+      - real_schema_path = an XPATH expression for the path - with prefixes but no specific instances of data
+                           included. This is used for looking up schema definitions.... e.g.
+                           /integrationtest:outsidelist/integrationtest:otherinsidelist/integrationtest:language
+      - libyang_node     = The libyang node for this schema path of the yang model.
     """
 
     _NODE_TYPE = 'Node'
 
-    def __init__(self, context, path='', spath='', parent_self=None):
+    def __init__(self, context, node, parent_self=None):
         self.__dict__['_context'] = context
-        self.__dict__['_path'] = path
-        self.__dict__['_spath'] = spath
+        self.__dict__['_node'] = node
         self.__dict__['_parent'] = parent_self
+        self.__dict__['_path'] = node.real_data_path
         self._specific_init()
 
     def __name__(self):
@@ -78,8 +79,7 @@ class Node:
         return self._base_repr()
 
     def _base_repr(self):
-        path = self.__dict__['_path']
-        return 'Voodoo%s{%s}' % (self._NODE_TYPE, path)
+        return 'Voodoo%s{%s}' % (self._NODE_TYPE, self._node.real_data_path)
 
     def __del__(self):
         pass
@@ -97,35 +97,40 @@ class Node:
         if attr in ('_ipython_canary_method_should_not_exist_', '_repr_mimebundle_'):
             raise AttributeError('Go Away!')
         context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
+        node = self.__dict__['_node']
+
+        # path = self.__dict__['_path']
+        # spath = self.__dict__['_spath']
 
         if attr == '_xpath_sorted' and self._NODE_TYPE == 'List':
             # Return Object
-            return SortedList(context, path, spath, self)
+            return SortedList(context, node, self)
 
-        new_spath = Common.Utils.form_schema_xpath(spath, attr, context.module)
-        node_schema = Common.Utils.get_schema_of_path(new_spath, context)
-
-        new_xpath = Common.Utils.form_value_xpath(path, attr, context.module, node_schema)
+        node_schema = Common.Utils.get_yangnode(node, context, attr)
         node_type = node_schema.nodetype()
 
         if node_type == 1:
             # assume this is a container (or a presence container)
             if node_schema.presence() is None:
                 # Return Object
-                return Container(context, new_xpath, new_spath, self)
+                return Container(context, node_schema, self)
             else:
                 # Return Object
-                return PresenceContainer(context, new_xpath, new_spath, self)
+                return PresenceContainer(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['LEAF']:
-            return context.dal.get(new_xpath, default_value=node_schema.default())
+            # TODO: need to consider unions of enum's in future - there is already a plan for a formalValidator class
+            leaf_type = node_schema.type().base()
+            if leaf_type == 5:
+                return Empty(context, node_schema)
+            # if leaf_type == 6:
+            #    return Enum(context, new_xpath, new_spath, node_schema)
+            return context.dal.get(node_schema.real_data_path, default_value=node_schema.default())
         elif node_type == Types.LIBYANG_NODETYPE['LIST']:
             # Return Object
-            return List(context, new_xpath, new_spath, self)
+            return List(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['LEAFLIST']:
             # Return Object
-            return LeafList(context, new_xpath, new_spath, self)
+            return LeafList(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['CHOICE']:
             """
             Note: for choices in terms of data we don't render the 'case'
@@ -136,55 +141,129 @@ class Node:
             means the following is invalid.
             list(yangctx.find_path(beertype + "integrationtest:brewdog"))
             """
-            return Choice(context, path, new_spath, self)
+            return Choice(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['CASE']:
-            return Case(context, path, new_spath, self)
+            return Case(context, node_schema, self)
 
         raise NotImplementedError("The YANG structure at %s of type %s is not supported." % (new_spath, node_type))
 
     def __setattr__(self, attr, val):
         context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-
-        spath = Common.Utils.form_schema_xpath(spath, attr, context.module)
-        node_schema = Common.Utils.get_schema_of_path(spath, context)
-        xpath = Common.Utils.form_value_xpath(path, attr, context.module, node_schema)
+        node = self.__dict__['_node']
+        node_schema = Common.Utils.get_yangnode(node, context, attr)
 
         if not node_schema.nodetype() == Types.LIBYANG_NODETYPE['LEAF']:
             raise Errors.CannotAssignValueToContainingNode(attr)
 
         if node_schema.is_key():
-            raise Errors.ListKeyCannotBeChanged(xpath, attr)
+            raise Errors.ListKeyCannotBeChanged(node_schema.real_data_path, attr)
+
+        leaf_type = node_schema.type().base()
+        # Enumeration:
+        if leaf_type == 6:
+            match = False
+            for (enum_valid_val, _) in node_schema.type().enums():
+                if str(enum_valid_val) == str(val):
+                    match = True
+            if not match:
+                raise Errors.ValueDoesMatchEnumeration(node_schema.real_data_path, val)
 
         if val is None:
-            context.dal.delete(xpath)
+            context.dal.delete(node_schema.real_data_path)
             return
 
-        backend_type = Common.Utils.get_yang_type(node_schema.type(), val, xpath)
+        backend_type = Common.Utils.get_yang_type(node_schema.type(), val, node_schema.real_data_path)
+        context.dal.set(node_schema.real_data_path, val, backend_type)
 
-        context.dal.set(xpath, val, backend_type)
+    def __dir__(self, no_translations=False):
+        node = self._node
+        context = self._context
 
-    def __dir__(self):
-        spath = self.__dict__['_spath']
-        context = self.__dict__['_context']
-
-        if spath == "":
+        if node.real_schema_path == "":
             search_path = "/" + context.module + ":*"
         else:
-            node_schema = Common.Utils.get_schema_of_path(spath, context)
-            search_path = node_schema.schema_path() + "/*"
+            search_path = node.real_schema_path + "/*"
 
         answer = []
         for child in context.schemactx.find_path(search_path):
-            answer.append(child.name().replace('-', '_'))
+            child_name = child.name()
+            if '-' in child_name and not no_translations:
+                new_child_name = child_name.replace('-', '_')
+                child_name = new_child_name
+            answer.append(child_name)
         answer.sort()
         return answer
 
 
+class Empty():
+
+    """
+    This represents a YANG Empty Leaf, which can be create()d, and remove()d, however they do
+    not actually store a value.
+
+    The presence of the empty leaf can be tested with exists()
+
+    In an XML representation they appear as
+        <emptyleaf/>
+
+    """
+
+    _NODE_TYPE = "Empty"
+
+    def __init__(self, context, node_schema):
+        self.__dict__['_context'] = context
+        self.__dict__['_node'] = node_schema
+
+    def __dir__(self):
+        return []
+
+    def create(self):
+        context = self._context
+        node = self._node
+        context.dal.set(node.real_data_path, None, 5)
+
+    def exists(self):
+        context = self._context
+        node = self._node
+        exists = context.dal.get(node.real_data_path)
+        return exists is not None
+
+    def remove(self):
+        context = self._context
+        node = self._node
+        context.dal.delete(node.real_data_path)
+
+    def __repr__(self):
+        node = self._node
+        path = node.real_data_path
+        if self.exists():
+            return "VoodooEmpty{%s} - Exists" % (path)
+        return "VoodooEmpty{%s} - Does Not Exist" % (path)
+
+
 class ContainingNode(Node):
 
-    pass
+    def _from_template(self, template, **kwargs):
+        """
+        TODO: decide if this is good here or if it should move to session.
+
+        This is misleading because the template still applies from root (although
+        potentially we cahnge templater to handle an abritary node)
+
+        """
+        templater = TemplateNinja.TemplateNinja()
+        templater.from_template(self, template, **kwargs)
+
+    def _from_xmlstr(self, xmlstr):
+        """
+        TODO: decide if this is good here or if it should move to session.
+
+        This is misleading because the template still applies from root (although
+        potentially we cahnge templater to handle an abritary node)
+
+        """
+        templater = TemplateNinja.TemplateNinja()
+        templater.from_xmlstr(self, xmlstr)
 
 
 class Choice(Node):
@@ -192,9 +271,8 @@ class Choice(Node):
     _NODE_TYPE = "Choice"
 
     def __repr__(self):
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, path, spath.split(":")[-1])
+        node = self.__dict__['_node']
+        return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, node.real_data_path, node.real_schema_path.split(":")[-1])
 
 
 class Case(Node):
@@ -202,9 +280,8 @@ class Case(Node):
     _NODE_TYPE = "Case"
 
     def __repr__(self):
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, path, spath.split(":")[-1])
+        node = self.__dict__['_node']
+        return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, node.real_data_path, node.real_schema_path.split(":")[-1])
 
 
 class LeafList(Node):
@@ -225,38 +302,34 @@ class LeafList(Node):
         If the item already exists in the list this operation will silenty
         do nothing.
         """
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
+        context = self._context
+        node = self._node
 
         if value == "":
-            raise Errors.ListItemCannotBeBlank(spath)
+            raise Errors.ListItemCannotBeBlank(node.real_data_path)
 
-        node_schema = Common.Utils.get_schema_of_path(spath, context)
-        backend_type = Common.Utils.get_yang_type(node_schema.type(), value, path)
-
-        context.log.trace("about to add: %s, %s, %s", path, value, backend_type)
-        context.dal.add(path, value, backend_type)
+        backend_type = Common.Utils.get_yang_type_from_path(context, node.real_schema_path, value)
+        context.log.trace("about to add: %s, %s, %s", node.real_data_path, value, backend_type)
+        context.dal.add(node.real_data_path, value, backend_type)
 
         return value
 
     def __iter__(self):
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
+        context = self._context
+        node = self._node
         # Return Object
-        return LeafListIterator(context, path, spath, self)
+        return LeafListIterator(context, node,  self)
 
     def __len__(self):
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        results = context.dal.gets(path)
+        context = self._context
+        node = self._node
+        results = context.dal.gets(node.real_data_path)
         return len(list(results))
 
     def __delitem__(self, arg):
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        context.dal.remove(path, arg)
+        context = self._context
+        node = self._node
+        context.dal.remove(node.real_data_path, arg)
 
         return None
 
@@ -305,35 +378,21 @@ class List(ContainingNode):
 
         Calling the create method a second time will not overwrite/remove data.
         """
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        conditional = self._get_keys(list(args))
-        new_xpath = path + conditional
-        new_spath = spath   # Note: we deliberartely won't use conditionals here
+        context = self._context
+        node = self._node
+        (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
 
-        keys = tuple(self.keys())
-        values = []
-        i = 0
-        for arg in args:
-            if arg == "":
-                raise Errors.ListKeyCannotBeBlank(spath, keys[i])
+        node = Common.Utils.get_yangnode(node, context, keys=keys, values=values)
 
-            node_schema = Common.Utils.get_schema_of_path(Common.Utils.form_schema_xpath(spath, keys[i], context.module), context)
-            yangtype = Common.Utils.get_yang_type(node_schema.type(), arg,
-                                                  Common.Utils.form_schema_xpath(spath, keys[i], context.module))
-            values.append((arg, yangtype))
-
-        context.log.trace("about to create: %s, %s, %s, %s",  new_xpath, keys, values, context.module)
-        context.dal.create(new_xpath, keys=keys, values=values)
+        context.log.trace("about to create: %s, %s, %s, %s",  node.real_data_path, keys, values, context.module)
+        context.dal.create(node.real_data_path, keys=keys, values=values)
         # Return Object
-        return ListElement(context, new_xpath, new_spath, self)
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, node.real_data_path)
+        return ListElement(context, new_node, self)
 
     def __len__(self):
         context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        return context.dal.gets_len(path)
+        return context.dal.gets_len(self._node.real_data_path)
 
     def elements(self, sorted_by_xpath=False):
         """
@@ -342,14 +401,13 @@ class List(ContainingNode):
         The datastore will maintain the order entries were originally added into the list.
         The sorted_by_xpath argument can be used to sort the list by xpath.
         """
-        context = self.__dict__['_context']
-        spath = self.__dict__['_spath']
-        path = self.__dict__['_path']
+        context = self._context
+        node = self._node
 
         if sorted_by_xpath:
-            results = context.dal.gets_sorted(path, spath,  ignore_empty_lists=True)
+            results = context.dal.gets_sorted(node.real_data_path, node.real_schema_path,  ignore_empty_lists=True)
         else:
-            results = context.dal.gets_unsorted(path, spath, ignore_empty_lists=True)
+            results = context.dal.gets_unsorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True)
 
         # Return Object
         return results
@@ -360,13 +418,9 @@ class List(ContainingNode):
 
         This is currently not supported.
         """
-        spath = self.__dict__['_spath']
-        context = self.__dict__['_context']
-        node_schema = Common.Utils.get_schema_of_path(spath, context)
-
-        keys = []
-        for k in node_schema.keys():
-            keys.append(k.name())
+        node = self._node
+        keys = Common.Utils.get_keys_from_a_node(node)
+        keys.sort()
         return keys
 
     def get_last(self, sorted_by_xpath=False):
@@ -377,14 +431,18 @@ class List(ContainingNode):
         The optional argument sorted_by_xpath will sort the list by XPATH before returning the
         last item.
         """
-        context = self.__dict__['_context']
-        spath = self.__dict__['_spath']
+        context = self._context
+        node = self._node
 
-        results = list(context.dal.gets_sorted(spath, spath,  ignore_empty_lists=True))
-
+        if sorted_by_xpath:
+            results = list(context.dal.gets_sorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True))
+        else:
+            results = list(context.dal.gets_unsorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True))
         this_xpath = results[-1]
+
         # Return Object
-        return ListElement(context, this_xpath, spath, self)
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, this_xpath)
+        return ListElement(context, new_node, self)
 
     def get_first(self, sorted_by_xpath=False):
         """
@@ -394,14 +452,18 @@ class List(ContainingNode):
         The optional argument sorted_by_xpath will sort the list by XPATH before returning the
         first item.
         """
-        context = self.__dict__['_context']
-        spath = self.__dict__['_spath']
+        context = self._context
+        node = self._node
 
-        results = list(context.dal.gets_sorted(spath, spath, ignore_empty_lists=True))
-
+        if sorted_by_xpath:
+            results = list(context.dal.gets_sorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True))
+        else:
+            results = list(context.dal.gets_unsorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True))
         this_xpath = results[0]
+
         # Return Object
-        return ListElement(context, this_xpath, spath, self)
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, this_xpath)
+        return ListElement(context, new_node, self)
 
     def get(self, *args):
         """
@@ -415,92 +477,51 @@ class List(ContainingNode):
 
         Alternatively access data by node[value] or node[value1, value2]
         """
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-
-        conditional = self._get_keys(list(args))
-        new_xpath = path + conditional
-        new_spath = spath   # Note: we deliberartely won't use conditionals here
-        if not context.dal.has_item(new_xpath):
-            raise Errors.ListDoesNotContainElement(new_xpath)
+        context = self._context
+        node = self._node
+        (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
+        predicates = Common.Utils.encode_xpath_predicates('', keys, values)
+        if not context.dal.has_item(node.real_data_path + predicates):
+            raise Errors.ListDoesNotContainElement(node.real_data_path + predicates)
         # Return Object
-        return ListElement(context, new_xpath, new_spath, self)
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, node.real_data_path+predicates)
+        return ListElement(context, new_node, self)
 
     def __iter__(self):
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
+        context = self._context
+        node = self._node
         # Return Object
-        return ListIterator(context, path, spath, self, xpath_sorted=self._SORTED_LIST)
+        return ListIterator(context, node, self, xpath_sorted=self._SORTED_LIST)
 
     def __contains__(self, *args):
-        context = self.__dict__['_context']
-        if isinstance(args[0], tuple):
-            arglist = []
-            for a in args[0]:
-                arglist.append(a)
-        else:
-            arglist = [args[0]]
-        conditional = self._get_keys(arglist)
+        context = self._context
+        node = self._node
+        (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
+        predicates = Common.Utils.encode_xpath_predicates('', keys, values)
 
-        path = self.__dict__['_path']
-        new_xpath = path + conditional
-        context.log.trace("has item: %s", new_xpath)
-        return context.dal.has_item(new_xpath)
+        context.log.trace("has item: %s",  node.real_data_path + predicates)
+        return context.dal.has_item(node.real_data_path + predicates)
 
     def __getitem__(self, *args):
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        if isinstance(args[0], tuple):
-            conditional = self._get_keys(list(args[0]))
-        else:
-            conditional = self._get_keys(list(args))
-        new_xpath = path + conditional
-        new_spath = spath   # Note: we deliberartely won't use conditionals here
+        context = self._context
+        node = self._node
+        (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
+        predicates = Common.Utils.encode_xpath_predicates('', keys, values)
+        if not context.dal.has_item(node.real_data_path + predicates):
+            raise Errors.ListDoesNotContainElement(node.real_data_path + predicates)
 
-        if not context.dal.has_item(new_xpath):
-            raise Errors.ListDoesNotContainElement(new_xpath)
         # Return Object
-        return ListElement(context, new_xpath, new_spath, self)
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, node.real_data_path+predicates)
+        return ListElement(context, new_node, self)
 
     def __delitem__(self, *args):
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        if isinstance(args[0], tuple):
-            conditional = self._get_keys(list(args[0]))
-        else:
-            conditional = self._get_keys(list(args))
-        new_xpath = path + conditional
-        context.dal.uncreate(new_xpath)
+        context = self._context
+        node = self._node
+        (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
+        predicates = Common.Utils.encode_xpath_predicates('', keys, values)
+        context.dal.uncreate(node.real_data_path + predicates)
 
         return None
-
-    def _get_keys(self, *args):
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        context = self.__dict__['_context']
-        node_schema = Common.Utils.get_schema_of_path(spath, context)
-        keys = list(node_schema.keys())
-
-        if not len(args[0]) == len(keys):
-            raise Errors.ListWrongNumberOfKeys(path, len(keys), len(args[0]))
-
-        conditional = ""
-        for i in range(len(keys)):
-            value = self._get_xpath_value_from_python_value(args[0][i], keys[i].type())
-
-            # Sysrepo doesn't like this version
-            # conditional = conditional + "[%s:%s='%s']" % (context.module, keys[i].name(), value)
-            conditional = conditional + "[%s='%s']" % (keys[i].name(), value)
-        return conditional
-
-    def _get_xpath_value_from_python_value(self, v, t):
-        if str(t) == 'boolean':
-            return str(v).lower()
-        else:
-            return str(v)
 
 
 class SortedList(List):
@@ -536,24 +557,24 @@ class ListIterator(Node):
 
     _NODE_TYPE = 'ListIterator'
 
-    def __init__(self, context, path, spath, parent_self, xpath_sorted=False):
+    def __init__(self, context, node, parent_self, xpath_sorted=False):
         self.__dict__['_context'] = context
-        self.__dict__['_path'] = path
-        self.__dict__['_spath'] = spath
+        self.__dict__['_node'] = node
         self.__dict__['_parent'] = parent_self
         self.__dict__['_xpath_sorted'] = xpath_sorted
         if xpath_sorted:
-            self.__dict__['_iterator'] = context.dal.gets_sorted(path, spath, ignore_empty_lists=True)
+            self.__dict__['_iterator'] = context.dal.gets_sorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True)
         else:
-            self.__dict__['_iterator'] = context.dal.gets_unsorted(path, spath, ignore_empty_lists=True)
+            self.__dict__['_iterator'] = context.dal.gets_unsorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True)
 
     def __next__(self):
-        context = self.__dict__['_context']
-        spath = self.__dict__['_spath']
-        parent = self.__dict__['_parent']
-        this_xpath = next(self.__dict__['_iterator'])
+        context = self._context
+        node = self._node
+        parent = self._parent
+        this_xpath = next(self._iterator)
         # Return Object
-        return ListElement(context, this_xpath, spath, parent)
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, this_xpath)
+        return ListElement(context, new_node, parent)
 
     def __repr__(self):
         base_repr = self._base_repr()
@@ -566,13 +587,12 @@ class LeafListIterator(Node):
 
     _NODE_TYPE = 'ListIterator'
 
-    def __init__(self, context, path, spath, parent_self, xpath_sorted=False):
+    def __init__(self, context, node, parent_self, xpath_sorted=False):
         self.__dict__['_context'] = context
-        self.__dict__['_path'] = path
-        self.__dict__['_spath'] = spath
+        self.__dict__['_node'] = node
         self.__dict__['_parent'] = parent_self
         self.__dict__['_xpath_sorted'] = xpath_sorted
-        self.__dict__['_iterator'] = context.dal.gets(path)
+        self.__dict__['_iterator'] = context.dal.gets(node.real_data_path)
 
     def __next__(self):
         return next(self.__dict__['_iterator'])
@@ -608,22 +628,19 @@ class PresenceContainer(Container):
     _NODE_TYPE = 'PresenceContainer'
 
     def exists(self):
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
+        context = self._context
+        path = self._node.real_data_path
         context.log.trace("Calling have container: %s", path)
         return context.dal.container(path)
 
     def create(self):
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
-        spath = self.__dict__['_spath']
-        context.log.trace("Calling create container: %s", path)
-        context.dal.create_container(path)
-        return PresenceContainer(context, path, spath, self)
+        context = self._context
+        node = self._node
+        context.log.trace("Calling create container: %s", node.real_data_path)
+        context.dal.create_container(node.real_data_path)
+        return PresenceContainer(context, node, self)
 
     def __repr__(self):
-        context = self.__dict__['_context']
-        path = self.__dict__['_path']
         base_repr = self._base_repr()
         if self.exists():
             return base_repr + " Exists"
@@ -638,7 +655,7 @@ class Root(ContainingNode):
         context = self.__dict__['_context']
         return "VoodooNodeRoot{} YANG Module: " + context.module
 
-    def from_template(self, template):
+    def from_template(self, template, **kwargs):
         """
         Process a template with a number of data nodes. The result of processing the template
         with Jinja2 must be a valid XML document.
@@ -676,7 +693,7 @@ class Root(ContainingNode):
         """
 
         templater = TemplateNinja.TemplateNinja()
-        templater.from_template(self, template)
+        templater.from_template(self, template, **kwargs)
 
     def from_xmlstr(self, xmlstr):
         """

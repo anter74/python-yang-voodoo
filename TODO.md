@@ -9,7 +9,8 @@
   - there is some XPATH escaping with single quotes still to cover off
 - ~~convert 'NODE_TYPE' to '_NODE_TYPE' to hide from ipython~~
 - ~~allow the location of yang's to be specified.~~
-- enumerations - should really be returned as an object not a string.
+- ~~enumerations - should really be returned as an object not a string. - Don't think this is required anymore~~
+- \__setattr__() should be properly implemented taking account of unions of uint32/enumerations.
 - define (with tests) further yang types in Types class (and handle a fallback better than 'keyerror')
 - session revert() and session compare() would be useful functions.
 - typedef's (partly resolved by using libyang's type().base() - but unions don't provide a composite base type)
@@ -18,6 +19,7 @@
   - ~~leafrefs to union (Partially supported - to be fully supported with libyang(swig) vs yang(cffi) changes - (ref branch: libyang-cffi-vs-libyang-swig_for_validation)~~
 - ~~enumeration test cases~~
 - ~~underscore conversion~~
+  - ~~underscore conversion where the are \_ and - in the node name~~
 - should support <object>[child-attr-name] for setting, getting data (i.e. where we want to use a variable to define child-attr-name])
 - ~~setting a list key as a blank value must be prevented.~~
 - deletes (of non-primitives)
@@ -31,7 +33,9 @@
 - jinja2 templates are a little trickier accessing data on objects is trivial, invoking object (not sure how that works).
   - Consider list of bands, with a list of gis - if we want to find the the last gig we can do this.
   - In python we can do `list(root.web.bands._xpath_sorted)[-2].gigs.get_last()`
-- presence nodes don't have to be explicitly created (in sysrepo backend) - this is not the correct behaviour
+- presence nodes don't have to be explicitly created (in sysrepo backend) - this is the correct behaviour- but the stub/proxy datastore does not explicitly create them based on having children. Proper fix would be
+   - VoodooNode's exists() method calls a specific dal method to check for container - in the case of proxy dal we always ask the real datastore (which could be stub) in the case of stub we search through the dictionary to find the presence node.
+  - The number of special cases in stub is starting to explode - it may make more sense to tradeoff memory to avoid the recursion.
 - investigate  https://github.com/clicon/clixon/blob/master/example/hello/README.md for a CLI instead of prompt-toolkit
 - ~~enhance logging if there is no subscriber for a particular YANG module (sysrepo swig bindings are a limiting factor here - if there is a non-zero error code we just get a python runtime error).~~
   - ~~potential to open up sysrepo code to return more discrete error codes (if they aren't already) and then change the SWIG code to provide more descriptive text.~~

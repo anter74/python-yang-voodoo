@@ -38,10 +38,19 @@ context = root._context
 backend = root._context.dal.data_abstraction_layer
 
 import IPython
-
-yangvoodoo.DataAccess._welcome()
-
-print('YANGVOOODOO Version %s' % (session.__version__))
+print('Objects Ready to Play with')
+print('--------------------------')
+print('yangvoodoo.Common.Utils - imported as Utils')
 print('')
+print('root << node based access')
+print('   ', root)
+print('sesssion << xpath based access (this is dal on root._context)')
+print('   ', session)
+print('backend << datastore(may be proxy)')
+print('   ', backend)
+print('yang    << libyang instance')
+print('yangctx << libyang context instance')
+print('context << yangvoodoo internal context object')
+print('   ', yangctx)
 
 IPython.embed(display_banner=False)
