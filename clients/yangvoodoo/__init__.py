@@ -123,13 +123,13 @@ NodeType: {type}
 Description:
   {description}
 """.format(**values)
-
         if attr == '':
             children = node.__dir__(no_translations=True)
         else:
-            children = node.__dir__(no_translations=True)
-        if children and children[0] == '__bool__':
-            children = '[No children]'
+            try:
+                children = node[attr].__dir__(no_translations=True)
+            except Exception:
+                children = '[No Child Nodes]'
         description = description + """
 Children: %s""" % (str(children)[1:-1])
         if print_description:

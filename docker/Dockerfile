@@ -43,10 +43,10 @@ RUN \
 
 
 RUN \
-      pip3 install mock coverage nose2 autopep8  && \
+      pip3 install mock coverage nose2 autopep8  
 
 
 EXPOSE 830 5000
 STOPSIGNAL SIGTERM
-WORKDIR /working
+WORKDIR /working/clients
 CMD /working/start-in-docker.sh
