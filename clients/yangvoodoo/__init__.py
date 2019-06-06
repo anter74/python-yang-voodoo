@@ -542,9 +542,9 @@ Children: %s""" % (str(children)[1:-1])
 
     @staticmethod
     def _welcome():
-        if 'TERM' in os.environ and 'xterm' in os.environ['TERM']:
+        if os.path.exists('.colour') and 'TERM' in os.environ and 'xterm' in os.environ['TERM']:
             with open('.colour') as fh:
                 print(fh.read())
-        else:
+        elif os.path.exists('.black'):
             with open('.black') as fh:
                 print(fh.read())
