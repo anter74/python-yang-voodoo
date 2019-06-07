@@ -28,7 +28,7 @@ class DataAccess:
      - lxml
     """
 
-    __version__ = "0.0.4"
+    __version__ = "0.0.5-devel"
 
     def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None,
                  disable_proxy=False, use_stub=False):
