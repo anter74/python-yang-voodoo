@@ -18,6 +18,74 @@ class test_xml_to_xpath(unittest.TestCase):
         self.schemactx = self.root._context.schemactx
         self.module = self.root._context.module
 
+    def test_from_template_siblings(self):
+        # Build
+
+        template = """<integrationtest>
+          <morecomplex>
+            <inner>
+              <siblings>
+                <a>A</a>
+                <b>B</b>
+                <c>C</c>
+                <d>D</d>
+                <e>E</e>
+                <f>F</f>
+                <g>G</g>
+                <h>H</h>
+              </siblings>
+            </inner>
+          </morecomplex>
+        </integrationtest>
+        """
+
+        # Act
+        self.subject._import_xml_to_datastore(self.module, self.schemactx, template, self.stub)
+
+        # assert
+        self.assertEqual(self.root.morecomplex.inner.siblings.a, "A")
+        self.assertEqual(self.root.morecomplex.inner.siblings.b, "B")
+        self.assertEqual(self.root.morecomplex.inner.siblings.c, "C")
+        self.assertEqual(self.root.morecomplex.inner.siblings.d, "D")
+        self.assertEqual(self.root.morecomplex.inner.siblings.e, "E")
+        self.assertEqual(self.root.morecomplex.inner.siblings.f, "F")
+        self.assertEqual(self.root.morecomplex.inner.siblings.g, "G")
+        self.assertEqual(self.root.morecomplex.inner.siblings.h, "H")
+
+    def test_from_template_choices(self):
+        # Build
+
+        template = """<integrationtest>
+          <morecomplex>
+            <inner>
+              <beer-styles>
+                <beer-style>new-england</beer-style>
+                <beer-choice>
+                  <new-england-case>
+                    <hazy-style>
+                      <beer-chosen>hazy jane</beer-chosen>
+                      <rating>5</rating>
+                      <size>schooner</size>
+                    </hazy-style>
+                  </new-england-case>
+                </beer-choice>
+              </beer-styles>
+            </inner>
+          </morecomplex>
+        </integrationtest>
+        """
+
+        # Act
+        self.subject._import_xml_to_datastore(self.module, self.schemactx, template, self.stub)
+
+        # assert
+        self.assertEqual(repr(self.root.morecomplex.inner.beer_styles['new-england']),
+                         "VoodooListElement{/integrationtest:morecomplex/inner/beer-styles[beer-style='new-england']}")
+
+        self.assertEqual(self.root.morecomplex.inner.beer_styles['new-england'].beer_choice.new_england_case.hazy_style.beer_chosen, "hazy jane")
+        self.assertEqual(self.root.morecomplex.inner.beer_styles['new-england'].beer_choice.new_england_case.hazy_style.rating, 5)
+        self.assertEqual(self.root.morecomplex.inner.beer_styles['new-england'].beer_choice.new_england_case.hazy_style.size, "schooner")
+
     def test_from_template_A(self):
         # Build
 

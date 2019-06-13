@@ -54,3 +54,7 @@
    - FEATURE: nodes can now have underscore and hyphens.
    - FEATURE: `session.describe()` now shows children
    - FEATURE: `session.tree()` to print a pyang style tree
+
+# v0.0.4 - Bugfixes
+
+   - FEATURE: Choices/Cases applied via a template now calculate the correct data path.

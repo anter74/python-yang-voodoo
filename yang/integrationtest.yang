@@ -869,8 +869,74 @@ module integrationtest {
     container inner {
       presence true;
 
+      container siblings {
+        leaf a {
+          type string;
+        }
+        leaf b {
+          type string;
+        }
+        leaf c {
+          type string;
+        }
+        leaf d {
+          type string;
+        }
+        leaf e {
+          type string;
+        }
+        leaf f {
+          type string;
+        }
+        leaf g {
+          type string;
+        }
+        leaf h {
+          type string;
+        }
+        leaf i {
+          type string;
+        }
+        leaf j {
+          type string;
+        }
+      }
+
       leaf brewdog-beer {
         type numstr;
+      }
+
+      list beer-styles {
+        key beer-style;
+
+        leaf beer-style {
+          type enumeration {
+            enum saison;
+            enum new-england;
+          }
+        }
+
+        choice beer-choice {
+          case new-england-case {
+            container hazy-style {
+              leaf beer-chosen {
+                type string;
+              }
+              leaf rating {
+                type uint8;
+              }
+              leaf size {
+                type enumeration {
+                  enum third;
+                  enum schooner;
+                  enum half;
+                  enum pint;
+                }
+              }
+            }
+          }
+        }
+
       }
 
       list brewdog-beers {

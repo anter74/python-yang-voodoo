@@ -55,6 +55,7 @@ class Utils:
     LOG_SILENT = 99
     LOG_ERROR = logging.ERROR
     LOG_TRACE = 7
+    LOG_CRAZY = 4
 
     LAST_LEAF_AND_PREDICTAES = re.compile(r"(.*/)([A-Za-z]+[A-Za-z0-9_:-]*)(\[.*\])$")
     PREDICATE_KEY_VALUES_SINGLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)='([^']*)'\]")
@@ -125,6 +126,12 @@ class Utils:
         log.setLevel(level)
 
         logging.addLevelName(7, "TRACE")
+        logging.addLevelName(4, "CRAZY")
+
+        def crazy(self, message, *args, **kws):
+            if self.isEnabledFor(4):
+                self._log(4, message, args, **kws)
+        logging.Logger.crazy = crazy
 
         def trace(self, message, *args, **kws):
             if self.isEnabledFor(7):

@@ -66,7 +66,6 @@ class TemplateNinja:
         """
         children = yangvoodoo.Common.PlainIterator(xmldoc.getchildren())
         for child in children:
-
             if state.next_time_loop:
                 (list_nodeschema, list_path) = state.next_time_loop
                 state.next_time_loop = None
@@ -80,14 +79,19 @@ class TemplateNinja:
             this_path = ''.join(state.spath) + '/' + this_node
             # value_path = ''.join(state.path) + '/' + this_node
 
-            if len(state.path) == 0:
-                value_path = ''.join(state.path) + '/' + this_node
-            else:
-                value_path = ''.join(state.path) + '/' + child.tag
-
             node_schema = next(state.yangctx.find_path(this_path))
             node_type = node_schema.nodetype()
 
+            if node_type == 2 or node_type == 64:
+                value_path = ''.join(state.path)
+            else:
+                if len(state.path) == 0:
+                    value_path = ''.join(state.path) + '/' + this_node
+                else:
+                    value_path = ''.join(state.path) + '/' + child.tag
+
+            # This approach works but it's a bit of a kludge -it should be easier to just append/remove things.
+            value_path = value_path.replace('::not-for-data-path::', '')
             if node_type == 1:  # Container / Lis
                 pass
             elif node_type == 16:
@@ -105,10 +109,15 @@ class TemplateNinja:
                 self.log.trace('setting. %s => %s %s', value_path, val, yang_type)
                 state.dal.set(value_path, val, yang_type)
 
-            if len(state.path) == 0:
-                state.path.append('/' + this_node)
+            if node_type == 2:
+                state.path.append('::not-for-data-path::')
+            elif node_type == 64:
+                state.path.append('::not-for-data-path::')
             else:
-                state.path.append('/' + child.tag)
+                if len(state.path) == 0:
+                    state.path.append('/' + this_node)
+                else:
+                    state.path.append('/' + child.tag)
 
             state.spath.append('/' + this_node)
 
@@ -133,7 +142,6 @@ class TemplateNinja:
 
         keys = []
         values = []
-        value_types = []
         predicates = ""
         first_key = True
         for k in node_schema.keys():

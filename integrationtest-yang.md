@@ -2,9 +2,11 @@
 
 ```
 module: integrationtest
+  +--rw underscore_and-hyphen?                empty
   +--rw diff
   |  +--rw deletes
   |  |  +--rw a-leaf?               string
+  |  |  +--rw a-2nd-leaf?           string
   |  |  +--rw a-list* [listkey]
   |  |  |  +--rw listkey       string
   |  |  |  +--rw listnonkey?   string
@@ -212,7 +214,26 @@ module: integrationtest
      +--rw leaf3?           type2
      +--rw leaf4?           type4
      +--rw inner!
+        +--rw siblings
+        |  +--rw a?   string
+        |  +--rw b?   string
+        |  +--rw c?   string
+        |  +--rw d?   string
+        |  +--rw e?   string
+        |  +--rw f?   string
+        |  +--rw g?   string
+        |  +--rw h?   string
+        |  +--rw i?   string
+        |  +--rw j?   string
         +--rw brewdog-beer?                numstr
+        +--rw beer-styles* [beer-style]
+        |  +--rw beer-style          enumeration
+        |  +--rw (beer-choice)?
+        |     +--:(new-england-case)
+        |        +--rw hazy-style
+        |           +--rw beer-chosen?   string
+        |           +--rw rating?        uint8
+        |           +--rw size?          enumeration
         +--rw brewdog-beers* [beer]
         |  +--rw beer    numstr
         +--rw (beer-type)?
