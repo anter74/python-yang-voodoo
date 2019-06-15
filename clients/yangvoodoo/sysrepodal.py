@@ -373,3 +373,17 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             errors.append((sysrepo_error.message(), sysrepo_error.xpath()))
 
         raise yangvoodoo.Errors.BackendDatastoreError(errors)
+
+    def dump_xpaths(self):
+        new_dict = {}
+        vals = self.session.get_items('/' + self.module + ':*')
+        for i in range(vals.val_cnt()):
+            sysrepo_item = vals.val(i)
+            xpath = sysrepo_item.xpath()
+            try:
+                v = self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
+                new_dict[xpath] = v
+            except yangvoodoo.Errors.NodeHasNoValue:
+                pass
+
+        return new_dict

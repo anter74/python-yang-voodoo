@@ -327,3 +327,24 @@ class test_node_based_access(unittest.TestCase):
 
         self.assertEqual(2, len(self.root.morecomplex.leaflists.simple))
         self.assertFalse('A' in self.root.morecomplex.leaflists.simple)
+
+    def test_dump_xpaths(self):
+        self.subject.module = "integrationtest"
+        result = self.subject.dump_xpaths()
+
+        expected_answer = {
+            '/integrationtest:default': 'statusquo',
+            '/integrationtest:simpleenum': 'A',
+            "/integrationtest:twokeylist[primary='true'][secondary='true']": None,
+            "/integrationtest:twokeylist[primary='true'][secondary='false']": None,
+            "/integrationtest:twokeylist[primary='false'][secondary='true']": None,
+            "/integrationtest:twokeylist[primary='false'][secondary='false']": None,
+            '/integrationtest:thing-that-is-leafref': 'GHI',
+            '/integrationtest:thing-to-leafref-against': 'GHI',
+            "/integrationtest:list-to-leafref-against[idle='i']": None,
+            "/integrationtest:list-to-leafref-against[idle='w']": None,
+            "/integrationtest:outsidelist[leafo='its cold outside']": None,
+            '/integrationtest:simpleleaf': 'duke'
+        }
+
+        self.assertDictEqual(result, expected_answer)
