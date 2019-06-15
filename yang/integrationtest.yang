@@ -939,6 +939,51 @@ module integrationtest {
 
       }
 
+      container classifier-example {
+        list rules {
+          key id;
+
+          leaf id {
+            type uint8;
+          }
+
+          leaf protocol {
+            type enumeration {
+              enum ip;
+              enum udp;
+              enum tcp;
+            }
+          }
+
+          container ports {
+            when "../protocol!='ip'";
+            container source {
+              leaf port-type {
+                type enumeration {
+                  enum "between";
+                  enum "equal";
+                }
+                default "equal";
+              }
+
+              leaf port {
+                type uint8;
+                when "../port-type!='between'";
+              }
+              leaf start-port {
+                type uint8;
+                when "../port-type='between'";
+              }
+
+              leaf end-port {
+                type uint8;
+                when "../port-type='between'";
+              }
+            }
+          }
+        }
+      }
+
       list brewdog-beers {
         key beer;
 
