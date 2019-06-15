@@ -1,5 +1,6 @@
 import libyang
 import logging
+from lxml import etree
 from yangvoodoo import Types, Errors
 import re
 
@@ -61,7 +62,14 @@ class Utils:
     PREDICATE_KEY_VALUES_SINGLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)='([^']*)'\]")
     PREDICATE_KEY_VALUES_DOUBLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)=\"([^\"]*)\"\]")
     FIND_KEYS = re.compile(r"\[([A-Za-z]+[A-Za-z0-9_-]*)=.*?\]")
+    FIND_KEYS_AND_VALUES = re.compile(r"\[([A-Za-z]+[A-Za-z0-9_-]*)=['\"](.*?)['\"]\]")
     DROP_PREDICATES = re.compile(r"(.*?)([A-Za-z0-9_-]+\[.*?\])?/([A-Za-z0-9_-]*)")
+    SPLIT_XPATH = re.compile(r"([a-zA-Z0-9_-]*)(/?)((\[.*?\])*)?")
+
+    @staticmethod
+    def pretty_xmldoc(xmldoc):
+        xmlstr = str(etree.tostring(xmldoc, pretty_print=True))
+        return str(xmlstr).replace('\\n', '\n')[2:-1]
 
     @staticmethod
     def convert_path_to_schema_path(path, module):

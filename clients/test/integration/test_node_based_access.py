@@ -348,3 +348,44 @@ class test_node_based_access(unittest.TestCase):
         }
 
         self.assertDictEqual(result, expected_answer)
+
+    def test_node_to_xml(self):
+        # Act
+        result = self.root.to_xmlstr()
+
+        # Assert
+        expected_result = """<integrationtest>
+  <default>statusquo</default>
+  <simpleenum>A</simpleenum>
+  <twokeylist>
+    <primary>true</primary>
+    <secondary>true</secondary>
+  </twokeylist>
+  <twokeylist>
+    <primary>true</primary>
+    <secondary>false</secondary>
+  </twokeylist>
+  <twokeylist>
+    <primary>false</primary>
+    <secondary>true</secondary>
+  </twokeylist>
+  <twokeylist>
+    <primary>false</primary>
+    <secondary>false</secondary>
+  </twokeylist>
+  <thing-that-is-leafref>GHI</thing-that-is-leafref>
+  <thing-to-leafref-against>GHI</thing-to-leafref-against>
+  <list-to-leafref-against>
+    <idle>i</idle>
+  </list-to-leafref-against>
+  <list-to-leafref-against>
+    <idle>w</idle>
+  </list-to-leafref-against>
+  <simpleleaf>duke</simpleleaf>
+  <outsidelist>
+    <leafo>its cold outside</leafo>
+  </outsidelist>
+</integrationtest>
+"""
+
+        self.assertEqual(result, expected_result)

@@ -265,6 +265,17 @@ class ContainingNode(Node):
         templater = TemplateNinja.TemplateNinja()
         templater.from_xmlstr(self, xmlstr)
 
+    def _to_xmlstr(self):
+        """
+        TODO: decide if this is good here or if it should move to session.
+
+        This is misleading because the template still applies from root (although
+        potentially we cahnge templater to handle an abritary node)
+        """
+
+        templater = TemplateNinja.TemplateNinja()
+        return templater.to_xmlstr(self._context.dal.dump_xpaths())
+
 
 class Choice(Node):
 
@@ -694,6 +705,14 @@ class Root(ContainingNode):
 
         templater = TemplateNinja.TemplateNinja()
         templater.from_template(self, template, **kwargs)
+
+    def to_xmlstr(self):
+        """
+        Return an XML Template from this node.
+        """
+
+        templater = TemplateNinja.TemplateNinja()
+        return templater.to_xmlstr(self._context.dal.dump_xpaths())
 
     def from_xmlstr(self, xmlstr):
         """

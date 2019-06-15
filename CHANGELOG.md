@@ -63,3 +63,4 @@
 
   - Sysrepo version bumped from 0.7.7 to 660552222ee6376efa560d9bcc7b832886ff460a
   - Implemented dump_xpaths() to sysrepo data abstraction layer.
+  - Implement to_xmlstr in TemplateNinja to convert a list of XPATH's to XML.
