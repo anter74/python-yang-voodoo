@@ -69,6 +69,7 @@ RUN \
       cd libyang && \
       git checkout 85d09f3bdf5ea01ea2e01deb384b2b0dde057e3f && \
       git checkout v0.16-r3 && \
+      git checkout v1.0-r2 && \
       mkdir build && cd build && \
       # We may not end up using these bindings (yang) and instead use (libyang - see below)
       # But it's useful to debug with both
@@ -168,7 +169,7 @@ RUN \
       make install
 
 
-ENV MY_VERSION=0.0.2cffi
+ENV MY_VERSION=0.0.5-debug
 ENV MY_ARCH=amd64
 
 # Optional build a deb

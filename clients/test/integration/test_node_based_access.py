@@ -356,6 +356,7 @@ class test_node_based_access(unittest.TestCase):
         # Assert
         expected_result = """<integrationtest>
   <default>statusquo</default>
+  <simpleleaf>duke</simpleleaf>
   <simpleenum>A</simpleenum>
   <twokeylist>
     <primary>true</primary>
@@ -381,7 +382,6 @@ class test_node_based_access(unittest.TestCase):
   <list-to-leafref-against>
     <idle>w</idle>
   </list-to-leafref-against>
-  <simpleleaf>duke</simpleleaf>
   <outsidelist>
     <leafo>its cold outside</leafo>
   </outsidelist>
