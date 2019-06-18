@@ -1,20 +1,22 @@
 import unittest
-
+import time
 import yangvoodoo
 import subprocess
 import sysrepo as sr
 from yangvoodoo import Types
 
-command = 'sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest'
-process = subprocess.Popen(["bash"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-(out, err) = process.communicate(command.encode('UTF-8'))
-if err:
-    raise ValueError('Unable to import data\n%s\n%s' % (out, err))
-
 
 class test_getdata(unittest.TestCase):
 
     def setUp(self):
+        command = 'sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest'
+        process = subprocess.Popen(["bash"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        (out, err) = process.communicate(command.encode('UTF-8'))
+        if err:
+            raise ValueError('Unable to import data\n%s\n%s' % (out, err))
+
+        time.sleep(0.5)
+
         self.subject = yangvoodoo.DataAccess()
         self.subject.connect('integrationtest')
 

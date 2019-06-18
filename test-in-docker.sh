@@ -18,8 +18,8 @@ echo "Starting subscribers"
 cd /working/subscribers
 ./launch-subscribers.sh
 
-
-
+touch /tmp/sysrepod-just-launched
+sleep 5
 echo "Ready"
 cd /working/clients
 set -euo pipefail

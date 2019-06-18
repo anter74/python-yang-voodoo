@@ -1,6 +1,7 @@
 import unittest
 import yangvoodoo
 import subprocess
+import time
 
 """
 Integration tests making use of python-yang-voodoo and the sysrepo backend.
@@ -13,20 +14,25 @@ The downside is that cleaning the datastore between every test becomes a
 little expensive, so there is bleed between each individual test.
 """
 
-command = 'sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest'
-process = subprocess.Popen(["bash"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-(out, err) = process.communicate(command.encode('UTF-8'))
-if err:
-    raise ValueError('Unable to import data\n%s\n%s' % (out, err))
-
 
 class test_node_based_access(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
+        command = 'sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest'
+        process = subprocess.Popen(["bash"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        (out, err) = process.communicate(command.encode('UTF-8'))
+        if err:
+            raise ValueError('Unable to import data\n%s\n%s' % (out, err))
+
+        time.sleep(0.5)
+
         self.subject = yangvoodoo.DataAccess()
         self.subject.connect('integrationtest')
         self.root = self.subject.get_node()
+
+    def tearDown(self):
+        self.subject.disconnect()
 
     def test_simplest_leaf(self):
         self.assertEqual(self.root.simpleleaf, 'duke')
@@ -343,7 +349,6 @@ class test_node_based_access(unittest.TestCase):
             '/integrationtest:thing-to-leafref-against': 'GHI',
             "/integrationtest:list-to-leafref-against[idle='i']": None,
             "/integrationtest:list-to-leafref-against[idle='w']": None,
-            "/integrationtest:outsidelist[leafo='its cold outside']": None,
             '/integrationtest:simpleleaf': 'duke'
         }
 
@@ -355,6 +360,37 @@ class test_node_based_access(unittest.TestCase):
 
         # Assert
         expected_result = """<integrationtest>
+  <default>statusquo</default>
+  <simpleenum>A</simpleenum>
+  <twokeylist>
+    <primary>true</primary>
+    <secondary>true</secondary>
+  </twokeylist>
+  <twokeylist>
+    <primary>true</primary>
+    <secondary>false</secondary>
+  </twokeylist>
+  <twokeylist>
+    <primary>false</primary>
+    <secondary>true</secondary>
+  </twokeylist>
+  <twokeylist>
+    <primary>false</primary>
+    <secondary>false</secondary>
+  </twokeylist>
+  <thing-that-is-leafref>GHI</thing-that-is-leafref>
+  <thing-to-leafref-against>GHI</thing-to-leafref-against>
+  <list-to-leafref-against>
+    <idle>i</idle>
+  </list-to-leafref-against>
+  <list-to-leafref-against>
+    <idle>w</idle>
+  </list-to-leafref-against>
+  <simpleleaf>duke</simpleleaf>
+</integrationtest>
+"""
+        # Assert
+        expected_result2 = """<integrationtest>
   <default>statusquo</default>
   <simpleleaf>duke</simpleleaf>
   <simpleenum>A</simpleenum>
@@ -382,10 +418,13 @@ class test_node_based_access(unittest.TestCase):
   <list-to-leafref-against>
     <idle>w</idle>
   </list-to-leafref-against>
-  <outsidelist>
-    <leafo>its cold outside</leafo>
-  </outsidelist>
 </integrationtest>
 """
 
-        self.assertEqual(result, expected_result)
+        # Assert
+        if result == expected_result:
+            print("Matched result")
+        elif result == expected_result2:
+            print("Matched result2")
+        else:
+            raise ValueError("Result doesn't match either expected results\n" + result)

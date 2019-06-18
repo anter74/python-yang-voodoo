@@ -1,6 +1,8 @@
 import unittest
 import yangvoodoo
 import yangvoodoo.stubdal
+import subprocess
+import time
 import yangvoodoo.proxydal
 from mock import Mock, patch
 
@@ -11,6 +13,14 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
+        command = 'sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest'
+        process = subprocess.Popen(["bash"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        (out, err) = process.communicate(command.encode('UTF-8'))
+        if err:
+            raise ValueError('Unable to import data\n%s\n%s' % (out, err))
+
+        time.sleep(0.5)
+
         self.session = yangvoodoo.DataAccess(disable_proxy=True)
         self.session.connect('integrationtest')
         self.root = self.session.get_node()

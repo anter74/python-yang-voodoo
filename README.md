@@ -1,7 +1,7 @@
 # Python access to YANG based Datastore (based on libyang/sysrepo)
 
 [![](https://travis-ci.org/allena29/python-yang-voodoo.svg?branch=master)](https://travis-ci.org/allena29/python-yang-voodoo)
-
+[![](https://coveralls.io/repos/github/allena29/python-yang-voodoo/badge.svg?branch=masterl)](https://coveralls.io/github/allena29/python-yang-voodoo?branch=master)
 
 
 The aim of this project is to provide the ability to write python code where there is a strong YANG based data model.
@@ -168,6 +168,26 @@ cd /working/init-data
 
 The `./launch-dbg` script in this repository will build a docker image (*first time will be slower*) mounts the current directory (i.e. this repository) as `/working` and then runs `/working-start-in-docker.sh`. This gives a quick way of getting a fresh docker instace (after the first build - which will terminate at the end). This will launch into an interactive python session (CTRL+D) to exit to bash.
 
+
+# Tests
+
+- **unitcore** Unit tests (against stub) for voodoo node based access
+- **unit** Unit tests (against stub) for extended test cases
+- **integration** Integration tests (against sysrepo)
+- In addition to tests *pycodestyle* and *xenon* are used for linting and complexity checks. *Right now complexity checks do not fail the build.*
+
+
+All tests can be executed with
+
+```bash
+./run-tests.sh
+```
+
+Integration tests can be skipped with
+
+```bash
+./run-tests.sh unit
+```
 
 
 

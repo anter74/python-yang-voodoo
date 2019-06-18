@@ -203,7 +203,7 @@ RUN \
 
 RUN \
     pip3 install lxml jinja2 dictdiffer six asn1crypto && \
-    pip3 install mock coverage nose2 autopep8 pyflakes xenon && \
+    pip3 install mock coverage nose2 autopep8 pyflakes xenon coveralls && \
     cd /working && \
     echo "Git Pull (v2)" && \
     git config --global user.email "docker-user@localhost" && \
@@ -215,8 +215,8 @@ RUN \
 
 RUN \
     touch /builder && \
-    touch /debug
-
+    touch /debug && \
+    echo "sysrepo-660552222ee6376efa560d9bcc7b832886ff460a-libyang-1.0r2-voodoo-devel" >/version
 
 ENV EDITOR vim
 EXPOSE 830
