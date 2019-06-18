@@ -43,7 +43,7 @@ RUN \
 
 
 RUN \
-      pip3 install mock coverage nose2 autopep8  
+      pip3 install mock coverage nose2 autopep8 pyflakes xenon
 
 
 EXPOSE 830 5000

@@ -7,3 +7,8 @@ libyang-cffi/
 *.egg-info/
 dist/
 *.pyc
+htmlcov-integration/
+htmlcov-unit/
+htmlcov-unitcore/
+htmlcov/
+.coverage

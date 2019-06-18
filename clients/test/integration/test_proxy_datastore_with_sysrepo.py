@@ -23,12 +23,12 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
         # Uncached
         self.assertFalse(xpath in self.subject.value_cached)
         result = self.subject.get(xpath)
-        self.assertEqual(result, None)
+        self.assertEqual(result, 'duke')
         self.assertTrue(xpath in self.subject.value_cached)
 
         # Cached
         result = self.subject.get(xpath)
-        self.assertEqual(result, None)
+        self.assertEqual(result, 'duke')
 
         # Drop cache
         self.subject.refresh()
