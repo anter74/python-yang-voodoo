@@ -129,7 +129,8 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.dirty = True
         if xpath not in self.stub_store:
             self.stub_store[xpath] = []
-        self.stub_store[xpath].append(value)
+        if value not in self.stub_store[xpath]:
+            self.stub_store[xpath].append(value)
 
     def remove(self, xpath, value):
         self.dirty = True

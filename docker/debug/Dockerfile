@@ -69,12 +69,11 @@ RUN \
       cd libyang && \
       git checkout 85d09f3bdf5ea01ea2e01deb384b2b0dde057e3f && \
       git checkout v0.16-r3 && \
-      git checkout v1.0-r2 && \
       mkdir build && cd build && \
       # We may not end up using these bindings (yang) and instead use (libyang - see below)
       # But it's useful to debug with both
       #cmake -DGEN_LANGUAGE_BINDINGS=ON -DGEN_PYTHON_BINDINGS=ON .. && \
-      cmake .. && \
+      cmake  -DCMAKE_BUILD_TYPE=Debug .. && \
       make -j6  && \
       make install && \
       ldconfig
@@ -87,11 +86,12 @@ RUN \
       git clone https://github.com/sysrepo/sysrepo.git && \
       cd sysrepo && \
       # git checkout 724a62fa830df7fcb2736b1ec41b320abe5064d2 && \
-      git checkout v0.7.7 && \
+      # git checkout v0.7.7 && \
+      # devel branch 15th June 2019
       git checkout 660552222ee6376efa560d9bcc7b832886ff460a && \
       mkdir build_python3 && \
       cd build_python3 && \
-      cmake -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 .. && \
+      cmake -DIS_DEVELOPER_CONFIGURATION=OFF -DCMAKE_BUILD_TYPE=Debug -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 .. && \
       make -j6 && \
       make install && \
       ldconfig
@@ -108,6 +108,7 @@ RUN \
       git clone https://github.com/allena29/python-yang-voodoo.git working && \
       cd working && \
       # git checkout  context-and-logging && \
+      echo "v0.0.2-devel-with-stub" && \
       cd /working && \
       pip3 install -r requirements.txt && \
       pip3 install jinja2 lxml && \
@@ -168,7 +169,7 @@ RUN \
       make install
 
 
-ENV MY_VERSION=0.0.5-debug
+ENV MY_VERSION=0.0.2cffi
 ENV MY_ARCH=amd64
 
 # Optional build a deb
@@ -209,9 +210,13 @@ RUN \
     git pull
 
 RUN \
-    touch /builder && \
-    echo "sysrepo-660552222ee6376efa560d9bcc7b832886ff460a-libyang-1.0r2-voodoo" >/voodoo-version
+    apt-get install -y gdb python3-dbg
 
+
+RUN \
+    touch /builder && \
+    touch /debug && \
+    echo "sysrepo-660552222ee6376efa560d9bcc7b832886ff460a-libyang-1.0r2-voodoo" >/version
 
 ENV EDITOR vim
 EXPOSE 830

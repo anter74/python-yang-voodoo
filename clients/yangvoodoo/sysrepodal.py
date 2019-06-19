@@ -96,10 +96,36 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             self._handle_error(None, err)
 
     def validate(self):
+        """
+        Validate data against the sysrepo backend.
+
+        There appears to be a race condition that if
+            - a) set data that's not valid (i.e. fails data constraints of a when condition)
+            - b) validate()
+            - c) correct data so that data's valid
+            - d) validate()
+
+        We may more times than not get an exception at point d.
+
+        If we then shortly after call validate again the validation passes as expected.
+        """
         try:
-            self.session.validate()
+            attempts = 2
+            delay = 0.1
+            for attempt in range(attempts):
+                try:
+                    self.session.validate()
+                    self.log.error("Validation of transaction failed - Attempt %s of %s" % (attempt + 1, attempts))
+                    return True
+                    time.sleep(delay)
+                except Exception:
+                    pass
+
+                self.session.validate()
+
         except RuntimeError as err:
             self._handle_error(None, err)
+
         return True
 
     def container(self, xpath):
@@ -347,3 +373,17 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             errors.append((sysrepo_error.message(), sysrepo_error.xpath()))
 
         raise yangvoodoo.Errors.BackendDatastoreError(errors)
+
+    def dump_xpaths(self):
+        new_dict = {}
+        vals = self.session.get_items('/' + self.module + ':*')
+        for i in range(vals.val_cnt()):
+            sysrepo_item = vals.val(i)
+            xpath = sysrepo_item.xpath()
+            try:
+                v = self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
+                new_dict[xpath] = v
+            except yangvoodoo.Errors.NodeHasNoValue:
+                pass
+
+        return new_dict

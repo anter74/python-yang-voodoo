@@ -18,6 +18,76 @@ class test_xml_to_xpath(unittest.TestCase):
         self.schemactx = self.root._context.schemactx
         self.module = self.root._context.module
 
+    def test_xpath_to_xml(self):
+        # Build
+        xpaths = {
+            "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/jklm/mnop": "val",
+            # "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/jklm/mnop2": "val2"
+
+        }
+
+        expected_result = """<module>
+  <regex>
+    <abc>
+      <def>
+        <ghi>s''sdf</ghi>
+        <xyz>asd</xyz>
+        <jklm>
+          <mnop>val</mnop>
+        </jklm>
+      </def>
+    </abc>
+  </regex>
+</module>
+"""
+
+        # Act
+        result = self.subject.to_xmlstr(xpaths)
+
+        # Assert
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_to_xml2(self):
+        # Build
+        xpaths = {
+            "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/jklm/mnop": "val",
+            "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/jklm/mnop2": "val2",
+            "/module:regex/abc/def[ghi='s''sdf'][xyz='asd2']/jklm/mnop": "val",
+            "/module:regex/abc/def[ghi='s''sdf'][xyz='asd2']/jklm/mnop2": "val2",
+            "/module:regex/abc/zzz": "123"
+        }
+
+        expected_result = """<module>
+  <regex>
+    <abc>
+      <def>
+        <ghi>s''sdf</ghi>
+        <xyz>asd</xyz>
+        <jklm>
+          <mnop>val</mnop>
+          <mnop2>val2</mnop2>
+        </jklm>
+      </def>
+      <def>
+        <ghi>s''sdf</ghi>
+        <xyz>asd2</xyz>
+        <jklm>
+          <mnop>val</mnop>
+          <mnop2>val2</mnop2>
+        </jklm>
+      </def>
+      <zzz>123</zzz>
+    </abc>
+  </regex>
+</module>
+"""
+
+        # Act
+        result = self.subject.to_xmlstr(xpaths)
+
+        # Assert
+        self.assertEqual(result, expected_result)
+
     def test_from_template_siblings(self):
         # Build
 

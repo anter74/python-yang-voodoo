@@ -10,6 +10,44 @@ class TemplateNinja:
     def __init__(self):
         self.log = Common.Utils.get_logger("TemplateNinja")
 
+    def to_xmlstr(self, xpaths):
+        # regex = re.compile("([a-zA-Z0-9_-]*)(/?)(\[.*?\])?")
+        regex = re.compile(r"([a-zA-Z0-9_-]*)(/?)((\[.*?\])*)?")
+        first_xpath = list(xpaths.keys())[0]
+        module = first_xpath[1:first_xpath.find(':')]
+
+        xmldoc = etree.Element(module)
+        node_lookup = {
+            '/': xmldoc
+        }
+
+        for xpath in xpaths:
+            path = "/"
+            for (a, _, b, _) in Common.Utils.SPLIT_XPATH.findall(xpath[xpath.find(':')+1:]):
+                xmlnode = node_lookup[path]
+
+                if a:
+                    path = path + "/" + a
+                    new_node = etree.Element(a)
+
+                if b:
+                    path = path + "/" + b
+                    key = 'keys'
+
+                    for (key, keyval) in Common.Utils.FIND_KEYS_AND_VALUES.findall(b):
+                        key_node = etree.Element(key)
+                        key_node.text = keyval
+                        new_node.append(key_node)
+
+                if path not in node_lookup:
+                    xmlnode.append(new_node)
+                    node_lookup[path] = new_node
+                    xmlnode = new_node
+
+            xmlnode.text = xpaths[xpath]
+
+        return Common.Utils.pretty_xmldoc(xmldoc)
+
     def from_template(self, root, template, **kwargs):
 
         variables = {'root': root}

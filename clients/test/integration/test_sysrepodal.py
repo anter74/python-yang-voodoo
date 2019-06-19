@@ -1,6 +1,8 @@
 import unittest
 from mock import Mock
 import yangvoodoo
+import subprocess
+import time
 import yangvoodoo.sysrepodal
 
 

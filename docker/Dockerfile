@@ -40,10 +40,11 @@ RUN \
       rm -f /get-pip.py && \
       pip3 install lxml jinja2 dictdiffer six asn1crypto
 
-
+RUN \
+    echo "sysrepo-660552222ee6376efa560d9bcc7b832886ff460a-libyang-1.0r2-voodoo" >/version
 
 RUN \
-      pip3 install mock coverage nose2 autopep8  
+      pip3 install mock coverage nose2 autopep8 pyflakes xenon coveralls
 
 
 EXPOSE 830 5000
