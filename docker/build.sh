@@ -28,7 +28,7 @@ echo "Copying deb pacakge"
 
 docker cp $container:/artefacts .
 wget https://bootstrap.pypa.io/get-pip.py -O artefacts/get-pip.py
-git clone -b devel https://github.com/allena29/python-yang-voodoo.git artefacts/working
+git clone -b master https://github.com/allena29/python-yang-voodoo.git artefacts/working
 docker stop $container
 
 img=`docker build . | tail -n 1 | sed -e's/Successfully built //'`

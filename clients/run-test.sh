@@ -19,9 +19,9 @@ else
 fi
 
 printf "\n\e[1;33mComplexity checks.....\e[0m\n"
-xenon . -a C -m C -b C
-echo "disabled build failure for complexity checks."
-if [ $? != 0 ]
+# xenon . -a C -m C -b C
+xenon . -a C -m C -b C 2>/dev/stdout| grep -v '_find_best_number_type" has a rank of D' | grep ERROR
+if [ $? == 0 ]
 then
   printf "\n\e[1;31mComplexity checkss.. Failed\e[0m\n"
   exit 1;

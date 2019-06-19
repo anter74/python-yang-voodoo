@@ -216,7 +216,7 @@ RUN \
 RUN \
     touch /builder && \
     touch /debug && \
-    echo "sysrepo-660552222ee6376efa560d9bcc7b832886ff460a-libyang-1.0r2-voodoo-devel" >/version
+    echo "sysrepo-660552222ee6376efa560d9bcc7b832886ff460a-libyang-1.0r2-voodoo" >/version
 
 ENV EDITOR vim
 EXPOSE 830

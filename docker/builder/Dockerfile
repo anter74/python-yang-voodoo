@@ -108,7 +108,6 @@ RUN \
       git clone https://github.com/allena29/python-yang-voodoo.git working && \
       cd working && \
       # git checkout  context-and-logging && \
-      echo "v0.0.2-devel-with-stub" && \
       cd /working && \
       pip3 install -r requirements.txt && \
       pip3 install jinja2 lxml && \
@@ -211,7 +210,7 @@ RUN \
 
 RUN \
     touch /builder && \
-    echo "sysrepo-660552222ee6376efa560d9bcc7b832886ff460a-libyang-1.0r2-voodoo-devel" >/voodoo-version
+    echo "sysrepo-660552222ee6376efa560d9bcc7b832886ff460a-libyang-1.0r2-voodoo" >/voodoo-version
 
 
 ENV EDITOR vim

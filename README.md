@@ -174,7 +174,7 @@ The `./launch-dbg` script in this repository will build a docker image (*first t
 - **unitcore** Unit tests (against stub) for voodoo node based access
 - **unit** Unit tests (against stub) for extended test cases
 - **integration** Integration tests (against sysrepo)
-- In addition to tests *pycodestyle* and *xenon* are used for linting and complexity checks. *Right now complexity checks do not fail the build.*
+- In addition to tests *pycodestyle* and *xenon* are used for linting and complexity checks.
 
 
 All tests can be executed with

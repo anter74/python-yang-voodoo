@@ -210,29 +210,32 @@ class Utils:
             elif isinstance(value, float):
                 return Types.DATA_ABSTRACTION_MAPPING['DECIMAL64']
             if isinstance(value, int):
-                if 12 in u_types and value >= -127 and value <= 128:
-                    return Types.DATA_ABSTRACTION_MAPPING['INT8']
-                elif 13 in u_types and value >= 0 and value <= 255:
-                    return Types.DATA_ABSTRACTION_MAPPING['UINT8']
-                elif 14 in u_types and value >= -32768 and value <= 32767:
-                    return Types.DATA_ABSTRACTION_MAPPING['INT16']
-                elif 15 in u_types and value >= 0 and value <= 65535:
-                    return Types.DATA_ABSTRACTION_MAPPING['UINT16']
-                elif 16 in u_types and value >= -2147483648 and value <= 2147483647:
-                    return Types.DATA_ABSTRACTION_MAPPING['INT32']
-                elif 17 in u_types and value >= 0 and value <= 4294967295:
-                    return Types.DATA_ABSTRACTION_MAPPING['UINT32']
-                elif 19 in u_types and value >= 0:
-                    return Types.DATA_ABSTRACTION_MAPPING['UINT64']
-                else:
-                    return Types.DATA_ABSTRACTION_MAPPING['INT64']
-
+                return Utils._find_best_number_type(u_types, value)
         if default_to_string:
             return Types.DATA_ABSTRACTION_MAPPING['STRING']
 
         msg = 'Unable to handle the yang type at path ' + str(xpath)
         msg += ' (this may be listed as a corner-case on the README already'
         raise NotImplementedError(msg)
+
+    @staticmethod
+    def _find_best_number_type(u_types, value):
+        if 12 in u_types and value >= -127 and value <= 128:
+            return Types.DATA_ABSTRACTION_MAPPING['INT8']
+        elif 13 in u_types and value >= 0 and value <= 255:
+            return Types.DATA_ABSTRACTION_MAPPING['UINT8']
+        elif 14 in u_types and value >= -32768 and value <= 32767:
+            return Types.DATA_ABSTRACTION_MAPPING['INT16']
+        elif 15 in u_types and value >= 0 and value <= 65535:
+            return Types.DATA_ABSTRACTION_MAPPING['UINT16']
+        elif 16 in u_types and value >= -2147483648 and value <= 2147483647:
+            return Types.DATA_ABSTRACTION_MAPPING['INT32']
+        elif 17 in u_types and value >= 0 and value <= 4294967295:
+            return Types.DATA_ABSTRACTION_MAPPING['UINT32']
+        elif 19 in u_types and value >= 0:
+            return Types.DATA_ABSTRACTION_MAPPING['UINT64']
+        else:
+            return Types.DATA_ABSTRACTION_MAPPING['INT64']
 
     @staticmethod
     def encode_xpath_predicate(k, v):
