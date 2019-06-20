@@ -25,7 +25,7 @@ class test_node_based_access(unittest.TestCase):
         if err:
             raise ValueError('Unable to import data\n%s\n%s' % (out, err))
 
-        time.sleep(0.5)
+        time.sleep(0.25)
 
         self.subject = yangvoodoo.DataAccess()
         self.subject.connect('integrationtest')
@@ -337,94 +337,51 @@ class test_node_based_access(unittest.TestCase):
     def test_dump_xpaths(self):
         self.subject.module = "integrationtest"
         result = self.subject.dump_xpaths()
-
         expected_answer = {
+            '/integrationtest:imports-in-here/name': 'foo',
             '/integrationtest:default': 'statusquo',
+            '/integrationtest:whencontainer/then': 'thendefault',
+            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/band": 'Dead Meadow',
+            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/favourite": True,
+            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/albums[album='Old Growth']/album": 'Old Growth',
+            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/albums[album='Old Growth']": None,
+            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']": None,
+            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']/band": 'Wooden Shjips',
+            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']/favourite": False,
+            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']": None,
+            '/integrationtest:morecomplex/extraboolean2': False,
+            '/integrationtest:morecomplex/extraboolean3': True,
+            '/integrationtest:morecomplex/leaf3': 12345,
+            '/integrationtest:morecomplex/inner/leaf5': 'Inside',
+            '/integrationtest:morecomplex/inner/leaf7': 'this-is-a-default',
+            '/integrationtest:morecomplex/inner': True,
+            '/integrationtest:morecomplex/leaf2': True,
+            '/integrationtest:morecomplex/nonconfig': 'hello',
             '/integrationtest:simpleenum': 'A',
+            "/integrationtest:twokeylist[primary='true'][secondary='true']/primary": True,
+            "/integrationtest:twokeylist[primary='true'][secondary='true']/secondary": True,
+            "/integrationtest:twokeylist[primary='true'][secondary='true']/tertiary": True,
             "/integrationtest:twokeylist[primary='true'][secondary='true']": None,
+            "/integrationtest:twokeylist[primary='true'][secondary='false']/primary": True,
+            "/integrationtest:twokeylist[primary='true'][secondary='false']/secondary": False,
+            "/integrationtest:twokeylist[primary='true'][secondary='false']/tertiary": True,
             "/integrationtest:twokeylist[primary='true'][secondary='false']": None,
+            "/integrationtest:twokeylist[primary='false'][secondary='true']/primary": False,
+            "/integrationtest:twokeylist[primary='false'][secondary='true']/secondary": True,
+            "/integrationtest:twokeylist[primary='false'][secondary='true']/tertiary": True,
             "/integrationtest:twokeylist[primary='false'][secondary='true']": None,
+            "/integrationtest:twokeylist[primary='false'][secondary='false']/primary": False,
+            "/integrationtest:twokeylist[primary='false'][secondary='false']/secondary": False,
+            "/integrationtest:twokeylist[primary='false'][secondary='false']/tertiary": False,
             "/integrationtest:twokeylist[primary='false'][secondary='false']": None,
             '/integrationtest:thing-that-is-leafref': 'GHI',
             '/integrationtest:thing-to-leafref-against': 'GHI',
+            "/integrationtest:list-to-leafref-against[idle='i']/idle": 'i',
+            "/integrationtest:list-to-leafref-against[idle='i']/wild": 'I',
             "/integrationtest:list-to-leafref-against[idle='i']": None,
+            "/integrationtest:list-to-leafref-against[idle='w']/idle": 'w',
+            "/integrationtest:list-to-leafref-against[idle='w']/wild": 'W',
             "/integrationtest:list-to-leafref-against[idle='w']": None,
-            '/integrationtest:simpleleaf': 'duke'
-        }
+            '/integrationtest:simpleleaf': 'duke'}
 
         self.assertDictEqual(result, expected_answer)
-
-    def test_node_to_xml(self):
-        # Act
-        result = self.root.to_xmlstr()
-
-        # Assert
-        expected_result = """<integrationtest>
-  <default>statusquo</default>
-  <simpleenum>A</simpleenum>
-  <twokeylist>
-    <primary>true</primary>
-    <secondary>true</secondary>
-  </twokeylist>
-  <twokeylist>
-    <primary>true</primary>
-    <secondary>false</secondary>
-  </twokeylist>
-  <twokeylist>
-    <primary>false</primary>
-    <secondary>true</secondary>
-  </twokeylist>
-  <twokeylist>
-    <primary>false</primary>
-    <secondary>false</secondary>
-  </twokeylist>
-  <thing-that-is-leafref>GHI</thing-that-is-leafref>
-  <thing-to-leafref-against>GHI</thing-to-leafref-against>
-  <list-to-leafref-against>
-    <idle>i</idle>
-  </list-to-leafref-against>
-  <list-to-leafref-against>
-    <idle>w</idle>
-  </list-to-leafref-against>
-  <simpleleaf>duke</simpleleaf>
-</integrationtest>
-"""
-        # Assert
-        expected_result2 = """<integrationtest>
-  <default>statusquo</default>
-  <simpleleaf>duke</simpleleaf>
-  <simpleenum>A</simpleenum>
-  <twokeylist>
-    <primary>true</primary>
-    <secondary>true</secondary>
-  </twokeylist>
-  <twokeylist>
-    <primary>true</primary>
-    <secondary>false</secondary>
-  </twokeylist>
-  <twokeylist>
-    <primary>false</primary>
-    <secondary>true</secondary>
-  </twokeylist>
-  <twokeylist>
-    <primary>false</primary>
-    <secondary>false</secondary>
-  </twokeylist>
-  <thing-that-is-leafref>GHI</thing-that-is-leafref>
-  <thing-to-leafref-against>GHI</thing-to-leafref-against>
-  <list-to-leafref-against>
-    <idle>i</idle>
-  </list-to-leafref-against>
-  <list-to-leafref-against>
-    <idle>w</idle>
-  </list-to-leafref-against>
-</integrationtest>
-"""
-
-        # Assert
-        if result == expected_result:
-            print("Matched result")
-        elif result == expected_result2:
-            print("Matched result2")
-        else:
-            raise ValueError("Result doesn't match either expected results\n" + result)
