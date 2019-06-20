@@ -34,6 +34,11 @@ class DiffIterator:
     REMOVE = 3
 
     def __init__(self, dataset_a, dataset_b, filter=''):
+        if isinstance(dataset_a, yangvoodoo.VoodooNode.Node):
+            dataset_a = dataset_a._context.dal.dump_xpaths()
+        if isinstance(dataset_b, yangvoodoo.VoodooNode.Node):
+            dataset_b = dataset_b._context.dal.dump_xpaths()
+
         self.a = dataset_a
         self.b = dataset_b
         self.filter = filter
@@ -41,29 +46,44 @@ class DiffIterator:
         self.diffset = diff(self.a, self.b)
         self.results = []
         for (op, path, values) in self.diffset:
-            if op == 'change':
-                if not path[0:len(filter)] == filter:
-                    continue
-                (old, new) = values
 
-                # This is specific to stub_store which uses lists/tuples for things it creates as covenient
-                # lookups.
-                if isinstance(new, tuple):
-                    continue
-                self.results.append((path, old, new, self.MODIFY))
-            else:
-                for (path, value) in values:
+            print(op, path, values)
+            value_is_a_list = False
+            if isinstance(path, list):
+                value_is_a_list = True
+                path = path[0]
+                index_of_item_changing = path[1]
+
+            try:
+                if op == 'change':
                     if not path[0:len(filter)] == filter:
                         continue
+                    (old, new) = values
 
                     # This is specific to stub_store which uses lists/tuples for things it creates as covenient
                     # lookups.
-                    if isinstance(value, tuple):
+                    if isinstance(new, tuple):
                         continue
-                    if op == 'remove':
-                        self.results.append((path, value, None, self.REMOVE))
-                    else:
-                        self.results.append((path, None, value, self.ADD))
+                    self.results.append((path, old, new, self.MODIFY))
+                else:
+                    for (leaf_path, value) in values:
+                        if isinstance(leaf_path, str):
+                            path = leaf_path
+                        if not path[0:len(filter)] == filter:
+                            continue
+
+                        # This is specific to stub_store which uses lists/tuples for things it creates as covenient
+                        # lookups.
+                        if isinstance(value, tuple):
+                            continue
+                        if op == 'remove':
+                            self.results.append((path, value, None, self.REMOVE))
+                        else:
+                            self.results.append((path, None, value, self.ADD))
+            except Exception as err:
+                print(err)
+                print(op, path, value)
+                raise ValueError("%s %s %s %s" % (op, path, value, err))
 
     def all(self):
         for result in self.results:
