@@ -15,7 +15,7 @@ class DiffIterator:
 
     Example usage:
 
-        differ = DiffIterator(dataset_A, dataset_B, filter='/integrationtest:diffs')
+        differ = DiffIterator(dataset_A, dataset_B, filter='/integrationtest:diffs', end_filter='/name')
 
     The resulting object can be used with.
 
@@ -25,7 +25,7 @@ class DiffIterator:
         differ.modified()   - return only XPATH's that have been modified (different values in dataset_A and dataset_B)
 
 
-
+    The filters
     TODO: this implementation is not optimal - the format data comes back from dictdiffer is a little different depending
     on the exact nature of the diff. Leaf-lists are more difficult.
 
@@ -35,7 +35,7 @@ class DiffIterator:
     MODIFY = 2
     REMOVE = 3
 
-    def __init__(self, dataset_a, dataset_b, filter=''):
+    def __init__(self, dataset_a, dataset_b, start_filter='', end_filter=''):
         if isinstance(dataset_a, yangvoodoo.VoodooNode.Node):
             dataset_a = dataset_a._context.dal.dump_xpaths()
         if isinstance(dataset_b, yangvoodoo.VoodooNode.Node):
@@ -43,60 +43,59 @@ class DiffIterator:
 
         self.a = dataset_a
         self.b = dataset_b
-        self.filter = filter
-
+        self.start_filter = start_filter
+        self.end_filter = end_filter
         self.diffset = diff(self.a, self.b)
         self.results = []
+
         for (op, path, values) in self.diffset:
-
-            print(op, path, values)
-            value_is_a_list = False
             if isinstance(path, list):
-                value_is_a_list = True
                 path = path[0]
-                index_of_item_changing = path[1]
 
-            try:
-                if op == 'change':
-                    if not path[0:len(filter)] == filter:
-                        continue
-                    (old, new) = values
+            if op == 'change':
+                if not DiffIterator.is_filtered(path, start_filter, end_filter):
+                    self._handle_modify(path, values)
+            else:
+                self._handle_add_or_remove(op, path, values)
 
-                    # This is specific to stub_store which uses lists/tuples for things it creates as covenient
-                    # lookups.
-                    if isinstance(new, tuple):
-                        continue
-                    self.results.append((path, old, new, self.MODIFY))
+    @staticmethod
+    def is_filtered(path, filter, end_filter):
+        if path[0:len(filter)] == filter and (end_filter == '' or path[-len(end_filter):] == end_filter):
+            return False
+        return True
+
+    def _handle_add_or_remove(self, op, path, values):
+        for (leaf_path, value) in values:
+            if isinstance(leaf_path, str):
+                path = leaf_path
+            if DiffIterator.is_filtered(path, self.start_filter, self.end_filter):
+                continue
+
+            # This is specific to stub_store which uses lists/tuples for things it creates as covenient
+            # lookups.
+            if isinstance(value, tuple):
+                continue
+            if op == 'remove':
+                if isinstance(value, list):
+                    pass
                 else:
-                    for (leaf_path, value) in values:
-                        if isinstance(leaf_path, str):
-                            path = leaf_path
-                        if not path[0:len(filter)] == filter:
-                            continue
+                    value = [value]
+                for v in value:
+                    self.results.append((path, v, None, self.REMOVE))
+            else:
+                if isinstance(value, list):
+                    pass
+                else:
+                    value = [value]
+                for v in value:
+                    self.results.append((path, None, v, self.ADD))
 
-                        # This is specific to stub_store which uses lists/tuples for things it creates as covenient
-                        # lookups.
-                        if isinstance(value, tuple):
-                            continue
-                        if op == 'remove':
-                            if isinstance(value, list):
-                                pass
-                            else:
-                                value = [value]
-                            for v in value:
-                                self.results.append((path, v, None, self.REMOVE))
-                        else:
-                            if isinstance(value, list):
-                                pass
-                            else:
-                                value = [value]
-                            for v in value:
-                                self.results.append((path, None, v, self.ADD))
-
-            except Exception as err:
-                print(err)
-                print(op, path, value)
-                raise ValueError("%s %s %s %s" % (op, path, value, err))
+    def _handle_modify(self, path, values):
+        (old, new) = values
+        # This is specific to stub_store which uses lists/tuples for things it creates as covenient
+        # lookups.
+        if not isinstance(new, tuple):
+            self.results.append((path, old, new, self.MODIFY))
 
     def all(self):
         for result in self.results:

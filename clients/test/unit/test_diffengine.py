@@ -36,7 +36,7 @@ class test_diff_engine(unittest.TestCase):
 
         # Act
         differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b,
-                                                    filter="/integrationtest:morecomplex")
+                                                    start_filter="/integrationtest:morecomplex")
 
         # Assert
         expected_results = [('/integrationtest:morecomplex/leaflists/simple', 'e', 'E', 2)]
@@ -52,7 +52,7 @@ class test_diff_engine(unittest.TestCase):
 
         # Act
         differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b,
-                                                    filter="/integrationtest:morecomplex")
+                                                    start_filter="/integrationtest:morecomplex")
 
         # Assert
         expected_results = [
@@ -74,7 +74,7 @@ class test_diff_engine(unittest.TestCase):
 
         # Act
         differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b,
-                                                    filter="/integrationtest:morecomplex")
+                                                    start_filter="/integrationtest:morecomplex")
 
         # Assert
         expected_results = [
@@ -90,7 +90,7 @@ class test_diff_engine(unittest.TestCase):
 
         # Act
         differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b,
-                                                    filter="/integrationtest:morecomplex")
+                                                    start_filter="/integrationtest:morecomplex")
 
         # Assert
         expected_results = [
@@ -117,7 +117,7 @@ class test_diff_engine(unittest.TestCase):
 
         # Act
         differ = yangvoodoo.DiffEngine.DiffIterator(self.stub_a.stub_store, self.stub_b.stub_store,
-                                                    filter="/integrationtest:diff")
+                                                    start_filter="/integrationtest:diff")
 
         expected_results = [
             ("/integrationtest:diff/modifies/a-list[listkey='Lissie']/listnonkey", 'earworm', 'earworm!', 2),
@@ -153,3 +153,10 @@ class test_diff_engine(unittest.TestCase):
             ('/integrationtest:diff/adds/a-2nd-leaf', None, 'b2', 1),
         ]
         self.assertEqual(list(differ.add()), expected_results)
+
+    def test_filter(self):
+        self.assertFalse(yangvoodoo.DiffEngine.DiffIterator.is_filtered('start-----', 'start', ''))
+        self.assertFalse(yangvoodoo.DiffEngine.DiffIterator.is_filtered('------end', '', 'end'))
+        self.assertFalse(yangvoodoo.DiffEngine.DiffIterator.is_filtered('start------end', 'start', 'end'))
+        self.assertTrue(yangvoodoo.DiffEngine.DiffIterator.is_filtered('----------end', 'start', 'end'))
+        self.assertTrue(yangvoodoo.DiffEngine.DiffIterator.is_filtered('start----------', 'start', 'end'))
