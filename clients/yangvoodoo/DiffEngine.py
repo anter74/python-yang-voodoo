@@ -26,7 +26,9 @@ class DiffIterator:
 
 
 
-    TODO: this implementation is not optimal and is dependant upon the stub.
+    TODO: this implementation is not optimal - the format data comes back from dictdiffer is a little different depending
+    on the exact nature of the diff. Leaf-lists are more difficult.
+
     """
 
     ADD = 1
@@ -77,9 +79,20 @@ class DiffIterator:
                         if isinstance(value, tuple):
                             continue
                         if op == 'remove':
-                            self.results.append((path, value, None, self.REMOVE))
+                            if isinstance(value, list):
+                                pass
+                            else:
+                                value = [value]
+                            for v in value:
+                                self.results.append((path, v, None, self.REMOVE))
                         else:
-                            self.results.append((path, None, value, self.ADD))
+                            if isinstance(value, list):
+                                pass
+                            else:
+                                value = [value]
+                            for v in value:
+                                self.results.append((path, None, v, self.ADD))
+
             except Exception as err:
                 print(err)
                 print(op, path, value)

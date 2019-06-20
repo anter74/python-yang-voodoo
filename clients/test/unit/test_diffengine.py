@@ -85,6 +85,19 @@ class test_diff_engine(unittest.TestCase):
         ]
         self.assertEqual(list(differ.all()), expected_results)
 
+    def test_diff_engine_with_leaflists_justadd(self):
+        self.root_b.morecomplex.leaflists.simple.create('A')
+
+        # Act
+        differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b,
+                                                    filter="/integrationtest:morecomplex")
+
+        # Assert
+        expected_results = [
+            ('/integrationtest:morecomplex/leaflists/simple', None, 'A', 1),
+        ]
+        self.assertEqual(list(differ.all()), expected_results)
+
     def test_diff_engine(self):
         self.root_a.diff.deletes.a_list.create('Avril Lavigne')
         self.root_a.diff.modifies.a_list.create('Lissie').listnonkey = 'earworm'
