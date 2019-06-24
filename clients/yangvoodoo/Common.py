@@ -49,6 +49,26 @@ class PlainIterator:
         raise StopIteration
 
 
+class IteratorToRaiseAnException:
+
+    def __init__(self, children, error_at=-1, error_type=Exception):
+        self.children = children
+        self.index = 0
+        self.error_at = error_at
+        self.error_type = error_type
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.error_at > -1 and self.index == self.error_at:
+            raise self.error_type()
+        if len(self.children) > self.index:
+            self.index = self.index + 1
+            return self.children[self.index-1]
+        raise StopIteration
+
+
 class Utils:
 
     LOG_INFO = logging.INFO
@@ -355,7 +375,7 @@ class Utils:
         if len(keys) and len(values):
             predicates = Utils.encode_xpath_predicates('', keys, values)
 
-        cache_entry = "!"+node.real_data_path + attr + predicates
+        cache_entry = "!" + node.real_data_path + attr + "!" + predicates + "!" + node.real_schema_path
 
         if context.schemacache.is_path_cached(cache_entry):
             return context.schemacache.get_item_from_cache(cache_entry)
