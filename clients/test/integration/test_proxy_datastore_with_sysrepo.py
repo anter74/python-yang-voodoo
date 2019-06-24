@@ -19,7 +19,7 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
         if err:
             raise ValueError('Unable to import data\n%s\n%s' % (out, err))
 
-        time.sleep(0.5)
+        time.sleep(0.25)
 
         self.session = yangvoodoo.DataAccess(disable_proxy=True)
         self.session.connect('integrationtest')

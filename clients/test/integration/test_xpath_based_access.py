@@ -15,7 +15,7 @@ class test_getdata(unittest.TestCase):
         if err:
             raise ValueError('Unable to import data\n%s\n%s' % (out, err))
 
-        time.sleep(0.5)
+        time.sleep(0.25)
 
         self.subject = yangvoodoo.DataAccess()
         self.subject.connect('integrationtest')

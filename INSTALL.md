@@ -52,9 +52,9 @@ git clone https://github.com/pyenv/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-v
   export LDFLAGS="-L/usr/local/opt/zlib/lib -L/usr/local/opt/sqlite3/lib"
   export CPPFLAGS="-I/usr/local/opt/zlib/include -I/usr/local/opt/sqlite3/include"
   export CFLAGS="-I$(xcrun --show-sdk-path)/usr/include"
-pyenv install 3.6.7
+pyenv install 3.7.3
 eval "$(pyenv virtualenv-init -)"
-pyenv virtualenv 3.6.7 yang-voodoo
+pyenv virtualenv 3.7.3 yang-voodoo-373
 pip install -r requirements.lock
 
 echo 'export PYENV_ROOT="$HOME/.pyenv"' >>~/.bashrc
@@ -71,16 +71,16 @@ echo 'export PYENV_VIRTUALENV_DISABLE_PROMPT=1' >>~/.bashrc
 
 The following instructions install sysrepo bindings within a pyenv environment. If not using pyenv then follow the simpler steps from the docker file.
 
-For MAC-OSX libpython3.6.dylib, for Linux libpython3.6m.a
+For MAC-OSX libpython3.7.dylib, for Linux libpython3.7m.a
 
 ```bash
 git clone --branch=v0.7.7 https://github.com/sysrepo/sysrepo.git
 cd sysrepo
-echo "3.6.7/envs/yang-voodoo" >.python-version
+echo "3.7.3/envs/yang-voodoo-373" >.python-version
 sed  -e 's/unset/#/' -i.bak swig/CMakeLists.txt
 mkdir build
 cd build
-cmake -DPYTHON_EXECUTABLE=~/.pyenv/versions/yang-voodoo/bin/python3  -DPYTHON_LIBRARY=~/.pyenv/versions/3.6.7/lib/libpython3.6.dylib  -DPYTHON_INCLUDE_DIR=~/.pyenv/versions/3.6.7/include/python3.6m  -DGEN_LUA_BINDINGS=0 -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 ..
+cmake -DPYTHON_EXECUTABLE=~/.pyenv/versions/yang-voodoo/bin/python3  -DPYTHON_LIBRARY=~/.pyenv/versions/3.7.3/lib/libpython3.7.dylib  -DPYTHON_INCLUDE_DIR=~/.pyenv/versions/3.7.3/include/python3.7m  -DGEN_LUA_BINDINGS=0 -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 ..
 make && sudo make install
 
 # Libyang
@@ -105,9 +105,9 @@ eval "$(pyenv init -)"
 export PYENV_ROOT="$HOME/.pyenv"
 
 git clone https://github.com/pyenv/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
-pyenv install 3.6.7
+pyenv install 3.7.3
 eval "$(pyenv virtualenv-init -)"
-pyenv virtualenv 3.6.7 yang-voodoo
+pyenv virtualenv 3.7.3 yang-voodoo-373
 
 
 echo 'export PYENV_ROOT="$HOME/.pyenv"' >>~/.bashrc
@@ -147,11 +147,11 @@ sudo ldconfig
 cd ~/
 git clone --branch=v0.7.7 https://github.com/sysrepo/sysrepo.git
 cd sysrepo
-echo "3.6.7/envs/yang-voodoo" >.python-version
+echo "3.7.3/envs/yang-voodoo-373" >.python-version
 sed  -e 's/unset/#/' -i.bak swig/CMakeLists.txt
 mkdir build
-cd build
-cmake -DPYTHON_EXECUTABLE=~/.pyenv/versions/yang-voodoo/bin/python3  -DPYTHON_LIBRARY=~/.pyenv/versions/3.6.7/lib/libpython3.6m.a  -DPYTHON_INCLUDE_DIR=~/.pyenv/versions/3.6.7/include/python3.6m  -DGEN_LUA_BINDINGS=0 -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 ..
+cd buil7
+cmake -DPYTHON_EXECUTABLE=~/.pyenv/versions/yang-voodoo/bin/python3  -DPYTHON_LIBRARY=~/.pyenv/versions/3.7.3/lib/libpython3.7m.a  -DPYTHON_INCLUDE_DIR=~/.pyenv/versions/3.7.3/include/python3.7m  -DGEN_LUA_BINDINGS=0 -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 ..
 make && sudo make install
 
 cd ~/
@@ -202,4 +202,3 @@ LIBYANG_INSTALL=system python3 setup.py install
 cd ~/
 sudo /usr/local/bin/sysrepod -d -l 4
 ```
-

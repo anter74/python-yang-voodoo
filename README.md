@@ -1,8 +1,7 @@
 # Python access to YANG based Datastore (based on libyang/sysrepo)
 
 [![](https://travis-ci.org/allena29/python-yang-voodoo.svg?branch=master)](https://travis-ci.org/allena29/python-yang-voodoo)
-[![](https://coveralls.io/repos/github/allena29/python-yang-voodoo/badge.svg?branch=masterl)](https://coveralls.io/github/allena29/python-yang-voodoo?branch=master)
-
+[![Coverage Status](https://coveralls.io/repos/github/allena29/python-yang-voodoo/badge.svg?branch=master)]
 
 The aim of this project is to provide the ability to write python code where there is a strong YANG based data model.
 By providing an object based access layer it allows data to be traversed without worrying about lower level details, and

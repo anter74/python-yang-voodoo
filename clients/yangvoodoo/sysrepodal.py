@@ -376,14 +376,28 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     def dump_xpaths(self):
         new_dict = {}
-        vals = self.session.get_items('/' + self.module + ':*')
-        for i in range(vals.val_cnt()):
-            sysrepo_item = vals.val(i)
-            xpath = sysrepo_item.xpath()
-            try:
-                v = self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
-                new_dict[xpath] = v
-            except yangvoodoo.Errors.NodeHasNoValue:
-                pass
+        xpath = '/' + self.module + ':*'
+        self._recurse_dump_xpaths(xpath, new_dict)
 
         return new_dict
+
+    def _recurse_dump_xpaths(self, xpath, new_dict):
+        vals = self.session.get_items(xpath)
+        if vals:
+            for i in range(vals.val_cnt()):
+                sysrepo_item = vals.val(i)
+                xpath = sysrepo_item.xpath()
+                self._recurse_dump_xpaths(xpath+'/*', new_dict)
+                try:
+                    v = self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
+                    if xpath in new_dict:
+                        if isinstance(new_dict[xpath], list):
+                            new_dict[xpath].append(v)
+                        else:
+                            tmp = new_dict[xpath]
+                            new_dict[xpath] = [tmp]
+                            new_dict[xpath].append(v)
+                    else:
+                        new_dict[xpath] = v
+                except yangvoodoo.Errors.NodeHasNoValue:
+                    pass
