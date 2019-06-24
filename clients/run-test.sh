@@ -51,23 +51,23 @@ function combine_reports {
   if [ $1 = "1" ]
   then
     mv htmlcov htmlcov-unitcore
-    mv .coverage htmlcov-unitcore
-    return
+    mv .coverage .coverage-previous
   fi
 
   if [ $2 = "1" ]
   then
     mv htmlcov htmlcov-unit
-    mv .coverage htmlcov-unit
-    coverage combine htmlcov-unitcore/.coverage htmlcov-unit/.coverage
+    mv .coverage htmlcov-unitcore
+    coverage combine htmlcov-unitcore/.coverage .coverage-previous
     coverage html
+    mv .coverage .coverage-previous
   fi
 
   if [ $3 = "1" ]
   then
     mv htmlcov htmlcov-integration
     mv .coverage htmlcov-integration
-    coverage combine htmlcov-unitcore/.coverage htmlcov-unit/.coverage htmlcov-integration/.coverage
+    coverage combine htmlcov-integration/.coverage .coverage-previous
     coverage html
   fi
 }
@@ -118,7 +118,7 @@ then
     printf "\n\e[1;31mIntegration tests.. (Extended Set) Failed\e[0m\n"
     combine_reports 0 0 0 0
     exit 1;
-  else:
+  else
     printf "\n\e[1;32mIntegration tests.. (Extended Set) Passed\e[0m\n"
     combine_reports 0 0 1 0
   fi

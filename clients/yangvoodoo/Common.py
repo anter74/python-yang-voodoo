@@ -135,7 +135,7 @@ class Utils:
             raise ValueError("Path is not valid as it ends with a trailing slash. (%s)" % (path))
         value_path = ""
         parent_value_path = ""
-        for (predicate, z, path) in Utils.DROP_PREDICATES.findall(path):
+        for (predicate, _, path) in Utils.DROP_PREDICATES.findall(path):
             parent_value_path = value_path
             if value_path == "":
                 value_path += "/" + module + ":" + path

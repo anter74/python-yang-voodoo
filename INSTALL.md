@@ -80,13 +80,14 @@ echo "3.7.3/envs/yang-voodoo-373" >.python-version
 sed  -e 's/unset/#/' -i.bak swig/CMakeLists.txt
 mkdir build
 cd build
-cmake -DPYTHON_EXECUTABLE=~/.pyenv/versions/yang-voodoo/bin/python3  -DPYTHON_LIBRARY=~/.pyenv/versions/3.7.3/lib/libpython3.7.dylib  -DPYTHON_INCLUDE_DIR=~/.pyenv/versions/3.7.3/include/python3.7m  -DGEN_LUA_BINDINGS=0 -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 ..
+cmake -DPYTHON_EXECUTABLE=~/.pyenv/versions/yang-voodoo-373/bin/python3  -DPYTHON_LIBRARY=~/.pyenv/versions/3.7.3/lib/libpython3.7.dylib  -DPYTHON_INCLUDE_DIR=~/.pyenv/versions/3.7.3/include/python3.7m  -DGEN_LUA_BINDINGS=0 -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 ..
 make && sudo make install
 
 # Libyang
 cd /tmp
 git clone https://github.com/allena29/libyang-cffi
 cd libyang-cffi
+echo "3.7.3/envs/yang-voodoo-373" >.python-version
 LIBYANG_INSTALL=system python3 setup.py install
 ```
 
