@@ -234,6 +234,10 @@ class Utils:
         if default_to_string:
             return Types.DATA_ABSTRACTION_MAPPING['STRING']
 
+        if value:
+            msg = "Unable to match the value '%s' to a yang type for path %s - check the value." % (value, str(xpath))
+            raise Errors.ValueNotMappedToType(xpath, value)
+
         msg = 'Unable to handle the yang type at path ' + str(xpath)
         msg += ' (this may be listed as a corner-case on the README already'
         raise NotImplementedError(msg)

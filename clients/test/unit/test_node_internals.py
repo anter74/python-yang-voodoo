@@ -121,3 +121,14 @@ class test_node_based_access(unittest.TestCase):
             '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf000'))
         result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), 2342342)
         self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['INT32'])
+
+        # More complex case where we have a union of int8,int16,int32,int64, uint8,uint16,uint32,uint64
+        yangnode = next(self.schemactx.find_path(
+            '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf112'))
+
+        with self.assertRaises(yangvoodoo.Errors.ValueNotMappedToType) as context:
+            yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), "not-valid", "/xpath")
+
+        # Assert
+        expected_msg = "Unable to match the value 'not-valid' to a yang type for path /xpath - check the yang schema"
+        self.assertEqual(str(context.exception), expected_msg)
