@@ -36,13 +36,13 @@ class TemplateNinja:
 
                     for (key, keyval) in Common.Utils.FIND_KEYS_AND_VALUES.findall(b):
                         key_node = etree.Element(key)
-                        key_node.text = keyval
+                        key_node.text = str(keyval)
                         new_node.append(key_node)
 
                 if path not in node_lookup:
                     xmlnode.append(new_node)
                     node_lookup[path] = new_node
-                    xmlnode = new_node
+                    xmlnode = str(new_node)
 
             xmlnode.text = xpaths[xpath]
 
