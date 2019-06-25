@@ -41,13 +41,13 @@ RUN \
       pip3 install lxml jinja2 dictdiffer six asn1crypto
 
 RUN \
-    cd /working/clients
-    echo -n "Build Date:" >.buildinfo
-    date >>.buildinfo
-    echo "Sysrepo: Commit 660552222ee6376efa560d9bcc7b832886ff460a" >>.buildinfo
-    echo "Libyang: 1.0r2" >>.buildinfo
-    echo -n "YangVoodoo:" >>.buildinfo
-    git commit | head -n 1 >>.buildinfo
+    cd /working/clients && \
+    echo -n "Build Date:" >.buildinfo && \
+    date >>.buildinfo && \
+    echo "Sysrepo: Commit 660552222ee6376efa560d9bcc7b832886ff460a" >>.buildinfo && \
+    echo "Libyang: 1.0r2" >>.buildinfo && \
+    echo -n "YangVoodoo:" >>.buildinfo && \
+    git log | head -n 1 >>.buildinfo
 
 RUN \
       pip3 install mock coverage nose2 autopep8 pyflakes xenon coveralls
