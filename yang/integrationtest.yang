@@ -1132,6 +1132,17 @@ module integrationtest {
         }
       }
 
+      leaf leaf113 {
+        type union {
+          type enumeration {
+            enum vocation;
+          }
+          type uint32;
+          type boolean;
+        }
+      }
+
+
       container ietf-inet-types {
 
         container ip {

@@ -48,16 +48,18 @@ class TemplateNinja:
 
         return Common.Utils.pretty_xmldoc(xmldoc)
 
-    def from_template(self, root, template, **kwargs):
+    def _getTemplate(self, contents):
+        return Template(contents)
 
+    def from_template(self, root, template, **kwargs):
         variables = {'root': root}
         for variable_name in kwargs:
             variables[variable_name] = kwargs[variable_name]
 
         xmlstr = ""
         with open(template) as file_handle:
-            t = Template(file_handle.read())
-            xmlstr = t.render(variables)
+            template = self._getTemplate(file_handle.read())
+            xmlstr = template.render(variables)
 
         dal = root.__dict__['_context'].dal
         yangctx = root.__dict__['_context'].schemactx
@@ -66,11 +68,6 @@ class TemplateNinja:
         self._import_xml_to_datastore(module, yangctx, xmlstr, dal)
 
     def from_xmlstr(self, root, xmlstr, **kwargs):
-
-        variables = {'root': root}
-        for variable_name in kwargs:
-            variables[variable_name] = kwargs[variable_name]
-
         dal = root.__dict__['_context'].dal
         yangctx = root.__dict__['_context'].schemactx
         module = root.__dict__['_context'].module
@@ -142,7 +139,8 @@ class TemplateNinja:
             elif node_type == 64:   # Case
                 pass
             else:
-                yang_type = Common.Utils.get_yang_type(node_schema.type(), child.text, this_path)
+                yang_type = self._best_guess_of_yang_type(node_schema.type(), child.text, this_path)
+
                 val = Common.Utils.convert_string_to_python_val(child.text, yang_type)
                 self.log.trace('setting. %s => %s %s', value_path, val, yang_type)
                 state.dal.set(value_path, val, yang_type)
@@ -165,6 +163,14 @@ class TemplateNinja:
             state.spath.pop()
 
         # for child in xmldoc.getchildren():
+
+    def _best_guess_of_yang_type(self, node_schema_type, child_text, this_path):
+        try:
+            return Common.Utils.get_yang_type(node_schema_type, child_text, this_path)
+        except yangvoodoo.Errors.ValueNotMappedToType:
+            pass
+
+        return Common.Utils.get_yang_type(node_schema_type, int(child_text), this_path)
 
     def _build_predicates(self, node_schema, this_path,  child, children, state):
         """

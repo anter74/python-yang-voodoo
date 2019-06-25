@@ -65,3 +65,9 @@
   - Implemented dump_xpaths() to sysrepo data abstraction layer.
   - Implement to_xmlstr in TemplateNinja to convert a list of XPATH's to XML.
   - Leaf-List entrires no-longer duplicated in the stub store.
+  - Reword error message for get-yang type many times it's bad data
+    - union's may not be fully supported, especially with unions (union of enumeration + uint is supported)
+    - see `best_guess_of_yang_type` - need to formalise to a more precise method that interrogates unions through typedefs and leafrefs
+  - Fix caching of node_schema to be based on data+schema path to avoid choice/cases returning bad data.
+  - DiffEngine fixes for leaf-lists  
+  - Upgrade to python 3.7.3

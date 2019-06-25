@@ -460,3 +460,18 @@ class Utils:
             real_values.append((value, key_yang_type))
 
         return keys, real_values
+
+    @staticmethod
+    def best_guess_of_yang_type(node_schema_type, child_text, this_path):
+        """
+        TODO: still want to create a proper validator class to properly recurse through union/typedef/leafrefs
+        and find the best match. This will do for now.
+
+        This is currently used by TemplateNinja
+        """
+        try:
+            return Utils.get_yang_type(node_schema_type, child_text, this_path)
+        except Errors.ValueNotMappedToType:
+            pass
+
+        return Utils.get_yang_type(node_schema_type, int(child_text), this_path)

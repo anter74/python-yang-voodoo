@@ -1,6 +1,6 @@
 import yangvoodoo.stubdal
 import unittest
-from mock import Mock, call
+from mock import Mock, call, patch
 
 
 class test_xml_to_xpath(unittest.TestCase):
@@ -221,6 +221,76 @@ class test_xml_to_xpath(unittest.TestCase):
                  'A', 'B'], [('a', 18), ('b', 18)])
         ])
 
+    def test_from_template_with_union_of_enumeartions(self):
+        # Build
+
+        template = """<integrationtest>
+          <morecomplex>
+            <inner>
+                <leaf112>vocation</leaf112>
+            </inner>
+        </morecomplex>
+        </integrationtest>
+        """
+
+        dal = Mock()
+
+        # Act
+        self.subject._import_xml_to_datastore(self.module, self.schemactx, template, dal)
+
+        # Assert
+        self.assertEqual(dal.set.call_count, 1)
+        dal.set.assert_has_calls([
+            call('/integrationtest:morecomplex/inner/leaf112', 'vocation', 11),
+        ])
+
+    def test_from_template_with_union_of_enumeartions_but_setting_integer(self):
+        # Build
+
+        template = """<integrationtest>
+          <morecomplex>
+            <inner>
+                <leaf112>123</leaf112>
+            </inner>
+        </morecomplex>
+        </integrationtest>
+        """
+
+        dal = Mock()
+
+        # Act
+        self.subject._import_xml_to_datastore(self.module, self.schemactx, template, dal)
+
+        # Assert
+        self.assertEqual(dal.set.call_count, 1)
+        dal.set.assert_has_calls([
+            call('/integrationtest:morecomplex/inner/leaf112', 123, 21),
+        ])
+    #
+    # def test_from_template_with_union_of_enumeartions_but_setting_boolean(self):
+    # TODO: Union of enumeration + boolean not support yet
+    #     # Build
+    #
+    #     template = """<integrationtest>
+    #       <morecomplex>
+    #         <inner>
+    #             <leaf113>true</leaf113>
+    #         </inner>
+    #     </morecomplex>
+    #     </integrationtest>
+    #     """
+    #
+    #     dal = Mock()
+    #
+    #     # Act
+    #     self.subject._import_xml_to_datastore(self.module, self.schemactx, template, dal)
+    #
+    #     # Assert
+    #     self.assertEqual(dal.set.call_count, 1)
+    #     dal.set.assert_has_calls([
+    #         call('/integrationtest:morecomplex/inner/leaf112', 123, 21),
+    #     ])
+
     def test_from_template_with_leaflists(self):
         # Build
 
@@ -273,6 +343,35 @@ class test_xml_to_xpath(unittest.TestCase):
 
             self.assertEqual(expected_items[0], item)
             expected_items.pop(0)
+
+    @patch("builtins.open", create=True)
+    def test_from_template(self, mockOpen):
+        # Build
+        moca = Mock()
+        moca.render.return_value = "Rendered Template"
+        self.subject._getTemplate = Mock(return_value=moca)
+        mockOpen.read.return_value = 'template-contents'
+        self.subject._import_xml_to_datastore = Mock()
+
+        # Act
+        self.subject.from_template(self.root, "my_template_file.xml", keyword1=1, keyword2=2)
+
+        # Assert
+        self.subject._import_xml_to_datastore.assert_called_once_with('integrationtest', self.root._context.schemactx,
+                                                                      "Rendered Template", self.root._context.dal)
+
+        moca.render.assert_called_once_with({'root': self.root, 'keyword1': 1, 'keyword2': 2})
+
+    def test_from_xmlstr(self):
+        # Build
+        self.subject._import_xml_to_datastore = Mock()
+
+        # Act
+        self.subject.from_xmlstr(self.root, "<my-xmlstr/>")
+
+        # Assert
+        self.subject._import_xml_to_datastore.assert_called_once_with('integrationtest', self.root._context.schemactx,
+                                                                      '<my-xmlstr/>', self.root._context.dal)
 
     def test_from_template_with_list_number(self):
         # Build
