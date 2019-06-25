@@ -548,3 +548,6 @@ Children: %s""" % (str(children)[1:-1])
         elif os.path.exists('.black'):
             with open('.black') as fh:
                 print(fh.read())
+        if os.path.exists('.buildinfo'):
+            with open('.buildinfo') as fh:
+                print(fh.read())
