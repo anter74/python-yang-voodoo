@@ -23,7 +23,6 @@ install:
 
 script:
   - docker exec -i working /bin/sh -c "cd /working; git checkout $TRAVIS_COMMIT"
-  - docker exec -i working cat /version
   - docker exec -i working /working/test-in-docker.sh
 
 after_success:
