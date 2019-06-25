@@ -44,7 +44,7 @@ class TemplateNinja:
                     node_lookup[path] = new_node
                     xmlnode = str(new_node)
 
-            xmlnode.text = xpaths[xpath]
+            xmlnode.text = str(xpaths[xpath])
 
         return Common.Utils.pretty_xmldoc(xmldoc)
 
