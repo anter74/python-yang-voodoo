@@ -19,6 +19,11 @@ class test_xml_to_xpath(unittest.TestCase):
         self.module = self.root._context.module
 
     def test_xpath_to_xml(self):
+        """
+        This probably isn't reflecting the real world - would expect predicates
+        The single quotes inside the predicate isn't quite standard complaint either,
+        just because this function handles it is no assurance other functions do.
+        """
         # Build
         xpaths = {
             "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/jklm/mnop": "val",
@@ -47,7 +52,12 @@ class test_xml_to_xpath(unittest.TestCase):
         # Assert
         self.assertEqual(result, expected_result)
 
-    def test_xpath_to_xml2(self):
+    def test_xpath_to_xml2_without_predicates(self):
+        """
+        This probably isn't reflecting the real world - would expect predciates
+        The single quotes inside the predicate isn't quite standard complaint either,
+        just because this function handles it is no assurance other functions do.
+        """
         # Build
         xpaths = {
             "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/jklm/mnop": "val",
@@ -70,6 +80,57 @@ class test_xml_to_xpath(unittest.TestCase):
       </def>
       <def>
         <ghi>s''sdf</ghi>
+        <xyz>asd2</xyz>
+        <jklm>
+          <mnop>val</mnop>
+          <mnop2>val2</mnop2>
+        </jklm>
+      </def>
+      <zzz>123</zzz>
+    </abc>
+  </regex>
+</module>
+"""
+
+        # Act
+        result = self.subject.to_xmlstr(xpaths)
+
+        # Assert
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_to_xml3(self):
+        """
+        This is more representative than the previous two examples, because
+        the predicates are explicit.
+
+            "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/ghi": "ssdf",
+            "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/xyz": "asd",
+        """
+        # Build
+        xpaths = {
+            "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/ghi": "ssdf",
+            "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/xyz": "asd",
+            "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/jklm/mnop": "val",
+            "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/jklm/mnop": "val",
+            "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/jklm/mnop2": "val2",
+            "/module:regex/abc/def[ghi='ssdf'][xyz='asd2']/jklm/mnop": "val",
+            "/module:regex/abc/def[ghi='ssdf'][xyz='asd2']/jklm/mnop2": "val2",
+            "/module:regex/abc/zzz": "123"
+        }
+
+        expected_result = """<module>
+  <regex>
+    <abc>
+      <def>
+        <ghi>ssdf</ghi>
+        <xyz>asd</xyz>
+        <jklm>
+          <mnop>val</mnop>
+          <mnop2>val2</mnop2>
+        </jklm>
+      </def>
+      <def>
+        <ghi>ssdf</ghi>
         <xyz>asd2</xyz>
         <jklm>
           <mnop>val</mnop>
@@ -190,6 +251,32 @@ class test_xml_to_xpath(unittest.TestCase):
         self.assertEqual(self.root.container_and_lists.multi_key_list['a', 'b'].inner.level3list['33333'].level3key, '33333')
         self.assertEqual(self.root.container_and_lists.multi_key_list['a', 'b'].level2list['22222'].level2key, '22222')
         self.assertFalse('2' in self.root.container_and_lists.multi_key_list.level2list)
+
+    def test_from_template_with_the_wrong_keys(self):
+        # Build
+
+        template = """<integrationtest>
+          <container-and-lists>
+            <numberkey-list>
+              <numberkey>5</numberkey>
+            </numberkey-list>
+            <multi-key-list>
+              <B>a</B>
+              <A>b</A>
+            </multi-key-list>
+          </container-and-lists>
+        </integrationtest>
+        """
+
+        dal = Mock()
+
+        # Act
+        with self.assertRaises(ValueError) as context:
+            self.subject._import_xml_to_datastore(self.module, self.schemactx, template, dal)
+
+        # Assert
+        expected_msg = "Expecting key name A, got B at /integrationtest:container-and-lists/multi-key-list"
+        self.assertEqual(expected_msg, str(context.exception))
 
     def test_from_template_with_only_keys(self):
         # Build

@@ -38,6 +38,7 @@ class TemplateNinja:
                         key_node = etree.Element(key)
                         key_node.text = str(keyval)
                         new_node.append(key_node)
+                        node_lookup[path + "/" + key] = key_node
 
                 if path not in node_lookup:
                     xmlnode.append(new_node)
@@ -139,7 +140,7 @@ class TemplateNinja:
             elif node_type == 64:   # Case
                 pass
             else:
-                yang_type = self._best_guess_of_yang_type(node_schema.type(), child.text, this_path)
+                yang_type = Common.Utils.best_guess_of_yang_type(node_schema.type(), child.text, this_path)
 
                 val = Common.Utils.convert_string_to_python_val(child.text, yang_type)
                 self.log.trace('setting. %s => %s %s', value_path, val, yang_type)
@@ -161,16 +162,6 @@ class TemplateNinja:
 
             state.path.pop()
             state.spath.pop()
-
-        # for child in xmldoc.getchildren():
-
-    def _best_guess_of_yang_type(self, node_schema_type, child_text, this_path):
-        try:
-            return Common.Utils.get_yang_type(node_schema_type, child_text, this_path)
-        except yangvoodoo.Errors.ValueNotMappedToType:
-            pass
-
-        return Common.Utils.get_yang_type(node_schema_type, int(child_text), this_path)
 
     def _build_predicates(self, node_schema, this_path,  child, children, state):
         """
