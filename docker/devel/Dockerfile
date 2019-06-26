@@ -29,7 +29,7 @@ RUN \
 ADD artefacts /
 
 RUN \
-      dpkg -i /*.deb && \
+      dpkg -i /*bundle*.deb && \
       rm -fr /*.deb && \
       apt-get clean && \
       apt-get autoclean

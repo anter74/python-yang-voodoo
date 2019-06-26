@@ -29,7 +29,7 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.5"
+    __version__ = "0.0.6-devel"
 
     def __init__(self, log=None, local_log=False, remote_log=False, data_abstraction_layer=None,
                  disable_proxy=False, use_stub=False):

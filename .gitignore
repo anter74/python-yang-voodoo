@@ -13,3 +13,4 @@ htmlcov-unitcore/
 htmlcov/
 .coverage
 .coverage.bak
+git-clone/

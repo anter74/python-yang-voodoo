@@ -80,6 +80,52 @@ RUN \
       ldconfig
 
 
+RUN \
+      git clone https://github.com/allena29/libyang-cffi.git && \
+      cd libyang-cffi && \
+      echo "#!/bin/bash" >rebuild.sh && \
+      LIBYANG_INSTALL=system python3 setup.py install
+
+# CHANGE VERSION NUMBER HERE
+ENV MY_VERSION=0.0.6-devel
+ENV MY_ARCH=amd64
+
+
+RUN \
+      cd / && \
+      git clone https://github.com/allena29/python-yang-voodoo.git working && \
+      cd working && \
+      git checkout $MY_VERSION && \
+      cd /working && \
+      pip3 install -r requirements.txt && \
+      pip3 install jinja2 lxml && \
+      python3 setup.py install
+
+
+# Optional build a deb
+RUN \
+      mkdir ~/python-bundle && \
+      cd / && \
+      tar cvpf /tmp/working.tar /usr/local && \
+      cd ~/python-bundle && \
+      tar xvf /tmp/working.tar && \
+      rm -fr usr/local/games && \
+      rm -fr usr/local/lib/python2.7 && \
+      tar cvpf /tmp/libyang.tar usr/local/lib/python3.7/dist-packages/*libyang* usr/local/lib/python3.7/dist-packages/*yangvoodoo* && \
+      tar xvf /tmp/libyang.tar && \
+      mkdir ~/python-bundle/DEBIAN && \
+      echo "Package: python-yang-vooodoo-bundle" >~/python-bundle/DEBIAN/control && \
+      echo "Version: ${MY_VERSION}" >>~/python-bundle/DEBIAN/control && \
+      echo "Architecture: ${MY_ARCH}" >>~/python-bundle/DEBIAN/control && \
+      echo "Maintainer: allena29@noreply.user.github.com" >>~/python-bundle/DEBIAN/control && \
+      echo "Description: libyang-python bundle without any backend datastore" >>~/python-bundle/DEBIAN/control && \
+      echo "#!/bin/sh" >~/python-bundle/DEBIAN/postinst && \
+      echo "ldconfig" >>~/python-bundle/DEBIAN/postinst && \
+      echo "touch /tmp/pkginstall" >>~/python-bundle/DEBIAN/postinst && \
+      chmod 755 ~/python-bundle/DEBIAN/postinst && \
+      dpkg --build ~/python-bundle && \
+      mkdir /artefacts && \
+      mv /root/python-bundle.deb /artefacts/python-yang-vooodoo_standalone.${MY_VERSION}.${MY_ARCH}.deb
 
 # sysrepo
 RUN \
@@ -95,23 +141,6 @@ RUN \
       make -j6 && \
       make install && \
       ldconfig
-
-RUN \
-      git clone https://github.com/allena29/libyang-cffi.git && \
-      cd libyang-cffi && \
-      echo "#!/bin/bash" >rebuild.sh && \
-      LIBYANG_INSTALL=system python3 setup.py install
-
-
-RUN \
-      cd / && \
-      git clone https://github.com/allena29/python-yang-voodoo.git working && \
-      cd working && \
-      # git checkout  context-and-logging && \
-      cd /working && \
-      pip3 install -r requirements.txt && \
-      pip3 install jinja2 lxml && \
-      python3 setup.py install
 
 
 # libssh
@@ -167,10 +196,6 @@ RUN \
       make  && \
       make install
 
-# CHANGE VERSION NUMBER HERE
-ENV MY_VERSION=0.0.5
-ENV MY_ARCH=amd64
-
 # Optional build a deb
 RUN \
       mkdir ~/sysrepo-python-bundle && \
@@ -189,14 +214,13 @@ RUN \
       echo "Architecture: ${MY_ARCH}" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Depends: libev4,libprotobuf-c1" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Maintainer: allena29@noreply.user.github.com" >>~/sysrepo-python-bundle/DEBIAN/control && \
-      echo "Description: sysrepo/libyang-python bundle without netconf support for local use." >>~/sysrepo-python-bundle/DEBIAN/control && \
+      echo "Description: sysrepo/libyang-python bundle with netconf support for local use." >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "#!/bin/sh" >~/sysrepo-python-bundle/DEBIAN/postinst && \
       echo "ldconfig" >>~/sysrepo-python-bundle/DEBIAN/postinst && \
       echo "touch /tmp/pkginstall" >>~/sysrepo-python-bundle/DEBIAN/postinst && \
       chmod 755 ~/sysrepo-python-bundle/DEBIAN/postinst && \
       dpkg --build ~/sysrepo-python-bundle && \
-      mkdir /artefacts && \
-      mv /root/sysrepo-python-bundle.deb /artefacts/python-yang-vooodoo_bundle.${MY_VERSION}.${MY_ARCH}.deb
+      mv /root/sysrepo-python-bundle.deb /artefacts/python-yang-vooodoo_netopeer2_sysrepo_bundle.${MY_VERSION}.${MY_ARCH}.deb
 
 
 
@@ -205,6 +229,7 @@ RUN \
     pip3 install mock coverage nose2 autopep8 pyflakes xenon coveralls && \
     cd /working && \
     echo "Git Pull (v2)" && \
+    git checkout master && \
     git config --global user.email "docker-user@localhost" && \
     git pull
 
