@@ -33,7 +33,7 @@
     - Example of containing nodes, Lists (but not Leaf-Lists), Containers, Root. The name of a child attribute can be provided (mandatory for root). i.e. `root.morecomplex.get_extension('info')` will look for the extension info on `/root/morecomplex` itself.
   - **EXPERIMENTAL** DiffEngine
 
-# v0.0.4 - Optimisations and Cleanup
+# v0.0.4 - Optimisations and Cleanup (Stegosaurus)
 
    - FIX: for template applier when using lists within lists
    - Travis now working on commits.
@@ -55,12 +55,10 @@
    - FEATURE: `session.describe()` now shows children
    - FEATURE: `session.tree()` to print a pyang style tree
 
-# v0.0.4 - Bugfixes
 
-   - FEATURE: Choices/Cases applied via a template now calculate the correct data path.
+# v0.0.5 - Gap filling, Bugfixes and Cleanup (Tortoise)
 
-# DEVEL version
-
+  - FIX: Choices/Cases applied via a template now calculate the correct data path.
   - Sysrepo version bumped from 0.7.7 to 660552222ee6376efa560d9bcc7b832886ff460a
   - Implemented dump_xpaths() to sysrepo data abstraction layer.
   - Implement to_xmlstr in TemplateNinja to convert a list of XPATH's to XML.
@@ -68,6 +66,7 @@
   - Reword error message for get-yang type many times it's bad data
     - union's may not be fully supported, especially with unions (union of enumeration + uint is supported)
     - see `best_guess_of_yang_type` - need to formalise to a more precise method that interrogates unions through typedefs and leafrefs
-  - Fix caching of node_schema to be based on data+schema path to avoid choice/cases returning bad data.
-  - DiffEngine fixes for leaf-lists  
+  - FIX: caching of node_schema to be based on data+schema path to avoid choice/cases returning bad data.
+  - FIX: DiffEngine fixes for leaf-lists  
   - Upgrade to python 3.7.3
+  - FIX: Don't write list-keys twice when using TemplateNinja's to_xmlstr

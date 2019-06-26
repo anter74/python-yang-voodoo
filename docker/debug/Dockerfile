@@ -108,7 +108,8 @@ RUN \
       git clone https://github.com/allena29/python-yang-voodoo.git working && \
       cd working && \
       # git checkout  context-and-logging && \
-      echo "v0.0.2-devel-with-stub" && \
+      # CHANGE VERSION NUMBER HERE
+      echo "v0.0.5" && \
       cd /working && \
       pip3 install -r requirements.txt && \
       pip3 install jinja2 lxml && \
@@ -168,8 +169,8 @@ RUN \
       make  && \
       make install
 
-
-ENV MY_VERSION=0.0.2cffi
+# CHANGE VERSION NUMBER HERE
+ENV MY_VERSION=0.0.5
 ENV MY_ARCH=amd64
 
 # Optional build a deb

@@ -5,8 +5,8 @@
 # script extracts.
 # The smaller deb file is used to create a minimal enviornemnt and installs
 # the smaller deb file.
-# Instead of 1.29GB for the full image we are closer to 250MB with this approach.
-#
+# Instead of 1.29GB for the full image we are closer to 350MB with this approach.
+# We have test harness things in place.
 
 
 set pipefail -euo

@@ -91,7 +91,8 @@ with open('README.md', 'r') as fh:
 
 os.chdir('clients')
 setuptools.setup(name='yangvoodoo',
-                 version='0.0.5-devel', author='Adam Allen',
+                 # CHANGE VERSION NUMBER HERE
+                 version='0.0.5', author='Adam Allen',
                  author_email='allena29@users.noreply.github.com',
                  description='Python based access to YANG Datatstores',
                  long_description=long_description,

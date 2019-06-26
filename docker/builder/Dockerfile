@@ -167,8 +167,8 @@ RUN \
       make  && \
       make install
 
-
-ENV MY_VERSION=0.0.5-debug
+# CHANGE VERSION NUMBER HERE
+ENV MY_VERSION=0.0.5
 ENV MY_ARCH=amd64
 
 # Optional build a deb
