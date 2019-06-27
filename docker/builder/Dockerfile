@@ -10,7 +10,8 @@ RUN \
       gnupg \
       apt-transport-https \
       python3 \
-      python3-pip
+      python3-pip \
+      libpython3.7
 
 RUN \
       apt-get update && apt-get install -y \
@@ -95,7 +96,7 @@ RUN \
       cd / && \
       git clone https://github.com/allena29/python-yang-voodoo.git working && \
       cd working && \
-      git checkout $MY_VERSION && \
+      git checkout master && \
       cd /working && \
       pip3 install -r requirements.txt && \
       pip3 install jinja2 lxml && \
@@ -201,7 +202,9 @@ RUN \
       mkdir ~/sysrepo-python-bundle && \
       cd / && \
       # This isn't right - check compiler options for sysrepo
-      tar cvpf /tmp/working.tar /usr/local /sysrepo /usr/lib/x86_64-linux-gnu/libpython3.7*  /usr/lib/python3/dist-packages/*sysrepo* && \
+      # tar cvpf /tmp/working.tar /usr/local /sysrepo /usr/lib/x86_64-linux-gnu/libpython3.7*  /usr/lib/python3/dist-packages/*sysrepo* && \
+      # vim-runtime contains libpython3.7
+      tar cvpf /tmp/working.tar /usr/local /sysrepo  /usr/lib/python3/dist-packages/*sysrepo* && \
       cd ~/sysrepo-python-bundle && \
       tar xvf /tmp/working.tar && \
       rm -fr usr/local/games && \

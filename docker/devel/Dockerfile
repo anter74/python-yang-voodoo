@@ -13,7 +13,8 @@ RUN \
       git \
       openssh-client \
       python3-distutils \
-      screen
+      screen \
+      libpython3.7
 
 RUN \
     mkdir -p /root/.ipython/profile_default   && \

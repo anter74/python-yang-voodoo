@@ -8,6 +8,7 @@ RUN \
       python3 \
       python3-distutils \
       screen
+      lib-python3.7
 
 RUN \
     mkdir -p /root/.ipython/profile_default   && \

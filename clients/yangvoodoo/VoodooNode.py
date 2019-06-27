@@ -664,7 +664,7 @@ class Root(ContainingNode):
 
     def __repr__(self):
         context = self.__dict__['_context']
-        return "VoodooNodeRoot{} YANG Module: " + context.module
+        return "VoodooTopNode{} YANG Module: " + context.module
 
     def from_template(self, template, **kwargs):
         """
