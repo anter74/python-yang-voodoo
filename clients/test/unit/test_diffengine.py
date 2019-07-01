@@ -18,6 +18,27 @@ class test_diff_engine(unittest.TestCase):
         self.session_b.connect('integrationtest')
         self.root_b = self.session_b.get_node()
 
+    def test_diff_engine_removes_then_modifies_the_adds(self):
+        self.root_a.simpleleaf = 'a'
+        self.root_a.simpleenum = 'A'
+        self.root_b.simpleleaf = 'b'
+        self.root_b.bronze.silver.gold.platinum.deep = 'c'
+        # Act
+        differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b)
+
+        # Assert
+        self.assertEqual(list(differ.all()), [('/integrationtest:simpleleaf', 'a', 'b', 2),
+                                              ('/integrationtest:bronze/silver/gold/platinum/deep', None, 'c', 1),
+                                              ('/integrationtest:simpleenum', 'A', None, 3)])
+
+        self.assertEqual(list(differ.modified()), [('/integrationtest:simpleleaf', 'a', 'b', 2)])
+        self.assertEqual(list(differ.remove()), [('/integrationtest:simpleenum', 'A', None, 3)])
+        self.assertEqual(list(differ.add()), [('/integrationtest:bronze/silver/gold/platinum/deep', None, 'c', 1)])
+
+        self.assertEqual(list(differ.remove_modify_then_add()), [('/integrationtest:simpleenum', 'A', None, 3),
+                                                                 ('/integrationtest:simpleleaf', 'a', 'b', 2),
+                                                                 ('/integrationtest:bronze/silver/gold/platinum/deep', None, 'c', 1)])
+
     def test_diff_engine_with_simpleleaf(self):
         self.root_a.simpleleaf = 'a'
         self.root_b.simpleleaf = 'b'
@@ -28,6 +49,15 @@ class test_diff_engine(unittest.TestCase):
         # Assert
         self.assertEqual(list(differ.all()), [('/integrationtest:simpleleaf', 'a', 'b', 2)])
     #
+
+    def test_diff_engine_with_simpleleaf_filtered(self):
+        self.root_a.bronze.silver.gold.platinum.deep = 'a'
+
+        # Act
+        differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b, start_filter="/integrationtest:simplelist")
+
+        # Assert
+        self.assertEqual(list(differ.all()), [])
 
     def test_diff_engine_with_leaflist_version_modify(self):
         self.root_a.morecomplex.leaflists.simple.create('e')
@@ -58,6 +88,40 @@ class test_diff_engine(unittest.TestCase):
         expected_results = [
             ('/integrationtest:morecomplex/leaflists/simple', None, 'f', 1),
             ('/integrationtest:morecomplex/leaflists/simple', None, 'g', 1)
+        ]
+        self.assertEqual(list(differ.all()), expected_results)
+
+    def test_diff_engine_with_leaflist_version2(self):
+        self.root_a.morecomplex.leaflists.simple.create('e')
+        self.root_a.morecomplex.leaflists.simple.create('d')
+
+        self.root_b.morecomplex.leaflists.simple.create('e')
+        self.root_b.morecomplex.leaflists.simple.create('f')
+        self.root_b.morecomplex.leaflists.simple.create('g')
+
+        # Act
+        differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b,
+                                                    start_filter="/integrationtest:morecomplex")
+
+        # Assert
+        expected_results = [
+            ('/integrationtest:morecomplex/leaflists/simple', 'd', 'f', 2),
+            ('/integrationtest:morecomplex/leaflists/simple', None, 'g', 1)
+        ]
+        self.assertEqual(list(differ.all()), expected_results)
+
+    def test_diff_engine_with_leaflist_version3(self):
+        self.root_a.morecomplex.leaflists.simple.create('e')
+        self.root_a.morecomplex.leaflists.simple.create('d')
+
+        # Act
+        differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b,
+                                                    start_filter="/integrationtest:morecomplex")
+
+        # Assert
+        expected_results = [
+            ('/integrationtest:morecomplex/leaflists/simple', 'e', None, 3),
+            ('/integrationtest:morecomplex/leaflists/simple', 'd', None, 3)
         ]
         self.assertEqual(list(differ.all()), expected_results)
 

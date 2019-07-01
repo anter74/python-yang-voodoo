@@ -70,3 +70,9 @@
   - FIX: DiffEngine fixes for leaf-lists  
   - Upgrade to python 3.7.3
   - FIX: Don't write list-keys twice when using TemplateNinja's to_xmlstr
+
+
+# DEVEL
+
+  - Docker image with jupyter notebooks and shellinabox enabled for learning
+  - ENHANCEMENT: DiffEngine now gives a combined method to get removes, modifies then deletes in one call.

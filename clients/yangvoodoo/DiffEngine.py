@@ -115,3 +115,14 @@ class DiffIterator:
         for (path, old, new, op) in self.results:
             if op == self.MODIFY:
                 yield (path, old, new, op)
+
+    def remove_modify_then_add(self):
+        for (path, old, new, op) in self.results:
+            if op == self.REMOVE:
+                yield (path, old, new, op)
+        for (path, old, new, op) in self.results:
+            if op == self.MODIFY:
+                yield (path, old, new, op)
+        for (path, old, new, op) in self.results:
+            if op == self.ADD:
+                yield (path, old, new, op)
