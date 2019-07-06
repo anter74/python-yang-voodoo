@@ -89,7 +89,6 @@ if os.environ.get('LIBYANG_INSTALL') != 'system':
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
-os.chdir('clients')
 setuptools.setup(name='yangvoodoo',
                  # CHANGE VERSION NUMBER HERE
                  version='0.0.5', author='Adam Allen',

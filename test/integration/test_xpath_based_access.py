@@ -9,7 +9,7 @@ from yangvoodoo import Types
 class test_getdata(unittest.TestCase):
 
     def setUp(self):
-        command = 'sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest'
+        command = 'sysrepocfg --import=init-data/integrationtest.xml --format=xml --datastore=running integrationtest'
         process = subprocess.Popen(["bash"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         (out, err) = process.communicate(command.encode('UTF-8'))
         if err:
@@ -83,9 +83,9 @@ class test_getdata(unittest.TestCase):
         value = "Outside"
 
         self.subject1 = yangvoodoo.DataAccess()
-        self.subject1.connect('integrationtest', '../yang', 'a')
+        self.subject1.connect('integrationtest', 'yang', 'a')
         self.subject2 = yangvoodoo.DataAccess()
-        self.subject2.connect('integrationtest', '../yang', 'b')
+        self.subject2.connect('integrationtest', 'yang', 'b')
 
         self.subject1.set(xpath, value)
         self.assertEqual(self.subject1.get(xpath), 'Outside')

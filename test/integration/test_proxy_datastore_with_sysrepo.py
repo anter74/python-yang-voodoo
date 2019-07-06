@@ -13,7 +13,7 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        command = 'sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest'
+        command = 'sysrepocfg --import=init-data/integrationtest.xml --format=xml --datastore=running integrationtest'
         process = subprocess.Popen(["bash"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         (out, err) = process.communicate(command.encode('UTF-8'))
         if err:

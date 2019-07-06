@@ -89,6 +89,7 @@ RUN \
 
 # CHANGE VERSION NUMBER HERE
 ENV MY_VERSION=0.0.6-devel
+ENV GIT_BRANCH=devel
 ENV MY_ARCH=amd64
 
 
@@ -96,7 +97,7 @@ RUN \
       cd / && \
       git clone https://github.com/allena29/python-yang-voodoo.git working && \
       cd working && \
-      git checkout master && \
+      git checkout $GIT_BRANCH && \
       cd /working && \
       pip3 install -r requirements.txt && \
       pip3 install jinja2 lxml && \
@@ -126,6 +127,7 @@ RUN \
       chmod 755 ~/python-bundle/DEBIAN/postinst && \
       dpkg --build ~/python-bundle && \
       mkdir /artefacts && \
+      mv /tmp/libyang.tar /artefacts/python-yang-vooodoo_standalone.${MY_VERSION}.${MY_ARCH}.tar && \
       mv /root/python-bundle.deb /artefacts/python-yang-vooodoo_standalone.${MY_VERSION}.${MY_ARCH}.deb
 
 # sysrepo
@@ -223,6 +225,7 @@ RUN \
       echo "touch /tmp/pkginstall" >>~/sysrepo-python-bundle/DEBIAN/postinst && \
       chmod 755 ~/sysrepo-python-bundle/DEBIAN/postinst && \
       dpkg --build ~/sysrepo-python-bundle && \
+      mv /tmp/libyang.tar /artefacts/python-yang-vooodoo_netopeer2_sysrepo_bundle.${MY_VERSION}.${MY_ARCH}.tar && \
       mv /root/sysrepo-python-bundle.deb /artefacts/python-yang-vooodoo_netopeer2_sysrepo_bundle.${MY_VERSION}.${MY_ARCH}.deb
 
 
@@ -232,7 +235,7 @@ RUN \
     pip3 install mock coverage nose2 autopep8 pyflakes xenon coveralls && \
     cd /working && \
     echo "Git Pull (v2)" && \
-    git checkout master && \
+    git checkout devel && \
     git config --global user.email "docker-user@localhost" && \
     git pull
 

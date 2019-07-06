@@ -18,4 +18,6 @@ sh build.sh
 # Generate the release image
 sh build-release.sh 0.0.5
 
+# Generate the lab image
+sh build-lab.sh
 ```

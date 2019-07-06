@@ -264,7 +264,7 @@ Children: %s""" % (str(children)[1:-1])
 
         return yangvoodoo.VoodooNode.Root(self.context, yang_node)
 
-    def connect(self, module=None,  yang_location="../yang/", tag='client'):
+    def connect(self, module=None,  yang_location="yang/", tag='client'):
         """
         Connect to the datastore.
 

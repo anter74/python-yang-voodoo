@@ -46,4 +46,4 @@ docker stop $container
 
 img=`docker build release | tail -n 1 | sed -e's/Successfully built //'`
 echo "Built minimal development image"
-docker tag $img allena29/yangvoodoo:$tag
+docker tag $img allena29/yangvoodoo:release-$tag

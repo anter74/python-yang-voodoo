@@ -21,7 +21,6 @@ cd /working/subscribers
 touch /tmp/sysrepod-just-launched
 sleep 5
 echo "Ready"
-cd /working/clients
 set -euo pipefail
 
 ./run-test.sh

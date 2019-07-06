@@ -2,8 +2,6 @@
 
 # Development/System version
 
-If the `import yangvoodoo` is carried out in the `clients/` subdirectory the version of the library from the GIT repository will be used. If the import is carried out anywhere else the system version will be used.
-
 
 # Updating libyang cffi bindings (Robin Jarry's bindings)
 

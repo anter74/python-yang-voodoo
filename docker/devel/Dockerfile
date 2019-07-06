@@ -42,13 +42,15 @@ RUN \
       pip3 install lxml jinja2 dictdiffer six asn1crypto
 
 RUN \
-    cd /working/clients && \
+    cd /working && \
+    git checkout devel && \
     echo -n "Build Date:" >.buildinfo && \
     date >>.buildinfo && \
     echo "Sysrepo: Commit 660552222ee6376efa560d9bcc7b832886ff460a" >>.buildinfo && \
     echo "Libyang: 1.0r2" >>.buildinfo && \
     echo -n "YangVoodoo:" >>.buildinfo && \
-    git log | head -n 1 >>.buildinfo
+    git log | head -n 1 >>.buildinfo && \
+    python3 setup.py install
 
 RUN \
       pip3 install mock coverage nose2 autopep8 pyflakes xenon coveralls pudb
@@ -56,5 +58,5 @@ RUN \
 
 EXPOSE 830 5000
 STOPSIGNAL SIGTERM
-WORKDIR /working/clients
+WORKDIR /working
 CMD /working/start-in-docker.sh

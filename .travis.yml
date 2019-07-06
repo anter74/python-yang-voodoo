@@ -28,8 +28,8 @@ script:
 after_success:
   - pwd
   - docker cp working:/working /tmp
-  - cd /tmp/working/clients
-  - sed -i.bak 's_/working/clients/_/tmp/working/clients/_g' .coverage
+  - cd /tmp/working
+  - sed -i.bak 's_/working/_/tmp/working/_g' .coverage
   - cat .coverage
   - coveralls debug
   - coveralls

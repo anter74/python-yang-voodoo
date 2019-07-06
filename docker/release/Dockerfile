@@ -7,13 +7,13 @@ RUN \
       apt-get update && apt-get install -y \
       python3 \
       python3-distutils \
-      screen
-      lib-python3.7
+      screen \
+      libpython3.7
 
 RUN \
     mkdir -p /root/.ipython/profile_default   && \
     echo "c.Completer.use_jedi = False" >/root/.ipython/profile_default/ipython_config.py && \
-    echo "c.TerminalInteractiveShell.confirm_exit = False" >>/root/.ipython/profile_default/ipython_config.py 
+    echo "c.TerminalInteractiveShell.confirm_exit = False" >>/root/.ipython/profile_default/ipython_config.py
 
 ADD artefacts /
 
@@ -29,9 +29,9 @@ RUN \
       rm -f /get-pip.py && \
       pip3 install lxml jinja2 dictdiffer six asn1crypto
 
-ADD git/clients/.colour git/clients/.black git/clients/interactive /working/clients/
-ADD git/yang /working/yang
+ADD git-clone/.colour git-clone/.black git-clone/interactive /working/
+ADD git-clone/yang /working/yang
 
 EXPOSE 830 5000
 STOPSIGNAL SIGTERM
-WORKDIR /working/clients
+WORKDIR /working

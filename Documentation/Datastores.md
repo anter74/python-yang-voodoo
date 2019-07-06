@@ -33,7 +33,7 @@ Each provider is launched in a screen session `screen -list` and `screen -r prov
 The data can be imported into the running config (with at least on subscriber active) or startup config (without requiring any subscribers). Note: the docker image doesn't have the test yang models or any data in when it launches so the instructions above always init the startup data.
 
 ```
-sysrepocfg --import=../init-data/integrationtest.xml --format=xml --datastore=running integrationtest
+sysrepocfg --import=init-data/integrationtest.xml --format=xml --datastore=running integrationtest
 ```
 
 **NOTE:** sysrepo does not automatically copying running configuration into startup configuration.
@@ -45,7 +45,7 @@ Sysrepo by default will return `<sysrepo.Val; proxy of <Swig Object of type 'sys
 
 Note: the docker image has `ipython3`
 
-From this point forward change into `cd /working/clients`
+From this point forward change into `cd /working`
 
 ```python
 import yangvoodoo

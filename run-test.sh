@@ -9,7 +9,7 @@ fi
 set pipefail -euo
 
 printf "\n\e[1;33mLint checks.....\e[0m\n"
-pycodestyle ./
+pycodestyle yangvoodoo/
 if [ $? != 0 ]
 then
   printf "\n\e[1;31Lint checks.. Failed\e[0m\n"
@@ -20,7 +20,7 @@ fi
 
 printf "\n\e[1;33mComplexity checks.....\e[0m\n"
 # xenon . -a C -m C -b C
-xenon . -a C -m C -b C 2>/dev/stdout| grep -v '_find_best_number_type" has a rank of D' | grep ERROR
+xenon yangvoodoo -a C -m C -b C 2>/dev/stdout| grep -v '_find_best_number_type" has a rank of D' | grep ERROR
 if [ $? == 0 ]
 then
   printf "\n\e[1;31mComplexity checkss.. Failed\e[0m\n"
