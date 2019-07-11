@@ -1,6 +1,7 @@
 import unittest
 import yangvoodoo
 import yangvoodoo.stubdal
+from yangvoodoo.Errors import PathIsNotALeaf
 
 
 class test_data_access_session(unittest.TestCase):
@@ -20,8 +21,19 @@ class test_data_access_session(unittest.TestCase):
         context = self.root._context
 
         # Act
-        self.subject.set_raw_data(context, base_xpath + sub_xpath, value)
+        self.subject.set_data_by_xpath(context, base_xpath + sub_xpath, value)
 
         # Assert
         expected_result = {'/integrationtest:bronze/silver/gold/platinum/deep': 'hello'}
         self.assertDictEqual(self.subject.dump_xpaths(), expected_result)
+
+    def test_set_raw_data_non_leaf_node(self):
+        # Build
+        base_xpath = self.root.bronze.silver.gold._node.real_data_path
+        sub_xpath = "/platinum"
+        value = "hello"
+        context = self.root._context
+
+        # Act
+        with self.assertRaises(PathIsNotALeaf) as err_context:
+            self.subject.set_data_by_xpath(context, base_xpath + sub_xpath, value)

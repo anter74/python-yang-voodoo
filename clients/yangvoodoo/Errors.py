@@ -138,6 +138,14 @@ class ValueNotMappedToType(Exception):
         super().__init__(message)
 
 
+class PathIsNotALeaf(Exception):
+
+    def __init__(self, path):
+        message = "The path %s is not a leaf." % (path)
+
+        super().__init__(message)
+
+
 class NodeProvidedIsNotAContainer(Exception):
 
     def __init__(self):

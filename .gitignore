@@ -15,3 +15,4 @@ htmlcov/
 .coverage.bak
 git-clone/
 .ipynb_checkpoints/
+.coverage-previous

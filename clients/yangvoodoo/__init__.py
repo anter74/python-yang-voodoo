@@ -4,6 +4,7 @@ import os
 import importlib
 import yangvoodoo.VoodooNode
 import yangvoodoo.proxydal
+from yangvoodoo.Errors import PathIsNotALeaf
 from yangvoodoo.Common import PlainObject, Types, Utils, YangNode
 
 
@@ -553,7 +554,7 @@ Children: %s""" % (str(children)[1:-1])
             with open('.buildinfo') as fh:
                 print(fh.read())
 
-    def set_raw_data(self, context, data_path, value):
+    def set_data_by_xpath(self, context, data_path, value):
         """
         This method is a backdoor way to set data in the datastore.
 
@@ -564,5 +565,7 @@ Children: %s""" % (str(children)[1:-1])
         to instantiate the YangVoodoo Node for it.
         """
         node_schema = Utils.get_nodeschema_from_data_path(context, data_path)
+        if not node_schema.nodetype() == Types.LIBYANG_NODETYPE['LEAF']:
+            raise PathIsNotALeaf("set_raw_data only operates on leaves")
         val_type = Utils.get_yang_type(node_schema.type(), value, node_schema.real_schema_path)
         context.dal.set(data_path, value, val_type)
