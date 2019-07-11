@@ -32,6 +32,17 @@ class test_node_based_access(unittest.TestCase):
 
         self.assertEqual(dir(self.root), expected_children)
 
+    def test_xpath_as_leaf_value(self):
+        self.root.simpleleaf = "/path/inside/a/leaf[key='sdf']/dsfsdf"
+
+        # Act
+        result = self.subject.dump_xpaths()
+
+        # Assert
+        expected_result = {'/integrationtest:simpleleaf': "/path/inside/a/leaf[key='sdf']/dsfsdf"}
+        self.assertDictEqual(result, expected_result)
+        self.assertEqual(self.root.simpleleaf, "/path/inside/a/leaf[key='sdf']/dsfsdf")
+
     def test_simplest_leaf(self):
         self.root.simpleleaf = 'spirit'
         self.assertEqual(self.root.simpleleaf, 'spirit')

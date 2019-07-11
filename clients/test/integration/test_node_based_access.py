@@ -34,6 +34,12 @@ class test_node_based_access(unittest.TestCase):
     def tearDown(self):
         self.subject.disconnect()
 
+    def test_xpath_as_leaf_value(self):
+        self.root.simpleleaf = "/path/inside/a/leaf[key='sdf']/dsfsdf"
+
+        # Assert
+        self.assertEqual(self.root.simpleleaf, "/path/inside/a/leaf[key='sdf']/dsfsdf")
+
     def test_simplest_leaf(self):
         self.assertEqual(self.root.simpleleaf, 'duke')
 
