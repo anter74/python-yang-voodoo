@@ -552,3 +552,17 @@ Children: %s""" % (str(children)[1:-1])
         if os.path.exists('.buildinfo'):
             with open('.buildinfo') as fh:
                 print(fh.read())
+
+    def set_raw_data(self, context, data_path, value):
+        """
+        This method is a backdoor way to set data in the datastore.
+
+        Normally, we would use the python objects __setattr__ and that would do similair
+        lookups to what is below. However if we want we can take the data path from a
+        node (i.e. root.bronze.silver.gold._node.real_data_path) and then just append
+        a child node (i.e. /platinum/deep) and set the data on the dal without bothering
+        to instantiate the YangVoodoo Node for it.
+        """
+        node_schema = Utils.get_nodeschema_from_data_path(context, data_path)
+        val_type = Utils.get_yang_type(node_schema.type(), value, node_schema.real_schema_path)
+        context.dal.set(data_path, value, val_type)

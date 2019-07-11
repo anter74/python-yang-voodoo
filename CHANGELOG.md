@@ -76,3 +76,5 @@
 
   - Docker image with jupyter notebooks and shellinabox enabled for learning
   - ENHANCEMENT: DiffEngine now gives a combined method to get removes, modifies then deletes in one call.
+  - Ability to more easily set data in the back-end without using voodoo (the value type is derrived)
+    (e.g session.set_raw_data(context, xpath, value)
