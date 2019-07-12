@@ -6,6 +6,7 @@ module integrationtest {
   import crux { prefix crux; }
   import testchild { prefix testchild; }
   import ietf-inet-types { prefix inet; }
+  import scaling { prefix scale; }
 
   extension hide {
     description "Hide this element - defined in integration test";
@@ -1322,5 +1323,10 @@ module integrationtest {
     container presence-container {
       presence true;
     }
+  }
+
+  container scaling {
+      uses scale:thirty-lists;
+      
   }
 }
