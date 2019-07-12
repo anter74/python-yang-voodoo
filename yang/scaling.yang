@@ -24,8 +24,11 @@ module scaling {
         }
 
         list scale2 {
-          key key2-a;
+          key "key2-a key2-b";
           leaf key2-a {
+            type string;
+          }
+          leaf key2-b {
             type string;
           }
           leaf non-key2 {

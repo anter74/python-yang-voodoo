@@ -3,6 +3,7 @@ import yangvoodoo
 from jinja2 import Template
 from lxml import etree
 from yangvoodoo import Common
+from yangvoodoo.Common import Utils
 
 
 class TemplateNinja:
@@ -47,6 +48,32 @@ class TemplateNinja:
 
             xmlnode.text = str(xpaths[xpath])
 
+        return Common.Utils.pretty_xmldoc(xmldoc)
+
+    def to_xmlstr_v2(self, xpaths):
+        # regex = re.compile("([a-zA-Z0-9_-]*)(/?)(\[.*?\])?")
+        first_xpath = list(xpaths.keys())[0]
+        module = first_xpath[1:first_xpath.find(':')]
+
+        xmldoc = etree.Element(module)
+        top_node = xmldoc
+        node_lookup = {
+            '/': xmldoc
+        }
+
+        print(xpaths)
+
+        for xpath in xpaths:
+            top_node = xmldoc
+
+            for (path_component, path_predicates) in Utils.convert_xpath_to_list(xpath, data_based=True, without_modules=True):
+
+                if path_predicates:
+                    print(path_component, path_predicates)
+                else:
+                    print(path_component)
+
+            print("*"*80)
         return Common.Utils.pretty_xmldoc(xmldoc)
 
     def _getTemplate(self, contents):

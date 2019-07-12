@@ -85,6 +85,10 @@ class Utils:
     FIND_KEYS_AND_VALUES = re.compile(r"\[([A-Za-z]+[A-Za-z0-9_-]*)=['\"](.*?)['\"]\]")
     DROP_PREDICATES = re.compile(r"(.*?)([A-Za-z0-9_-]+\[.*?\])?/([A-Za-z0-9_-]*)")
     SPLIT_XPATH = re.compile(r"([a-zA-Z0-9_-]*)(/?)((\[.*?\])*)?")
+    XPATH_DECODER = re.compile(r"(([a-zA-Z0-9_-]*))(\[.*?=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])?/(([a-zA-Z0-9_-]*:)?([a-zA-Z0-9_-]*))")
+
+    STARTING_A_PREDICATE = re.compile(r".*\[[a-z0-9A-Z_-]+\s*=\s*['\"]")
+    ENDING_A_PREDICATE = re.compile(r".*['\"]\s*\]$")
 
     @staticmethod
     def pretty_xmldoc(xmldoc):
@@ -475,3 +479,72 @@ class Utils:
             pass
 
         return Utils.get_yang_type(node_schema_type, int(child_text), this_path)
+
+    @staticmethod
+    def _handle_portion_of_xpath(portion, answer, inside_a_predicate):
+        """
+        Handle a portion of xpath , based on a primitive split by '/',
+        giving back to the value anything which as a '/' in it.
+        """
+        if inside_a_predicate:
+            answer[-1] += "/" + portion
+            if Utils.ENDING_A_PREDICATE.match(portion):
+                return False
+            return True
+        answer.append(portion)
+        if Utils.STARTING_A_PREDICATE.match(portion):
+            if Utils.ENDING_A_PREDICATE.match(portion):
+                return False
+            return True
+
+        return False
+
+    @staticmethod
+    def convert_xpath_to_list_code_based(xpath, remove_module_name=None):
+        """
+        This is twice as slow as the regex, but accurate.
+        """
+        # remove normalise paths to either include/ignore module prefixes
+        if remove_module_name:
+            if xpath[0:len(remove_module_name)+2] == "/" + remove_module_name + ":":
+                xpath = xpath[len(remove_module_name)+2:]
+        else:
+            xpath = xpath[1:]
+
+        inside_a_predicate = False
+        answer = []
+        while xpath.find("/") >= 0:
+            portion = xpath[0:xpath.find("/")]
+            inside_a_predicate = Utils._handle_portion_of_xpath(portion, answer, inside_a_predicate)
+            xpath = xpath[xpath.find("/")+1:]
+
+        # deal with the last portion
+        portion = xpath
+        Utils._handle_portion_of_xpath(portion, answer, inside_a_predicate)
+        return answer
+
+    @staticmethod
+    def convert_xpath_to_list_regex_based(xpath, module="integrationtest", data_based=True, without_modules=False):
+        if without_modules:
+            module = ""
+        else:
+            module = module + ":"
+        for (path, predicate) in Utils.convert_xpath_to_list(xpath, module, data_based, without_modules):
+            if predicate:
+                yield path + predicate
+            else:
+                yield path
+
+    @staticmethod
+    def convert_xpath_to_list(xpath, module="integrationtest", data_based=True, without_modules=False):
+        if without_modules:
+            module = ""
+        else:
+            module = module + ":"
+
+        for (a, b, c, d, e, f, g) in Utils.XPATH_DECODER.findall(xpath[xpath.find(':')+1:]):
+            if data_based:
+                yield (module + e,  c)
+                module = ""
+            else:
+                yield (module + e, None)
