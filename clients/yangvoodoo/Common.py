@@ -84,9 +84,11 @@ class Utils:
     FIND_KEYS = re.compile(r"\[([A-Za-z]+[A-Za-z0-9_-]*)=.*?\]")
     FIND_KEYS_AND_VALUES = re.compile(r"\[([A-Za-z]+[A-Za-z0-9_-]*)=['\"](.*?)['\"]\]")
     DROP_PREDICATES = re.compile(r"(.*?)([A-Za-z0-9_-]+\[.*?\])?/([A-Za-z0-9_-]*)")
+    DROP_ALL_PREDICATES = re.compile(r"(\[.*?\])")
     SPLIT_XPATH = re.compile(r"([a-zA-Z0-9_-]*)(/?)((\[.*?\])*)?")
     XPATH_DECODER = re.compile(r"(([a-zA-Z0-9_-]*))(\[.*?=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])?/(([a-zA-Z0-9_-]*:)?([a-zA-Z0-9_-]*))")
-
+    XPATH_DECODER_V2 = re.compile(r"(([a-zA-Z0-9_-]*))(\[.*?=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])?(/([a-zA-Z0-9_-]*))?")
+    XPATH_MATCH_AFTER_LAST_PREDICATE = re.compile(r"^(.*?)(/[^\[\]]*)$")
     STARTING_A_PREDICATE = re.compile(r".*\[[a-z0-9A-Z_-]+\s*=\s*['\"]")
     ENDING_A_PREDICATE = re.compile(r".*['\"]\s*\]$")
 
@@ -482,6 +484,8 @@ class Utils:
 
     @staticmethod
     def _handle_portion_of_xpath(portion, answer, inside_a_predicate):
+        raise ValueError("This should be possible tremove")
+
         """
         Handle a portion of xpath , based on a primitive split by '/',
         giving back to the value anything which as a '/' in it.
@@ -501,6 +505,8 @@ class Utils:
 
     @staticmethod
     def convert_xpath_to_list_code_based(xpath, remove_module_name=None):
+        raise ValueError("This should be possible tremove")
+
         """
         This is twice as slow as the regex, but accurate.
         """
@@ -525,6 +531,7 @@ class Utils:
 
     @staticmethod
     def convert_xpath_to_list_regex_based(xpath, module="integrationtest", data_based=True, without_modules=False):
+        raise ValueError("This should be possible tremove")
         if without_modules:
             module = ""
         else:
@@ -537,14 +544,75 @@ class Utils:
 
     @staticmethod
     def convert_xpath_to_list(xpath, module="integrationtest", data_based=True, without_modules=False):
+        raise NotImplementedError("This shoudl be possible to remove - convert_xpath to list - use v2 instead")
         if without_modules:
             module = ""
         else:
             module = module + ":"
 
         for (a, b, c, d, e, f, g) in Utils.XPATH_DECODER.findall(xpath[xpath.find(':')+1:]):
+            # print('a', a, 'b', b, 'c', c, 'd', d, 'e', e, 'f', f, 'g', g)
             if data_based:
                 yield (module + e,  c)
                 module = ""
             else:
                 yield (module + e, None)
+
+    @staticmethod
+    def convert_xpath_to_list_v2(xpath):
+        """
+        Return a list of tuples based upon the XPATH sent in.
+
+            expected_result = [
+                ('bronze', '', '/bronze/', '/'),
+                ('silver', '', '/bronze/silver/', '/bronze/'),
+                ('gold', '', '/bronze/silver/gold/', '/bronze/silver/'),
+                ('platinum', '', '/bronze/silver/gold/platinum/', '/bronze/silver/gold/')
+            ]
+        """
+
+        working_path = ""
+        for (a, b, predicates, d, e, node) in Utils.XPATH_DECODER_V2.findall(xpath):
+            c = predicates
+            f = node
+            #print('a:  %s   b: %s   c: %s    d: %s    e: %s     f: %s' % (a, b, c, d, e, f))
+            parent_path = working_path
+            if node == "":
+                working_path = working_path + predicates
+                continue
+            elif predicates and node:
+                working_path = working_path + predicates
+                yield (node,  predicates, working_path, parent_path)
+                working_path = working_path + "/" + node
+                yield (node,  predicates, working_path, parent_path)
+            else:
+                working_path = working_path + predicates + "/"+node
+                yield (node,  predicates, working_path, parent_path)
+
+    @staticmethod
+    def return_until_first_predicate(in_string):
+        return in_string[0:in_string.find('[')]
+
+    @staticmethod
+    def drop_last_node(in_string):
+        return in_string[0:in_string.rfind('/')]
+
+    @staticmethod
+    def get_last_node_name(in_string):
+        return in_string[in_string.rfind('/')+1:]
+
+    @staticmethod
+    def drop_module_name_from_xpath(in_string, module):
+        if in_string[0:len(module)+2] == "/"+module+":":
+            return "/" + in_string[len(module)+2:]
+        return in_string
+
+    @staticmethod
+    def return_except_last_predicates(in_string):
+        """ Assuming well formed xpaths with [] not valid in keys. """
+        # return in_string[in_string.rfind(']'):]
+        return Utils.XPATH_MATCH_AFTER_LAST_PREDICATE.sub(r'\g<1>', in_string)
+
+    @staticmethod
+    def drop_all_predicates(in_string):
+        return Utils.DROP_ALL_PREDICATES.sub('', in_string)

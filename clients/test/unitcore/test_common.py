@@ -1,4 +1,4 @@
-import libyang
+import yangvoodoo
 from yangvoodoo.Common import Utils, PlainIterator, PlainObject
 from mock import Mock
 import unittest
@@ -8,6 +8,7 @@ class test_common(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
+        self.subject = yangvoodoo.Common.Utils
 
     def test_regex(self):
 
@@ -164,3 +165,130 @@ class test_common(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             result = Utils.convert_path_to_value_path("/path/abc/", 'module')
         self.assertEqual(str(context.exception), "Path is not valid as it ends with a trailing slash. (/path/abc/)")
+
+    def test_xpath_splitter_simple(self):
+
+        # Act
+        xpath = "/bronze"
+        result = list(self.subject.convert_xpath_to_list_v2(xpath))
+
+        # Assert
+        expected_result = [
+            ('bronze', '', '/bronze', '')
+        ]
+
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_splitter_simple_deep(self):
+
+        # Act
+        xpath = "/bronze/silver/gold/platinum"
+        result = list(self.subject.convert_xpath_to_list_v2(xpath))
+
+        # Assert
+        expected_result = [
+            ('bronze', '', '/bronze', ''),
+            ('silver', '', '/bronze/silver', '/bronze'),
+            ('gold', '', '/bronze/silver/gold', '/bronze/silver'),
+            ('platinum', '', '/bronze/silver/gold/platinum', '/bronze/silver/gold')
+        ]
+
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_splitter_simple_list(self):
+
+        # Act
+        xpath = "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']"
+        result = list(self.subject.convert_xpath_to_list_v2(xpath))
+
+        # Assert
+        expected_result = [
+            ('container-and-lists', '', '/container-and-lists', ''),
+            ('multi-key-list', '', '/container-and-lists/multi-key-list', '/container-and-lists')
+        ]
+
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_splitter_simple_list_deeper(self):
+
+        # Act
+        xpath = "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner/C"
+        result = list(self.subject.convert_xpath_to_list_v2(xpath))
+
+        # Assert
+        expected_result = [
+            ('container-and-lists', '', '/container-and-lists', ''),
+            ('multi-key-list', '', '/container-and-lists/multi-key-list', '/container-and-lists'),
+            ('inner', "[B='bbb']", "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']", "/container-and-lists/multi-key-list[A='aaaa']"),
+            ('inner', "[B='bbb']", "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner", "/container-and-lists/multi-key-list[A='aaaa']"),
+            ('C', '', "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner/C", "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner")
+        ]
+
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_drop_predicates(self):
+        # Arrange
+        xpath = "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner/C"
+
+        # Act
+        result = Utils.return_until_first_predicate(xpath)
+
+        # Assert
+        expected_result = "/container-and-lists/multi-key-list"
+        self.assertEqual(result, expected_result)
+
+    def test_drop_last_node(self):
+        # Arrange
+        xpath = "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner/C"
+
+        # Act
+        result = Utils.drop_last_node(xpath)
+
+        # Assert
+        expected_result = "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner"
+        self.assertEqual(result, expected_result)
+
+    def test_get_last_node_name(self):
+        # Arrange
+        xpath = "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner/C"
+
+        # Act
+        result = Utils.get_last_node_name(xpath)
+
+        # Assert
+        expected_result = "C"
+        self.assertEqual(result, expected_result)
+
+    def test_drop_module_name_from_xpath(self):
+        # Act
+        result = Utils.drop_module_name_from_xpath("/integrationtest:sdfsdfsfdsdf/sdf/sdf/sdfsdfdsf/sdf", "integrationtest")
+
+        # Assert
+        expected_result = "/sdfsdfsfdsdf/sdf/sdf/sdfsdfdsf/sdf"
+        self.assertEqual(result, expected_result)
+
+    def test_drop_module_name_from_xpath_without_prefix(self):
+        # Act
+        result = Utils.drop_module_name_from_xpath("/sdfsdfsfdsdf/sdf/sdf/sdfsdfdsf/sdf", "integrationtest")
+
+        # Assert
+        expected_result = "/sdfsdfsfdsdf/sdf/sdf/sdfsdfdsf/sdf"
+        self.assertEqual(result, expected_result)
+
+    def test_return_until_last_predicate(self):
+        # Act
+        xpath = "/integrationtest:container-and-lists[level3key='key3']/multi-key-list[A='primary-leaf'][B='secondary-leaf']/inner/level3list"
+        result = Utils.return_except_last_predicates(xpath)
+
+        # Assert
+        expected_result = "/integrationtest:container-and-lists[level3key='key3']/multi-key-list[A='primary-leaf'][B='secondary-leaf']"
+        self.assertEqual(result, expected_result)
+
+    def test_drop_all_predicates(self):
+        # Act
+        xpath = "/integrationtest:container-and-lists/multi-key-list[A='primary-leaf'][B='secondary-leaf']/inner/level3list[level3key='key3']"
+        result = Utils.drop_all_predicates(xpath)
+
+        # Assert
+        expected_result = "/integrationtest:container-and-lists/multi-key-list/inner/level3list"
+        self.assertEqual(result, expected_result)
