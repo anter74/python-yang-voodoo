@@ -575,7 +575,7 @@ class Utils:
         for (a, b, predicates, d, e, node) in Utils.XPATH_DECODER_V2.findall(xpath):
             c = predicates
             f = node
-            #print('a:  %s   b: %s   c: %s    d: %s    e: %s     f: %s' % (a, b, c, d, e, f))
+            # print('a:  %s   b: %s   c: %s    d: %s    e: %s     f: %s' % (a, b, c, d, e, f))
             parent_path = working_path
             if node == "":
                 working_path = working_path + predicates

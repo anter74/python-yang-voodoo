@@ -440,6 +440,28 @@ module integrationtest {
       presence true;
     }
   }
+
+  container container1 {
+    presence true;
+    leaf leaf1 {
+      type string;
+    }
+    container container2 {
+      presence true;
+      leaf leaf2a {
+        type string;
+      }
+      leaf leaf2b {
+        type string;
+      }
+      container container3 {
+        presence true;
+        leaf leaf3 {
+          type string;
+        }
+      }
+    }
+  }
   container bronze {
     description "The metallics are used to test container nesting";
     container silver {
@@ -450,6 +472,9 @@ module integrationtest {
           description "Then we get platinum which is as deep as we go.";
           leaf deep {
             type string;
+          }
+          container deeper {
+            presence true;
           }
         }
       }
@@ -1327,6 +1352,6 @@ module integrationtest {
 
   container scaling {
       uses scale:thirty-lists;
-      
+
   }
 }

@@ -15,6 +15,9 @@ class Context:
         self.log = log
         self.yang_module = module
 
+    def _trace(self, vnt, yn, context, p):
+        self.log.trace("%s: %s %s\nschema: %s\ndata: %s\nparent of: %s", vnt, context, yn.libyang_node,  yn.real_schema_path,  yn.real_data_path, p)
+
 
 class Node:
 
@@ -98,12 +101,14 @@ class Node:
             raise AttributeError('Go Away!')
         context = self.__dict__['_context']
         node = self.__dict__['_node']
+        context.log.trace("__getattr__ %s %s", attr, node.real_schema_path)
 
         # path = self.__dict__['_path']
         # spath = self.__dict__['_spath']
 
         if attr == '_xpath_sorted' and self._NODE_TYPE == 'List':
             # Return Object
+            context._trace("SortedList", node, context, self)
             return SortedList(context, node, self)
 
         node_schema = Common.Utils.get_yangnode(node, context, attr)
@@ -113,23 +118,30 @@ class Node:
             # assume this is a container (or a presence container)
             if node_schema.presence() is None:
                 # Return Object
+                context._trace("Container", node_schema, context, self)
                 return Container(context, node_schema, self)
             else:
                 # Return Object
+                context._trace("PresenceContainer", node_schema, context, self)
                 return PresenceContainer(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['LEAF']:
             # TODO: need to consider unions of enum's in future - there is already a plan for a formalValidator class
             leaf_type = node_schema.type().base()
             if leaf_type == 5:
+                # Return Object
+                context._trace("Empty", node_schema, context, None)
                 return Empty(context, node_schema)
             # if leaf_type == 6:
             #    return Enum(context, new_xpath, new_spath, node_schema)
+            context.log.trace("Returning Literal value from datastore for %s", node_schema.real_data_path)
             return context.dal.get(node_schema.real_data_path, default_value=node_schema.default())
         elif node_type == Types.LIBYANG_NODETYPE['LIST']:
             # Return Object
+            context._trace("List", node_schema, context, self)
             return List(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['LEAFLIST']:
             # Return Object
+            context._trace("LeafList", node_schema, context, self)
             return LeafList(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['CHOICE']:
             """
@@ -141,17 +153,20 @@ class Node:
             means the following is invalid.
             list(yangctx.find_path(beertype + "integrationtest:brewdog"))
             """
+            context._trace("Choice", node_schema, context, self)
             return Choice(context, node_schema, self)
         elif node_type == Types.LIBYANG_NODETYPE['CASE']:
+            context._trace("Case", node_schema, context, self)
             return Case(context, node_schema, self)
 
-        raise NotImplementedError("The YANG structure at %s of type %s is not supported." % (new_spath, node_type))
+        context.log.error("The nodetype %s for schema %s is not supported.", node_type, node_schema.real_schema_path)
+        raise NotImplementedError("The YANG structure at %s of type %s is not supported." % (node_schema.real_schema_path, node_type))
 
     def __setattr__(self, attr, val):
         context = self.__dict__['_context']
         node = self.__dict__['_node']
         node_schema = Common.Utils.get_yangnode(node, context, attr)
-
+        context.log.trace("__setattr__ %s=%s %s", attr, val, node.real_data_path)
         if not node_schema.nodetype() == Types.LIBYANG_NODETYPE['LEAF']:
             raise Errors.CannotAssignValueToContainingNode(attr)
 
@@ -178,6 +193,7 @@ class Node:
     def __dir__(self, no_translations=False):
         node = self._node
         context = self._context
+        context.log.trace("__dir__ %s", node.real_schema_path)
 
         if node.real_schema_path == "":
             search_path = "/" + context.module + ":*"
@@ -320,7 +336,6 @@ class LeafList(Node):
             raise Errors.ListItemCannotBeBlank(node.real_data_path)
 
         backend_type = Common.Utils.get_yang_type_from_path(context, node.real_schema_path, value)
-        context.log.trace("about to add: %s, %s, %s", node.real_data_path, value, backend_type)
         context.dal.add(node.real_data_path, value, backend_type)
 
         return value
@@ -395,7 +410,6 @@ class List(ContainingNode):
 
         node = Common.Utils.get_yangnode(node, context, keys=keys, values=values)
 
-        context.log.trace("about to create: %s, %s, %s, %s",  node.real_data_path, keys, values, context.module)
         context.dal.create(node.real_data_path, keys=keys, values=values)
         # Return Object
         new_node = Common.YangNode(node.libyang_node, node.real_schema_path, node.real_data_path)
@@ -510,7 +524,6 @@ class List(ContainingNode):
         (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
         predicates = Common.Utils.encode_xpath_predicates('', keys, values)
 
-        context.log.trace("has item: %s",  node.real_data_path + predicates)
         return context.dal.has_item(node.real_data_path + predicates)
 
     def __getitem__(self, *args):
@@ -641,13 +654,11 @@ class PresenceContainer(Container):
     def exists(self):
         context = self._context
         path = self._node.real_data_path
-        context.log.trace("Calling have container: %s", path)
         return context.dal.container(path)
 
     def create(self):
         context = self._context
         node = self._node
-        context.log.trace("Calling create container: %s", node.real_data_path)
         context.dal.create_container(node.real_data_path)
         return PresenceContainer(context, node, self)
 

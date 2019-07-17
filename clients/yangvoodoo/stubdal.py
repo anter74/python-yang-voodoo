@@ -47,13 +47,16 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.empty()
 
     def connect(self, module, tag='<id-tag>'):
+        self.log.trace('CONNECT: Stub Datastore- module name %s', module)
         self.module = module
         return True
 
     def disconnect(self):
+        self.log.trace('DISCONNET')
         return True
 
     def commit(self):
+        self.log.trace('COMMIT')
         if not self.dirty:
             raise yangvoodoo.Errors.NothingToCommit()
 
@@ -61,12 +64,15 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         return True
 
     def validate(self):
+        self.log.trace('VALIDATE')
         return True
 
     def container(self, xpath):
+        self.log.trace('CONTAINER (does it exist?): %s', xpath)
         return xpath in self.containers
 
     def create_container(self, xpath):
+        self.log.trace('CREATE-CONTAINER: %s', xpath)
         self.dirty = True
         self.containers[xpath] = True
 
@@ -105,6 +111,8 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             "/integrationtest:simplelist[integrationtest:simplekey='sdf']": = (1, "list path")
 
         """
+
+        self.log.trace('CREATE-LIST-ELEMENT: %s (keys: %s, values: %s)', xpath, keys, values)
         self.dirty = True
         predicates = ""
         for index in range(len(keys)):
@@ -122,10 +130,12 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             self.set(xpath + "/" + keys[index], value, valuetype)
 
     def uncreate(self, xpath):
+        self.log.trace('UNCREATE-LIST-ELEMENT: %s', xpath)
         self.dirty = True
         self.delete(xpath)
 
     def add(self, xpath, value, valtype):
+        self.log.trace('ADD-LEAF-LIST: %s => %s (%s)', xpath, value, valtype)
         self.dirty = True
         if xpath not in self.stub_store:
             self.stub_store[xpath] = []
@@ -133,6 +143,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             self.stub_store[xpath].append(value)
 
     def remove(self, xpath, value):
+        self.log.trace('REMOVE-LEAF-LIST: %s => %s', xpath, value)
         self.dirty = True
         if xpath not in self.stub_store:
             raise yangvoodoo.Errors.BackendDatastoreError([('path does not exist - cannot remove', xpath)])
@@ -141,6 +152,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.stub_store[xpath].remove(value)
 
     def gets(self, xpath):
+        self.log.trace('GETS: %s', xpath)
         items = []
         if xpath in self.stub_store:
             items = self.stub_store[xpath]
@@ -148,6 +160,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             yield item
 
     def has_item(self, xpath):
+        self.log.trace('HAS_ITEM: %s', xpath)
         list_xpath = self._list_xpath(xpath, ignore_empty_lists=True)
         if list_xpath in self.list_element_map:
             if xpath in self.list_element_map[list_xpath]:
@@ -155,6 +168,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         return False
 
     def set(self, xpath, value, valtype=0):
+        self.log.trace("SET: %s => %s (%s)", xpath, value, valtype)
         # if an empty Node stub will store this as True (sysrepo will not want a value)
         if valtype == 5:
             value = True
@@ -162,6 +176,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.stub_store[xpath] = value
 
     def gets_sorted(self, list_xpath, schema_path, ignore_empty_lists=False):
+        self.log.trace("GETS_SORTED: %s . %s", list_xpath, schema_path)
         if list_xpath in self.list_element_map:
             items = []
             for item in self.list_element_map[list_xpath]:
@@ -171,6 +186,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
                 yield item
 
     def gets_unsorted(self, list_xpath, schema_path, ignore_empty_lists=False):
+        self.log.trace("GETS_UNSORTED: %s . %s", list_xpath, schema_path)
         if list_xpath in self.list_element_map:
             items = []
             for item in self.list_element_map[list_xpath]:
@@ -182,11 +198,13 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             raise yangvoodoo.Errors.ListDoesNotContainElement(list_xpath)
 
     def gets_len(self, list_xpath):
+        self.log.trace("GETS_LEN: %s", list_xpath)
         if list_xpath in self.list_element_map:
             return len(self.list_element_map[list_xpath])
         return 0
 
     def get(self, xpath, default_value=None):
+        self.log.trace("GET: %s (default value: %s)", xpath, default_value)
         if xpath not in self.stub_store:
             if default_value:
                 return default_value
@@ -194,6 +212,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         return self.stub_store[xpath]
 
     def delete(self, xpath):
+        self.log.trace("DELETE: %s", xpath)
         self.dirty = True
         if xpath in self.stub_store:
             # Logic for lists
@@ -224,16 +243,20 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             del self.stub_store[child]
 
     def refresh(self):
+        self.log.trace("REFRESH:")
         self.dirty = False
         pass
 
     def empty(self):
+        self.log.trace("EMPTY:")
         self.stub_store = {}
         self.list_element_map = {}
         self.containers = {}
 
     def is_session_dirty(self):
+        self.log.trace("IS_SESSION_DIRTY")
         return self.dirty
 
     def has_datastore_changed(self):
+        self.log.trace("HAS_DATASTORE_CHANGED")
         return False

@@ -236,11 +236,13 @@ Children: %s""" % (str(children)[1:-1])
          - ordering of commits (session a creates new data that session b requires for a leafref)
          - rollbacks if one commit fails.
         """
-
         super_root = yangvoodoo.VoodooNode.SuperRoot()
         if session and attribute:
             super_root.attach_node_from_session(session, attribute)
         return super_root
+
+    def _trace(self, vnt, yn, context):
+        self.log.trace("%s: %s %s\nschema: %s\ndata: %s", vnt, context, yn.libyang_node,  yn.real_schema_path,  yn.real_data_path)
 
     def get_node(self):
         """
@@ -251,12 +253,15 @@ Children: %s""" % (str(children)[1:-1])
         We must have access to the same YANG module loaded within in sysrepo, which can be
         set by modifying yang_location argument.
         """
+        self.log.trace("GET_NODE")
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
 
         self.data_abstraction_layer.setup_root()
 
         yang_node = YangNode(PlainObject(), '', '')
+        self._trace("VoodooNode.Root", yang_node, self.context)
+
         return yangvoodoo.VoodooNode.Root(self.context, yang_node)
 
     def connect(self, module=None,  yang_location="../yang/", tag='client'):
@@ -267,7 +272,6 @@ Children: %s""" % (str(children)[1:-1])
         """
         if not os.path.exists(yang_location + "/" + module + ".yang"):
             raise ValueError("YANG Module "+module+" not present in "+yang_location)
-
         self.module = module
         self.yang_ctx = libyang.Context(yang_location)
         self.yang_schema = self.yang_ctx.load_module(self.module)
@@ -279,6 +283,11 @@ Children: %s""" % (str(children)[1:-1])
 
         self.context = yangvoodoo.VoodooNode.Context(self.module, self, self.yang_schema, self.yang_ctx, log=self.log)
         self.data_abstraction_layer.context = self.context
+
+        self.log.trace("CONNECT: module %s. yang_location %s", module, yang_location)
+        self.log.trace("       : libyangctx %s ", self.yang_ctx)
+        self.log.trace("       : context %s", self.context)
+        self.log.trace("       : data_abstraction_layer %s", self.data_abstraction_layer)
         return connect_status
 
     def disconnect(self):
@@ -288,6 +297,7 @@ Children: %s""" % (str(children)[1:-1])
 
         returns: True
         """
+        self.log.trace("DISCONNECT")
         self.connected = False
         return self.data_abstraction_layer.disconnect()
 
@@ -301,6 +311,7 @@ Children: %s""" % (str(children)[1:-1])
 
         returns: True
         """
+        self.log.trace("COMMIT")
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.commit()
@@ -314,6 +325,7 @@ Children: %s""" % (str(children)[1:-1])
 
         returns: True or False
         """
+        self.log.trace("VALIDATE")
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.validate()
@@ -540,6 +552,7 @@ Children: %s""" % (str(children)[1:-1])
         """
         dump the datastore in xpath format.
         """
+        self.log.trace("DUMP_XPATHS")
         return self.data_abstraction_layer.dump_xpaths()
 
     @staticmethod
@@ -564,6 +577,7 @@ Children: %s""" % (str(children)[1:-1])
         a child node (i.e. /platinum/deep) and set the data on the dal without bothering
         to instantiate the YangVoodoo Node for it.
         """
+        self.log.trace("SET_DATA_BY_XPATH: %s %s %s", context, data_path, value)
         node_schema = Utils.get_nodeschema_from_data_path(context, data_path)
         if not node_schema.nodetype() == Types.LIBYANG_NODETYPE['LEAF']:
             raise PathIsNotALeaf("set_raw_data only operates on leaves")
