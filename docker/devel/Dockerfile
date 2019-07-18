@@ -51,7 +51,7 @@ RUN \
     git log | head -n 1 >>.buildinfo
 
 RUN \
-      pip3 install mock coverage nose2 autopep8 pyflakes xenon coveralls
+      pip3 install mock coverage nose2 autopep8 pyflakes xenon coveralls pudb
 
 
 EXPOSE 830 5000

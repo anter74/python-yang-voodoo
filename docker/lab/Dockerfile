@@ -38,8 +38,8 @@ RUN mkdir /home/jungle/.jupyter && \
     mkdir -p /home/jungle/.ipython/profile_default   && \
     echo "c.Completer.use_jedi = False" >/home/jungle/.ipython/profile_default/ipython_config.py && \
     echo "c.TerminalInteractiveShell.confirm_exit = False" >>/home/jungle/.ipython/profile_default/ipython_config.py && \
-    mkdir -p /home/jungle/.jupyter && \
-    echo '{ "keys": { "command": { "unbind": [ "x", "c", "r" ], "bind": { "c": "jupyter-notebook:restart-kernel-and-clear-output", "k": "jupyter-notebook:shutdown-kernel", "r": "jupyter-notebook:run-all-cells" } } } }' >/home/jungle/.jupyter/nb_config
+    mkdir -p /home/jungle/.jupyter/nbconfig && \
+    echo '{ "keys": { "command": { "unbind": [ "x", "c", "r" ], "bind": { "c": "jupyter-notebook:restart-kernel-and-clear-output", "k": "jupyter-notebook:shutdown-kernel", "r": "jupyter-notebook:run-all-cells" } } } }' >/home/jungle/.jupyter/nbconfig/notebook.json
 
 COPY start-notebook.sh /
 
