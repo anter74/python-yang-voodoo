@@ -4,76 +4,66 @@ from jinja2 import Template
 from lxml import etree
 from yangvoodoo import Common
 from yangvoodoo.Common import Utils
+from yangvoodoo.Cache import Cache
 
 
 class TemplateNinja:
 
-    def __init__(self):
-        self.log = Common.Utils.get_logger("TemplateNinja")
+    def __init__(self, log=None):
+        if not log:
+            log = Common.Utils.get_logger("TemplateNinja")
+        self.log = log
 
     def to_xmlstr(self, xpaths):
-        # regex = re.compile("([a-zA-Z0-9_-]*)(/?)(\[.*?\])?")
-        regex = re.compile(r"([a-zA-Z0-9_-]*)(/?)((\[.*?\])*)?")
-        first_xpath = list(xpaths.keys())[0]
-        module = first_xpath[1:first_xpath.find(':')]
+        first_xpath = next(iter(xpaths))
+        (module, leaf) = Utils.return_module_name_and_leaf(first_xpath)
+        if not module:
+            raise ValueError("Unable to determine module name from the first xpath")
 
+        cache = Cache()
         xmldoc = etree.Element(module)
-        node_lookup = {
-            '/': xmldoc
-        }
-
         for xpath in xpaths:
-            path = "/"
-            for (a, _, b, _) in Common.Utils.SPLIT_XPATH.findall(xpath[xpath.find(':')+1:]):
-                xmlnode = node_lookup[path]
 
-                if a:
-                    path = path + "/" + a
-                    new_node = etree.Element(a)
+            previous_node = xmldoc
+            working_node = xmldoc
+            done_predicates = False
+            for (this_path, leaf_name,  predicates, _, this_parent_path) in Utils.convert_xpath_to_list_v4(xpath):
+                previous_node = working_node
+                if cache.is_path_cached(this_path):
+                    self.log.trace("CACHE_HIT: %s", this_path)
+                    working_node = cache.get_item_from_cache(this_path)
+                    continue
 
-                if b:
-                    path = path + "/" + b
-                    key = 'keys'
+                self.log.trace("CACHE_MISS: %s", this_path)
+                self.log.trace("CREATING_NODE: %s ... %s %s", leaf_name, predicates, done_predicates)
+                self.log.trace("PARENT: %s", this_parent_path)
+                if not predicates:
+                    new_node = etree.Element(leaf_name)
+                    working_node.append(new_node)
+                    cache.add_entry(this_path, new_node)
+                    working_node = new_node
 
-                    for (key, keyval) in Common.Utils.FIND_KEYS_AND_VALUES.findall(b):
-                        key_node = etree.Element(key)
-                        key_node.text = str(keyval)
-                        new_node.append(key_node)
-                        node_lookup[path + "/" + key] = key_node
+                if predicates:
+                    if not done_predicates:
+                        done_predicates = True
+                        new_node = etree.Element(leaf_name)
+                        working_node.append(new_node)
+                        working_node = new_node
+                        self.log.trace("ADD CACHE: %s", this_path)
+                        cache.add_entry(this_path, working_node)
 
-                if path not in node_lookup:
-                    xmlnode.append(new_node)
-                    node_lookup[path] = new_node
-                    xmlnode = str(new_node)
+                # print("///", this_path, "////", predicates, "//////", leaf_name)
+            if xpaths[xpath]:
+                if isinstance(xpaths[xpath], list):
+                    leaf_list_items = xpaths[xpath]
+                    working_node.text = str(leaf_list_items.pop(0))
+                    for leaf_list_item in leaf_list_items:
+                        new_node = etree.Element(working_node.tag)
+                        new_node.text = str(leaf_list_item)
+                        previous_node.append(new_node)
+                    continue
+                working_node.text = str(xpaths[xpath])
 
-            xmlnode.text = str(xpaths[xpath])
-
-        return Common.Utils.pretty_xmldoc(xmldoc)
-
-    def to_xmlstr_v2(self, xpaths):
-        # regex = re.compile("([a-zA-Z0-9_-]*)(/?)(\[.*?\])?")
-        first_xpath = list(xpaths.keys())[0]
-        module = first_xpath[1:first_xpath.find(':')]
-
-        xmldoc = etree.Element(module)
-        top_node = xmldoc
-        node_lookup = {
-            '/': xmldoc
-        }
-
-        print(xpaths)
-
-        for xpath in xpaths:
-            top_node = xmldoc
-
-            for (path_component, path_predicates) in Utils.convert_xpath_to_list(xpath, data_based=True, without_modules=True):
-
-                if path_predicates:
-                    print(path_component, path_predicates)
-                else:
-                    print(path_component)
-
-            print("*"*80)
         return Common.Utils.pretty_xmldoc(xmldoc)
 
     def _getTemplate(self, contents):

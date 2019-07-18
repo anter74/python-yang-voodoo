@@ -170,11 +170,11 @@ class test_common(unittest.TestCase):
 
         # Act
         xpath = "/bronze"
-        result = list(self.subject.convert_xpath_to_list_v2(xpath))
+        result = list(self.subject.convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [
-            ('bronze', '', '/bronze', '')
+            ('/bronze', 'bronze', '', '/integrationtest:bronze', '')
         ]
 
         self.assertEqual(result, expected_result)
@@ -183,28 +183,108 @@ class test_common(unittest.TestCase):
 
         # Act
         xpath = "/bronze/silver/gold/platinum"
-        result = list(self.subject.convert_xpath_to_list_v2(xpath))
+        result = list(self.subject.convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [
-            ('bronze', '', '/bronze', ''),
-            ('silver', '', '/bronze/silver', '/bronze'),
-            ('gold', '', '/bronze/silver/gold', '/bronze/silver'),
-            ('platinum', '', '/bronze/silver/gold/platinum', '/bronze/silver/gold')
+            ('/bronze', 'bronze', '', '/integrationtest:bronze', ''),
+            ('/bronze/silver', 'silver', '', '/integrationtest:bronze/integrationtest:silver', '/bronze'),
+            ('/bronze/silver/gold', 'gold', '',
+             '/integrationtest:bronze/integrationtest:silver/integrationtest:gold', '/bronze/silver'),
+            ('/bronze/silver/gold/platinum', 'platinum', '',
+             '/integrationtest:bronze/integrationtest:silver/integrationtest:gold/integrationtest:platinum',
+             '/bronze/silver/gold')
         ]
 
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_with_xpath_val_in_a_list(self):
+
+        # Act
+        xpath = """/integrationtest:simplelist[simplekey='/xpath/inside[dsf="sdf"]/dsfsdf']"""
+        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+
+        # Assert
+        expected_result = [
+            ('/simplelist[simplekey=\'/xpath/inside[dsf="sdf"]/dsfsdf\']',
+             'simplelist',
+             '[simplekey=\'/xpath/inside[dsf="sdf"]/dsfsdf\']',
+             '/integrationtest:simplelist', '')
+        ]
+
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_with_xpath_val_in_a_listv2(self):
+
+        # Act
+        xpath = """/integrationtest:simplelist[simplekey='/xpath/inside[dsf="sdf"]/dsfsdf']/sdfsdf"""
+        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+
+        # Assert
+        expected_result = [
+            ('/simplelist[simplekey=\'/xpath/inside[dsf="sdf"]/dsfsdf\']',
+             'simplelist',
+             '[simplekey=\'/xpath/inside[dsf="sdf"]/dsfsdf\']',
+             '/integrationtest:simplelist', ''),
+            ('/simplelist[simplekey=\'/xpath/inside[dsf="sdf"]/dsfsdf\']/sdfsdf',
+             'sdfsdf',
+             '',
+             '/integrationtest:simplelist/integrationtest:sdfsdf',
+             '/simplelist[simplekey=\'/xpath/inside[dsf="sdf"]/dsfsdf\']')
+        ]
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_with_xpath_val_in_a_listv3(self):
+
+        # Act
+        xpath = """/integrationtest:simplelist[simplekey="/xpath/inside[dsf='sdf']/dsfsdf"]/sdfsdf"""
+        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+
+        # Assert
+        expected_result = [
+            ('/simplelist[simplekey="/xpath/inside[dsf=\'sdf\']/dsfsdf"]',
+             'simplelist',
+             '[simplekey="/xpath/inside[dsf=\'sdf\']/dsfsdf"]',
+             '/integrationtest:simplelist', ''),
+            ('/simplelist[simplekey="/xpath/inside[dsf=\'sdf\']/dsfsdf"]/sdfsdf',
+             'sdfsdf',
+             '',
+             '/integrationtest:simplelist/integrationtest:sdfsdf',
+             '/simplelist[simplekey="/xpath/inside[dsf=\'sdf\']/dsfsdf"]')
+        ]
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_with_xpath_val_in_a_listv4(self):
+
+        # Act
+        xpath = """/integrationtest:simplelist[simplekey="/xpath/inside[dsf='sdf']/dsfsdf"][a="b"]/sdfsdf"""
+        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+
+        # Assert
+        expected_result = [
+            ('/simplelist[simplekey="/xpath/inside[dsf=\'sdf\']/dsfsdf"][a="b"]',
+             'simplelist',
+             '[simplekey="/xpath/inside[dsf=\'sdf\']/dsfsdf"][a="b"]',
+             '/integrationtest:simplelist', ''),
+            ('/simplelist[simplekey="/xpath/inside[dsf=\'sdf\']/dsfsdf"][a="b"]/sdfsdf',
+             'sdfsdf',
+             '',
+             '/integrationtest:simplelist/integrationtest:sdfsdf',
+             '/simplelist[simplekey="/xpath/inside[dsf=\'sdf\']/dsfsdf"][a="b"]')
+        ]
         self.assertEqual(result, expected_result)
 
     def test_xpath_splitter_simple_list(self):
 
         # Act
         xpath = "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']"
-        result = list(self.subject.convert_xpath_to_list_v2(xpath))
+        result = list(self.subject.convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [
-            ('container-and-lists', '', '/container-and-lists', ''),
-            ('multi-key-list', '', '/container-and-lists/multi-key-list', '/container-and-lists')
+            ('/container-and-lists', 'container-and-lists', '', '/integrationtest:container-and-lists', ''),
+            ("/container-and-lists/multi-key-list[A='aaaa'][B='bbb']", "multi-key-list", "[A='aaaa'][B='bbb']",
+             '/integrationtest:container-and-lists/integrationtest:multi-key-list', '/container-and-lists')
         ]
 
         self.assertEqual(result, expected_result)
@@ -213,15 +293,19 @@ class test_common(unittest.TestCase):
 
         # Act
         xpath = "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner/C"
-        result = list(self.subject.convert_xpath_to_list_v2(xpath))
+        result = list(self.subject.convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [
-            ('container-and-lists', '', '/container-and-lists', ''),
-            ('multi-key-list', '', '/container-and-lists/multi-key-list', '/container-and-lists'),
-            ('inner', "[B='bbb']", "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']", "/container-and-lists/multi-key-list[A='aaaa']"),
-            ('inner', "[B='bbb']", "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner", "/container-and-lists/multi-key-list[A='aaaa']"),
-            ('C', '', "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner/C", "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner")
+            ('/container-and-lists', 'container-and-lists', '', '/integrationtest:container-and-lists', ''),
+            ("/container-and-lists/multi-key-list[A='aaaa'][B='bbb']", "multi-key-list", "[A='aaaa'][B='bbb']",
+             '/integrationtest:container-and-lists/integrationtest:multi-key-list', '/container-and-lists'),
+            ("/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner", "inner", '',
+             '/integrationtest:container-and-lists/integrationtest:multi-key-list/integrationtest:inner',
+             "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']"),
+            ("/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner/C", "C", '',
+             '/integrationtest:container-and-lists/integrationtest:multi-key-list/integrationtest:inner/integrationtest:C',
+             "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner")
         ]
 
         self.assertEqual(result, expected_result)
@@ -291,4 +375,40 @@ class test_common(unittest.TestCase):
 
         # Assert
         expected_result = "/integrationtest:container-and-lists/multi-key-list/inner/level3list"
+        self.assertEqual(result, expected_result)
+
+    def test_module_and_leaf(self):
+        # Act
+        xpath = "/integrationtest:container-and-lists/multi-key-list[A='primary-leaf'][B='secondary-leaf']/inner/level3list[level3key='key3']"
+        result = Utils.return_module_name_and_leaf(xpath)
+
+        # Assert
+        expected_result = ("integrationtest", "container-and-lists")
+        self.assertEqual(result, expected_result)
+
+    def test_module_and_leaf_without_module(self):
+        # Act
+        xpath = "/container-and-lists/multi-key-list[A='primary-leaf'][B='secondary-leaf']/inner/level3list[level3key='key3']"
+        result = Utils.return_module_name_and_leaf(xpath)
+
+        # Assert
+        expected_result = (None, "container-and-lists")
+        self.assertEqual(result, expected_result)
+
+    def test_module_and_leaf_without_module_without_suffix(self):
+        # Act
+        xpath = "/container-and-lists"
+        result = Utils.return_module_name_and_leaf(xpath)
+
+        # Assert
+        expected_result = (None, "container-and-lists")
+        self.assertEqual(result, expected_result)
+
+    def test_module_and_leaf_with_module_without_suffix(self):
+        # Act
+        xpath = "/integrationtest:container-and-lists"
+        result = Utils.return_module_name_and_leaf(xpath)
+
+        # Assert
+        expected_result = ("integrationtest", "container-and-lists")
         self.assertEqual(result, expected_result)

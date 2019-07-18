@@ -19,13 +19,10 @@ class test_xml_to_xpath(unittest.TestCase):
         self.module = self.root._context.module
 
     def test_xpath_to_xml(self):
-        """
-        This probably isn't reflecting the real world - would expect predicates
-        The single quotes inside the predicate isn't quite standard complaint either,
-        just because this function handles it is no assurance other functions do.
-        """
         # Build
         xpaths = {
+            "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/ghi": "s''sdf",
+            "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/xyz": "asd",
             "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/jklm/mnop": "val",
             # "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/jklm/mnop2": "val2"
 
@@ -52,60 +49,8 @@ class test_xml_to_xpath(unittest.TestCase):
         # Assert
         self.assertEqual(result, expected_result)
 
-    def test_xpath_to_xml2_without_predicates(self):
-        """
-        This probably isn't reflecting the real world - would expect predciates
-        The single quotes inside the predicate isn't quite standard complaint either,
-        just because this function handles it is no assurance other functions do.
-        """
-        # Build
-        xpaths = {
-            "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/jklm/mnop": "val",
-            "/module:regex/abc/def[ghi='s''sdf'][xyz='asd']/jklm/mnop2": "val2",
-            "/module:regex/abc/def[ghi='s''sdf'][xyz='asd2']/jklm/mnop": "val",
-            "/module:regex/abc/def[ghi='s''sdf'][xyz='asd2']/jklm/mnop2": "val2",
-            "/module:regex/abc/zzz": "123"
-        }
-
-        expected_result = """<module>
-  <regex>
-    <abc>
-      <def>
-        <ghi>s''sdf</ghi>
-        <xyz>asd</xyz>
-        <jklm>
-          <mnop>val</mnop>
-          <mnop2>val2</mnop2>
-        </jklm>
-      </def>
-      <def>
-        <ghi>s''sdf</ghi>
-        <xyz>asd2</xyz>
-        <jklm>
-          <mnop>val</mnop>
-          <mnop2>val2</mnop2>
-        </jklm>
-      </def>
-      <zzz>123</zzz>
-    </abc>
-  </regex>
-</module>
-"""
-
-        # Act
-        result = self.subject.to_xmlstr(xpaths)
-
-        # Assert
-        self.assertEqual(result, expected_result)
-
     def test_xpath_to_xml3(self):
-        """
-        This is more representative than the previous two examples, because
-        the predicates are explicit.
 
-            "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/ghi": "ssdf",
-            "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/xyz": "asd",
-        """
         # Build
         xpaths = {
             "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/ghi": "ssdf",
@@ -113,6 +58,8 @@ class test_xml_to_xpath(unittest.TestCase):
             "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/jklm/mnop": "val",
             "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/jklm/mnop": "val",
             "/module:regex/abc/def[ghi='ssdf'][xyz='asd']/jklm/mnop2": "val2",
+            "/module:regex/abc/def[ghi='ssdf'][xyz='asd2']/ghi": "ssdf",
+            "/module:regex/abc/def[ghi='ssdf'][xyz='asd2']/xyz": "asd2",
             "/module:regex/abc/def[ghi='ssdf'][xyz='asd2']/jklm/mnop": "val",
             "/module:regex/abc/def[ghi='ssdf'][xyz='asd2']/jklm/mnop2": "val2",
             "/module:regex/abc/zzz": "123"
@@ -147,6 +94,111 @@ class test_xml_to_xpath(unittest.TestCase):
         result = self.subject.to_xmlstr(xpaths)
 
         # Assert
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_to_xml4(self):
+        """
+        An example template containing lots of embedded lists and
+        leaf-lists. The structure of the XML document must change due to that.
+        """
+        # Build
+        path1 = "/integrationtest:container-and-lists/multi-key-list"
+        path2 = "/integrationtest:scaling/scale0[key0-a='created0']"
+        path3 = path2 + "/scale1[key1-a='created1']/scale2[key2-a='created2'][key2-b='extrakey']"
+
+        xpaths = {
+            path1 + "[A='primary-leaf'][B='secondary-leaf']/A": "primary-leaf",
+            path1 + "[A='primary-leaf'][B='secondary-leaf']/B": "secondary-leaf",
+            path1 + "[A='primary-leaf'][B='secondary-leaf']/inner/C": "c",
+            path1 + "[A='primary-leaf'][B='secondary-leaf']/inner/level3list[level3key='key3']/level3key": "key3",
+            path1 + "[A='primary-leaf'][B='secondary-leaf']/inner/level3list[level3key='key3']/level3-nonkey": "sdf",
+            path1 + "[A='another-leaf'][B='another-leaf']/A": "another-leaf",
+            path1 + "[A='another-leaf'][B='another-leaf']/B": "another-leaf",
+            "/integrationtest:morecomplex/leaflists/simple": ['abc', '123', 'def'],
+            path2 + "/key0-a": "created0",
+            path2 + "/scale1[key1-a='created1']/key1-a": "created1",
+            path2 + "/scale1[key1-a='created1']/scale2[key2-a='created2'][key2-b='extrakey']/key2-a": "created2",
+            path3 + "/key2-b": "extrakey",
+            path3 + "/scale3[key3-a='created3']/key3-a": "created3",
+            path3 + "/scale3[key3-a='created3']/scale4[key4-a='created4']/key4-a": "created4"
+        }
+
+        expected_result = """<integrationtest>
+  <container-and-lists>
+    <multi-key-list>
+      <A>primary-leaf</A>
+      <B>secondary-leaf</B>
+      <inner>
+        <C>c</C>
+        <level3list>
+          <level3key>key3</level3key>
+          <level3-nonkey>sdf</level3-nonkey>
+        </level3list>
+      </inner>
+    </multi-key-list>
+    <multi-key-list>
+      <A>another-leaf</A>
+      <B>another-leaf</B>
+    </multi-key-list>
+  </container-and-lists>
+  <morecomplex>
+    <leaflists>
+      <simple>abc</simple>
+      <simple>123</simple>
+      <simple>def</simple>
+    </leaflists>
+  </morecomplex>
+  <scaling>
+    <scale0>
+      <key0-a>created0</key0-a>
+      <scale1>
+        <key1-a>created1</key1-a>
+        <scale2>
+          <key2-a>created2</key2-a>
+          <key2-b>extrakey</key2-b>
+          <scale3>
+            <key3-a>created3</key3-a>
+            <scale4>
+              <key4-a>created4</key4-a>
+            </scale4>
+          </scale3>
+        </scale2>
+      </scale1>
+    </scale0>
+  </scaling>
+</integrationtest>
+"""
+
+        # Act
+        result = self.subject.to_xmlstr(xpaths)
+
+        # Assert
+        self.assertEqual(result, expected_result)
+
+    def test_template_ninja_with_xpath_looking_keys(self):
+        path = "/integrationtest:container-and-lists/multi-key-list[A='/this/looks/a/bit/like/xpath[key=\"sdf\"]/sdf']"
+        xpaths = {
+            path + "[B='second-leaf']/A": "/this/looks/a/bit/like/xpath[key=\"sdf\"]/sdf",
+            path + "[B='second-leaf']/B": "second-leaf",
+            path + "[B='second-leaf']/inner/C": "C",
+        }
+
+        # Act
+        result = self.subject.to_xmlstr(xpaths)
+
+        # Assert
+        expected_result = """<integrationtest>
+  <container-and-lists>
+    <multi-key-list>
+      <A>/this/looks/a/bit/like/xpath[key="sdf"]/sdf</A>
+      <B>second-leaf</B>
+      <inner>
+        <C>C</C>
+      </inner>
+    </multi-key-list>
+  </container-and-lists>
+</integrationtest>
+"""
         self.assertEqual(result, expected_result)
 
     def test_from_template_siblings(self):

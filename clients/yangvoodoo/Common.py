@@ -88,9 +88,12 @@ class Utils:
     SPLIT_XPATH = re.compile(r"([a-zA-Z0-9_-]*)(/?)((\[.*?\])*)?")
     XPATH_DECODER = re.compile(r"(([a-zA-Z0-9_-]*))(\[.*?=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])?/(([a-zA-Z0-9_-]*:)?([a-zA-Z0-9_-]*))")
     XPATH_DECODER_V2 = re.compile(r"(([a-zA-Z0-9_-]*))(\[.*?=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])?(/([a-zA-Z0-9_-]*))?")
+    XPATH_DECODER_V3 = re.compile(r"(([a-zA-Z0-9:_-]*))(\[.*?=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])?(/([a-zA-Z0-9_-]*))?")
+    XPATH_DECODER_V4 = re.compile(r"(([A-Za-z0-9_-]*:)?([A-Za-z0-9_-]+))((\[[A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])+)?")
     XPATH_MATCH_AFTER_LAST_PREDICATE = re.compile(r"^(.*?)(/[^\[\]]*)$")
     STARTING_A_PREDICATE = re.compile(r".*\[[a-z0-9A-Z_-]+\s*=\s*['\"]")
     ENDING_A_PREDICATE = re.compile(r".*['\"]\s*\]$")
+    MODULE_AND_LEAF_REGEX = re.compile(r"/([A-Za-z0-9_-]+:)?([A-Za-z0-9_-]+)")
 
     @staticmethod
     def pretty_xmldoc(xmldoc):
@@ -559,35 +562,29 @@ class Utils:
                 yield (module + e, None)
 
     @staticmethod
-    def convert_xpath_to_list_v2(xpath):
+    def convert_xpath_to_list_v4(xpath):
         """
         Return a list of tuples based upon the XPATH sent in.
+                (path, predicates, schema path, parent path)
 
-            expected_result = [
-                ('bronze', '', '/bronze/', '/'),
-                ('silver', '', '/bronze/silver/', '/bronze/'),
-                ('gold', '', '/bronze/silver/gold/', '/bronze/silver/'),
-                ('platinum', '', '/bronze/silver/gold/platinum/', '/bronze/silver/gold/')
-            ]
         """
-
+        module = "integrationtest"
+        working_schema_path = ""
         working_path = ""
-        for (a, b, predicates, d, e, node) in Utils.XPATH_DECODER_V2.findall(xpath):
-            c = predicates
-            f = node
-            # print('a:  %s   b: %s   c: %s    d: %s    e: %s     f: %s' % (a, b, c, d, e, f))
+        parent_path = ""
+
+        for (a, b, leaf_name, predicates, e, f) in Utils.XPATH_DECODER_V4.findall(xpath):
             parent_path = working_path
-            if node == "":
-                working_path = working_path + predicates
-                continue
-            elif predicates and node:
-                working_path = working_path + predicates
-                yield (node,  predicates, working_path, parent_path)
-                working_path = working_path + "/" + node
-                yield (node,  predicates, working_path, parent_path)
-            else:
-                working_path = working_path + predicates + "/"+node
-                yield (node,  predicates, working_path, parent_path)
+            working_path = working_path + "/" + leaf_name + predicates
+            working_schema_path = working_schema_path + "/" + module + ":"+leaf_name
+            yield (working_path, leaf_name, predicates, working_schema_path, parent_path)
+
+    @staticmethod
+    def return_module_name_and_leaf(in_string):
+        (module, node) = Utils.MODULE_AND_LEAF_REGEX.match(in_string).groups()
+        if module:
+            return (module[:-1], node)
+        return (module, node)
 
     @staticmethod
     def return_until_first_predicate(in_string):

@@ -13,6 +13,10 @@ class Cache:
     def get_item_from_cache(self, path):
         return self.items[path]
 
+    def remove_entry(self, path):
+        if path in self.items:
+            del self.items[path]
+
     def add_entry(self, path, cache_object):
         """
         Add an entry into the cache.
