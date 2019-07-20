@@ -91,6 +91,11 @@ class Node:
     def _specific_init(self):
         pass
 
+    def __setitem__(self, arg, val):
+        if not isinstance(arg, str):
+            raise ValueError("node['child'] only supports a single argument.")
+        return self.__setattr__(arg, val)
+
     def __getitem__(self, arg):
         if not isinstance(arg, str):
             raise ValueError("node['child'] only supports a single argument.")

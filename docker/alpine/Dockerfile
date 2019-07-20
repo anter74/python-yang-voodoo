@@ -63,22 +63,3 @@ RUN \
       make install && \
       ln -s /usr/local/lib64/*ysrepo* /usr/local/lib
 
-
-RUN \
-# libssh
-      cd /opt/dev/libssh && \
-      git checkout libssh-0.9.0 && \
-      mkdir build && cd build && \
-      cmake .. && \
-      make -j6 && \
-      make install
-
-# libnetconf2
-RUN \
-      cd /opt/dev/libnetconf2 && \
-      mkdir build && cd build && \
-      # git checkout 54ba1c7a1dbd85f3e700c1629ced8e4b52bac4ec && \
-      git checkout v0.12-r2 && \
-      cmake ..  && make
-      # make -j6 && \
-      # make install

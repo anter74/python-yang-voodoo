@@ -79,3 +79,4 @@
   - Ability to more easily set data in the back-end without using voodoo (the value type is derrived)
     (e.g session.set_data_by_xpath(context, xpath, value)
   - FIX: Template conversion into XML from XPATH (list-values which looked like xpath were affecting the structure)
+  - Implement \__setitem__ so we can do root.bronze['A'] = 'AAAAA'

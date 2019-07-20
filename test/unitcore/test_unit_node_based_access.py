@@ -345,3 +345,7 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
         xpaths = self.stub.dump_xpaths()
         self.assertEqual(xpaths["/integrationtest:underscoretests/underscore_and-hyphen"], "sdf")
         self.assertEqual(xpaths["/integrationtest:underscore_and-hyphen"], True)
+
+    def test_getitem_and_steitem(self):
+        self.root.bronze['A'] = 'bronze-set-by-set-attr'
+        self.assertEqual(self.root.bronze['A'], 'bronze-set-by-set-attr')
