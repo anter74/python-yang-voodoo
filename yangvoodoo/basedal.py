@@ -205,3 +205,6 @@ class BaseDataAbstractionLayer:
 
     def dump_xpaths(self):
         raise NotImplementedError("dump_xpaths not implemented")
+
+    def empty(self):
+        raise NotImplementedError("empty not implemented")

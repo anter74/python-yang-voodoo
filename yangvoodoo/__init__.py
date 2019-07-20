@@ -501,6 +501,16 @@ Children: %s""" % (str(children)[1:-1])
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.refresh()
 
+    def empty(self):
+        """
+        Somewhat dangerous option - but attempt to empty the entire datastore.
+
+        returns: True
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.empty()
+
     def is_session_dirty(self):
         """
         Returns if we have changed our dataset since the time we connected, last committed

@@ -206,7 +206,7 @@ NodeType: Container
 Description:
   The metallics are used to test container nesting
 
-Children: 'silver'"""
+Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'silver'"""
 
         self.assertEqual(description, expected_description)
 

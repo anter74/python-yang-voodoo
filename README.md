@@ -123,7 +123,8 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **create_container(xpath)** - if a container is a presence container explicitly create the container.
  - **set(xpath, value, valuetype)** - sets the value of a specific xpath (supported for yang leaves). The valuetype is an integer (defined in Types.py/DATA_ABSTRACTION_MAPPING) based on the effective type of the yang field (*based on fuzzy matching in the case of unions*).
  - **delete(xpath** - delete a value or container, this method must not be used for lists.
-
+ - **empty()** - a dangerous option which will remove everything from the datastore.
+ 
 ### SCHEMA vs DATA level constraints
 
 There are some validation and constraints that are schema level, that is they are defined in the yang model and have no dependency on the data in the datastore. ~~Schema based constraints are enforced by libyang without a requirement to run a full datastore (like sysrepo).~~ Note: sysrepo actually calls libyang to perform the validation with the full dataset.
