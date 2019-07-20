@@ -1,3 +1,26 @@
+# Scaling YANG model
+
+see `test/scaling` which can be manually run, using a stub datastore the following values are found with commit `ce5306edd19c3b355620ccb36324841ccb7d08b2`
+
+|Test                                                  | Paths     | Time (seconds) |
+|------------------------------------------------------|-----------|----------------|
+| One entry to thirty nested lists                     | 30        | 0.005          |
+| One hundred entries to thirty nested lists           | 3000      | 0.422          |
+| Add nested leaves with deep data set (               | 16100     | 1.25           |
+| Dump xpaths with                                     | 16100     | 0.008          |
+| Dump XPATHS to template                              | 16100     | 1.72           |
+| Load XPATHS from xml                                 | 16100     | 0.720          |
+| Add three thousand entries to one list               | 3000      | 0.175          |
+| Simple leaf changed 3000 times                       | 3000      | 0.06           |
+
+
+Factors affecting performance
+
+ - Deepness of the XPATH - shallow data is easier to store. (There are a few areas of processing of predicates which looks to be repetitive)
+ - When writing an XML template we look for a cache hit on the parent nodes, if there is data access to siblings within the same parent we have less work to do.
+ 
+
+
 # Summary
 
 - The results below are center towards reading and list iteration, the average speed is from 20,000 operations.

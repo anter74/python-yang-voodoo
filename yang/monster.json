@@ -1,0 +1,109 @@
+{
+  "integrationtest:morecomplex": {
+    "leaf4": "A",
+    "inner": {
+      "leaf5": "this was mandatory",
+      "siblings": {
+        "a": "a",
+        "b": "b"
+      }
+    }
+  },
+  "integrationtest:container-and-lists": {
+    "multi-key-list": [
+      {
+        "A": "a",
+        "B": "b",
+        "inner": {
+          "C": "c"
+        }
+      },
+      {
+        "A": "A",
+        "B": "B",
+        "inner": {
+          "C": "C"
+        }
+      }
+    ]
+  },
+  "integrationtest:scaling": {
+    "scale0": [
+      {
+        "key0-a": "created0x0",
+        "scale1": [
+          {
+            "key1-a": "created1x0",
+            "scale2": [
+              {
+                "key2-a": "created2x0",
+                "key2-b": "extrakey",
+                "scale3": [
+                  {
+                    "key3-a": "created3x0",
+                    "alpha0": {
+                      "A": "sdf",
+                      "B": "sdf",
+                      "C": "sdf",
+                      "D": "sdf",
+                      "E": "sdf",
+                      "F": "sdf",
+                      "G": "sdf",
+                      "H": "sdf",
+                      "I": "sdf",
+                      "J": "sdf",
+                      "K": "sdf",
+                      "L": "sdf",
+                      "M": "sdf",
+                      "N": "sdf",
+                      "O": "sdf",
+                      "P": "sdf",
+                      "Q": "sdf",
+                      "R": "sdf",
+                      "S": "sdf",
+                      "T": "sdf",
+                      "U": "sdf",
+                      "V": "sdf",
+                      "W": "sdf",
+                      "X": "sdf",
+                      "Y": "sdf",
+                      "Z": "sdf"
+                    },
+                    "alpha1": {
+                      "A": "sdf",
+                      "B": "sdf",
+                      "C": "sdf",
+                      "D": "sdf",
+                      "E": "sdf",
+                      "F": "sdf",
+                      "G": "sdf",
+                      "H": "sdf",
+                      "I": "sdf",
+                      "J": "sdf",
+                      "K": "sdf",
+                      "L": "sdf",
+                      "M": "sdf",
+                      "N": "sdf",
+                      "O": "sdf",
+                      "P": "sdf",
+                      "Q": "sdf",
+                      "R": "sdf",
+                      "S": "sdf",
+                      "T": "sdf",
+                      "U": "sdf",
+                      "V": "sdf",
+                      "W": "sdf",
+                      "X": "sdf",
+                      "Y": "sdf",
+                      "Z": "sdf"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

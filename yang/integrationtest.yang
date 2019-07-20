@@ -464,17 +464,22 @@ module integrationtest {
   }
   container bronze {
     description "The metallics are used to test container nesting";
+    uses scale:lots-of-leaves;
     container silver {
       description "Silver is the second level";
+      uses scale:lots-of-leaves;
       container gold {
         description "Gold is a bit better than silver";
+        uses scale:lots-of-leaves;
         container platinum {
           description "Then we get platinum which is as deep as we go.";
+          uses scale:lots-of-leaves;
           leaf deep {
             type string;
           }
           container deeper {
             presence true;
+            uses scale:lots-of-leaves;
           }
         }
       }

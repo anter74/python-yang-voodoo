@@ -3,6 +3,86 @@ module scaling {
   namespace "http://brewerslabng.mellon-collie.net/yang/integrationtest-sclaing";
   prefix "scaling";
 
+  grouping lots-of-leaves {
+    leaf A {
+      type string;
+    }
+    leaf B {
+      type string;
+    }
+    leaf C {
+      type string;
+    }
+    leaf D {
+      type string;
+    }
+    leaf E {
+      type string;
+    }
+    leaf F {
+      type string;
+    }
+    leaf G {
+      type string;
+    }
+    leaf H {
+      type string;
+    }
+    leaf I {
+      type string;
+    }
+    leaf J {
+      type string;
+    }
+    leaf K {
+      type string;
+    }
+    leaf L {
+      type string;
+    }
+    leaf M {
+      type string;
+    }
+    leaf N {
+      type string;
+    }
+    leaf O {
+      type string;
+    }
+    leaf P {
+      type string;
+    }
+    leaf Q {
+      type string;
+    }
+    leaf R {
+      type string;
+    }
+    leaf S {
+      type string;
+    }
+    leaf T {
+      type string;
+    }
+    leaf U {
+      type string;
+    }
+    leaf V {
+      type string;
+    }
+    leaf W {
+      type string;
+    }
+    leaf X {
+      type string;
+    }
+    leaf Y {
+      type string;
+    }
+    leaf Z {
+      type string;
+    }
+  }
 
   grouping thirty-lists {
     list scale0 {
@@ -43,7 +123,12 @@ module scaling {
             leaf non-key3 {
               type string;
             }
-
+            container alpha0 {
+              uses lots-of-leaves;
+            }
+            container alpha1 {
+              uses lots-of-leaves;
+            }
             list scale4 {
               key key4-a;
               leaf key4-a {
@@ -276,6 +361,21 @@ module scaling {
                                                                 }
                                                                 leaf non-key29 {
                                                                   type string;
+                                                                }
+                                                                container alpha0 {
+                                                                  uses lots-of-leaves;
+                                                                }
+                                                                container alpha1 {
+                                                                  uses lots-of-leaves;
+                                                                }
+                                                                container alpha2 {
+                                                                  uses lots-of-leaves;
+                                                                }
+                                                                container alpha3 {
+                                                                  uses lots-of-leaves;
+                                                                }
+                                                                container alpha4 {
+                                                                  uses lots-of-leaves;
                                                                 }
                                                               }
                                                             }

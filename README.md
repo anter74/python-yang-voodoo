@@ -126,7 +126,8 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
 
 ### SCHEMA vs DATA level constraints
 
-There are some validation and constraints that are schema level, that is they are defined in the yang model and have no dependency on the data in the datastore. Schema based constraints are enforced by libyang without a requirement to run a full datastore (like sysrepo).
+There are some validation and constraints that are schema level, that is they are defined in the yang model and have no dependency on the data in the datastore. ~~Schema based constraints are enforced by libyang without a requirement to run a full datastore (like sysrepo).~~ Note: sysrepo actually calls libyang to perform the validation with the full dataset.
+
 Examples of schema based constraints.
 
  - Creating/accessing nodes that are not part of the YANG model.
