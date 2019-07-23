@@ -54,7 +54,7 @@ class test_xml_to_xpath(unittest.TestCase):
   </bronze>
   <simplelist>
     <simplekey>S</simplekey>
-    <nonleafkey>DFS</nonleafkey>
+    <nonleafkey>4</nonleafkey>
   </simplelist>
   <simplelist>
     <simplekey>T</simplekey>
@@ -84,7 +84,7 @@ class test_xml_to_xpath(unittest.TestCase):
   </bronze>
   <simplelist>
     <simplekey>S</simplekey>
-    <nonleafkey>DFS</nonleafkey>
+    <nonleafkey>4</nonleafkey>
   </simplelist>
   <simplelist>
     <simplekey>T</simplekey>

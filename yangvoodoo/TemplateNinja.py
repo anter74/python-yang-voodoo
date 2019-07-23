@@ -33,8 +33,6 @@ class TemplateNinja:
 
                 if not predicates:
                     new_node = etree.Element(leaf_name)
-                    if namespace and previous_node == xmldoc:
-                        new_node.attrib['xmlns'] = namespace
                     working_node.append(new_node)
                     cache.add_entry(this_path, new_node)
                     working_node = new_node
@@ -47,6 +45,8 @@ class TemplateNinja:
                         working_node = new_node
                         cache.add_entry(this_path, working_node)
 
+                if namespace and previous_node == xmldoc:
+                    new_node.attrib['xmlns'] = namespace
             if xpaths[xpath]:
                 if isinstance(xpaths[xpath], list):
                     leaf_list_items = xpaths[xpath]
