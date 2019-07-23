@@ -40,6 +40,65 @@ class test_xml_to_xpath(unittest.TestCase):
 """
         self.assertEqual(result, expected_result)
 
+    def test_strip_xmlns(self):
+        xmlstr_with_ns = """<data>
+  <simpleleaf xmlns="http://nnnnnnnnn">FD</simpleleaf>
+  <bronze xmlns="http://nnnnnnnnn">
+    <silver>
+      <gold>
+        <platinum>
+          <deep>down here</deep>
+        </platinum>
+      </gold>
+    </silver>
+  </bronze>
+  <simplelist>
+    <simplekey>S</simplekey>
+    <nonleafkey>DFS</nonleafkey>
+  </simplelist>
+  <simplelist>
+    <simplekey>T</simplekey>
+  </simplelist>
+  <morecomplex xmlns="http://nnnnnnnnn">
+    <inner>
+      <beer-styles>
+        <beer-style>saison</beer-style>
+      </beer-styles>
+    </inner>
+  </morecomplex>
+</data>"""
+
+        # Act
+        xmlstr_without_ns = self.subject.strip_xmlns(xmlstr_with_ns)
+
+        expected_result = """<data>
+  <simpleleaf>FD</simpleleaf>
+  <bronze>
+    <silver>
+      <gold>
+        <platinum>
+          <deep>down here</deep>
+        </platinum>
+      </gold>
+    </silver>
+  </bronze>
+  <simplelist>
+    <simplekey>S</simplekey>
+    <nonleafkey>DFS</nonleafkey>
+  </simplelist>
+  <simplelist>
+    <simplekey>T</simplekey>
+  </simplelist>
+  <morecomplex>
+    <inner>
+      <beer-styles>
+        <beer-style>saison</beer-style>
+      </beer-styles>
+    </inner>
+  </morecomplex>
+</data>"""
+        self.assertEqual(xmlstr_without_ns, expected_result)
+
     def test_xpath_to_xml_without_a_module_name(self):
         # Build
         xpaths = {

@@ -9,6 +9,8 @@ from yangvoodoo.Cache import Cache
 
 
 class TemplateNinja:
+    REGEX_COLON_TAGS = re.compile("<([^>]+:[^>]+)>")
+    REGEX_XMLNS = re.compile('xmlns.*="[^"]+"')
 
     def __init__(self, log=None):
         if not log:
@@ -89,10 +91,22 @@ class TemplateNinja:
 
         self._import_xml_to_datastore(module, yangctx, xmlstr, dal)
 
+    @staticmethod
+    def strip_xmlns(xmlstr):
+        for replacement in TemplateNinja.REGEX_COLON_TAGS.findall(xmlstr):
+            xmlstr = xmlstr.replace(replacement, replacement.replace(':', '__'))
+        for xmlns in TemplateNinja.REGEX_XMLNS.findall(xmlstr):
+            xmlstr = xmlstr.replace(xmlns, '')
+        xmlstr = xmlstr.replace(' >', '>')
+
+        return xmlstr
+
     def from_xmlstr(self, root, xmlstr, **kwargs):
         dal = root.__dict__['_context'].dal
         yangctx = root.__dict__['_context'].schemactx
         module = root.__dict__['_context'].module
+
+        xmlstr = TemplateNinja.strip_xmlns(xmlstr)
 
         self._import_xml_to_datastore(module, yangctx, xmlstr, dal)
 
