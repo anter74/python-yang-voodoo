@@ -270,7 +270,7 @@ Children: %s""" % (str(children)[1:-1])
 
         returns: True
         """
-        if not os.path.exists(yang_location + "/" + module + ".yang"):
+        if yang_location and not os.path.exists(yang_location + "/" + module + ".yang"):
             raise ValueError("YANG Module "+module+" not present in "+yang_location)
         self.module = module
         self.yang_ctx = libyang.Context(yang_location)
