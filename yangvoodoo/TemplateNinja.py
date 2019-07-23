@@ -1,3 +1,4 @@
+import json
 import re
 import yangvoodoo
 from jinja2 import Template
@@ -14,16 +15,10 @@ class TemplateNinja:
             log = Common.Utils.get_logger("TemplateNinja")
         self.log = log
 
-    def to_xmlstr(self, xpaths):
-        first_xpath = next(iter(xpaths))
-        (module, leaf) = Utils.return_module_name_and_leaf(first_xpath)
-        if not module:
-            raise ValueError("Unable to determine module name from the first xpath")
-
+    def to_xmldoc(self, xpaths, first_node_name="data", namespace=None):
         cache = Cache()
-        xmldoc = etree.Element(module)
+        xmldoc = etree.Element(first_node_name)
         for xpath in xpaths:
-
             previous_node = xmldoc
             working_node = xmldoc
             done_predicates = False
@@ -34,11 +29,10 @@ class TemplateNinja:
                     working_node = cache.get_item_from_cache(this_path)
                     continue
 
-                self.log.trace("CACHE_MISS: %s", this_path)
-                self.log.trace("CREATING_NODE: %s ... %s %s", leaf_name, predicates, done_predicates)
-                self.log.trace("PARENT: %s", this_parent_path)
                 if not predicates:
                     new_node = etree.Element(leaf_name)
+                    if namespace and previous_node == xmldoc:
+                        new_node.attrib['xmlns'] = namespace
                     working_node.append(new_node)
                     cache.add_entry(this_path, new_node)
                     working_node = new_node
@@ -49,10 +43,8 @@ class TemplateNinja:
                         new_node = etree.Element(leaf_name)
                         working_node.append(new_node)
                         working_node = new_node
-                        self.log.trace("ADD CACHE: %s", this_path)
                         cache.add_entry(this_path, working_node)
 
-                # print("///", this_path, "////", predicates, "//////", leaf_name)
             if xpaths[xpath]:
                 if isinstance(xpaths[xpath], list):
                     leaf_list_items = xpaths[xpath]
@@ -64,6 +56,18 @@ class TemplateNinja:
                     continue
                 working_node.text = str(xpaths[xpath])
 
+        return xmldoc
+
+    def to_xmlstr_with_ns(self, xpaths, namespace):
+        xmldoc = self.to_xmldoc(xpaths, "data", namespace)
+        return Common.Utils.pretty_xmldoc(xmldoc)
+
+    def to_xmlstr(self, xpaths):
+        first_xpath = next(iter(xpaths))
+        (module, leaf) = Utils.return_module_name_and_leaf(first_xpath)
+        if not module:
+            raise ValueError("Unable to determine module name from the first xpath")
+        xmldoc = self.to_xmldoc(xpaths, module)
         return Common.Utils.pretty_xmldoc(xmldoc)
 
     def _getTemplate(self, contents):

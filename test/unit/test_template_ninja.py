@@ -18,6 +18,41 @@ class test_xml_to_xpath(unittest.TestCase):
         self.schemactx = self.root._context.schemactx
         self.module = self.root._context.module
 
+    def test_xpath_to_xml_with_ns(self):
+        # Build
+        xpaths = {
+            "/regex/abc/def[ghi='s''sdf'][xyz='asd']/ghi": "sdf"
+        }
+
+        # Act
+        result = self.subject.to_xmlstr_with_ns(xpaths, "http://ns")
+
+        # Assert
+        expected_result = """<data>
+  <regex xmlns="http://ns">
+    <abc>
+      <def>
+        <ghi>sdf</ghi>
+      </def>
+    </abc>
+  </regex>
+</data>
+"""
+        self.assertEqual(result, expected_result)
+
+    def test_xpath_to_xml_without_a_module_name(self):
+        # Build
+        xpaths = {
+            "/regex/abc/def[ghi='s''sdf'][xyz='asd']/ghi": "s''sdf"
+        }
+
+        # Act
+        with self.assertRaises(ValueError) as context:
+            self.subject.to_xmlstr(xpaths)
+
+        # Assert
+        self.assertEqual(str(context.exception), "Unable to determine module name from the first xpath")
+
     def test_xpath_to_xml(self):
         # Build
         xpaths = {
