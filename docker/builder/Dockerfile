@@ -9,7 +9,7 @@ RUN \
       curl \
       gnupg \
       apt-transport-https \
-      python3 \
+      python3-dbg \
       python3-pip \
       libpython3.7
 
@@ -28,6 +28,8 @@ RUN \
       swig \
       python-dev \
       python3-dev \
+      valgrind \
+      libxml2-utils \
       libcurl4-openssl-dev \
       libxslt-dev \
       libxml2-dev \
