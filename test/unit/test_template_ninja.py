@@ -449,9 +449,9 @@ class test_xml_to_xpath(unittest.TestCase):
         self.assertEqual(dal.create.call_count, 2)
         dal.create.assert_has_calls([
             call(
-                "/integrationtest:container-and-lists/numberkey-list[numberkey='5']", ['numberkey'], [(5, 19)]),
+                "/integrationtest:container-and-lists/numberkey-list[numberkey='5']", ['numberkey'], [(5, 13)]),
             call("/integrationtest:container-and-lists/multi-key-list[A='a'][B='b']", [
-                 'A', 'B'], [('a', 18), ('b', 18)])
+                 'A', 'B'], [('a', 10), ('b', 10)])
         ])
 
     def test_from_template_with_union_of_enumeartions(self):
@@ -474,7 +474,7 @@ class test_xml_to_xpath(unittest.TestCase):
         # Assert
         self.assertEqual(dal.set.call_count, 1)
         dal.set.assert_has_calls([
-            call('/integrationtest:morecomplex/inner/leaf112', 'vocation', 11),
+            call('/integrationtest:morecomplex/inner/leaf112', 'vocation', 6),
         ])
 
     def test_from_template_with_union_of_enumeartions_but_setting_integer(self):
@@ -497,7 +497,7 @@ class test_xml_to_xpath(unittest.TestCase):
         # Assert
         self.assertEqual(dal.set.call_count, 1)
         dal.set.assert_has_calls([
-            call('/integrationtest:morecomplex/inner/leaf112', 123, 21),
+            call('/integrationtest:morecomplex/inner/leaf112', 123, 17),
         ])
     #
     # def test_from_template_with_union_of_enumeartions_but_setting_boolean(self):
@@ -547,9 +547,9 @@ class test_xml_to_xpath(unittest.TestCase):
         self.assertEqual(dal.create.call_count, 0)
         self.assertEqual(dal.add.call_count, 3)
         dal.add.assert_has_calls([
-            call("/integrationtest:morecomplex/leaflists/simple", 'A', 18),
-            call("/integrationtest:morecomplex/leaflists/simple", 'Z', 18),
-            call("/integrationtest:morecomplex/leaflists/simple", 'M', 18)
+            call("/integrationtest:morecomplex/leaflists/simple", 'A', 10),
+            call("/integrationtest:morecomplex/leaflists/simple", 'Z', 10),
+            call("/integrationtest:morecomplex/leaflists/simple", 'M', 10)
         ])
 
     def test_from_template_with_leaflists_with_stub_dal(self):

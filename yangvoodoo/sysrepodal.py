@@ -23,6 +23,28 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     SYSREPO_DATASTORE_LOCATION = "/sysrepo/data"
     DAL_ID = "SysrepDAL"
     DAL_IN_MEMORY = False
+    SYSREPO_DATA_ABSTRACTION_MAPPING = {
+        19: sr.SR_UINT64_T,
+        17: sr.SR_UINT32_T,
+        15: sr.SR_UINT16_T,
+        13: sr.SR_UINT8_T,
+        18: sr.SR_INT64_T,
+        16: sr.SR_INT32_T,
+        14: sr.SR_INT16_T,
+        12: sr.SR_INT8_T,
+        10: sr.SR_STRING_T,
+        3: sr.SR_BOOL_T,
+        6: sr.SR_ENUM_T,
+        4: sr.SR_DECIMAL64_T,   # DECIMAL 64
+        5: sr.SR_LEAF_EMPTY_T,    # Empty
+        # 100: 4,  # Presence container has no libyang type but does have a sysrepo type
+        # 16: 2,   # List (
+    }
+
+    SYSREPO_NODE_MAPPING = {
+        16: sr.SR_LIST_T,
+        100: sr.SR_CONTAINER_PRESENCE_T
+    }
 
     def connect(self, module, tag='client'):
         """
@@ -141,7 +163,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     def create_container(self, xpath):
         self.dirty = True
         try:
-            self.set(xpath, None, sr.SR_CONTAINER_PRESENCE_T)
+            self.set(xpath, None, None, 100)
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
@@ -155,7 +177,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         """
         self.dirty = True
         try:
-            self.set(xpath, None, sr.SR_LIST_T)
+            self.set(xpath, None, None, 16)
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
@@ -163,7 +185,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.dirty = True
         self.delete(xpath)
 
-    def set(self, xpath, value, valtype=sr.SR_STRING_T):
+    def set(self, xpath, value, valtype=10, nodetype=4):
         """
         Set an individual item by XPATH.
           e.g. / path/to/item
@@ -173,9 +195,15 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             v=sr.Val(2.344)
         """
         self.log.trace('SET: %s => %s (%s)' % (xpath, value, valtype))
+        if valtype:
+            valtype = self.SYSREPO_DATA_ABSTRACTION_MAPPING[valtype]
+        elif nodetype:
+            valtype = self.SYSREPO_NODE_MAPPING[nodetype]
         self.dirty = True
-        if valtype == 10:
+        if valtype in (10, 22):
             valtype = None
+        if valtype == 5:
+            value = None
         if valtype:
             v = sr.Val(value, valtype)
         else:

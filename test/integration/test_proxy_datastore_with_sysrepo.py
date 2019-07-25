@@ -60,7 +60,7 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
     @patch("yangvoodoo.Common.Utils.get_yang_type_from_path")
     def test_lists(self, mockGetYangType):
         self.subject.module = "integrationtest"
-        mockGetYangType.return_value = 18
+        mockGetYangType.return_value = 10
         xpath = "/integrationtest:simplelist"
         xpath1 = xpath + "[simplekey='simpleval']"
         xpath2 = xpath + "[simplekey='zsimpleval']"
@@ -91,9 +91,9 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
         val2 = 'A'
         val3 = 'C'
 
-        self.subject.add(xpath, val1, 18)
-        self.subject.add(xpath, val2, 18)
-        self.subject.add(xpath, val3, 18)
+        self.subject.add(xpath, val1, 10)
+        self.subject.add(xpath, val2, 10)
+        self.subject.add(xpath, val3, 10)
 
         # Uncached
         self.assertFalse(xpath in self.subject.value_cached)

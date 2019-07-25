@@ -91,14 +91,14 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             self.has_item_cached[xpath] = result
         return self.has_item_cached[xpath]
 
-    def set(self, xpath, value, valtype=0):
-        self.cache.set(xpath, value, valtype)
+    def set(self, xpath, value, valtype=0, nodetype=4):
+        self.cache.set(xpath, value, valtype, nodetype)
         if valtype == 5:
             value = True
         self.value_cached[xpath] = value
         if valtype == 5:
             value = None
-        return self.store.set(xpath, value, valtype)
+        return self.store.set(xpath, value, valtype, nodetype)
 
     def gets_sorted(self, list_xpath, schema_xpath, ignore_empty_lists=False):
         if list_xpath not in self.sorted_cached:
@@ -144,7 +144,6 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             key_schema_path = schema_xpath + "/" + self.module+":"+keys[index]
             valtype = Utils.get_yang_type_from_path(self.context, key_schema_path, vals[index])
             val = Utils.convert_string_to_python_val(vals[index], valtype)
-
             key_path = xpath + "/" + keys[index]
             self.value_cached[key_path] = val
 

@@ -370,7 +370,7 @@ Children: %s""" % (str(children)[1:-1])
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.uncreate(xpath)
 
-    def set(self, xpath, value, valtype=18):
+    def set(self, xpath, value, valtype=10, nodetype=4):
         """
         Set an individual item by XPATH.
           e.g. / path/to/item
@@ -382,7 +382,7 @@ Children: %s""" % (str(children)[1:-1])
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.set(xpath, value, valtype)
+        return self.data_abstraction_layer.set(xpath, value, valtype, nodetype)
 
     def gets_len(self, xpath):
         """

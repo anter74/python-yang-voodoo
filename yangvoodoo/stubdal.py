@@ -167,7 +167,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
                 return True
         return False
 
-    def set(self, xpath, value, valtype=0):
+    def set(self, xpath, value, valtype=0, nodetype=4):
         self.log.trace("SET: %s => %s (%s)", xpath, value, valtype)
         # if an empty Node stub will store this as True (sysrepo will not want a value)
         if valtype == 5:

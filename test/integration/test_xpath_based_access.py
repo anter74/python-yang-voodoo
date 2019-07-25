@@ -1,3 +1,4 @@
+import libyang
 import unittest
 import time
 import yangvoodoo
@@ -147,24 +148,24 @@ class test_getdata(unittest.TestCase):
         self.assertEqual(value, None)
 
         xpath = "/integrationtest:empty"
-        self.subject.set(xpath, None, sr.SR_LEAF_EMPTY_T)
+        self.subject.set(xpath, None, Types.DATA_ABSTRACTION_MAPPING['EMPTY'])
 
     def test_numbers(self):
         with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             xpath = "/integrationtest:bronze/silver/gold/platinum/deep"
-            self.subject.set(xpath, 123, sr.SR_UINT16_T)
+            self.subject.set(xpath, 123, Types.DATA_ABSTRACTION_MAPPING['UINT16'])
         self.assertEqual(str(context.exception), "1 Errors occured\nError 0: Invalid argument (Path: None)\n")
 
         xpath = "/integrationtest:bronze/silver/gold/platinum/deep"
-        self.subject.set(xpath, "123", sr.SR_STRING_T)
+        self.subject.set(xpath, "123", Types.DATA_ABSTRACTION_MAPPING['STRING'])
 
         with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             xpath = "/integrationtest:morecomplex/leaf3"
-            self.subject.set(xpath, 123, sr.SR_UINT16_T)
+            self.subject.set(xpath, 123, Types.DATA_ABSTRACTION_MAPPING['UINT16'])
         self.assertEqual(str(context.exception), '1 Errors occured\nError 0: Invalid argument (Path: None)\n')
 
         xpath = "/integrationtest:morecomplex/leaf3"
-        self.subject.set(xpath, 123, sr.SR_UINT32_T)
+        self.subject.set(xpath, 123, Types.DATA_ABSTRACTION_MAPPING['UINT32'])
 
     def test_other_types(self):
         xpath = "/integrationtest:morecomplex/leaf2"
@@ -172,17 +173,17 @@ class test_getdata(unittest.TestCase):
         self.assertTrue(value)
 
         xpath = "/integrationtest:morecomplex/leaf2"
-        self.subject.set(xpath, False, sr.SR_BOOL_T)
+        self.subject.set(xpath, False, Types.DATA_ABSTRACTION_MAPPING['BOOLEAN'])
 
         value = self.subject.get(xpath)
         self.assertFalse(value)
 
         # this leaf is a union of two different typedef's
         xpath = "/integrationtest:morecomplex/leaf4"
-        self.subject.set(xpath, 'A', sr.SR_ENUM_T)
+        self.subject.set(xpath, 'A', Types.DATA_ABSTRACTION_MAPPING['ENUM'])
 
         xpath = "/integrationtest:morecomplex/leaf4"
-        self.subject.set(xpath, 23499, sr.SR_UINT32_T)
+        self.subject.set(xpath, 23499, Types.DATA_ABSTRACTION_MAPPING['UINT32'])
 
     def test_lists(self):
         """
@@ -203,13 +204,13 @@ class test_getdata(unittest.TestCase):
         """
 
         xpath = "/integrationtest:container-and-lists/multi-key-list[A='a'][B='B']"  # [B='b']"
-        self.subject.create(xpath, keys=('A', 'B'), values=(('a', 18), ('B', 18)))
+        self.subject.create(xpath, keys=('A', 'B'), values=(('a', Types.DATA_ABSTRACTION_MAPPING['STRING']), ('B', Types.DATA_ABSTRACTION_MAPPING['STRING'])))
 
         xpath = "/integrationtest:container-and-lists/multi-key-list[A='a'][B='B']"  # [B='b']"
-        self.subject.set(xpath,  None, sr.SR_LIST_T)
+        self.subject.set(xpath,  None, None,  Types.DATA_NODE_MAPPING['LIST'])
 
         xpath = "/integrationtest:container-and-lists/multi-key-list[A='aa'][B='bb']/inner/C"  # [B='b']"
-        self.subject.set(xpath,  'cc', sr.SR_STRING_T)
+        self.subject.set(xpath,  'cc', Types.DATA_ABSTRACTION_MAPPING['STRING'])
 
         xpath = "/integrationtest:container-and-lists/multi-key-list[A='xx'][B='xx']/inner/C"  # [B='b']"
         value = self.subject.get(xpath)
@@ -218,7 +219,7 @@ class test_getdata(unittest.TestCase):
         # Missing key
         with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
             xpath = "/integrationtest:twokeylist[primary='true']"
-            self.subject.set(xpath,  None, sr.SR_LIST_T)
+            self.subject.set(xpath,  None, None, Types.DATA_NODE_MAPPING['LIST'])
         self.assertEqual(str(context.exception), '1 Errors occured\nError 0: Invalid argument (Path: None)\n')
 
         xpath = "/integrationtest:container-and-lists/multi-key-list"
@@ -261,16 +262,16 @@ class test_getdata(unittest.TestCase):
     def test_lists_ordering(self):
 
         xpath = "/integrationtest:simplelist[simplekey='A']"
-        self.subject.create(xpath, keys=('simplekey',), values=(('A', 18),))
+        self.subject.create(xpath, keys=('simplekey',), values=(('A', Types.DATA_ABSTRACTION_MAPPING['STRING']),))
 
         xpath = "/integrationtest:simplelist[simplekey='Z']"
-        self.subject.create(xpath, keys=('simplekey',), values=(('Z', 18),))
+        self.subject.create(xpath, keys=('simplekey',), values=(('Z', Types.DATA_ABSTRACTION_MAPPING['STRING']),))
 
         xpath = "/integrationtest:simplelist[simplekey='middle']"
-        self.subject.create(xpath, keys=('simplekey',), values=(('middle', 18),))
+        self.subject.create(xpath, keys=('simplekey',), values=(('middle', Types.DATA_ABSTRACTION_MAPPING['STRING']),))
 
         xpath = "/integrationtest:simplelist[simplekey='M']"
-        self.subject.create(xpath, keys=('simplekey',), values=(('M', 18),))
+        self.subject.create(xpath, keys=('simplekey',), values=(('M', Types.DATA_ABSTRACTION_MAPPING['STRING']),))
 
         xpath = "/integrationtest:simplelist"
 
@@ -289,3 +290,27 @@ class test_getdata(unittest.TestCase):
                             "/integrationtest:simplelist[simplekey='Z']",
                             "/integrationtest:simplelist[simplekey='middle']"]
         self.assertEqual(list(items), expected_results)
+
+    def _set_type(self, xpath, value, valtype):
+        self.subject.set("/integrationtest:validator/integrationtest:types/integrationtest:" + xpath, value, valtype)
+
+    def test_types_from_node(self):
+        self._set_type("u_int_8", 0, libyang.schema.Type.UINT8)
+        self._set_type("u_int_8", 255, libyang.schema.Type.UINT8)
+        self._set_type("u_int_16", 65535, libyang.schema.Type.UINT16)
+        self._set_type("u_int_32", 4294967295, libyang.schema.Type.UINT32)
+        # self._set_type("u_int_64", 18446744073709551615, libyang.schema.Type.UINT64)
+        self._set_type("int_8", 0, libyang.schema.Type.INT8)
+        self._set_type("int_8", 2128, libyang.schema.Type.INT8)
+        self._set_type("int_16", -32768, libyang.schema.Type.INT16)
+        self._set_type("int_16", 32767, libyang.schema.Type.INT16)
+        self._set_type("int_32", -2147483648, libyang.schema.Type.INT32)
+        self._set_type("int_32", 2147483647, libyang.schema.Type.INT32)
+        self._set_type("int_64", - 9223372036854775808, libyang.schema.Type.INT64)
+        # self._set_type("int_64",  9223372036854775807, libyang.schema.Type.INT64)
+        self._set_type("str", "A", libyang.schema.Type.STRING)
+        self._set_type("bool", True, libyang.schema.Type.BOOL)
+        self._set_type("void", None, libyang.schema.Type.EMPTY)
+        self._set_type("enumeratio", "A", libyang.schema.Type.ENUM)
+        self._set_type("dec_64", 234.234234, libyang.schema.Type.DEC64)
+        self.subject.validate()

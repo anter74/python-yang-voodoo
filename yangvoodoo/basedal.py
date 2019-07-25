@@ -129,7 +129,7 @@ class BaseDataAbstractionLayer:
         """
         raise NotImplementedError("uncreate not implemented")
 
-    def set(self, xpath, value, valtype=18):
+    def set(self, xpath, value, valtype=18, nodetype=4):
         raise NotImplementedError("set not implemented")
 
     def gets_sorted(self, xpath, schema_path, ignore_empty_lists=False):

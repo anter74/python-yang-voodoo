@@ -81,3 +81,5 @@
   - FIX: Template conversion into XML from XPATH (list-values which looked like xpath were affecting the structure)
   - Implement \__setitem__ so we can do root.bronze['A'] = 'AAAAA'
   - TemplateNinja: provide support for dumping XML with namespace and <data> container `to_xmlstr_with_ns`. *this is a hidden option not exposed on yangvoodoo session object*
+  - valtype converted to libyang types instead of sysrepo types (sysrepodal now does this mapping)
+  - `set` operation on the dal now takes node\_type as well as val\_type 

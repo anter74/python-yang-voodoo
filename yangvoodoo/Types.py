@@ -1,23 +1,29 @@
 
 DATA_ABSTRACTION_MAPPING = {
-    # Note: if the backend does not like these values
-    # mapping into more acceptable values should be
-    # done in the respective data_abstraction_layer
-    'UINT64': 22,
-    'UINT32': 21,
-    'UINT16': 20,
-    'UINT8': 19,
-    'INT64': 17,
+    # These values are now libyang types, instead of sysrepo
+    # the node_types' for PRESENCE_CONTAINER and LIST are
+    # artificially high to make it obvious these aren't real
+    # libyang types.
+    'UINT64': 19,
+    'UINT32': 17,
+    'UINT16': 15,
+    'UINT8': 13,
+    'INT64': 18,
     'INT32': 16,
-    'INT16': 15,
-    'INT8': 14,
-    'STRING': 18,
-    'DECIMAL64': 10,
-    'BOOLEAN': 9,
-    'ENUM': 11,
+    'INT16': 14,
+    'INT8': 12,
+    'STRING': 10,
+    'DECIMAL64': 4,
+    'BOOLEAN': 3,
+    'ENUM': 6,
     'EMPTY': 5,
-    'PRESENCE_CONTAINER': 4,
-    'LIST': 2,
+    # 'PRESENCE_CONTAINER': 100,
+    # 'LIST': 101,
+}
+
+DATA_NODE_MAPPING = {
+    'LIST': 16,
+    'PRESENCE_CONTAINER': 100
 }
 
 INT_CONVERSION = {
@@ -29,7 +35,6 @@ INT_CONVERSION = {
     DATA_ABSTRACTION_MAPPING['UINT8'],
     DATA_ABSTRACTION_MAPPING['INT64'],
     DATA_ABSTRACTION_MAPPING['UINT64']
-
 }
 
 LIBYANG_MAPPING = {
