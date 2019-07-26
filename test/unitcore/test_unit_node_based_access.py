@@ -21,7 +21,7 @@ class test_node_based_access(unittest.TestCase):
     def test_root(self):
         self.assertEqual(repr(self.root), 'VoodooTopNode{} YANG Module: integrationtest')
 
-        expected_children = ['bronze', 'container1', 'container_and_lists', 'default', 'diff', 'dirty_secret', 'empty',
+        expected_children = ['augments', 'bronze', 'container1', 'container_and_lists', 'default', 'diff', 'dirty_secret', 'empty',
                              'hyphen_leaf', 'imports_in_here', 'list_to_leafref_against', 'lista', 'morecomplex',
                              'numberlist', 'outsidelist', 'patternstr', 'psychedelia', 'quad', 'quarter',
                              'resolver', 'scaling', 'simplecontainer', 'simpleenum', 'simpleleaf', 'simplelist',
@@ -31,6 +31,13 @@ class test_node_based_access(unittest.TestCase):
                              'underscoretests', 'validator', 'web', 'whencontainer']
 
         self.assertEqual(dir(self.root), expected_children)
+
+    def test_xpath_as_leaf_value(self):
+        # Act
+        self.root.augments.xxx = 'xyz'
+
+        # Assert
+        self.assertEqual(self.root.augments.xxx, 'xyz')
 
     def test_xpath_as_leaf_value(self):
         self.root.simpleleaf = "/path/inside/a/leaf[key='sdf']/dsfsdf"

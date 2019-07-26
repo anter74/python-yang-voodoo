@@ -303,7 +303,7 @@ class Choice(Node):
     _NODE_TYPE = "Choice"
 
     def __repr__(self):
-        node = self.__dict__['_node']
+        node = self._node
         return 'Voodoo%s{%s/...%s}' % (self._NODE_TYPE, node.real_data_path, node.real_schema_path.split(":")[-1])
 
 

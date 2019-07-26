@@ -25,7 +25,7 @@ print()
 # Using Stub backend
 import yangvoodoo.stubdal
 stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
-session = yangvoodoo.DataAccess(remote_log=True, data_abstraction_layer=stub)
+session = yangvoodoo.DataAccess(data_abstraction_layer=stub)
 
 session.connect('integrationtest')
 root = session.get_node()

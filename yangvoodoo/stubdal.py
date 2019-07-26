@@ -134,7 +134,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.dirty = True
         self.delete(xpath)
 
-    def add(self, xpath, value, valtype):
+    def add(self, xpath, value, valtype=10):
         self.log.trace('ADD-LEAF-LIST: %s => %s (%s)', xpath, value, valtype)
         self.dirty = True
         if xpath not in self.stub_store:

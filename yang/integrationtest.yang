@@ -97,8 +97,18 @@ module integrationtest {
     container modifies {
       uses diff-group;
     }
+  }
+
+  container augments {
 
   }
+
+  augment /integrationtest:augments {
+    leaf xxx {
+      type string;
+    }
+  }
+
   container validator {
     container strings {
       leaf nolen {

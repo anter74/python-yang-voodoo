@@ -444,11 +444,11 @@ class Utils:
             keys.append(k.name())
         return keys
 
-    @staticmethod
-    def convert_args_to_list(node, *args):
-        if isinstance(args[0], tuple):
-            return list(args[0])
-        return list(args)
+    # @staticmethod
+    # def convert_args_to_list(node, *args):
+    #     if isinstance(args[0], tuple):
+    #         return list(args[0])
+    #     return list(args)
 
     @staticmethod
     def get_key_val_tuples(context, node,  values):
@@ -481,27 +481,27 @@ class Utils:
             pass
 
         return Utils.get_yang_type(node_schema_type, int(child_text), this_path)
-
-    @staticmethod
-    def _handle_portion_of_xpath(portion, answer, inside_a_predicate):
-        raise ValueError("This should be possible tremove")
-
-        """
-        Handle a portion of xpath , based on a primitive split by '/',
-        giving back to the value anything which as a '/' in it.
-        """
-        if inside_a_predicate:
-            answer[-1] += "/" + portion
-            if Utils.ENDING_A_PREDICATE.match(portion):
-                return False
-            return True
-        answer.append(portion)
-        if Utils.STARTING_A_PREDICATE.match(portion):
-            if Utils.ENDING_A_PREDICATE.match(portion):
-                return False
-            return True
-
-        return False
+    #
+    # @staticmethod
+    # def _handle_portion_of_xpath(portion, answer, inside_a_predicate):
+    #     raise ValueError("This should be possible tremove")
+    #
+    #     """
+    #     Handle a portion of xpath , based on a primitive split by '/',
+    #     giving back to the value anything which as a '/' in it.
+    #     """
+    #     if inside_a_predicate:
+    #         answer[-1] += "/" + portion
+    #         if Utils.ENDING_A_PREDICATE.match(portion):
+    #             return False
+    #         return True
+    #     answer.append(portion)
+    #     if Utils.STARTING_A_PREDICATE.match(portion):
+    #         if Utils.ENDING_A_PREDICATE.match(portion):
+    #             return False
+    #         return True
+    #
+    #     return False
 
     @staticmethod
     def convert_xpath_to_list_v4(xpath):

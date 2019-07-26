@@ -269,7 +269,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         except RuntimeError as err:
             self._handle_error(xpath, err)
 
-    def add(self, xpath, value, valtype=sr.SR_STRING_T):
+    def add(self, xpath, value, valtype=10):
         self.dirty = True
         return self.set(xpath, value, valtype)
 
