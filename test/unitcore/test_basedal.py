@@ -25,7 +25,7 @@ class test_datastore_voodooentry_point(unittest.TestCase):
         Don't change the method signature!
         """
         with self.assertRaises(NotImplementedError):
-            self.subject.connect(tag='client')
+            self.subject.connect('module', tag='client', yangdir=None)
         with self.assertRaises(NotImplementedError):
             self.subject.disconnect()
         with self.assertRaises(NotImplementedError):

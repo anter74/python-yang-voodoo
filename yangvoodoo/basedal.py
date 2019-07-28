@@ -67,7 +67,7 @@ class BaseDataAbstractionLayer:
     #             elif value:
     #                 self.set(xpath, value, valuetype)
 
-    def connect(self, tag='client'):
+    def connect(self, module, yang_location=None,  tag='client'):
         raise NotImplementedError('connect not implemented')
 
     def disconnect(self):

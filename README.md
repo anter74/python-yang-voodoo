@@ -102,7 +102,7 @@ This project was written around sysrepo for data storage, however there is no st
 
 Implementing a new data_abastraction_layer is as simple as implementing the following methods.
 
- - **connect()** - connects to the datastore, it is expected that the datastore may provide and track a specific connection providing *transactionality*. Takes in the arguments of `yang module` and `yang_location`
+ - **connect(module, tag, yang_dir)** - connects to the datastore, it is expected that the datastore may provide and track a specific connection providing *transactionality*. Takes in the arguments of `yang module` and `yang_location`
  - **validate()** - validate pending changes are valid based on the full data of the entire datastore (VoodooNode is limited to validating the yang schema itself).
  - **refresh()** - refresh the data from the datastore, the datastore may provide us with the data present in the datastore at the time we first connected, or it may refresh in realtime everytime we access a given set of data.
  - **commit()** - commit pending datastore.

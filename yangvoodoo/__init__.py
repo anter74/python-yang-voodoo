@@ -275,7 +275,7 @@ Children: %s""" % (str(children)[1:-1])
         self.module = module
         self.yang_ctx = libyang.Context(yang_location)
         self.yang_schema = self.yang_ctx.load_module(self.module)
-        connect_status = self.data_abstraction_layer.connect(self.module)
+        connect_status = self.data_abstraction_layer.connect(self.module, yang_location, tag)
 
         self.session = self.data_abstraction_layer.session
         self.conn = self.data_abstraction_layer.conn

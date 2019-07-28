@@ -22,10 +22,10 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.module = None
         self.refresh()
 
-    def connect(self, module, tag='<id-tag>'):
-        self.cache.connect(module, tag)
+    def connect(self, module, yang_location=None,  tag="<tag-id>"):
+        self.cache.connect(module, yang_location, tag)
         self.module = module
-        return self.store.connect(module, tag)
+        return self.store.connect(module, yang_location, tag)
 
     def disconnect(self):
         self.cache.disconnect()
