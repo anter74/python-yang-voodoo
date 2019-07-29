@@ -21,9 +21,11 @@ class BaseDataAbstractionLayer:
 
     DAL_ID = "BASE"
 
-    def __init__(self, log=None):
+    def __init__(self, log=None, log_level=None):
         if not log:
             log = Utils.get_logger(self.DAL_ID)
+        if log_level:
+            log.setLevel(log_level)
         self.log = log
         self.session = None
         self.conn = None
