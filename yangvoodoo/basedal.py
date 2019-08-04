@@ -206,3 +206,9 @@ class BaseDataAbstractionLayer:
 
     def empty(self):
         raise NotImplementedError("empty not implemented")
+
+    def dump(self, filename, format=1):
+        raise NotImplementedError("export not implemented")
+
+    def load(self, filename, format=1):
+        raise NotImplementedError("import not implemented")

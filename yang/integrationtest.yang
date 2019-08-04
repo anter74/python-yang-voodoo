@@ -548,6 +548,9 @@ module integrationtest {
           container deeper {
             presence true;
             uses scale:lots-of-leaves;
+            leaf gone-too-far {
+              type string;
+            }
           }
         }
       }

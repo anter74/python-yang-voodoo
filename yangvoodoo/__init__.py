@@ -25,7 +25,8 @@ class DataAccess:
 
 
     Dependencies:
-     - libyang 0.16.78 (https://github.com/rjarry/libyang-cffi/)
+     - libyang 1.0-r3 (https://github.com/CESNET/libyang/tree/v1.0-r3)
+     - libyang-cffi   (https://github.com/allena29/libyang-cffi/tree/libyang-data-tree)
      - lxml
     """
 
@@ -593,3 +594,19 @@ Children: %s""" % (str(children)[1:-1])
             raise PathIsNotALeaf("set_raw_data only operates on leaves")
         val_type = Utils.get_yang_type(node_schema.type(), value, node_schema.real_schema_path)
         context.dal.set(data_path, value, val_type)
+
+    def load(self, filename, format=1):
+        """
+        Load data from the filename in the format specified.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+        """
+        return self.data_abstraction_layer.load(filename, format)
+
+    def dump(self, filename, format=1):
+        """
+        Save data to the filename in the format specified.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+        """
+        return self.data_abstraction_layer.dump(filename, format)

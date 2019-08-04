@@ -295,6 +295,29 @@ class test_xml_to_xpath(unittest.TestCase):
 """
         self.assertEqual(result, expected_result)
 
+    def test_template_ninja_with_proper_leaf_list_xpaths(self):
+        xpaths = {
+            '/integrationtest:simpleleaf': 'A',
+            "/integrationtest:morecomplex/leaflists/simple[.='ABC']": 'ABC',
+            "/integrationtest:morecomplex/leaflists/simple[.='DEF']": 'DEF'
+        }
+
+        # Act
+        result = self.subject.to_xmlstr(xpaths)
+
+        # Assert
+        expected_result = """<integrationtest>
+  <simpleleaf>A</simpleleaf>
+  <morecomplex>
+    <leaflists>
+      <simple>ABC</simple>
+      <simple>DEF</simple>
+    </leaflists>
+  </morecomplex>
+</integrationtest>
+"""
+        self.assertEqual(result, expected_result)
+
     def test_from_template_siblings(self):
         # Build
 

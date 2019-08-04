@@ -112,7 +112,7 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **container(xpath)** - returns True/False if the presence-container exists.
  - **get(xpath, default_value)** - get specific data by XPATH, this will not apply to non-presence containers or lists
  - **gets_unsorted(xpath, schema_path, ignore_empty_lists)** - get a list of XPATH's representing the items in the list, it is expected the datastore will maintain the order the user inserts the data and this MUST return the data in that order. If the list is empty this method will normally raise an ListDoesNotContainElement exception.
- - **gets_unsorted(xpath, schema_path, ignore_empty_lists)** - as gets_unsorted, but the results will be sorted by XPATH.
+ - *TO BE DEPRECATED* : **gets_sorted(xpath, schema_path, ignore_empty_lists)** - as gets_unsorted, but the results will be sorted by XPATH.
  - **gets_len(xpath)** - gets back number of list elements available in the list (Not for leaf-lists)
  - **gets(xpath)** - gets a generator back of values for a specific XPATH (leaf lists only)
  - **add(xpath, value, valuetype)** - add a new entry to the end of a leaf-list at the given XPATH
@@ -126,6 +126,17 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
    - The nodetype is an integer (matching libyang) and defaults to 4 for a leaf, 16 for a list - 100 is a special value for presence containers.
  - **delete(xpath** - delete a value or container, this method must not be used for lists.
  - **empty()** - a dangerous option which will remove everything from the datastore.
+
+
+## JSON/XML Import/Export
+
+In the first versions of this project the JSON/XML documents were rendered in a sub-optimal
+way. Now the data-access has methods to import and export data.
+
+ - **load(filename, format)** - load the XML (format=1) or JSON (format=2) document corresponding
+   to the yang module loaded
+ - **dump(filename, format)** - save the data to an XML (format=1) or JSON (format=2) document.
+ 
 
 ### SCHEMA vs DATA level constraints
 
