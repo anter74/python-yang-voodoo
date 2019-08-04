@@ -1404,7 +1404,12 @@ module integrationtest {
     leaf a-2nd-leaf {
       type string;
     }
-
+    leaf empty-leaf {
+      type empty;
+    }
+    leaf boolean {
+      type boolean;
+    }
     list a-list {
       key listkey;
 

@@ -1,4 +1,3 @@
-from yangvoodoo.Common import Utils
 from yangvoodoo.basedal import BaseDataAbstractionLayer
 import libyang
 from libyang import diff
@@ -18,8 +17,10 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
 
     DAL_ID = "StubLy"
 
-    def connect(self, module, yang_location, tag='client'):
-        if yang_location:
+    def connect(self, module, yang_location, tag='client', yang_ctx=None):
+        if yang_ctx:
+            self.libyang_ctx = yang_ctx
+        elif yang_location:
             self.libyang_ctx = libyang.Context(yang_location)
         else:
             self.libyang_ctx = libyang.Context()
@@ -193,16 +194,23 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         paths). We could add logic to find if they infact have values and skip
         them- but that is more work and we have dump() available now.
         """
-        xpaths = {}
-        differ = libyang.diff.Differ(self.libyang_ctx)
-        for (xpath, oldval, newval, operation) in differ.diff(None, self.libyang_data):
-            print('bb', xpath)
-            xpaths[xpath] = newval
-        return xpaths
+        raise NotImplementedError("dump-xpaths not supported with libyang - see dump/load methods")
 
     def empty(self):
         raise NotImplementedError("empty not implemented")
 
     def dump(self, filename, format=1):
         self.log.trace("DUMP: %s (format: %s)", filename, format)
-        self.libyang_data.save_to_file(filename, format)
+        self.libyang_data.dump(filename, format)
+
+    def load(self, filename, format=1):
+        self.log.trace("LOAD: %s (format: %s)", filename, format)
+        self.libyang_data.load(filename, format)
+
+    def dumps(self, format=1):
+        self.log.trace("DUMPs: (format: %s)",  format)
+        return self.libyang_data.dumps(format)
+
+    def loads(self, payload, format=1):
+        self.log.trace("LOADS: (format: %s)", format)
+        self.libyang_data.loads(payload, format)

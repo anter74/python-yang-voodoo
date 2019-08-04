@@ -27,7 +27,6 @@ class test_new_stuff(unittest.TestCase):
 
         # Assert
         self.assertEqual(self.root.simpleleaf, "A")
-        self.stubly.libyang_data.save_to_file("/tmp/x.xml")
 
     def test_basic_list(self):
         # Act

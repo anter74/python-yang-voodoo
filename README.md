@@ -102,7 +102,11 @@ This project was written around sysrepo for data storage, however there is no st
 
 Implementing a new data_abastraction_layer is as simple as implementing the following methods.
 
- - **connect(module, tag, yang_dir)** - connects to the datastore, it is expected that the datastore may provide and track a specific connection providing *transactionality*. Takes in the arguments of `yang module` and `yang_location`
+ - **connect(module, yang_location, tag, yang_ctx)** - connects to the datastore, it is expected that the datastore may provide and track a specific connection providing *transactionality*.
+   - module - mandatory argument, the yang module.
+   - yang_location - a directory providing the location of the yang files, or None to YANGDIR environemnt variable.
+   - tag - cosmetic tag.
+   - yang_ctx - optional - if wanting to use libyang based diff engine both data objects must have the same libyang_ctx.
  - **validate()** - validate pending changes are valid based on the full data of the entire datastore (VoodooNode is limited to validating the yang schema itself).
  - **refresh()** - refresh the data from the datastore, the datastore may provide us with the data present in the datastore at the time we first connected, or it may refresh in realtime everytime we access a given set of data.
  - **commit()** - commit pending datastore.
@@ -131,12 +135,18 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
 ## JSON/XML Import/Export
 
 In the first versions of this project the JSON/XML documents were rendered in a sub-optimal
-way. Now the data-access has methods to import and export data.
+way. Now the data-access has methods to import and export data - currently only the libyang
+based stub module has support for these methods.
 
  - **load(filename, format)** - load the XML (format=1) or JSON (format=2) document corresponding
    to the yang module loaded
  - **dump(filename, format)** - save the data to an XML (format=1) or JSON (format=2) document.
- 
+ - **loads(payload, format)** - load the XML (format=1) or JSON (format=2) document corresponding
+   to the yang module loaded from the payload string provided.
+ - **dumps(format)** - return the data to an XML (format=1) or JSON (format=2) document
+
+Note: the libyang based stub does not support `dump_xpaths()`.
+
 
 ### SCHEMA vs DATA level constraints
 
@@ -299,7 +309,7 @@ The `SuperRoot` object provides a container for multiple top-level nodes from YA
 
 ```python
 import yangvoodoo
-root = yangvoodoo.DataAccess.get_root()
+root = yangvoodoo.DataAccess.get_node()
 
 session1 = yangvoodoo.DataAccess()
 session1.connect("integrationtest")
@@ -318,6 +328,8 @@ dir(root)
 It is possible to apply templates to set data instead of manually setting every element of data individually. [Jinja2](http://jinja.pocoo.org/docs/2.10/) is used to provide the ability to make templates less static.
 
 It is important to note the template is rendered **first** with the existing data, and then applied. The implication of this is that even though we set `root.simpleleaf` to `HELLO WOLRD` as the second line in the template - when we substitute the value in the 14th line will take the existing value at the time of rendering the template.
+
+**NOTE: The TemplateNinja will be deprecated in favour of libyang based stubs.**
 
 
 ```xml

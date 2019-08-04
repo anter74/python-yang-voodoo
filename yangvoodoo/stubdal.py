@@ -46,7 +46,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     def _initdal(self):
         self.empty()
 
-    def connect(self, module, yang_location=None, tag="<tag>"):
+    def connect(self, module, yang_location=None, tag="<tag>", yang_ctx=None):
         self.log.trace('CONNECT: Stub Datastore- module name %s', module)
         self.module = module
         return True

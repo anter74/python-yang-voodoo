@@ -69,7 +69,7 @@ class BaseDataAbstractionLayer:
     #             elif value:
     #                 self.set(xpath, value, valuetype)
 
-    def connect(self, module, yang_location=None,  tag='client'):
+    def connect(self, module, yang_location=None,  tag='client', yang_ctx=None):
         raise NotImplementedError('connect not implemented')
 
     def disconnect(self):
@@ -211,4 +211,10 @@ class BaseDataAbstractionLayer:
         raise NotImplementedError("export not implemented")
 
     def load(self, filename, format=1):
+        raise NotImplementedError("import not implemented")
+
+    def dumps(self, format=1):
+        raise NotImplementedError("export not implemented")
+
+    def loads(self, payload, format=1):
         raise NotImplementedError("import not implemented")

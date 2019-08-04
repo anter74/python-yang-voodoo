@@ -12,12 +12,7 @@ RUN mkdir /opt/dev
 WORKDIR /opt/dev
 
 RUN \
-      git clone https://github.com/CESNET/libyang.git && \
-      git clone https://github.com/sysrepo/libredblack.git && \
-      git clone https://github.com/sysrepo/sysrepo.git && \
-      git clone https://git.libssh.org/projects/libssh.git libssh  && \
-      git clone https://github.com/CESNET/libnetconf2.git && \
-      git clone https://github.com/CESNET/Netopeer2.git
+      git clone https://github.com/CESNET/libyang.git
 
 RUN \
       cd /opt/dev && \
@@ -44,22 +39,11 @@ RUN \
 RUN \
       cd /opt/dev && \
       cd libyang-cffi && \
+      git checkout libyang-data-tree && \
       echo "#!/bin/bash" >rebuild.sh && \
       LIBYANG_INSTALL=system python3 setup.py install
 
 RUN \
-      cd /opt/dev/libredblack && \
-      ./configure && \
-      make && \
-      make install
-
-RUN \
-      cd /opt/dev/sysrepo && \
-      git checkout v0.7.8 && \
-      mkdir build_python3 && \
-      cd build_python3 && \
-      cmake -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 .. && \
-      make -j6 && \
-      make install && \
-      ln -s /usr/local/lib64/*ysrepo* /usr/local/lib
-
+      cd /working/python-yang-voodoo && \
+      git checkout devel && \
+      LIBYANG_INSTALL=system python3 setup.py install

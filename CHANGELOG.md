@@ -84,4 +84,4 @@
   - valtype converted to libyang types instead of sysrepo types (sysrepodal now does this mapping)
   - `set` operation on the dal now takes node\_type as well as val\_type
   - EXPERIMENTAL: support for libyang based stub- including dump/load from file of XML or JSON.
-    - NOTE: dump_xpaths() does not work correctly in this version
+    - dump_xpaths() not supported.
