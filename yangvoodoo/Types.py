@@ -21,6 +21,11 @@ DATA_ABSTRACTION_MAPPING = {
     # 'LIST': 101,
 }
 
+FORMAT = {
+    'XML': 1,
+    'JSON': 2
+}
+
 DATA_NODE_MAPPING = {
     'LIST': 16,
     'PRESENCE_CONTAINER': 100

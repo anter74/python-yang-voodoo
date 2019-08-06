@@ -1,6 +1,6 @@
 FROM allena29/yangvoodoo:devel
 
-RUN pip3 install jupyter dill
+RUN pip3 install jupyter dill openssh-server
 
 # Websockets version with ttyd
 #RUN apt-get update && \

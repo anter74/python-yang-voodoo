@@ -46,7 +46,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         100: sr.SR_CONTAINER_PRESENCE_T
     }
 
-    def connect(self, module, tag='client'):
+    def connect(self, module, yang_location=None, tag='client', yang_ctx=None):
         """
         Connect to the datastore.
         """

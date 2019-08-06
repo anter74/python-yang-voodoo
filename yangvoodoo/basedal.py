@@ -21,9 +21,11 @@ class BaseDataAbstractionLayer:
 
     DAL_ID = "BASE"
 
-    def __init__(self, log=None):
+    def __init__(self, log=None, log_level=None):
         if not log:
             log = Utils.get_logger(self.DAL_ID)
+        if log_level:
+            log.setLevel(log_level)
         self.log = log
         self.session = None
         self.conn = None
@@ -67,7 +69,7 @@ class BaseDataAbstractionLayer:
     #             elif value:
     #                 self.set(xpath, value, valuetype)
 
-    def connect(self, tag='client'):
+    def connect(self, module, yang_location=None,  tag='client', yang_ctx=None):
         raise NotImplementedError('connect not implemented')
 
     def disconnect(self):
@@ -204,3 +206,15 @@ class BaseDataAbstractionLayer:
 
     def empty(self):
         raise NotImplementedError("empty not implemented")
+
+    def dump(self, filename, format=1):
+        raise NotImplementedError("export not implemented")
+
+    def load(self, filename, format=1):
+        raise NotImplementedError("import not implemented")
+
+    def dumps(self, format=1):
+        raise NotImplementedError("export not implemented")
+
+    def loads(self, payload, format=1):
+        raise NotImplementedError("import not implemented")

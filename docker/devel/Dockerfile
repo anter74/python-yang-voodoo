@@ -47,7 +47,7 @@ RUN \
     echo -n "Build Date:" >.buildinfo && \
     date >>.buildinfo && \
     echo "Sysrepo: Commit 660552222ee6376efa560d9bcc7b832886ff460a" >>.buildinfo && \
-    echo "Libyang: 1.0r2" >>.buildinfo && \
+    echo "Libyang: 1.0r3" >>.buildinfo && \
     echo -n "YangVoodoo:" >>.buildinfo && \
     git log | head -n 1 >>.buildinfo && \
     python3 setup.py install

@@ -72,7 +72,7 @@ RUN \
       cd libyang && \
       git checkout 85d09f3bdf5ea01ea2e01deb384b2b0dde057e3f && \
       git checkout v0.16-r3 && \
-      git checkout v1.0-r2 && \
+      git checkout v1.0-r3 && \
       mkdir build && cd build && \
       # We may not end up using these bindings (yang) and instead use (libyang - see below)
       # But it's useful to debug with both
@@ -86,6 +86,7 @@ RUN \
 RUN \
       git clone https://github.com/allena29/libyang-cffi.git && \
       cd libyang-cffi && \
+      git checkout libyang-data-tree && \
       echo "#!/bin/bash" >rebuild.sh && \
       LIBYANG_INSTALL=system python3 setup.py install
 

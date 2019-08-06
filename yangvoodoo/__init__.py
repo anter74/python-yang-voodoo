@@ -25,7 +25,8 @@ class DataAccess:
 
 
     Dependencies:
-     - libyang 0.16.78 (https://github.com/rjarry/libyang-cffi/)
+     - libyang 1.0-r3 (https://github.com/CESNET/libyang/tree/v1.0-r3)
+     - libyang-cffi   (https://github.com/allena29/libyang-cffi/tree/libyang-data-tree)
      - lxml
     """
 
@@ -264,7 +265,7 @@ Children: %s""" % (str(children)[1:-1])
 
         return yangvoodoo.VoodooNode.Root(self.context, yang_node)
 
-    def connect(self, module=None,  yang_location="yang/", tag='client'):
+    def connect(self, module=None,  yang_location="yang/", tag='client', yang_ctx=None):
         """
         Connect to the datastore.
 
@@ -273,15 +274,22 @@ Children: %s""" % (str(children)[1:-1])
         if yang_location and not os.path.exists(yang_location + "/" + module + ".yang"):
             raise ValueError("YANG Module "+module+" not present in "+yang_location)
         self.module = module
-        self.yang_ctx = libyang.Context(yang_location)
-        self.yang_schema = self.yang_ctx.load_module(self.module)
-        connect_status = self.data_abstraction_layer.connect(self.module)
+        if not yang_ctx:
+            self.yang_ctx = libyang.Context(yang_location)
+            self.yang_schema = self.yang_ctx.load_module(self.module)
+        else:
+            self.yang_ctx = yang_ctx
+            self.yang_schema = self.yang_ctx.load_module(self.module)
+
+        connect_status = self.data_abstraction_layer.connect(self.module, yang_location, tag,
+                                                             self.yang_ctx)
 
         self.session = self.data_abstraction_layer.session
         self.conn = self.data_abstraction_layer.conn
         self.connected = True
 
-        self.context = yangvoodoo.VoodooNode.Context(self.module, self, self.yang_schema, self.yang_ctx, log=self.log)
+        self.context = yangvoodoo.VoodooNode.Context(self.module, self, self.yang_schema,
+                                                     self.yang_ctx, log=self.log)
         self.data_abstraction_layer.context = self.context
 
         self.log.trace("CONNECT: module %s. yang_location %s", module, yang_location)
@@ -593,3 +601,35 @@ Children: %s""" % (str(children)[1:-1])
             raise PathIsNotALeaf("set_raw_data only operates on leaves")
         val_type = Utils.get_yang_type(node_schema.type(), value, node_schema.real_schema_path)
         context.dal.set(data_path, value, val_type)
+
+    def load(self, filename, format=1):
+        """
+        Load data from the filename in the format specified.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+        """
+        return self.data_abstraction_layer.load(filename, format)
+
+    def dump(self, filename, format=1):
+        """
+        Save data to the filename in the format specified.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+        """
+        return self.data_abstraction_layer.dump(filename, format)
+
+    def loads(self, payload, format=1):
+        """
+        Load data from the payload in the format specified.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+        """
+        return self.data_abstraction_layer.loads(payload, format)
+
+    def dumps(self, format=1):
+        """
+        Return data to the filename in the format specified.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+        """
+        return self.data_abstraction_layer.dumps(format)

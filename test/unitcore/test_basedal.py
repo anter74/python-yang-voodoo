@@ -25,7 +25,7 @@ class test_datastore_voodooentry_point(unittest.TestCase):
         Don't change the method signature!
         """
         with self.assertRaises(NotImplementedError):
-            self.subject.connect(tag='client')
+            self.subject.connect('module', yang_location=None, tag=None, yang_ctx=None)
         with self.assertRaises(NotImplementedError):
             self.subject.disconnect()
         with self.assertRaises(NotImplementedError):
@@ -70,6 +70,14 @@ class test_datastore_voodooentry_point(unittest.TestCase):
             self.subject.delete("xpath")
         with self.assertRaises(NotImplementedError):
             self.subject.gets_len("xpath")
+        with self.assertRaises(NotImplementedError):
+            self.subject.dump('filename', format=1)
+        with self.assertRaises(NotImplementedError):
+            self.subject.load('filename', format=1)
+        with self.assertRaises(NotImplementedError):
+            self.subject.loads('payload', format=1)
+        with self.assertRaises(NotImplementedError):
+            self.subject.dumps(format=1)
         self.subject.setup_root()
         self.subject._initdal()
         """
