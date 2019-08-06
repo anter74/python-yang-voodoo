@@ -194,7 +194,10 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         paths). We could add logic to find if they infact have values and skip
         them- but that is more work and we have dump() available now.
         """
-        raise NotImplementedError("dump-xpaths not supported with libyang - see dump/load methods")
+        dict = {}
+        for node in self.libyang_data.dump_datanodes():
+            dict[node.xpath] = node.value
+        return dict
 
     def empty(self):
         raise NotImplementedError("empty not implemented")

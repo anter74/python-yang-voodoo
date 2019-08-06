@@ -23,4 +23,5 @@ sleep 5
 echo "Ready"
 set -euo pipefail
 
+cd /working
 ./run-test.sh

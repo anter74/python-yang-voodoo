@@ -1,7 +1,7 @@
 import unittest
 import yangvoodoo
 import yangvoodoo.stublydal
-from libyang.diff import Differ
+from yangvoodoo.DiffEngine import DiffIterator
 
 """
 This tests the integration of libyang based stubs.
@@ -62,6 +62,10 @@ class test_new_stuff(unittest.TestCase):
 
         self.assertEqual(result, expected_result)
 
+        """
+        Note: this is the moment we realised that libyang diff's are a bit problematic because
+        it tracks insertion order :-(
+
         # [('/integrationtest:simpleleaf', 'NonEmptyDoc', None, 3),
         # ('/integrationtest:diff/adds/a-leaf', None, 'A Leaf Value', 1),
 
@@ -76,6 +80,7 @@ class test_new_stuff(unittest.TestCase):
         # ("/integrationtest:simplelist[simplekey='C']/simplekey", None, 'C', 1),
         # ('/integrationtest:morecomplex/extraboolean', None, False, 1)]
 
+
         d = Differ(self.subject.yang_ctx)
         result = d.diff(self.stubly.libyang_data, self.stubly2.libyang_data)
 
@@ -85,3 +90,51 @@ class test_new_stuff(unittest.TestCase):
         # document.... ->next probably is the answer
         raise ValueError(list(result))
         print(result)
+        """
+
+        xpaths = self.subject.dump_xpaths()
+
+        xpaths2 = self.subject2.dump_xpaths()
+
+        # Assert
+        expected_xpaths = {
+            '/integrationtest:simpleleaf': 'NonEmptyDoc'
+        }
+
+        expected_xpaths2 = {
+            '/integrationtest:diff/adds/a-2nd-leaf': 'A second leaf',
+            '/integrationtest:diff/adds/a-leaf': 'A Leaf Value',
+            "/integrationtest:diff/adds/a-leaf-list[.='A']": 'A',
+            "/integrationtest:diff/adds/a-leaf-list[.='B']": 'B',
+            "/integrationtest:diff/adds/a-leaf-list[.='C']": 'C',
+            "/integrationtest:diff/adds/a-list[listkey='KEY1']/listkey": 'KEY1',
+            "/integrationtest:diff/adds/a-list[listkey='KEY1']/listnonkey": 'VAL1',
+            "/integrationtest:diff/adds/a-list[listkey='KEY2']/listkey": 'KEY2',
+            "/integrationtest:diff/adds/a-list[listkey='KEY2']/listnonkey": 'VAL2',
+            "/integrationtest:diff/adds/a-list[listkey='KEY3']/listkey": 'KEY3',
+            "/integrationtest:diff/adds/a-list[listkey='KEY3']/listnonkey": 'VAL3',
+            '/integrationtest:diff/adds/boolean': True,
+            '/integrationtest:diff/adds/empty-leaf': True
+        }
+
+        self.assertEqual(xpaths, expected_xpaths)
+        self.assertEqual(xpaths2, expected_xpaths2)
+
+        differ = yangvoodoo.DiffEngine.DiffIterator(xpaths, xpaths2)
+        expected_diff_results = [
+            ('/integrationtest:diff/adds/a-2nd-leaf', None, 'A second leaf', 1),
+            ('/integrationtest:diff/adds/a-leaf', None, 'A Leaf Value', 1),
+            ("/integrationtest:diff/adds/a-leaf-list[.='A']", None, 'A', 1),
+            ("/integrationtest:diff/adds/a-leaf-list[.='B']", None, 'B', 1),
+            ("/integrationtest:diff/adds/a-leaf-list[.='C']", None, 'C', 1),
+            ("/integrationtest:diff/adds/a-list[listkey='KEY1']/listkey", None, 'KEY1', 1),
+            ("/integrationtest:diff/adds/a-list[listkey='KEY1']/listnonkey", None, 'VAL1', 1),
+            ("/integrationtest:diff/adds/a-list[listkey='KEY2']/listkey", None, 'KEY2', 1),
+            ("/integrationtest:diff/adds/a-list[listkey='KEY2']/listnonkey", None, 'VAL2', 1),
+            ("/integrationtest:diff/adds/a-list[listkey='KEY3']/listkey", None, 'KEY3', 1),
+            ("/integrationtest:diff/adds/a-list[listkey='KEY3']/listnonkey", None, 'VAL3', 1),
+            ('/integrationtest:diff/adds/boolean', None, True, 1),
+            ('/integrationtest:diff/adds/empty-leaf', None, True, 1),
+            ('/integrationtest:simpleleaf', 'NonEmptyDoc', None, 3)
+        ]
+        self.assertEqual(list(differ.all()), expected_diff_results)

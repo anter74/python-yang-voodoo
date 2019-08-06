@@ -145,7 +145,6 @@ based stub module has support for these methods.
    to the yang module loaded from the payload string provided.
  - **dumps(format)** - return the data to an XML (format=1) or JSON (format=2) document
 
-Note: the libyang based stub does not support `dump_xpaths()`.
 
 
 ### SCHEMA vs DATA level constraints
