@@ -44,7 +44,10 @@ RUN \
       apt-get install -y libffi-dev || echo 'livffi-dev does not exist'
 
 RUN \
-    pip3 install ipython ncclient && \
+      apt-get install -y alien devscripts debhelper tree flex checkinstall
+
+RUN \
+    pip3 install ipython ncclient wheel && \
     mkdir -p /root/.ipython/profile_default   && \
     echo "c.Completer.use_jedi = False" >/root/.ipython/profile_default/ipython_config.py && \
     echo "c.TerminalInteractiveShell.confirm_exit = False" >>/root/.ipython/profile_default/ipython_config.py
@@ -80,23 +83,35 @@ RUN \
       cmake .. && \
       make -j6  && \
       make install && \
-      ldconfig
+      ldconfig && \
+      echo "libyang - programmatic access to yang modles" >description-pak && \
+      checkinstall --nodoc --pkglicense=CESNET --requires=libpcre3 --provides=libyang --pkgname=libyang --maintainer=adam.allen --pkgversion=1.1.30  --pkggroup=devel -y && \
+      mkdir /artefacts && \
+      alien -r libyang_1.1.30-1_amd64.deb && \
+      mv libyang*.rpm /artefacts && \
+      mv libyang_1.1.30-1_amd64.deb /artefacts
 
 
 RUN \
       git clone https://github.com/allena29/libyang-cffi.git && \
       cd libyang-cffi && \
       git checkout libyang-data-tree && \
+      echo "6" && \
       echo "#!/bin/bash" >rebuild.sh && \
-      LIBYANG_INSTALL=system python3 setup.py install
+      LIBYANG_INSTALL=system python3 setup.py install && \
+      LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
+      LIBYANG_INSTALL=system python3 setup.py sdist && \
+      mv dist/*.whl /artefacts && \
+      mv dist/*.tar.gz /artefacts
 
 # CHANGE VERSION NUMBER HERE
-ENV MY_VERSION=0.0.6-devel
+ENV MY_VERSION=0.5.4-devel
 ENV GIT_BRANCH=devel
 ENV MY_ARCH=amd64
 
 
 RUN \
+      echo "change here to retrigger a build- even if version numbers did not change" && \
       cd / && \
       git clone https://github.com/allena29/python-yang-voodoo.git working && \
       cd working && \
@@ -104,10 +119,13 @@ RUN \
       cd /working && \
       pip3 install -r requirements.txt && \
       pip3 install jinja2 lxml && \
-      python3 setup.py install
+      python3 setup.py install && \
+      python3 setup.py bdist_wheel && \
+      python3 setup.py sdist && \
+      mv dist/*.whl /artefacts && \
+      mv dist/*.tar.gz /artefacts
 
-
-# Optional build a deb
+# Optional build a deb - for libyang we should be able to remove this.
 RUN \
       mkdir ~/python-bundle && \
       cd / && \
@@ -129,7 +147,6 @@ RUN \
       echo "touch /tmp/pkginstall" >>~/python-bundle/DEBIAN/postinst && \
       chmod 755 ~/python-bundle/DEBIAN/postinst && \
       dpkg --build ~/python-bundle && \
-      mkdir /artefacts && \
       mv /tmp/libyang.tar /artefacts/python-yang-vooodoo_standalone.${MY_VERSION}.${MY_ARCH}.tar && \
       mv /root/python-bundle.deb /artefacts/python-yang-vooodoo_standalone.${MY_VERSION}.${MY_ARCH}.deb
 
@@ -202,7 +219,7 @@ RUN \
       make  && \
       make install
 
-# Optional build a deb
+# Optional build a deb  - TODO: convert his over to sysrepo
 RUN \
       mkdir ~/sysrepo-python-bundle && \
       cd / && \
