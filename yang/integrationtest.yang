@@ -5,6 +5,7 @@ module integrationtest {
 
   import crux { prefix crux; }
   import testchild { prefix testchild; }
+  import secondmodule { prefix second; }
   import ietf-inet-types { prefix inet; }
   import scaling { prefix scale; }
 
@@ -76,6 +77,19 @@ module integrationtest {
     type string {
       length '1..3 | 5..max' {
         error-message "Must not be 4 characters long";
+      }
+    }
+  }
+
+  uses second:group1;
+
+  augment /integrationtest:listgroup1 {
+    container contain {
+      leaf leafa {
+        type string;
+      }
+      leaf leafb {
+        type uint32;
       }
     }
   }

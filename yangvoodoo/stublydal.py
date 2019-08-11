@@ -16,6 +16,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
     """
 
     DAL_ID = "StubLy"
+    DAL_IN_MEMORY = False
 
     def connect(self, module, yang_location, tag='client', yang_ctx=None):
         if yang_ctx:

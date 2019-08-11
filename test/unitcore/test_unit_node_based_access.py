@@ -22,7 +22,7 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(repr(self.root), 'VoodooTopNode{} YANG Module: integrationtest')
 
         expected_children = ['augments', 'bronze', 'container1', 'container_and_lists', 'default', 'diff', 'dirty_secret', 'empty',
-                             'hyphen_leaf', 'imports_in_here', 'list_to_leafref_against', 'lista', 'morecomplex',
+                             'hyphen_leaf', 'imports_in_here', 'list_to_leafref_against', 'lista', 'listgroup1', 'morecomplex',
                              'numberlist', 'outsidelist', 'patternstr', 'psychedelia', 'quad', 'quarter',
                              'resolver', 'scaling', 'simplecontainer', 'simpleenum', 'simpleleaf', 'simplelist',
                              'thing_that_is_a_list_based_leafref', 'thing_that_is_leafref',

@@ -121,20 +121,49 @@ class test_new_stuff(unittest.TestCase):
         self.assertEqual(xpaths2, expected_xpaths2)
 
         differ = yangvoodoo.DiffEngine.DiffIterator(xpaths, xpaths2)
+
         expected_diff_results = [
-            ('/integrationtest:diff/adds/a-2nd-leaf', None, 'A second leaf', 1),
             ('/integrationtest:diff/adds/a-leaf', None, 'A Leaf Value', 1),
-            ("/integrationtest:diff/adds/a-leaf-list[.='A']", None, 'A', 1),
-            ("/integrationtest:diff/adds/a-leaf-list[.='B']", None, 'B', 1),
-            ("/integrationtest:diff/adds/a-leaf-list[.='C']", None, 'C', 1),
+            ('/integrationtest:diff/adds/a-2nd-leaf', None, 'A second leaf', 1),
             ("/integrationtest:diff/adds/a-list[listkey='KEY1']/listkey", None, 'KEY1', 1),
             ("/integrationtest:diff/adds/a-list[listkey='KEY1']/listnonkey", None, 'VAL1', 1),
             ("/integrationtest:diff/adds/a-list[listkey='KEY2']/listkey", None, 'KEY2', 1),
             ("/integrationtest:diff/adds/a-list[listkey='KEY2']/listnonkey", None, 'VAL2', 1),
             ("/integrationtest:diff/adds/a-list[listkey='KEY3']/listkey", None, 'KEY3', 1),
             ("/integrationtest:diff/adds/a-list[listkey='KEY3']/listnonkey", None, 'VAL3', 1),
-            ('/integrationtest:diff/adds/boolean', None, True, 1),
+            ("/integrationtest:diff/adds/a-leaf-list[.='A']", None, 'A', 1),
+            ("/integrationtest:diff/adds/a-leaf-list[.='B']", None, 'B', 1),
+            ("/integrationtest:diff/adds/a-leaf-list[.='C']", None, 'C', 1),
             ('/integrationtest:diff/adds/empty-leaf', None, True, 1),
+            ('/integrationtest:diff/adds/boolean', None, True, 1),
             ('/integrationtest:simpleleaf', 'NonEmptyDoc', None, 3)
         ]
         self.assertEqual(list(differ.all()), expected_diff_results)
+
+    def test_json(self):
+        list_element = self.root.listgroup1.create('A', 'B', 500)
+        list_element.contain.leafa = 'ABC'
+        list_element.contain.leafb = 4
+        # Act
+        result = self.subject.dumps(2)
+
+        # Act
+        expected_result = ('{"integrationtest:listgroup1":[{"key1":"A","key2":"B","key3":"500",'
+                           '"contain":{"leafa":"ABC","leafb":4}}]}')
+        self.assertEqual(result, expected_result)
+
+    def test_json2(self):
+        # Act
+        json = ('{"integrationtest:listgroup1":[{"key1":"A","key2":"B","key3":"500",'
+                '"contain":{"leafa":"ABCDEF","leafb":44}}]}')
+        self.subject.loads(json, 2)
+
+        list_element = self.root.listgroup1.get('A', 'B', 500)
+
+        # Assert
+        expected_result = "VoodooListElement{/integrationtest:listgroup1[key1='A'][key2='B'][key3='500']}"
+        self.assertEqual(len(self.root.listgroup1), 1)
+        self.assertEqual(repr(list_element), expected_result
+                         )
+        self.assertEqual(list_element.contain.leafa, 'ABCDEF')
+        self.assertEqual(list_element.contain.leafb, 44)
