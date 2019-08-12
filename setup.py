@@ -82,8 +82,8 @@ class BuildExt(build_ext):
 
 
 LIBRARIES = []
-if os.environ.get('LIBYANG_INSTALL') != 'system':
-    LIBRARIES.append(('yang', {'sources': ['clib']}))
+# if os.environ.get('LIBYANG_INSTALL') != 'system':
+#     LIBRARIES.append(('yang', {'sources': ['clib']}))
 
 
 with open('README.md', 'r') as fh:
@@ -91,7 +91,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(name='yangvoodoo',
                  # CHANGE VERSION NUMBER HERE
-                 version='0.0.5.4', author='Adam Allen',
+                 version='0.0.5.5', author='Adam Allen',
                  author_email='allena29@users.noreply.github.com',
                  description='Python based access to YANG Datatstores',
                  long_description=long_description,

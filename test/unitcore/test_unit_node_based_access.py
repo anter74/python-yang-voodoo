@@ -133,6 +133,8 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(dir(listelement), expected_children)
         self.assertEqual(listelement.tertiary, True)
 
+        self.assertEqual(dir(self.root.simplelist), ['simplekey'])
+
     def test_iteration_of_lists(self):
         # Build
         self.root.psychedelia.psychedelic_rock.stoner_rock.bands.create('Dead Meadow')

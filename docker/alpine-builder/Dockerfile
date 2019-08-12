@@ -35,7 +35,7 @@ RUN \
 RUN \
       cd /working && \
       git checkout devel && \
-      python3 setup.py install
+      LIBYANG_INSTALL=system python3 setup.py install
 RUN \
       cd /opt/dev && \
       cd libyang-cffi && \
@@ -44,6 +44,6 @@ RUN \
       LIBYANG_INSTALL=system python3 setup.py install
 
 RUN \
-      cd /working/python-yang-voodoo && \
+      cd /working && \
       git checkout devel && \
       LIBYANG_INSTALL=system python3 setup.py install

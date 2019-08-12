@@ -85,3 +85,4 @@
   - `set` operation on the dal now takes node\_type as well as val\_type
   - EXPERIMENTAL: support for libyang based stub- including dump/load from file of XML or JSON.
     - dump_xpaths() not supported.
+  - FIX: don't return non-list keys when dir() of a list
