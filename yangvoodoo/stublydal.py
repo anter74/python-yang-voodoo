@@ -1,6 +1,5 @@
 from yangvoodoo.basedal import BaseDataAbstractionLayer
 import libyang
-from libyang import diff
 
 
 class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
