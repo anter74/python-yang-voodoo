@@ -122,23 +122,35 @@ class test_new_stuff(unittest.TestCase):
 
         differ = yangvoodoo.DiffEngine.DiffIterator(xpaths, xpaths2)
 
-        expected_diff_results = [
-            ('/integrationtest:diff/adds/a-leaf', None, 'A Leaf Value', 1),
-            ('/integrationtest:diff/adds/a-2nd-leaf', None, 'A second leaf', 1),
-            ("/integrationtest:diff/adds/a-list[listkey='KEY1']/listkey", None, 'KEY1', 1),
-            ("/integrationtest:diff/adds/a-list[listkey='KEY1']/listnonkey", None, 'VAL1', 1),
-            ("/integrationtest:diff/adds/a-list[listkey='KEY2']/listkey", None, 'KEY2', 1),
-            ("/integrationtest:diff/adds/a-list[listkey='KEY2']/listnonkey", None, 'VAL2', 1),
-            ("/integrationtest:diff/adds/a-list[listkey='KEY3']/listkey", None, 'KEY3', 1),
-            ("/integrationtest:diff/adds/a-list[listkey='KEY3']/listnonkey", None, 'VAL3', 1),
-            ("/integrationtest:diff/adds/a-leaf-list[.='A']", None, 'A', 1),
-            ("/integrationtest:diff/adds/a-leaf-list[.='B']", None, 'B', 1),
-            ("/integrationtest:diff/adds/a-leaf-list[.='C']", None, 'C', 1),
-            ('/integrationtest:diff/adds/empty-leaf', None, True, 1),
-            ('/integrationtest:diff/adds/boolean', None, True, 1),
-            ('/integrationtest:simpleleaf', 'NonEmptyDoc', None, 3)
-        ]
-        self.assertEqual(list(differ.all()), expected_diff_results)
+        expected_diff_results = {
+            '/integrationtest:diff/adds/a-leaf': (None, 'A Leaf Value', 1),
+            '/integrationtest:diff/adds/a-2nd-leaf': (None, 'A second leaf', 1),
+            "/integrationtest:diff/adds/a-list[listkey='KEY1']/listkey": (None, 'KEY1', 1),
+            "/integrationtest:diff/adds/a-list[listkey='KEY1']/listnonkey": (None, 'VAL1', 1),
+            "/integrationtest:diff/adds/a-list[listkey='KEY2']/listkey": (None, 'KEY2', 1),
+            "/integrationtest:diff/adds/a-list[listkey='KEY2']/listnonkey": (None, 'VAL2', 1),
+            "/integrationtest:diff/adds/a-list[listkey='KEY3']/listkey": (None, 'KEY3', 1),
+            "/integrationtest:diff/adds/a-list[listkey='KEY3']/listnonkey": (None, 'VAL3', 1),
+            "/integrationtest:diff/adds/a-leaf-list[.='A']": (None, 'A', 1),
+            "/integrationtest:diff/adds/a-leaf-list[.='B']": (None, 'B', 1),
+            "/integrationtest:diff/adds/a-leaf-list[.='C']": (None, 'C', 1),
+            '/integrationtest:diff/adds/empty-leaf': (None, True, 1),
+            '/integrationtest:diff/adds/boolean': (None, True, 1),
+            '/integrationtest:simpleleaf': ('NonEmptyDoc', None, 3)
+        }
+
+        # Unfortunately libyang based stub's do not appear to be order determinsitic.
+        for (xpath, oldval, newval, op) in list(differ.all()):
+            if xpath not in expected_diff_results:
+                self.fail('%s is not expected but received in the diff' % (xpath))
+            (expected_oldval, expected_newval, expected_op) = expected_diff_results[xpath]
+            self.assertEqual('%s_%s' % (xpath, expected_oldval), '%s_%s' % (xpath, oldval))
+            self.assertEqual('%s_%s' % (xpath, expected_newval), '%s_%s' % (xpath, newval))
+            self.assertEqual('%s_%s' % (xpath, expected_op), '%s_%s' % (xpath, op))
+            del expected_diff_results[xpath]
+
+        if len(expected_diff_results):
+            self.fail('Not all diff results were found in the diff\n%s' % (expected_diff_results))
 
     def test_json(self):
         list_element = self.root.listgroup1.create('A', 'B', 500)
