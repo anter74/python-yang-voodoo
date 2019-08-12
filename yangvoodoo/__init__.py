@@ -245,7 +245,7 @@ Children: %s""" % (str(children)[1:-1])
     def _trace(self, vnt, yn, context):
         self.log.trace("%s: %s %s\nschema: %s\ndata: %s", vnt, context, yn.libyang_node,  yn.real_schema_path,  yn.real_data_path)
 
-    def get_node(self):
+    def get_node(self, readonly=False):
         """
         Instantiate Node-based access to the data stored in the backend defined by a yang
         schema. The data access will be constraint to the YANG module chosen when invoking
@@ -262,7 +262,7 @@ Children: %s""" % (str(children)[1:-1])
 
         yang_node = YangNode(PlainObject(), '', '')
         self._trace("VoodooNode.Root", yang_node, self.context)
-
+        self.context.readonly = readonly
         return yangvoodoo.VoodooNode.Root(self.context, yang_node)
 
     def connect(self, module=None,  yang_location="yang/", tag='client', yang_ctx=None):

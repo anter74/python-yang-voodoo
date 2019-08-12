@@ -152,3 +152,12 @@ class NodeProvidedIsNotAContainer(Exception):
         message = "Require a containing node not a leaf"
 
         super().__init__(message)
+
+
+class ReadonlyError(Exception):
+
+    def __init__(self):
+
+        message = "This node is read-only"
+
+        super().__init__(message)

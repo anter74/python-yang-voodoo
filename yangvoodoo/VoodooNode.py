@@ -172,6 +172,10 @@ class Node:
         node = self.__dict__['_node']
         node_schema = Common.Utils.get_yangnode(node, context, attr)
         context.log.trace("__setattr__ %s=%s %s", attr, val, node.real_data_path)
+
+        if context.readonly:
+            raise Errors.ReadonlyError()
+
         if not node_schema.nodetype() == Types.LIBYANG_NODETYPE['LEAF']:
             raise Errors.CannotAssignValueToContainingNode(attr)
 
@@ -241,6 +245,10 @@ class Empty():
     def create(self):
         context = self._context
         node = self._node
+
+        if context.readonly:
+            raise Errors.ReadonlyError()
+
         context.dal.set(node.real_data_path, None, 5)
 
     def exists(self):
@@ -337,6 +345,9 @@ class LeafList(Node):
         context = self._context
         node = self._node
 
+        if context.readonly:
+            raise Errors.ReadonlyError()
+
         if value == "":
             raise Errors.ListItemCannotBeBlank(node.real_data_path)
 
@@ -360,6 +371,10 @@ class LeafList(Node):
     def __delitem__(self, arg):
         context = self._context
         node = self._node
+
+        if context.readonly:
+            raise Errors.ReadonlyError()
+
         context.dal.remove(node.real_data_path, arg)
 
         return None
@@ -414,6 +429,8 @@ class List(ContainingNode):
         (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
 
         node = Common.Utils.get_yangnode(node, context, keys=keys, values=values)
+        if context.readonly:
+            raise Errors.ReadonlyError()
 
         context.dal.create(node.real_data_path, keys=keys, values=values)
         # Return Object
@@ -546,6 +563,9 @@ class List(ContainingNode):
     def __delitem__(self, *args):
         context = self._context
         node = self._node
+        if context.readonly:
+            raise Errors.ReadonlyError()
+
         (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
         predicates = Common.Utils.encode_xpath_predicates('', keys, values)
         context.dal.uncreate(node.real_data_path + predicates)
@@ -664,6 +684,10 @@ class PresenceContainer(Container):
     def create(self):
         context = self._context
         node = self._node
+
+        if context.readonly:
+            raise Errors.ReadonlyError()
+
         context.dal.create_container(node.real_data_path)
         return PresenceContainer(context, node, self)
 
