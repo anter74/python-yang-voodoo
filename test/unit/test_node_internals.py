@@ -132,3 +132,13 @@ class test_node_based_access(unittest.TestCase):
         # Assert
         expected_msg = "Unable to match the value 'not-valid' to a yang type for path /xpath - check the yang schema"
         self.assertEqual(str(context.exception), expected_msg)
+
+    def test_ipython_canary(self):
+        with self.assertRaises(AttributeError):
+            self.root._ipython_canary_method_should_not_exist_
+
+        with self.assertRaises(AttributeError):
+            self.root._repr_mimebundle_
+
+    def test_name(self):
+        self.assertEqual(self.root.__name__(), 'VoodooNode')

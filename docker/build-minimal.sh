@@ -12,16 +12,16 @@ docker tag $img allena29/yangvoodoo:builder
 container=`docker run -i -d $img /bin/bash`
 
 echo "Image $img, Container $container"
-if [ -d devel/artefacts ]
+if [ -d minimal/artefacts ]
 then
-  rm -fr devel/artefacts
+  rm -fr minimal/artefacts
 fi
 
 echo "Copying deb pacakge"
 
 docker cp $container:/artefacts minimal
 wget https://bootstrap.pypa.io/get-pip.py -O minimal/artefacts/get-pip.py
-git clone -b master https://github.com/allena29/python-yang-voodoo.git minimal/artefacts/working
+git clone -b devel https://github.com/allena29/python-yang-voodoo.git minimal/artefacts/working
 docker stop $container
 
 

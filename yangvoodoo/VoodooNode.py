@@ -3,15 +3,12 @@ from yangvoodoo import Cache, Common, Errors, TemplateNinja, Types
 
 class Context:
 
-    def __init__(self, module, data_access_layer, yang_schema, yang_ctx, cache=None, log=None):
+    def __init__(self, module, data_access_layer, yang_schema, yang_ctx, log=None):
         self.module = module
         self.schema = yang_schema
         self.schemactx = yang_ctx
         self.dal = data_access_layer
-        if cache is None:
-            self.schemacache = Cache.Cache()
-        else:
-            self.schemacache = cache
+        self.schemacache = Cache.Cache()
         self.log = log
         self.yang_module = module
 

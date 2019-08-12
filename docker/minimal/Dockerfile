@@ -8,8 +8,7 @@ RUN \
       python3 \
       python3-distutils \
       libpcre3 \
-      libpython3.7 \
-      git
+      libpython3.7 
 
 RUN \
     mkdir -p /root/.ipython/profile_default   && \
@@ -34,16 +33,6 @@ RUN \
       pip3 install ipython && \
       rm -fr /*.whl  && \
       rm -fr /*.tar.gz
-RUN \
-    cd /working && \
-    git checkout devel && \
-    echo -n "Build Date:" >.buildinfo && \
-    date >>.buildinfo && \
-    echo "Sysrepo: Not Installed" >>.buildinfo && \
-    echo "Libyang: 1.0r3" >>.buildinfo && \
-    # CHANGE VERSION HERE
-    echo -n "YangVoodoo: 0.5.3" >>.buildinfo
-
 
 STOPSIGNAL SIGTERM
 WORKDIR /working
