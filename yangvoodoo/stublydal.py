@@ -26,10 +26,12 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
             self.libyang_ctx = libyang.Context()
         self.libyang_ctx.load_module(module)
         self.module = module
-        self.libyang_data = libyang.DataTree(self.libyang_ctx)
+        if not hasattr(self, 'libyang_data'):
+            self.libyang_data = libyang.DataTree(self.libyang_ctx)
 
     def disconnect(self):
         del self.libyang_ctx
+        del self.libyang_data
 
     def commit(self):
         self.log.debug("COMMIT: - null operation for the stub")

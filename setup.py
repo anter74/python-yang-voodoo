@@ -91,17 +91,17 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(name='yangvoodoo',
                  # CHANGE VERSION NUMBER HERE
-                 version='0.0.5.5', author='Adam Allen',
+                 version='0.0.5.6', author='Adam Allen',
                  author_email='allena29@users.noreply.github.com',
                  description='Python based access to YANG Datatstores',
                  long_description=long_description,
                  long_description_content_type='text/markdown',
-                 url='http://github.com/allena29/pyyang-voodoo',
+                 url='http://github.com/allena29/python-yang-voodoo',
                  packages=['yangvoodoo'],
                  install_requires=[
                      'libyang',
                      'cffi',
-                     'jinja2',
+                     'Jinja2',
                      'lxml',
                      'dictdiffer',
                  ],

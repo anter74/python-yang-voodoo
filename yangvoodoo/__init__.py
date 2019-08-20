@@ -31,7 +31,7 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.5.5-devel"
+    __version__ = "0.5.6-devel"
 
     def __init__(self, log=None, local_log=False, data_abstraction_layer=None,
                  disable_proxy=False, use_stub=False):
@@ -300,8 +300,9 @@ Children: %s""" % (str(children)[1:-1])
 
     def disconnect(self):
         """
-        Disconnect from the datastore - losing any pending changes to data which has not yet
-        been committed.
+        Disconnect from the datastore.
+
+        If the datastore is an 'stub' based datastore disconnecting will lose any data.
 
         returns: True
         """

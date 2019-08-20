@@ -1,7 +1,7 @@
 import unittest
 import yangvoodoo
 import yangvoodoo.stublydal
-
+from mock import Mock
 
 """
 This set of unit tests uses the stub backend datastore, which is not preseeded with
@@ -176,3 +176,18 @@ class test_new_stuff(unittest.TestCase):
 
         # Assert
         self.assertEqual(self.root.simpleleaf, None)
+
+    def test_connect_connects_if_libyang_data_already_exists(self):
+        stubly = Mock()
+        subject = yangvoodoo.DataAccess(data_abstraction_layer=stubly, disable_proxy=True)
+        subject.connect('integrationtest')
+
+        self.assertNotEqual(stubly, subject.data_abstraction_layer.libyang_data)
+
+    def test_connect_avoids_connecting_if_libyang_data_already_exists(self):
+        stubly = Mock()
+        subject = yangvoodoo.DataAccess(data_abstraction_layer=stubly, disable_proxy=True)
+        subject.data_abstraction_layer.libyang_data = stubly
+        subject.connect('integrationtest')
+
+        self.assertEqual(stubly, subject.data_abstraction_layer.libyang_data)
