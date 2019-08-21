@@ -412,3 +412,20 @@ class test_common(unittest.TestCase):
         # Assert
         expected_result = ("integrationtest", "container-and-lists")
         self.assertEqual(result, expected_result)
+
+    def test_extracting_keys(self):
+        # Act
+        xpath = "/path/to/somewhere[k1='v1'][k2=\"v2\"]/sdf[k3='v3']/sdf"
+        result = Utils.extract_all_keys(xpath)
+
+        # Assert
+        self.assertEqual(result, [('k1', 'v1'), ('k2', 'v2'), ('k3', 'v3')])
+
+        # Act
+        xpath = "/path/to/somewhere[k1='v1'][k2=\"/this/is/xpath[inside='here']\"]/sdf[k3='v3']/sdf"
+        result = Utils.extract_all_keys(xpath)
+
+        # Assert
+        self.assertEqual(result, [('k1', 'v1'), ('k2', "/this/is/xpath[inside='here']"), ('k3', 'v3')])
+
+

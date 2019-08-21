@@ -82,7 +82,6 @@ class Utils:
     PREDICATE_KEY_VALUES_SINGLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)='([^']*)'\]")
     PREDICATE_KEY_VALUES_DOUBLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)=\"([^\"]*)\"\]")
     FIND_KEYS = re.compile(r"\[([A-Za-z]+[A-Za-z0-9_-]*)=.*?\]")
-    FIND_KEYS_AND_VALUES = re.compile(r"\[([A-Za-z]+[A-Za-z0-9_-]*)=['\"](.*?)['\"]\]")
     DROP_PREDICATES = re.compile(r"(.*?)([A-Za-z0-9_-]+\[.*?\])?/([A-Za-z0-9_-]*)")
     DROP_ALL_PREDICATES = re.compile(r"(\[.*?\])")
     SPLIT_XPATH = re.compile(r"([a-zA-Z0-9_-]*)(/?)((\[.*?\])*)?")
@@ -91,6 +90,7 @@ class Utils:
     STARTING_A_PREDICATE = re.compile(r".*\[[a-z0-9A-Z_-]+\s*=\s*['\"]")
     ENDING_A_PREDICATE = re.compile(r".*['\"]\s*\]$")
     MODULE_AND_LEAF_REGEX = re.compile(r"/([A-Za-z0-9_-]+:)?([A-Za-z0-9_-]+)")
+    EXTRACT_ALL_KEYS = re.compile(r"(\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])")
 
     @staticmethod
     def pretty_xmldoc(xmldoc):
@@ -555,3 +555,14 @@ class Utils:
     @staticmethod
     def drop_all_predicates(in_string):
         return Utils.DROP_ALL_PREDICATES.sub('', in_string)
+
+    @staticmethod
+    def extract_all_keys(in_string):
+        response = []
+        for (match, quote_type) in Utils.EXTRACT_ALL_KEYS.findall(in_string):
+            if quote_type == "'":
+                (predicate_key, predicate_value) = Utils.PREDICATE_KEY_VALUES_SINGLE.match(match).groups()
+            else:
+                (predicate_key, predicate_value) = Utils.PREDICATE_KEY_VALUES_DOUBLE.match(match).groups()
+            response.append((predicate_key, predicate_value))
+        return response
