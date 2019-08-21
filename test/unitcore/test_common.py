@@ -359,24 +359,6 @@ class test_common(unittest.TestCase):
         expected_result = "/sdfsdfsfdsdf/sdf/sdf/sdfsdfdsf/sdf"
         self.assertEqual(result, expected_result)
 
-    def test_return_until_last_predicate(self):
-        # Act
-        xpath = "/integrationtest:container-and-lists[level3key='key3']/multi-key-list[A='primary-leaf'][B='secondary-leaf']/inner/level3list"
-        result = Utils.return_except_last_predicates(xpath)
-
-        # Assert
-        expected_result = "/integrationtest:container-and-lists[level3key='key3']/multi-key-list[A='primary-leaf'][B='secondary-leaf']"
-        self.assertEqual(result, expected_result)
-
-    def test_drop_all_predicates(self):
-        # Act
-        xpath = "/integrationtest:container-and-lists/multi-key-list[A='primary-leaf'][B='secondary-leaf']/inner/level3list[level3key='key3']"
-        result = Utils.drop_all_predicates(xpath)
-
-        # Assert
-        expected_result = "/integrationtest:container-and-lists/multi-key-list/inner/level3list"
-        self.assertEqual(result, expected_result)
-
     def test_module_and_leaf(self):
         # Act
         xpath = "/integrationtest:container-and-lists/multi-key-list[A='primary-leaf'][B='secondary-leaf']/inner/level3list[level3key='key3']"
@@ -427,5 +409,3 @@ class test_common(unittest.TestCase):
 
         # Assert
         self.assertEqual(result, [('k1', 'v1'), ('k2', "/this/is/xpath[inside='here']"), ('k3', 'v3')])
-
-

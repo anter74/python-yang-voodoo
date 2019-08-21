@@ -83,12 +83,7 @@ class Utils:
     PREDICATE_KEY_VALUES_DOUBLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)=\"([^\"]*)\"\]")
     FIND_KEYS = re.compile(r"\[([A-Za-z]+[A-Za-z0-9_-]*)=.*?\]")
     DROP_PREDICATES = re.compile(r"(.*?)([A-Za-z0-9_-]+\[.*?\])?/([A-Za-z0-9_-]*)")
-    DROP_ALL_PREDICATES = re.compile(r"(\[.*?\])")
-    SPLIT_XPATH = re.compile(r"([a-zA-Z0-9_-]*)(/?)((\[.*?\])*)?")
     XPATH_DECODER_V4 = re.compile(r"(([A-Za-z0-9_-]*:)?([A-Za-z0-9_-]+))((\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])+)?")
-    XPATH_MATCH_AFTER_LAST_PREDICATE = re.compile(r"^(.*?)(/[^\[\]]*)$")
-    STARTING_A_PREDICATE = re.compile(r".*\[[a-z0-9A-Z_-]+\s*=\s*['\"]")
-    ENDING_A_PREDICATE = re.compile(r".*['\"]\s*\]$")
     MODULE_AND_LEAF_REGEX = re.compile(r"/([A-Za-z0-9_-]+:)?([A-Za-z0-9_-]+)")
     EXTRACT_ALL_KEYS = re.compile(r"(\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])")
 
@@ -481,27 +476,6 @@ class Utils:
             pass
 
         return Utils.get_yang_type(node_schema_type, int(child_text), this_path)
-    #
-    # @staticmethod
-    # def _handle_portion_of_xpath(portion, answer, inside_a_predicate):
-    #     raise ValueError("This should be possible tremove")
-    #
-    #     """
-    #     Handle a portion of xpath , based on a primitive split by '/',
-    #     giving back to the value anything which as a '/' in it.
-    #     """
-    #     if inside_a_predicate:
-    #         answer[-1] += "/" + portion
-    #         if Utils.ENDING_A_PREDICATE.match(portion):
-    #             return False
-    #         return True
-    #     answer.append(portion)
-    #     if Utils.STARTING_A_PREDICATE.match(portion):
-    #         if Utils.ENDING_A_PREDICATE.match(portion):
-    #             return False
-    #         return True
-    #
-    #     return False
 
     @staticmethod
     def convert_xpath_to_list_v4(xpath):
@@ -545,16 +519,6 @@ class Utils:
         if in_string[0:len(module)+2] == "/"+module+":":
             return "/" + in_string[len(module)+2:]
         return in_string
-
-    @staticmethod
-    def return_except_last_predicates(in_string):
-        """ Assuming well formed xpaths with [] not valid in keys. """
-        # return in_string[in_string.rfind(']'):]
-        return Utils.XPATH_MATCH_AFTER_LAST_PREDICATE.sub(r'\g<1>', in_string)
-
-    @staticmethod
-    def drop_all_predicates(in_string):
-        return Utils.DROP_ALL_PREDICATES.sub('', in_string)
 
     @staticmethod
     def extract_all_keys(in_string):
