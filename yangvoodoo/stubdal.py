@@ -53,6 +53,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     def disconnect(self):
         self.log.trace('DISCONNET')
+        self.empty()
         return True
 
     def commit(self):

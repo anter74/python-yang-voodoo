@@ -409,3 +409,14 @@ class test_common(unittest.TestCase):
 
         # Assert
         self.assertEqual(result, [('k1', 'v1'), ('k2', "/this/is/xpath[inside='here']"), ('k3', 'v3')])
+
+    def test_convert_path_to_nodelist(self):
+        # Arrange
+        xpath = "/path/to/somewhere[k1='v1'][k2=\"/this/is/xpath[inside='here']\"]/sdf[k3='v3']/sdf"
+
+        # Act
+        result = Utils.convert_path_to_nodelist(xpath)
+
+        # Assert
+        expected_result = ['path', 'to', 'somewhere', 'sdf', 'sdf']
+        self.assertEqual(result, expected_result)

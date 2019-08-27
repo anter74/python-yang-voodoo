@@ -119,6 +119,14 @@ class Utils:
         return schema_path, parent_schema_path
 
     @staticmethod
+    def convert_path_to_nodelist(xpath):
+        result = []
+
+        for (_, _, leaf_name, _, _, _) in Utils.XPATH_DECODER_V4.findall(xpath):
+            result.append(leaf_name)
+        return result
+
+    @staticmethod
     def convert_path_to_value_path(path, module):
         """
         /path/abc/def[g='sdf']/xyz/sdf[fdsf='fg']/zzz
