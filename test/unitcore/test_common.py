@@ -148,24 +148,6 @@ class test_common(unittest.TestCase):
             result = Utils.convert_path_to_schema_path("/path/abc/", 'module')
         self.assertEqual(str(context.exception), "Path is not valid as it ends with a trailing slash. (/path/abc/)")
 
-    def test_convert_path_to_value_path(self):
-        result = Utils.convert_path_to_value_path("/path/abc/def[g='sdf']/xyz/sdf[fdsf='fg'][hhhh='hh']/zzz", 'module')
-        expected_result = ("/module:path/abc/def[g='sdf']/xyz/sdf[fdsf='fg'][hhhh='hh']/zzz", "/module:path/abc/def[g='sdf']/xyz/sdf")
-
-        self.assertEqual(result, expected_result)
-
-        result = Utils.convert_path_to_value_path("/path/abc/def[g='sdf'][h='sdf']/sdsd", 'module')
-        expected_result = ("/module:path/abc/def[g='sdf'][h='sdf']/sdsd", '/module:path/abc/def')
-        self.assertEqual(result, expected_result)
-
-        result = Utils.convert_path_to_value_path("/path/abc", 'module')
-        expected_result = ("/module:path/abc", "/module:path")
-        self.assertEqual(result, expected_result)
-
-        with self.assertRaises(ValueError) as context:
-            result = Utils.convert_path_to_value_path("/path/abc/", 'module')
-        self.assertEqual(str(context.exception), "Path is not valid as it ends with a trailing slash. (/path/abc/)")
-
     def test_xpath_splitter_simple(self):
 
         # Act
@@ -419,4 +401,16 @@ class test_common(unittest.TestCase):
 
         # Assert
         expected_result = ['path', 'to', 'somewhere', 'sdf', 'sdf']
+        self.assertEqual(result, expected_result)
+
+    def test_convert_datapath_to_schemapath_v4(self):
+        # Arrange
+        xpath = "/integration:path/to/somewhere[k1='v1'][k2=\"/this/is/xpath[inside='here']\"]/sdf[k3='v3']/sdf"
+
+        # Act
+        result = Utils.convert_path_to_schema_path(xpath, 'integrationtest')
+
+        # Assert
+        expected_result = ('/integrationtest:path/integrationtest:to/integrationtest:somewhere/integrationtest:sdf/integrationtest:sdf',
+                           '/integrationtest:path/integrationtest:to/integrationtest:somewhere/integrationtest:sdf')
         self.assertEqual(result, expected_result)

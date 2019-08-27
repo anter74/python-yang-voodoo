@@ -82,7 +82,6 @@ class Utils:
     PREDICATE_KEY_VALUES_SINGLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)='([^']*)'\]")
     PREDICATE_KEY_VALUES_DOUBLE = re.compile(r"\[([A-z]+[A-z0-9_\-]*)=\"([^\"]*)\"\]")
     FIND_KEYS = re.compile(r"\[([A-Za-z]+[A-Za-z0-9_-]*)=.*?\]")
-    DROP_PREDICATES = re.compile(r"(.*?)([A-Za-z0-9_-]+\[.*?\])?/([A-Za-z0-9_-]*)")
     XPATH_DECODER_V4 = re.compile(r"(([A-Za-z0-9_-]*:)?([A-Za-z0-9_-]+))((\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])+)?")
     MODULE_AND_LEAF_REGEX = re.compile(r"/([A-Za-z0-9_-]+:)?([A-Za-z0-9_-]+)")
     EXTRACT_ALL_KEYS = re.compile(r"(\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])")
@@ -113,7 +112,7 @@ class Utils:
             raise ValueError("Path is not valid as it ends with a trailing slash. (%s)" % (path))
         schema_path = ""
         parent_schema_path = ""
-        for (_, _, path) in Utils.DROP_PREDICATES.findall(path):
+        for path in Utils.convert_path_to_nodelist(path):
             parent_schema_path = schema_path
             schema_path += "/" + module + ":" + path
         return schema_path, parent_schema_path
@@ -125,35 +124,6 @@ class Utils:
         for (_, _, leaf_name, _, _, _) in Utils.XPATH_DECODER_V4.findall(xpath):
             result.append(leaf_name)
         return result
-
-    @staticmethod
-    def convert_path_to_value_path(path, module):
-        """
-        /path/abc/def[g='sdf']/xyz/sdf[fdsf='fg']/zzz
-        /module:path/module:abc/module:def/module:xyz/module:sdf/module:zzz
-            ('', '', 'path')
-            ('', '', 'abc')
-            ('', '', 'def')
-            ("[g='sdf']", '', 'xyz')
-            ('', '', 'sdf')
-            ("[fdsf='fg']", '', 'zzz')
-        """
-        if path[0:len(module)+2] == "/"+module+":":
-            path = "/" + path[len(module)+2:]
-        if path[-1] == "/":
-            raise ValueError("Path is not valid as it ends with a trailing slash. (%s)" % (path))
-        value_path = ""
-        parent_value_path = ""
-        for (predicate, _, path) in Utils.DROP_PREDICATES.findall(path):
-            parent_value_path = value_path
-            if value_path == "":
-                value_path += "/" + module + ":" + path
-                if not predicate == "":
-                    raise NotImplementedError("The path %s is not handled by convert_path_to_value_path." % (value_path))
-            else:
-                value_path += predicate + "/" + path
-
-        return value_path, parent_value_path
 
     @staticmethod
     def get_logger(name, level=logging.DEBUG):
