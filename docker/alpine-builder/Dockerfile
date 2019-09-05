@@ -6,13 +6,18 @@ RUN apk add git cmake swig python3-dev libxml2-dev libtool \
             py3-setuptools readline-dev libxslt-dev make \
             protobuf-c-dev libev-dev openssl-dev \
             boost-thread libffi-dev bison automake zlib-dev \
-            gcc g++ flex pcre-dev alpine-sdk vim musl-dev screen
+            gcc g++ flex pcre-dev alpine-sdk vim musl-dev screen \
+            librdkafka-dev
 
 RUN mkdir /opt/dev && \
     adduser -D -g abuild builder && \
     passwd -d builder builder && \
     echo "builder    ALL=(ALL)  NOPASSWD: ALL" >>/etc/sudoers && \
-    mkdir /pkgs
+    mkdir /pkgs && \
+    chown builder /pkgs -R && \
+    chown builder /var/cache -R && \
+    chown builder /home/builder -R && \
+    addgroup builder abuild
 
 WORKDIR /opt/dev
 
@@ -34,12 +39,22 @@ RUN \
       mv dist/*.whl /pkgs 
 
 RUN \
+    sudo apk add librdkafka-dev && \
+    wget https://files.pythonhosted.org/packages/c7/27/e7f6d54dafb050dcb66622742d8a39c5742ca6aa00c337b043738da78abf/confluent-kafka-1.1.0.tar.gz && \
+    tar xvfz confluent-kafka-1.1.0.tar.gz && \
+    cd confluent-kafka-1.1.0 && \
+    python3 setup.py build bdist_wheel && \
+    cp dist/*.whl /pkgs && \
+    sudo python3 setup.py install
+
+RUN \
       git clone https://github.com/CESNET/libyang.git && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
 RUN \
       cd /working && \
+      git checkout devel && \
       pip3 install -r requirements.txt
 
 # libyang
@@ -76,19 +91,15 @@ RUN \
       mv dist/*.whl /pkgs 
 
 ADD home_builder/ /home/builder 
-
-RUN \
-      chown builder /pkgs -R && \
-      chown builder /var/cache -R && \
-      chown builder /home/builder -R && \
-      addgroup builder abuild
-
 WORKDIR /home/builder
 USER builder
 
 
 RUN \
+     sudo chown builder /pkgs -R && \
+     sudo chown builder /home/builder -R  && \
      cd /home/builder/libyang && \
      abuild checksum && \
      abuild -r && \
      cp /home/builder/packages/builder/x86_64/libyang-v1.0r3-r0.apk /pkgs
+

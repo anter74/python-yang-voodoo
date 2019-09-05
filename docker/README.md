@@ -21,3 +21,14 @@ sh build-release.sh 0.0.5
 # Generate the lab image
 sh build-lab.sh
 ```
+
+# Alpine Linux minimal image
+
+```
+docker build alpine-builder
+
+# luanch the image
+docker cp <inages>:pkgs/ alpine-release
+cp alpine-builder/home_builder/.abuild/builder-5d715690.rsa.pub alpine-release/pkgs/
+docker build alpine-release
+```
