@@ -8,16 +8,37 @@ RUN apk add git cmake swig python3-dev libxml2-dev libtool \
             boost-thread libffi-dev bison automake zlib-dev \
             gcc g++ flex pcre-dev alpine-sdk vim musl-dev screen
 
-RUN mkdir /opt/dev
+RUN mkdir /opt/dev && \
+    adduser -D -g abuild builder && \
+    passwd -d builder builder && \
+    echo "builder    ALL=(ALL)  NOPASSWD: ALL" >>/etc/sudoers && \
+    mkdir /pkgs
+
 WORKDIR /opt/dev
 
 RUN \
-      git clone https://github.com/CESNET/libyang.git
+      wget https://files.pythonhosted.org/packages/c4/43/3f1e7d742e2a7925be180b6af5e0f67d38de2f37560365ac1a0b9a04c015/lxml-4.4.1.tar.gz && \
+      tar xvfz lxml-4.4.1.tar.gz && \
+      pip3 install wheel && \
+      cd lxml-4.4.1 && \
+      python3 setup.py bdist_wheel && \
+      python3 -m pip install dist/*.whl && \
+      mv dist/*.whl /pkgs
+
+RUN \ 
+      wget https://files.pythonhosted.org/packages/93/1a/ab8c62b5838722f29f3daffcc8d4bd61844aa9b5f437341cc890ceee483b/cffi-1.12.3.tar.gz && \
+      tar xvfz cffi-1.12.3.tar.gz && \
+      cd cffi-1.12.3 && \
+      python3 setup.py bdist_wheel && \
+      python3 -m pip install dist/*.whl && \
+      mv dist/*.whl /pkgs 
 
 RUN \
-      cd /opt/dev && \
+      git clone https://github.com/CESNET/libyang.git && \
       git clone https://github.com/allena29/libyang-cffi.git && \
-      git clone https://github.com/allena29/python-yang-voodoo.git /working && \
+      git clone https://github.com/allena29/python-yang-voodoo.git /working
+
+RUN \
       cd /working && \
       pip3 install -r requirements.txt
 
@@ -35,15 +56,39 @@ RUN \
 RUN \
       cd /working && \
       git checkout devel && \
-      LIBYANG_INSTALL=system python3 setup.py install
+      LIBYANG_INSTALL=system python3 setup.py install 
+
+
 RUN \
       cd /opt/dev && \
       cd libyang-cffi && \
       git checkout libyang-data-tree && \
       echo "#!/bin/bash" >rebuild.sh && \
-      LIBYANG_INSTALL=system python3 setup.py install
+      LIBYANG_INSTALL=system python3 setup.py install && \
+      LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
+      mv dist/*.whl /pkgs
 
 RUN \
       cd /working && \
       git checkout devel && \
-      LIBYANG_INSTALL=system python3 setup.py install
+      LIBYANG_INSTALL=system python3 setup.py install && \
+      LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
+      mv dist/*.whl /pkgs 
+
+ADD home_builder/ /home/builder 
+
+RUN \
+      chown builder /pkgs -R && \
+      chown builder /var/cache -R && \
+      chown builder /home/builder -R && \
+      addgroup builder abuild
+
+WORKDIR /home/builder
+USER builder
+
+
+RUN \
+     cd /home/builder/libyang && \
+     abuild checksum && \
+     abuild -r && \
+     cp /home/builder/packages/builder/x86_64/libyang-v1.0r3-r0.apk /pkgs
