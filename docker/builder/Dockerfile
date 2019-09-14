@@ -9,8 +9,9 @@ RUN \
       curl \
       gnupg \
       apt-transport-https \
-      python3 \
-      python3-pip
+      python3-dbg \
+      python3-pip \
+      libpython3.7
 
 RUN \
       apt-get update && apt-get install -y \
@@ -27,6 +28,8 @@ RUN \
       swig \
       python-dev \
       python3-dev \
+      valgrind \
+      libxml2-utils \
       libcurl4-openssl-dev \
       libxslt-dev \
       libxml2-dev \
@@ -41,7 +44,10 @@ RUN \
       apt-get install -y libffi-dev || echo 'livffi-dev does not exist'
 
 RUN \
-    pip3 install ipython ncclient && \
+      apt-get install -y alien devscripts debhelper tree flex checkinstall
+
+RUN \
+    pip3 install ipython ncclient wheel && \
     mkdir -p /root/.ipython/profile_default   && \
     echo "c.Completer.use_jedi = False" >/root/.ipython/profile_default/ipython_config.py && \
     echo "c.TerminalInteractiveShell.confirm_exit = False" >>/root/.ipython/profile_default/ipython_config.py
@@ -69,7 +75,7 @@ RUN \
       cd libyang && \
       git checkout 85d09f3bdf5ea01ea2e01deb384b2b0dde057e3f && \
       git checkout v0.16-r3 && \
-      git checkout v1.0-r2 && \
+      git checkout v1.0-r3 && \
       mkdir build && cd build && \
       # We may not end up using these bindings (yang) and instead use (libyang - see below)
       # But it's useful to debug with both
@@ -77,9 +83,72 @@ RUN \
       cmake .. && \
       make -j6  && \
       make install && \
-      ldconfig
+      ldconfig && \
+      echo "libyang - programmatic access to yang modles" >description-pak && \
+      checkinstall --nodoc --pkglicense=CESNET --requires=libpcre3 --provides=libyang --pkgname=libyang --maintainer=adam.allen --pkgversion=1.1.30  --pkggroup=devel -y && \
+      mkdir /artefacts && \
+      alien -r libyang_1.1.30-1_amd64.deb && \
+      mv libyang*.rpm /artefacts && \
+      mv libyang_1.1.30-1_amd64.deb /artefacts
 
 
+RUN \
+      git clone https://github.com/allena29/libyang-cffi.git && \
+      cd libyang-cffi && \
+      git checkout libyang-data-tree && \
+      echo "6" && \
+      echo "#!/bin/bash" >rebuild.sh && \
+      LIBYANG_INSTALL=system python3 setup.py install && \
+      LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
+      LIBYANG_INSTALL=system python3 setup.py sdist && \
+      mv dist/*.whl /artefacts && \
+      mv dist/*.tar.gz /artefacts
+
+# CHANGE VERSION NUMBER HERE
+ENV MY_VERSION=0.5.7
+ENV GIT_BRANCH=devel
+ENV MY_ARCH=amd64
+
+
+RUN \
+      echo "change here to retrigger a build- even if version numbers did not change" && \
+      cd / && \
+      git clone https://github.com/allena29/python-yang-voodoo.git working && \
+      cd working && \
+      git checkout $GIT_BRANCH && \
+      cd /working && \
+      pip3 install -r requirements.txt && \
+      pip3 install jinja2 lxml && \
+      python3 setup.py install && \
+      python3 setup.py bdist_wheel && \
+      python3 setup.py sdist && \
+      mv dist/*.whl /artefacts && \
+      mv dist/*.tar.gz /artefacts
+
+# Optional build a deb - for libyang we should be able to remove this.
+RUN \
+      mkdir ~/python-bundle && \
+      cd / && \
+      tar cvpf /tmp/working.tar /usr/local && \
+      cd ~/python-bundle && \
+      tar xvf /tmp/working.tar && \
+      rm -fr usr/local/games && \
+      rm -fr usr/local/lib/python2.7 && \
+      tar cvpf /tmp/libyang.tar usr/local/lib/python3.7/dist-packages/*libyang* usr/local/lib/python3.7/dist-packages/*yangvoodoo* && \
+      tar xvf /tmp/libyang.tar && \
+      mkdir ~/python-bundle/DEBIAN && \
+      echo "Package: python-yang-vooodoo-bundle" >~/python-bundle/DEBIAN/control && \
+      echo "Version: ${MY_VERSION}" >>~/python-bundle/DEBIAN/control && \
+      echo "Architecture: ${MY_ARCH}" >>~/python-bundle/DEBIAN/control && \
+      echo "Maintainer: allena29@noreply.user.github.com" >>~/python-bundle/DEBIAN/control && \
+      echo "Description: libyang-python bundle without any backend datastore" >>~/python-bundle/DEBIAN/control && \
+      echo "#!/bin/sh" >~/python-bundle/DEBIAN/postinst && \
+      echo "ldconfig" >>~/python-bundle/DEBIAN/postinst && \
+      echo "touch /tmp/pkginstall" >>~/python-bundle/DEBIAN/postinst && \
+      chmod 755 ~/python-bundle/DEBIAN/postinst && \
+      dpkg --build ~/python-bundle && \
+      mv /tmp/libyang.tar /artefacts/python-yang-vooodoo_standalone.${MY_VERSION}.${MY_ARCH}.tar && \
+      mv /root/python-bundle.deb /artefacts/python-yang-vooodoo_standalone.${MY_VERSION}.${MY_ARCH}.deb
 
 # sysrepo
 RUN \
@@ -95,23 +164,6 @@ RUN \
       make -j6 && \
       make install && \
       ldconfig
-
-RUN \
-      git clone https://github.com/allena29/libyang-cffi.git && \
-      cd libyang-cffi && \
-      echo "#!/bin/bash" >rebuild.sh && \
-      LIBYANG_INSTALL=system python3 setup.py install
-
-
-RUN \
-      cd / && \
-      git clone https://github.com/allena29/python-yang-voodoo.git working && \
-      cd working && \
-      # git checkout  context-and-logging && \
-      cd /working && \
-      pip3 install -r requirements.txt && \
-      pip3 install jinja2 lxml && \
-      python3 setup.py install
 
 
 # libssh
@@ -167,16 +219,14 @@ RUN \
       make  && \
       make install
 
-# CHANGE VERSION NUMBER HERE
-ENV MY_VERSION=0.0.5
-ENV MY_ARCH=amd64
-
-# Optional build a deb
+# Optional build a deb  - TODO: convert his over to sysrepo
 RUN \
       mkdir ~/sysrepo-python-bundle && \
       cd / && \
       # This isn't right - check compiler options for sysrepo
-      tar cvpf /tmp/working.tar /usr/local /sysrepo /usr/lib/x86_64-linux-gnu/libpython3.7*  /usr/lib/python3/dist-packages/*sysrepo* && \
+      # tar cvpf /tmp/working.tar /usr/local /sysrepo /usr/lib/x86_64-linux-gnu/libpython3.7*  /usr/lib/python3/dist-packages/*sysrepo* && \
+      # vim-runtime contains libpython3.7
+      tar cvpf /tmp/working.tar /usr/local /sysrepo  /usr/lib/python3/dist-packages/*sysrepo* && \
       cd ~/sysrepo-python-bundle && \
       tar xvf /tmp/working.tar && \
       rm -fr usr/local/games && \
@@ -189,14 +239,14 @@ RUN \
       echo "Architecture: ${MY_ARCH}" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Depends: libev4,libprotobuf-c1" >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "Maintainer: allena29@noreply.user.github.com" >>~/sysrepo-python-bundle/DEBIAN/control && \
-      echo "Description: sysrepo/libyang-python bundle without netconf support for local use." >>~/sysrepo-python-bundle/DEBIAN/control && \
+      echo "Description: sysrepo/libyang-python bundle with netconf support for local use." >>~/sysrepo-python-bundle/DEBIAN/control && \
       echo "#!/bin/sh" >~/sysrepo-python-bundle/DEBIAN/postinst && \
       echo "ldconfig" >>~/sysrepo-python-bundle/DEBIAN/postinst && \
       echo "touch /tmp/pkginstall" >>~/sysrepo-python-bundle/DEBIAN/postinst && \
       chmod 755 ~/sysrepo-python-bundle/DEBIAN/postinst && \
       dpkg --build ~/sysrepo-python-bundle && \
-      mkdir /artefacts && \
-      mv /root/sysrepo-python-bundle.deb /artefacts/python-yang-vooodoo_bundle.${MY_VERSION}.${MY_ARCH}.deb
+      mv /tmp/libyang.tar /artefacts/python-yang-vooodoo_netopeer2_sysrepo_bundle.${MY_VERSION}.${MY_ARCH}.tar && \
+      mv /root/sysrepo-python-bundle.deb /artefacts/python-yang-vooodoo_netopeer2_sysrepo_bundle.${MY_VERSION}.${MY_ARCH}.deb
 
 
 
@@ -205,6 +255,7 @@ RUN \
     pip3 install mock coverage nose2 autopep8 pyflakes xenon coveralls && \
     cd /working && \
     echo "Git Pull (v2)" && \
+    git checkout devel && \
     git config --global user.email "docker-user@localhost" && \
     git pull
 

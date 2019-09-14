@@ -1,0 +1,412 @@
+module scaling {
+
+  namespace "http://brewerslabng.mellon-collie.net/yang/integrationtest-sclaing";
+  prefix "scaling";
+
+  grouping lots-of-leaves {
+    leaf A {
+      type string;
+    }
+    leaf B {
+      type string;
+    }
+    leaf C {
+      type string;
+    }
+    leaf D {
+      type string;
+    }
+    leaf E {
+      type string;
+    }
+    leaf F {
+      type string;
+    }
+    leaf G {
+      type string;
+    }
+    leaf H {
+      type string;
+    }
+    leaf I {
+      type string;
+    }
+    leaf J {
+      type string;
+    }
+    leaf K {
+      type string;
+    }
+    leaf L {
+      type string;
+    }
+    leaf M {
+      type string;
+    }
+    leaf N {
+      type string;
+    }
+    leaf O {
+      type string;
+    }
+    leaf P {
+      type string;
+    }
+    leaf Q {
+      type string;
+    }
+    leaf R {
+      type string;
+    }
+    leaf S {
+      type string;
+    }
+    leaf T {
+      type string;
+    }
+    leaf U {
+      type string;
+    }
+    leaf V {
+      type string;
+    }
+    leaf W {
+      type string;
+    }
+    leaf X {
+      type string;
+    }
+    leaf Y {
+      type string;
+    }
+    leaf Z {
+      type string;
+    }
+  }
+
+  grouping thirty-lists {
+    list scale0 {
+      key key0-a;
+      leaf key0-a {
+        type string;
+      }
+      leaf non-key0 {
+        type string;
+      }
+
+      list scale1 {
+        key key1-a;
+        leaf key1-a {
+          type string;
+        }
+        leaf non-key1 {
+          type string;
+        }
+
+        list scale2 {
+          key "key2-a key2-b";
+          leaf key2-a {
+            type string;
+          }
+          leaf key2-b {
+            type string;
+          }
+          leaf non-key2 {
+            type string;
+          }
+
+          list scale3 {
+            key key3-a;
+            leaf key3-a {
+              type string;
+            }
+            leaf non-key3 {
+              type string;
+            }
+            container alpha0 {
+              uses lots-of-leaves;
+            }
+            container alpha1 {
+              uses lots-of-leaves;
+            }
+            list scale4 {
+              key key4-a;
+              leaf key4-a {
+                type string;
+              }
+              leaf non-key4 {
+                type string;
+              }
+
+              list scale5 {
+                key key5-a;
+                leaf key5-a {
+                  type string;
+                }
+                leaf non-key5 {
+                  type string;
+                }
+
+                list scale6 {
+                  key key6-a;
+                  leaf key6-a {
+                    type string;
+                  }
+                  leaf non-key6 {
+                    type string;
+                  }
+
+                  list scale7 {
+                    key key7-a;
+                    leaf key7-a {
+                      type string;
+                    }
+                    leaf non-key7 {
+                      type string;
+                    }
+
+                    list scale8 {
+                      key key8-a;
+                      leaf key8-a {
+                        type string;
+                      }
+                      leaf non-key8 {
+                        type string;
+                      }
+
+                      list scale9 {
+                        key key9-a;
+                        leaf key9-a {
+                          type string;
+                        }
+                        leaf non-key9 {
+                          type string;
+                        }
+
+                        list scale10 {
+                          key key10-a;
+                          leaf key10-a {
+                            type string;
+                          }
+                          leaf non-key10 {
+                            type string;
+                          }
+
+                          list scale11 {
+                            key key11-a;
+                            leaf key11-a {
+                              type string;
+                            }
+                            leaf non-key11 {
+                              type string;
+                            }
+
+                            list scale12 {
+                              key key12-a;
+                              leaf key12-a {
+                                type string;
+                              }
+                              leaf non-key12 {
+                                type string;
+                              }
+
+                              list scale13 {
+                                key key13-a;
+                                leaf key13-a {
+                                  type string;
+                                }
+                                leaf non-key13 {
+                                  type string;
+                                }
+
+                                list scale14 {
+                                  key key14-a;
+                                  leaf key14-a {
+                                    type string;
+                                  }
+                                  leaf non-key14 {
+                                    type string;
+                                  }
+
+                                  list scale15 {
+                                    key key15-a;
+                                    leaf key15-a {
+                                      type string;
+                                    }
+                                    leaf non-key15 {
+                                      type string;
+                                    }
+
+                                    list scale16 {
+                                      key key16-a;
+                                      leaf key16-a {
+                                        type string;
+                                      }
+                                      leaf non-key16 {
+                                        type string;
+                                      }
+
+                                      list scale17 {
+                                        key key17-a;
+                                        leaf key17-a {
+                                          type string;
+                                        }
+                                        leaf non-key17 {
+                                          type string;
+                                        }
+
+                                        list scale18 {
+                                          key key18-a;
+                                          leaf key18-a {
+                                            type string;
+                                          }
+                                          leaf non-key18 {
+                                            type string;
+                                          }
+
+                                          list scale19 {
+                                            key key19-a;
+                                            leaf key19-a {
+                                              type string;
+                                            }
+                                            leaf non-key19 {
+                                              type string;
+                                            }
+
+                                            list scale20 {
+                                              key key20-a;
+                                              leaf key20-a {
+                                                type string;
+                                              }
+                                              leaf non-key20 {
+                                                type string;
+                                              }
+
+                                              list scale21 {
+                                                key key21-a;
+                                                leaf key21-a {
+                                                  type string;
+                                                }
+                                                leaf non-key21 {
+                                                  type string;
+                                                }
+
+                                                list scale22 {
+                                                  key key22-a;
+                                                  leaf key22-a {
+                                                    type string;
+                                                  }
+                                                  leaf non-key22 {
+                                                    type string;
+                                                  }
+
+                                                  list scale23 {
+                                                    key key23-a;
+                                                    leaf key23-a {
+                                                      type string;
+                                                    }
+                                                    leaf non-key23 {
+                                                      type string;
+                                                    }
+
+                                                    list scale24 {
+                                                      key key24-a;
+                                                      leaf key24-a {
+                                                        type string;
+                                                      }
+                                                      leaf non-key24 {
+                                                        type string;
+                                                      }
+
+                                                      list scale25 {
+                                                        key key25-a;
+                                                        leaf key25-a {
+                                                          type string;
+                                                        }
+                                                        leaf non-key25 {
+                                                          type string;
+                                                        }
+
+                                                        list scale26 {
+                                                          key key26-a;
+                                                          leaf key26-a {
+                                                            type string;
+                                                          }
+                                                          leaf non-key26 {
+                                                            type string;
+                                                          }
+
+                                                          list scale27 {
+                                                            key key27-a;
+                                                            leaf key27-a {
+                                                              type string;
+                                                            }
+                                                            leaf non-key27 {
+                                                              type string;
+                                                            }
+
+                                                            list scale28 {
+                                                              key key28-a;
+                                                              leaf key28-a {
+                                                                type string;
+                                                              }
+                                                              leaf non-key28 {
+                                                                type string;
+                                                              }
+
+                                                              list scale29 {
+                                                                key key29-a;
+                                                                leaf key29-a {
+                                                                  type string;
+                                                                }
+                                                                leaf non-key29 {
+                                                                  type string;
+                                                                }
+                                                                container alpha0 {
+                                                                  uses lots-of-leaves;
+                                                                }
+                                                                container alpha1 {
+                                                                  uses lots-of-leaves;
+                                                                }
+                                                                container alpha2 {
+                                                                  uses lots-of-leaves;
+                                                                }
+                                                                container alpha3 {
+                                                                  uses lots-of-leaves;
+                                                                }
+                                                                container alpha4 {
+                                                                  uses lots-of-leaves;
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+  }
+}

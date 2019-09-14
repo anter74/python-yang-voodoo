@@ -68,3 +68,4 @@ The following list of known limitations are not planned to be handled until ther
   - `Types.py` will require updates, `yangvoodoo/__init__.py` and potentially `VoodooNode/__getattr__` and `VoodooNode/_get_yang_type`
 - Union's containing leafref's
   - This will lead to `VoodooNode/_get_yang_type` needing updates to recursively follow unions and leafrefs.
+- Leaves in XPATH are considered to match the following regex only [A-Za-z0-9_-]

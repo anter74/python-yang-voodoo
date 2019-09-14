@@ -1,0 +1,43 @@
+# Contributor:
+# Maintainer:
+pkgname="libyang"
+pkgver="v1.0r3"
+pkgrel=0
+pkgdesc="C-library for parsing yang models."
+url="https://github.com/CESNET/libyang"
+arch="x86_64"
+license="Modified BSD"
+depends="pcre"
+makedepends="cmake"
+install=""
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://github.com/CESNET/libyang/archive/v1.0-r3.tar.gz"
+builddir="$srcdir/libyang-1.0-r3"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	mkdir build
+	cd build
+	cmake .. \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_CXX_FLAGS="$CXXFLAGS" \
+		-DCMAKE_C_FLAGS="$CFLAGS" \
+		${CMAKE_CROSSOPTS} .
+	make
+}
+
+check() {
+	echo "no checks"
+}
+
+package() {
+	cd build
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="02573db0085c9d15b49f38d1f4eea311ea91c20b4c45c33194bbcd0e2e7f00a286dd7053919138a543744913387c8c47f5024740d70477f40d700ca9d3f5bbd6  v1.0-r3.tar.gz"

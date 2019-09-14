@@ -18,19 +18,21 @@ docker tag $img allena29/yangvoodoo:builder
 container=`docker run -i -d $img /bin/bash`
 
 echo "Image $img, Container $container"
-if [ -d artefacts ]
+if [ -d devel/artefacts ]
 then
-  rm -fr artefacts
+  rm -fr devel/artefacts
 fi
 
 echo "Copying deb pacakge"
 
-
-docker cp $container:/artefacts .
-wget https://bootstrap.pypa.io/get-pip.py -O artefacts/get-pip.py
-git clone -b master https://github.com/allena29/python-yang-voodoo.git artefacts/working
+docker cp $container:/artefacts devel
+wget https://bootstrap.pypa.io/get-pip.py -O devel/artefacts/get-pip.py
+git clone -b master https://github.com/allena29/python-yang-voodoo.git devel/artefacts/working
 docker stop $container
 
-img=`docker build . | tail -n 1 | sed -e's/Successfully built //'`
+
+rm -fr devel/artefacts/*standalone*
+
+img=`docker build devel | tail -n 1 | sed -e's/Successfully built //'`
 echo "Built minimal development image"
 docker tag $img allena29/yangvoodoo:devel

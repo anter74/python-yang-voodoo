@@ -70,3 +70,20 @@
   - FIX: DiffEngine fixes for leaf-lists  
   - Upgrade to python 3.7.3
   - FIX: Don't write list-keys twice when using TemplateNinja's to_xmlstr
+
+
+# DEVEL
+
+  - Docker image with jupyter notebooks and shellinabox enabled for learning
+  - ENHANCEMENT: DiffEngine now gives a combined method to get removes, modifies then deletes in one call.
+  - Ability to more easily set data in the back-end without using voodoo (the value type is derrived)
+    (e.g session.set_data_by_xpath(context, xpath, value)
+  - FIX: Template conversion into XML from XPATH (list-values which looked like xpath were affecting the structure)
+  - Implement \__setitem__ so we can do root.bronze['A'] = 'AAAAA'
+  - TemplateNinja: provide support for dumping XML with namespace and <data> container `to_xmlstr_with_ns`. *this is a hidden option not exposed on yangvoodoo session object*
+  - valtype converted to libyang types instead of sysrepo types (sysrepodal now does this mapping)
+  - `set` operation on the dal now takes node\_type as well as val\_type
+  - EXPERIMENTAL: support for libyang based stub- including dump/load from file of XML or JSON.
+    - dump_xpaths() not supported.
+  - FIX: don't return non-list keys when dir() of a list
+  - CLEANUP: remove dormant/unsafe regexes

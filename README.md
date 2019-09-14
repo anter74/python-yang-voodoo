@@ -102,7 +102,11 @@ This project was written around sysrepo for data storage, however there is no st
 
 Implementing a new data_abastraction_layer is as simple as implementing the following methods.
 
- - **connect()** - connects to the datastore, it is expected that the datastore may provide and track a specific connection providing *transactionality*. Takes in the arguments of `yang module` and `yang_location`
+ - **connect(module, yang_location, tag, yang_ctx)** - connects to the datastore, it is expected that the datastore may provide and track a specific connection providing *transactionality*.
+   - module - mandatory argument, the yang module.
+   - yang_location - a directory providing the location of the yang files, or None to YANGDIR environemnt variable.
+   - tag - cosmetic tag.
+   - yang_ctx - optional - if wanting to use libyang based diff engine both data objects must have the same libyang_ctx.
  - **validate()** - validate pending changes are valid based on the full data of the entire datastore (VoodooNode is limited to validating the yang schema itself).
  - **refresh()** - refresh the data from the datastore, the datastore may provide us with the data present in the datastore at the time we first connected, or it may refresh in realtime everytime we access a given set of data.
  - **commit()** - commit pending datastore.
@@ -112,7 +116,7 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **container(xpath)** - returns True/False if the presence-container exists.
  - **get(xpath, default_value)** - get specific data by XPATH, this will not apply to non-presence containers or lists
  - **gets_unsorted(xpath, schema_path, ignore_empty_lists)** - get a list of XPATH's representing the items in the list, it is expected the datastore will maintain the order the user inserts the data and this MUST return the data in that order. If the list is empty this method will normally raise an ListDoesNotContainElement exception.
- - **gets_unsorted(xpath, schema_path, ignore_empty_lists)** - as gets_unsorted, but the results will be sorted by XPATH.
+ - *TO BE DEPRECATED* : **gets_sorted(xpath, schema_path, ignore_empty_lists)** - as gets_unsorted, but the results will be sorted by XPATH.
  - **gets_len(xpath)** - gets back number of list elements available in the list (Not for leaf-lists)
  - **gets(xpath)** - gets a generator back of values for a specific XPATH (leaf lists only)
  - **add(xpath, value, valuetype)** - add a new entry to the end of a leaf-list at the given XPATH
@@ -121,12 +125,32 @@ Implementing a new data_abastraction_layer is as simple as implementing the foll
  - **create(xpath, key_tuple, value_tuple)** - create a list item, to remove use **uncreate**
  - **uncreate(xpath** - delete a list element from the datastore.
  - **create_container(xpath)** - if a container is a presence container explicitly create the container.
- - **set(xpath, value, valuetype)** - sets the value of a specific xpath (supported for yang leaves). The valuetype is an integer (defined in Types.py/DATA_ABSTRACTION_MAPPING) based on the effective type of the yang field (*based on fuzzy matching in the case of unions*).
+ - **set(xpath, value, valuetype, nodetype)** - sets the value of a specific xpath (supported for yang leaves).
+   - The valuetype is an integer (matching libyang, see  Types.py/DATA_ABSTRACTION_MAPPING). This is based on the effective type of the yang field (*based on fuzzy matching in the case of unions*). Defaults to 10 for a string.
+   - The nodetype is an integer (matching libyang) and defaults to 4 for a leaf, 16 for a list - 100 is a special value for presence containers.
  - **delete(xpath** - delete a value or container, this method must not be used for lists.
+ - **empty()** - a dangerous option which will remove everything from the datastore.
+
+
+## JSON/XML Import/Export
+
+In the first versions of this project the JSON/XML documents were rendered in a sub-optimal
+way. Now the data-access has methods to import and export data - currently only the libyang
+based stub module has support for these methods.
+
+ - **load(filename, format)** - load the XML (format=1) or JSON (format=2) document corresponding
+   to the yang module loaded
+ - **dump(filename, format)** - save the data to an XML (format=1) or JSON (format=2) document.
+ - **loads(payload, format)** - load the XML (format=1) or JSON (format=2) document corresponding
+   to the yang module loaded from the payload string provided.
+ - **dumps(format)** - return the data to an XML (format=1) or JSON (format=2) document
+
+
 
 ### SCHEMA vs DATA level constraints
 
-There are some validation and constraints that are schema level, that is they are defined in the yang model and have no dependency on the data in the datastore. Schema based constraints are enforced by libyang without a requirement to run a full datastore (like sysrepo).
+There are some validation and constraints that are schema level, that is they are defined in the yang model and have no dependency on the data in the datastore. ~~Schema based constraints are enforced by libyang without a requirement to run a full datastore (like sysrepo).~~ Note: sysrepo actually calls libyang to perform the validation with the full dataset.
+
 Examples of schema based constraints.
 
  - Creating/accessing nodes that are not part of the YANG model.
@@ -204,15 +228,15 @@ This is a proof of concept style quality of code at this stage.
 - Then `session.commit()` which wraps around sysrepo's commit will actually validate things like must, whens and leaf-ref pathss.
 
 
-When running `get_node(yang_module)` the directory `../yang` will be used to find the respective yang modules. There is a 1:1 mapping between a root object and yang module - this fits with the pattern of sysrepo. An optional argument `yang_location=<>` can be passed to get_node to specify an alternative location.
+When running `connect()` the directory `yang` will be used to find the respective yang modules. There is a 1:1 mapping between a root object and yang module - this fits with the pattern of sysrepo.
 
 
 
 ```python
 import yangvoodoo
 session = yangvoodoo.DataAccess()
-session.connect('integrationtest', yang_location='../yang')
-root = session.get_node()
+session.connect('integrationtest', yang_location='yang')
+root = session.get_node(readonly=False)
 
 # Set a value
 root.simpleleaf = 'abc'
@@ -284,7 +308,7 @@ The `SuperRoot` object provides a container for multiple top-level nodes from YA
 
 ```python
 import yangvoodoo
-root = yangvoodoo.DataAccess.get_root()
+root = yangvoodoo.DataAccess.get_node()
 
 session1 = yangvoodoo.DataAccess()
 session1.connect("integrationtest")
@@ -303,6 +327,8 @@ dir(root)
 It is possible to apply templates to set data instead of manually setting every element of data individually. [Jinja2](http://jinja.pocoo.org/docs/2.10/) is used to provide the ability to make templates less static.
 
 It is important to note the template is rendered **first** with the existing data, and then applied. The implication of this is that even though we set `root.simpleleaf` to `HELLO WOLRD` as the second line in the template - when we substitute the value in the 14th line will take the existing value at the time of rendering the template.
+
+**NOTE: The TemplateNinja will be deprecated in favour of libyang based stubs.**
 
 
 ```xml
