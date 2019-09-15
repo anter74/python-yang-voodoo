@@ -255,7 +255,7 @@ RUN \
     pip3 install mock coverage nose2 autopep8 pyflakes xenon coveralls && \
     cd /working && \
     echo "Git Pull (v2)" && \
-    git checkout devel && \
+    git checkout master && \
     git config --global user.email "docker-user@localhost" && \
     git pull
 

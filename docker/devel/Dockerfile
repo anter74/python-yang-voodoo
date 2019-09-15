@@ -43,13 +43,15 @@ RUN \
 
 RUN \
     cd /working && \
-    git checkout devel && \
+    git checkout master && \
     echo -n "Build Date:" >.buildinfo && \
     date >>.buildinfo && \
     echo "Sysrepo: Commit 660552222ee6376efa560d9bcc7b832886ff460a" >>.buildinfo && \
     echo "Libyang: 1.0r3" >>.buildinfo && \
     echo -n "YangVoodoo:" >>.buildinfo && \
-    git log | head -n 1 >>.buildinfo && \
+    # git log | head -n 1 >>.buildinfo && \
+    # CHANGE VERSION NUMBER HERE
+    echo "0.5.7" >>.buildinfo && \
     python3 setup.py install
 
 RUN \
