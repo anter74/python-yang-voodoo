@@ -1,4 +1,5 @@
-
+RESERVED_PYTHON_KEYWORDS = ('import', 'class', 'in', 'and', 'as', 'not', 'from', 'or', 'global', 'pass',
+                            'if', 'return', 'try', 'is', 'break')
 DATA_ABSTRACTION_MAPPING = {
     # These values are now libyang types, instead of sysrepo
     # the node_types' for PRESENCE_CONTAINER and LIST are

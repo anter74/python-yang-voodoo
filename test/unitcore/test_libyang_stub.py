@@ -191,3 +191,48 @@ class test_new_stuff(unittest.TestCase):
         subject.connect('integrationtest')
 
         self.assertEqual(stubly, subject.data_abstraction_layer.libyang_data)
+
+    def test_reserved_kewords(self):
+        self.root.morecomplex.python_reserved_keywords.class_ = 'class'
+        self.assertEqual(repr(self.root.morecomplex.python_reserved_keywords.import_),
+                         "VoodooEmpty{/integrationtest:morecomplex/python-reserved-keywords/import} - Does Not Exist")
+        self.root.morecomplex.python_reserved_keywords.import_.create()
+        self.assertEqual(repr(self.root.morecomplex.python_reserved_keywords.import_),
+                         "VoodooEmpty{/integrationtest:morecomplex/python-reserved-keywords/import} - Exists")
+
+        self.assertEqual(len(self.root.morecomplex.python_reserved_keywords.and_), 0)
+        self.root.morecomplex.python_reserved_keywords.and_.create('x', 'y')
+        self.assertEqual(len(self.root.morecomplex.python_reserved_keywords.and_), 1)
+        self.assertEqual(repr(list(self.root.morecomplex.python_reserved_keywords.and_)[0]),
+                         "VoodooListElement{/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']}"
+                         )
+
+        self.root.morecomplex.leaflists.simple.create('a')
+        self.root.morecomplex.leaflists.simple.create('b')
+        self.root.morecomplex.leaflists.simple.create('c')
+        self.assertEqual(len(self.root.morecomplex.leaflists.simple), 3)
+        self.assertEqual(len(self.root.morecomplex.python_reserved_keywords.global_), 0)
+        self.root.morecomplex.python_reserved_keywords.global_.create('x')
+        self.root.morecomplex.python_reserved_keywords.global_.create('y')
+        self.assertEqual(len(self.root.morecomplex.python_reserved_keywords.global_), 2)
+        self.assertEqual(list(self.root.morecomplex.python_reserved_keywords.global_), ['x', 'y'])
+
+        # Assert
+        self.assertEqual(self.root.morecomplex.python_reserved_keywords.class_, 'class')
+
+        expected_result = {
+            '/integrationtest:morecomplex': True,
+            '/integrationtest:morecomplex/python-reserved-keywords': True,
+            '/integrationtest:morecomplex/python-reserved-keywords/class': 'class',
+            '/integrationtest:morecomplex/python-reserved-keywords/import': True,
+            "/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']/break": 'x',
+            "/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']/not-break": 'y',
+            "/integrationtest:morecomplex/python-reserved-keywords/global[.='x']": 'x',
+            "/integrationtest:morecomplex/python-reserved-keywords/global[.='y']": 'y',
+            '/integrationtest:morecomplex/leaflists': True,
+            "/integrationtest:morecomplex/leaflists/simple[.='a']": 'a',
+            "/integrationtest:morecomplex/leaflists/simple[.='b']": 'b',
+            "/integrationtest:morecomplex/leaflists/simple[.='c']": 'c'
+        }
+
+        self.assertEqual(self.subject.dump_xpaths(), expected_result)

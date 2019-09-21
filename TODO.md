@@ -1,5 +1,6 @@
 # TODO:
 
+- PROXY does not handle leaf-lists well, if the entries are added/removed a length check/get will retrieve stale results.
 - XPATH forming/decoding lazily forms key='value' - we need to be careful about having special characters/single quotes in the value.
   - VoodooNode.get_keys
   - yangvoodoo\_lookahead_for_list_keys

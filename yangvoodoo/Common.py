@@ -404,6 +404,10 @@ class Utils:
             schema_path = "/" + context.module + ":*/*"
         else:
             schema_path = schema_path + "/*"
+
+        if attr[-1] == '_':
+            attr = attr[:-1]
+
         for child in context.schemactx.find_path(schema_path):
             if child.name().replace('-', '_') == attr:
                 return child.name()
@@ -415,6 +419,7 @@ class Utils:
         keys = []
         for k in node_schema.keys():
             keys.append(k.name())
+        keys.sort()
         return keys
 
     # @staticmethod
