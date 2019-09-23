@@ -13,7 +13,8 @@ class Context:
         self.yang_module = module
 
     def _trace(self, vnt, yn, context, p):
-        self.log.trace("%s: %s %s\nschema: %s\ndata: %s\nparent of: %s", vnt, context, yn.libyang_node,  yn.real_schema_path,  yn.real_data_path, p)
+        self.log.trace("%s: %s %s\nschema: %s\ndata: %s\nparent of: %s", vnt, context, yn.libyang_node,
+                       yn.real_schema_path,  yn.real_data_path, p)
 
 
 class Node:
@@ -209,6 +210,8 @@ class Node:
         answer = []
         for child in context.schemactx.find_path(search_path):
             child_name = child.name()
+            if child_name in Types.RESERVED_PYTHON_KEYWORDS:
+                child_name = child_name + '_'
             if '-' in child_name and not no_translations:
                 new_child_name = child_name.replace('-', '_')
                 child_name = new_child_name
@@ -464,14 +467,17 @@ class List(ContainingNode):
         """
         node = self._node
         keys = Common.Utils.get_keys_from_a_node(node)
-        keys.sort()
-        return keys
+        translated_keys = []
+        for k in keys:
+            if k in Types.RESERVED_PYTHON_KEYWORDS:
+                translated_keys.append(k.replace('-', '_') + '_')
+            else:
+                translated_keys.append(k.replace('-', '_'))
+        translated_keys.sort()
+        return translated_keys
 
     def __dir__(self):
-        node = self._node
-        keys = Common.Utils.get_keys_from_a_node(node)
-        keys.sort()
-        return keys
+        return self.keys()
 
     def get(self, *args):
         """

@@ -87,3 +87,4 @@
     - dump_xpaths() not supported.
   - FIX: don't return non-list keys when dir() of a list
   - CLEANUP: remove dormant/unsafe regexes
+  - Append an underscore to nodes which match the python reserved keyswords (defined in Types.py)

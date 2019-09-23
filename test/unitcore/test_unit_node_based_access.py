@@ -81,7 +81,7 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(repr(morecomplex), "VoodooContainer{/integrationtest:morecomplex}")
 
         expected_children = ['extraboolean', 'extraboolean2', 'extraboolean3', 'inner', 'leaf2', 'leaf3', 'leaf4',
-                             'leaflists', 'nonconfig', 'percentage', 'superstar']
+                             'leaflists', 'nonconfig', 'percentage', 'python_reserved_keywords', 'superstar']
         self.assertEqual(dir(morecomplex), expected_children)
 
         inner = morecomplex.inner.create()

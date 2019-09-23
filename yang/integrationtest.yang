@@ -936,6 +936,26 @@ module integrationtest {
       }
     }
 
+    container python-reserved-keywords {
+      leaf class {
+        type string;
+      }
+      leaf import {
+        type empty;
+      }
+      list and {
+        key "break not-break";
+        leaf break {
+          type string;
+        }
+        leaf not-break {
+          type string;
+        }
+      }
+      leaf-list global {
+        type string;
+      }
+    }
 
     leaf superstar {
       type percentile95th;
