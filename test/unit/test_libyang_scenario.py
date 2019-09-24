@@ -14,13 +14,13 @@ class test_new_stuff(unittest.TestCase):
         self.maxDiff = None
 
         self.stubly = yangvoodoo.stublydal.StubLyDataAbstractionLayer(log_level=2)
-        self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stubly)
+        self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stubly, disable_proxy=True)
         self.subject.connect('integrationtest')
         yang_ctx = self.subject.yang_ctx
         self.root = self.subject.get_node()
 
         self.stubly2 = yangvoodoo.stublydal.StubLyDataAbstractionLayer(log_level=2)
-        self.subject2 = yangvoodoo.DataAccess(data_abstraction_layer=self.stubly2)
+        self.subject2 = yangvoodoo.DataAccess(data_abstraction_layer=self.stubly2, disable_proxy=True)
         self.subject2.connect('integrationtest', yang_ctx=yang_ctx)
         self.root2 = self.subject2.get_node()
 
@@ -183,5 +183,38 @@ class test_new_stuff(unittest.TestCase):
         self.assertEqual(len(self.root.listgroup1), 1)
         self.assertEqual(repr(list_element), expected_result
                          )
+        self.assertEqual(list_element.contain.leafa, 'ABCDEF')
+        self.assertEqual(list_element.contain.leafb, 44)
+
+    def test_multiple_json_loads(self):
+        # Act
+        json = ('{"integrationtest:listgroup1":[{"key1":"A","key2":"B","key3":"500",'
+                '"contain":{"leafa":"ABCDEF","leafb":44}}]}')
+        self.subject.loads(json, 2)
+
+        list_element = self.root.listgroup1.get('A', 'B', 500)
+
+        # Assert
+        expected_result = "VoodooListElement{/integrationtest:listgroup1[key1='A'][key2='B'][key3='500']}"
+        self.assertEqual(len(self.root.listgroup1), 1)
+        self.assertEqual(repr(list_element), expected_result
+                         )
+        self.assertEqual(list_element.contain.leafa, 'ABCDEF')
+        self.assertEqual(list_element.contain.leafb, 44)
+
+        # Act 2
+        json = ('{"integrationtest:listgroup1":[{"key1":"aa","key2":"bb","key3":"500",'
+                '"contain":{"leafa":"abcdef","leafb":444}}]}')
+        self.subject.merges(json, 2)
+
+        list_element1 = self.root.listgroup1.get('A', 'B', 500)
+        list_element2 = self.root.listgroup1.get('aa', 'bb', 500)
+
+        expected_result1 = "VoodooListElement{/integrationtest:listgroup1[key1='A'][key2='B'][key3='500']}"
+        expected_result2 = "VoodooListElement{/integrationtest:listgroup1[key1='aa'][key2='bb'][key3='500']}"
+
+        self.assertEqual(len(self.root.listgroup1), 2)
+        self.assertEqual(repr(list_element1), expected_result1)
+        self.assertEqual(repr(list_element2), expected_result2)
         self.assertEqual(list_element.contain.leafa, 'ABCDEF')
         self.assertEqual(list_element.contain.leafb, 44)

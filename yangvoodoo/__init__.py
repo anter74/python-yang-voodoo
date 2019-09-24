@@ -31,7 +31,7 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.5.9"
+    __version__ = "0.5.10"
 
     def __init__(self, log=None, local_log=False, data_abstraction_layer=None,
                  disable_proxy=False, use_stub=False):
@@ -634,3 +634,19 @@ Children: %s""" % (str(children)[1:-1])
         Types.FORMAT['XML'] or Types.FORMAT['JSON']
         """
         return self.data_abstraction_layer.dumps(format)
+
+    def merges(self, payload, format=1):
+        """
+        Merge data from the payload in the format specified.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+        """
+        return self.data_abstraction_layer.merges(payload, format)
+
+    def merge(self, filename, format=1):
+        """
+        Merge data from the filename in the format specified.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+        """
+        return self.data_abstraction_layer.merge(filename, format)
