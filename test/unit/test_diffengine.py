@@ -18,6 +18,26 @@ class test_diff_engine(unittest.TestCase):
         self.session_b.connect('integrationtest')
         self.root_b = self.session_b.get_node()
 
+    def test_diff_engine_modifies_the_adds(self):
+        self.root_a.simpleleaf = 'a'
+        self.root_a.simpleenum = 'A'
+        self.root_b.simpleleaf = 'b'
+        self.root_b.bronze.silver.gold.platinum.deep = 'c'
+        # Act
+        differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b)
+
+        # Assert
+        self.assertEqual(list(differ.all()), [('/integrationtest:simpleleaf', 'a', 'b', 2),
+                                              ('/integrationtest:bronze/silver/gold/platinum/deep', None, 'c', 1),
+                                              ('/integrationtest:simpleenum', 'A', None, 3)])
+
+        self.assertEqual(list(differ.modified()), [('/integrationtest:simpleleaf', 'a', 'b', 2)])
+        self.assertEqual(list(differ.remove()), [('/integrationtest:simpleenum', 'A', None, 3)])
+        self.assertEqual(list(differ.add()), [('/integrationtest:bronze/silver/gold/platinum/deep', None, 'c', 1)])
+
+        self.assertEqual(list(differ.modify_then_add()), [('/integrationtest:simpleleaf', 'a', 'b', 2),
+                                                          ('/integrationtest:bronze/silver/gold/platinum/deep', None, 'c', 1)])
+
     def test_diff_engine_removes_then_modifies_the_adds(self):
         self.root_a.simpleleaf = 'a'
         self.root_a.simpleenum = 'A'

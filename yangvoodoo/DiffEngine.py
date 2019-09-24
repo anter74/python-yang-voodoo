@@ -23,7 +23,8 @@ class DiffIterator:
         differ.remove()     - return only XPATH's that have been removed from dataset_B (in dataset_A)
         differ.add()        - return only XPATH's that have been added from dataset_B (not in dataset_A)
         differ.modified()   - return only XPATH's that have been modified (different values in dataset_A and dataset_B)
-
+        differ.remove_modify_then_add()  - a convenience function of the above
+        differ.modify_then_add()  - a convenience function of the above
 
     The filters
     TODO: this implementation is not optimal - the format data comes back from dictdiffer is a little different depending
@@ -120,6 +121,14 @@ class DiffIterator:
         for (path, old, new, op) in self.results:
             if op == self.REMOVE:
                 yield (path, old, new, op)
+        for (path, old, new, op) in self.results:
+            if op == self.MODIFY:
+                yield (path, old, new, op)
+        for (path, old, new, op) in self.results:
+            if op == self.ADD:
+                yield (path, old, new, op)
+
+    def modify_then_add(self):
         for (path, old, new, op) in self.results:
             if op == self.MODIFY:
                 yield (path, old, new, op)
