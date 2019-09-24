@@ -144,7 +144,9 @@ based stub module has support for these methods.
  - **loads(payload, format)** - load the XML (format=1) or JSON (format=2) document corresponding
    to the yang module loaded from the payload string provided.
  - **dumps(format)** - return the data to an XML (format=1) or JSON (format=2) document
-
+ - **merges(payload, format)** - merge the data from the XML (format=1) or JSON (format=2) document
+   corresponding to the yang module loaded from the payload string provided into the existing data.
+   *Note: the existing data tree must have data in place.*
 
 
 ### SCHEMA vs DATA level constraints

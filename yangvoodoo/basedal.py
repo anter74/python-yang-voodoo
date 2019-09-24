@@ -218,3 +218,9 @@ class BaseDataAbstractionLayer:
 
     def loads(self, payload, format=1):
         raise NotImplementedError("import not implemented")
+
+    def merges(self, filename, format=1):
+        raise NotImplementedError("merges not implemented")
+
+    def merge(self, payload, format=1):
+        raise NotImplementedError("merge not implemented")

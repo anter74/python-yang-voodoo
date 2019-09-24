@@ -95,7 +95,7 @@ RUN \
 RUN \
       git clone https://github.com/allena29/libyang-cffi.git && \
       cd libyang-cffi && \
-      git checkout libyang-data-tree && \
+      git checkout libyang-data-tree-merge && \
       echo "6" && \
       echo "#!/bin/bash" >rebuild.sh && \
       LIBYANG_INSTALL=system python3 setup.py install && \
@@ -105,7 +105,7 @@ RUN \
       mv dist/*.tar.gz /artefacts
 
 # CHANGE VERSION NUMBER HERE
-ENV MY_VERSION=0.5.8
+ENV MY_VERSION=0.5.10
 ENV GIT_BRANCH=master
 ENV MY_ARCH=amd64
 

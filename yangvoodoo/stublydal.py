@@ -219,3 +219,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
     def loads(self, payload, format=1):
         self.log.trace("LOADS: (format: %s)", format)
         self.libyang_data.loads(payload, format)
+
+    def merges(self, payload, format=1):
+        self.log.trace("MERGES: (format: %s)", format)
+        self.libyang_data.merges(payload, format)
