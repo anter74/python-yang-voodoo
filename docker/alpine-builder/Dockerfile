@@ -30,13 +30,13 @@ RUN \
       python3 -m pip install dist/*.whl && \
       mv dist/*.whl /pkgs
 
-RUN \ 
+RUN \
       wget https://files.pythonhosted.org/packages/93/1a/ab8c62b5838722f29f3daffcc8d4bd61844aa9b5f437341cc890ceee483b/cffi-1.12.3.tar.gz && \
       tar xvfz cffi-1.12.3.tar.gz && \
       cd cffi-1.12.3 && \
       python3 setup.py bdist_wheel && \
       python3 -m pip install dist/*.whl && \
-      mv dist/*.whl /pkgs 
+      mv dist/*.whl /pkgs
 
 RUN \
     sudo apk add librdkafka-dev && \
@@ -48,13 +48,14 @@ RUN \
     sudo python3 setup.py install
 
 RUN \
+      echo 'x'>refersh && \
       git clone https://github.com/CESNET/libyang.git && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
 RUN \
       cd /working && \
-      git checkout devel && \
+      git checkout master && \
       pip3 install -r requirements.txt
 
 # libyang
@@ -70,14 +71,15 @@ RUN \
 
 RUN \
       cd /working && \
-      git checkout devel && \
-      LIBYANG_INSTALL=system python3 setup.py install 
+      git checkout master && \
+      LIBYANG_INSTALL=system python3 setup.py install
 
 
 RUN \
       cd /opt/dev && \
       cd libyang-cffi && \
-      git checkout libyang-data-tree && \
+      git pull && \
+      git checkout libyang-data-tree-merge && \
       echo "#!/bin/bash" >rebuild.sh && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
@@ -85,12 +87,14 @@ RUN \
 
 RUN \
       cd /working && \
-      git checkout devel && \
+      # CHANGE VERSION HERE
+      echo "0.5.11" >/version && \
+      git checkout master && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
-      mv dist/*.whl /pkgs 
+      mv dist/*.whl /pkgs
 
-ADD home_builder/ /home/builder 
+ADD home_builder/ /home/builder
 WORKDIR /home/builder
 USER builder
 
@@ -102,4 +106,3 @@ RUN \
      abuild checksum && \
      abuild -r && \
      cp /home/builder/packages/builder/x86_64/libyang-v1.0r3-r0.apk /pkgs
-
