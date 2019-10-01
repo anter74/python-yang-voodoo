@@ -101,6 +101,21 @@ class test_node_based_access(unittest.TestCase):
 
         self.assertEqual(repr(self.root.morecomplex['inner']), "VoodooPresenceContainer{/integrationtest:morecomplex/inner} Exists")
 
+    def test_list_predicates(self):
+        # Act
+        self.root.container_and_lists.lots_of_keys.create('1', '2', '3', '4', '5', '6')
+
+        # Assert
+        expected_results = {
+            "/integrationtest:container-and-lists/lots-of-keys[A='1'][Z='2'][Y='3'][X='4'][B='5'][C='6']/A": '1',
+            "/integrationtest:container-and-lists/lots-of-keys[A='1'][Z='2'][Y='3'][X='4'][B='5'][C='6']/B": '5',
+            "/integrationtest:container-and-lists/lots-of-keys[A='1'][Z='2'][Y='3'][X='4'][B='5'][C='6']/C": '6',
+            "/integrationtest:container-and-lists/lots-of-keys[A='1'][Z='2'][Y='3'][X='4'][B='5'][C='6']/X": '4',
+            "/integrationtest:container-and-lists/lots-of-keys[A='1'][Z='2'][Y='3'][X='4'][B='5'][C='6']/Y": '3',
+            "/integrationtest:container-and-lists/lots-of-keys[A='1'][Z='2'][Y='3'][X='4'][B='5'][C='6']/Z": '2'
+        }
+        self.assertEqual(self.subject.dump_xpaths(), expected_results)
+
     def test_list(self):
         # Build
         self.root.twokeylist.create(True, False).tertiary = True
