@@ -12,12 +12,9 @@ docker tag $img allena29/yangvoodoo:alpine-builder
 container=`docker run -i -d $img /bin/bash`
 
 echo "Image $img, Container $container"
-if [ -d minimal/artefacts ]
-then
-  rm -fr minimal/artefacts
-fi
 
 echo "Copying apk pacakges"
+rm -fr alpine-release/pkgs/*.whl
 
 docker cp $container:/pkgs alpine-release
 docker stop $container

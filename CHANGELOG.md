@@ -72,7 +72,7 @@
   - FIX: Don't write list-keys twice when using TemplateNinja's to_xmlstr
 
 
-# DEVEL
+# 0.0.6 - Bug fixes and switch to Libyang Stub (Cowth Vader)
 
   - Docker image with jupyter notebooks and shellinabox enabled for learning
   - ENHANCEMENT: DiffEngine now gives a combined method to get removes, modifies then deletes in one call.
@@ -84,7 +84,11 @@
   - valtype converted to libyang types instead of sysrepo types (sysrepodal now does this mapping)
   - `set` operation on the dal now takes node\_type as well as val\_type
   - EXPERIMENTAL: support for libyang based stub- including dump/load from file of XML or JSON.
-    - dump_xpaths() not supported.
+    - dump\_xpaths() not supported.
   - FIX: don't return non-list keys when dir() of a list
   - CLEANUP: remove dormant/unsafe regexes
   - Append an underscore to nodes which match the python reserved keyswords (defined in Types.py)
+
+  - **CHANGE OF BEHAVIOUR** - yang location is now defaulted to None, which means use $YANGPATH environment variable.
+  - **CHANGE OF BEHAVIOUR** - default data abstraction layer is now libyang_stub, the use\_stub option may be removed in the future.
+  - **CHANGE OF BEHAVIOUR** - proxy now defaults to False (this was useful for sysrepo)

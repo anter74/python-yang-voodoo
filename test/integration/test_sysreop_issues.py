@@ -2,6 +2,7 @@ import time
 import unittest
 import yangvoodoo
 import subprocess
+from yangvoodoo.sysrepodal import SysrepoDataAbstractionLayer
 
 
 class test_node_based_access(unittest.TestCase):
@@ -16,8 +17,9 @@ class test_node_based_access(unittest.TestCase):
 
         time.sleep(0.25)
 
-        self.subject = yangvoodoo.DataAccess()
-        self.subject.connect('integrationtest')
+        sysrepodal = SysrepoDataAbstractionLayer()
+        self.subject = yangvoodoo.DataAccess(disable_proxy=True, data_abstraction_layer=sysrepodal)
+        self.subject.connect('integrationtest', yang_location='yang')
         self.root = self.subject.get_node()
 
     def test_classifier_example(self):

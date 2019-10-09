@@ -31,10 +31,10 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.5.11"
+    __version__ = "0.6.0"
 
     def __init__(self, log=None, local_log=False, data_abstraction_layer=None,
-                 disable_proxy=False, use_stub=False):
+                 disable_proxy=True, use_stub=False):
         if not log:
             log = Utils.get_logger('yangvoodoo', 10)
         self.log = log
@@ -57,8 +57,8 @@ class DataAccess:
             importlib.import_module('yangvoodoo.stubdal')
             return yangvoodoo.stubdal.StubDataAbstractionLayer(log)
 
-        importlib.import_module('yangvoodoo.sysrepodal')
-        return yangvoodoo.sysrepodal.SysrepoDataAbstractionLayer(log)
+        importlib.import_module('yangvoodoo.stublydal')
+        return yangvoodoo.stublydal.StubLyDataAbstractionLayer(log)
 
     def _proxify_data_abstraction_layer(self, dal):
         # return dal
@@ -265,7 +265,7 @@ Children: %s""" % (str(children)[1:-1])
         self.context.readonly = readonly
         return yangvoodoo.VoodooNode.Root(self.context, yang_node)
 
-    def connect(self, module=None,  yang_location="yang/", tag='client', yang_ctx=None):
+    def connect(self, module=None,  yang_location=None, tag='client', yang_ctx=None):
         """
         Connect to the datastore.
 

@@ -1,5 +1,6 @@
 import unittest
 import yangvoodoo
+from yangvoodoo.sysrepodal import SysrepoDataAbstractionLayer
 import subprocess
 import time
 
@@ -27,8 +28,9 @@ class test_node_based_access(unittest.TestCase):
 
         time.sleep(0.25)
 
-        self.subject = yangvoodoo.DataAccess()
-        self.subject.connect('integrationtest')
+        sysrepodal = SysrepoDataAbstractionLayer()
+        self.subject = yangvoodoo.DataAccess(disable_proxy=False, data_abstraction_layer=sysrepodal)
+        self.subject.connect('integrationtest', yang_location='yang')
         self.root = self.subject.get_node()
 
     def tearDown(self):

@@ -16,7 +16,7 @@ class test_datastore_via_node(unittest.TestCase):
         self.maxDiff = None
         self.stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
         self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
-        self.subject.connect('integrationtest')
+        self.subject.connect('integrationtest', yang_location='yang')
         self.root = self.subject.get_node()
 
     def _get_type(self, xpath, value):

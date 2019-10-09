@@ -15,7 +15,7 @@ class test_node_based_access(unittest.TestCase):
         self.maxDiff = None
         self.stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
         self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
-        self.subject.connect('integrationtest')
+        self.subject.connect('integrationtest', yang_location='yang')
         self.root = self.subject.get_node()
 
     def test_root(self):
@@ -288,10 +288,10 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
 
     def test_super_root(self):
         session1 = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
-        session1.connect('integrationtest')
+        session1.connect('integrationtest', yang_location='yang')
 
         session2 = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
-        session2.connect('integrationtest')
+        session2.connect('integrationtest', yang_location='yang')
 
         super_root = yangvoodoo.DataAccess.get_root(session1, 'web')
         super_root.attach_node_from_session(session2, 'morecomplex')

@@ -4,6 +4,7 @@ import time
 import yangvoodoo
 import subprocess
 import sysrepo as sr
+from yangvoodoo.sysrepodal import SysrepoDataAbstractionLayer
 from yangvoodoo import Types
 
 
@@ -18,8 +19,9 @@ class test_getdata(unittest.TestCase):
 
         time.sleep(0.25)
 
-        self.subject = yangvoodoo.DataAccess()
-        self.subject.connect('integrationtest')
+        sysrepodal = SysrepoDataAbstractionLayer()
+        self.subject = yangvoodoo.DataAccess(disable_proxy=True, data_abstraction_layer=sysrepodal)
+        self.subject.connect('integrationtest', yang_location='yang')
 
     def test_delete_and_get(self):
         self.subject.set('/integrationtest:simpleenum', 'A', Types.DATA_ABSTRACTION_MAPPING['ENUM'])
@@ -46,8 +48,9 @@ class test_getdata(unittest.TestCase):
         self.subject.set(xpath, value)
         self.assertEqual(self.subject.get(xpath), 'Outside')
 
-        self.subject = yangvoodoo.DataAccess()
-        self.subject.connect('integrationtest')
+        sysrepodal = SysrepoDataAbstractionLayer()
+        self.subject = yangvoodoo.DataAccess(disable_proxy=True, data_abstraction_layer=sysrepodal)
+        self.subject.connect('integrationtest', yang_location='yang')
 
         xpath = "/integrationtest:morecomplex/inner/leaf5"
         self.assertNotEqual(self.subject.get(xpath), 'Outside')
@@ -58,8 +61,9 @@ class test_getdata(unittest.TestCase):
         self.assertEqual(self.subject.get(xpath), 'Outside')
         self.subject.commit()
 
-        self.subject = yangvoodoo.DataAccess()
-        self.subject.connect('integrationtest')
+        sysrepodal = SysrepoDataAbstractionLayer()
+        self.subject = yangvoodoo.DataAccess(disable_proxy=True, data_abstraction_layer=sysrepodal)
+        self.subject.connect('integrationtest', yang_location='yang')
 
         xpath = "/integrationtest:morecomplex/inner/leaf5"
         self.assertEqual(self.subject.get(xpath), 'Outside')
@@ -83,9 +87,12 @@ class test_getdata(unittest.TestCase):
         xpath = "/integrationtest:morecomplex/inner/leaf5"
         value = "Outside"
 
-        self.subject1 = yangvoodoo.DataAccess()
+        sysrepodal1 = SysrepoDataAbstractionLayer()
+        self.subject1 = yangvoodoo.DataAccess(disable_proxy=True, data_abstraction_layer=sysrepodal1)
+        self.subject.connect('integrationtest', yang_location='yang')
         self.subject1.connect('integrationtest', 'yang', 'a')
-        self.subject2 = yangvoodoo.DataAccess()
+        sysrepodal2 = SysrepoDataAbstractionLayer()
+        self.subject2 = yangvoodoo.DataAccess(disable_proxy=True, data_abstraction_layer=sysrepodal2)
         self.subject2.connect('integrationtest', 'yang', 'b')
 
         self.subject1.set(xpath, value)
@@ -115,8 +122,9 @@ class test_getdata(unittest.TestCase):
                           "Error 0: Leafref \"../thing-to-leafref-against\" of value \"ZZZ\" "
                           "points to a non-existing leaf. (Path: /integrationtest:thing-that-is-leafref)\n"))
 
-        self.subject = yangvoodoo.DataAccess()
-        self.subject.connect('integrationtest')
+        sysrepodal = SysrepoDataAbstractionLayer()
+        self.subject = yangvoodoo.DataAccess(disable_proxy=True, data_abstraction_layer=sysrepodal)
+        self.subject.connect('integrationtest', yang_location='yang')
 
         xpath = "/integrationtest:thing-that-is-a-list-based-leafref"
         valid_value = 'I'
