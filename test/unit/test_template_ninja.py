@@ -11,7 +11,7 @@ class test_xml_to_xpath(unittest.TestCase):
         self.maxDiff = None
         self.stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
         self.session = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
-        self.session.connect("integrationtest")
+        self.session.connect('integrationtest', yang_location='yang')
         self.root = self.session.get_node()
         self.subject = yangvoodoo.TemplateNinja.TemplateNinja()
 

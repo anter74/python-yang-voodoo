@@ -11,6 +11,7 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     """
 
     DAL_ID = "ProxyDAL"
+    DAL_IN_MEMORY = False
 
     def __init__(self, realstore, log=None):
         super().__init__(log)

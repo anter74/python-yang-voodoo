@@ -10,12 +10,12 @@ class test_diff_engine(unittest.TestCase):
         self.maxDiff = None
         self.stub_a = yangvoodoo.stubdal.StubDataAbstractionLayer()
         self.session_a = yangvoodoo.DataAccess(data_abstraction_layer=self.stub_a)
-        self.session_a.connect('integrationtest')
+        self.session_a.connect('integrationtest', yang_location='yang')
         self.root_a = self.session_a.get_node()
 
         self.stub_b = yangvoodoo.stubdal.StubDataAbstractionLayer()
         self.session_b = yangvoodoo.DataAccess(data_abstraction_layer=self.stub_b)
-        self.session_b.connect('integrationtest')
+        self.session_b.connect('integrationtest', yang_location='yang')
         self.root_b = self.session_b.get_node()
 
     def test_diff_engine_modifies_the_adds(self):

@@ -11,7 +11,7 @@ class test_node_based_access(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.subject = yangvoodoo.DataAccess()
-        self.subject.connect('integrationtest')
+        self.subject.connect('integrationtest', yang_location='yang')
         self.root = self.subject.get_node()
         self.schemactx = self.root._context.schemactx
 

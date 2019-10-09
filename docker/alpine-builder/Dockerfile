@@ -48,7 +48,8 @@ RUN \
     sudo python3 setup.py install
 
 RUN \
-      echo 'x'>refersh && \
+      # CHANGE VERSION HERE
+      echo "0.6.0" >/version && \
       git clone https://github.com/CESNET/libyang.git && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
@@ -80,15 +81,12 @@ RUN \
       cd libyang-cffi && \
       git pull && \
       git checkout libyang-data-tree-merge && \
-      echo "#!/bin/bash" >rebuild.sh && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs
 
 RUN \
       cd /working && \
-      # CHANGE VERSION HERE
-      echo "0.5.11" >/version && \
       git checkout master && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \

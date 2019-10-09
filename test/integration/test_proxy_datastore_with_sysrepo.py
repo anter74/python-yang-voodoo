@@ -4,6 +4,7 @@ import yangvoodoo.stubdal
 import subprocess
 import time
 import yangvoodoo.proxydal
+from yangvoodoo.sysrepodal import SysrepoDataAbstractionLayer
 from mock import Mock, patch
 
 
@@ -21,8 +22,9 @@ class test_proxy_datastore_with_sysrepo(unittest.TestCase):
 
         time.sleep(0.25)
 
-        self.session = yangvoodoo.DataAccess(disable_proxy=True)
-        self.session.connect('integrationtest')
+        sysrepodal = SysrepoDataAbstractionLayer()
+        self.session = yangvoodoo.DataAccess(disable_proxy=False, data_abstraction_layer=sysrepodal)
+        self.session.connect('integrationtest', yang_location='yang')
         self.root = self.session.get_node()
         self.subject = yangvoodoo.proxydal.ProxyDataAbstractionLayer(self.session.data_abstraction_layer)
         self.subject.context = Mock()

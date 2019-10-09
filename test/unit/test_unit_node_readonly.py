@@ -15,7 +15,7 @@ class test_node_read_only(unittest.TestCase):
         self.maxDiff = None
         self.stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
         self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
-        self.subject.connect('integrationtest')
+        self.subject.connect('integrationtest', yang_location='yang')
         self.root = self.subject.get_node(readonly=True)
 
     def test_reaonly_stops_us_creating_nodes(self):
