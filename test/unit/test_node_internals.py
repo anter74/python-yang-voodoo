@@ -97,11 +97,18 @@ class test_node_based_access(unittest.TestCase):
         result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type())
         self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['BOOLEAN'], None)
 
+        # More complex case where we have a leafref to a string
+        with self.assertRaises(NotImplementedError) as context:
+            yangnode = next(self.schemactx.find_path(
+                '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf5555'))
+            yangvoodoo.Common.Utils.get_yang_type(yangnode.type())
+        self.assertEqual(str(context.exception), "Union containing leafrefs not supported (see README.md)")
+
         # More complex case where we have a leafref to a complex set of unions and we want to get an ENUm out
         with self.assertRaises(NotImplementedError) as context:
             yangnode = next(self.schemactx.find_path(
                 '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf-union-of-union'))
-            result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type())
+            yangvoodoo.Common.Utils.get_yang_type(yangnode.type())
         self.assertEqual(str(context.exception), "Union containing unions not supported (see README.md)")
 
         # More complex case where we have a leafref to a string
@@ -109,6 +116,18 @@ class test_node_based_access(unittest.TestCase):
             '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf8'))
         result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), 'A')
         self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['ENUM'])
+
+        # Decimal 64
+        yangnode = next(self.schemactx.find_path(
+            '/integrationtest:validator/integrationtest:types/integrationtest:dec_64'))
+        result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), 3.44)
+        self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['DECIMAL64'])
+
+        # Default as string
+        yangnode = next(self.schemactx.find_path(
+            '/integrationtest:validator/integrationtest:types/integrationtest:str'))
+        result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), None, 'default')
+        self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['STRING'])
 
         # More complex case where we have a leafref to a string
         yangnode = next(self.schemactx.find_path(
@@ -142,3 +161,19 @@ class test_node_based_access(unittest.TestCase):
 
     def test_name(self):
         self.assertEqual(self.root.__name__(), 'VoodooNode')
+
+    def test_find_best_number_type(self):
+        result = yangvoodoo.Common.Utils._find_best_number_type([12], 40)
+        assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['INT8']
+
+        result = yangvoodoo.Common.Utils._find_best_number_type([12, 13], 40)
+        assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['INT8']
+
+        result = yangvoodoo.Common.Utils._find_best_number_type([13, 14], 40)
+        assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['UINT8']
+
+        result = yangvoodoo.Common.Utils._find_best_number_type([13, 14], 30000)
+        assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['INT16']
+
+        result = yangvoodoo.Common.Utils._find_best_number_type([13, 14, 15, 16, 17], 2147483640)
+        assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['INT32']

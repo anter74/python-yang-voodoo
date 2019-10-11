@@ -2,6 +2,8 @@ module integrationtest {
 
   namespace "http://brewerslabng.mellon-collie.net/yang/integrationtest";
   prefix "integrationtest";
+  yang-version 1.1;
+
 
   import crux { prefix crux; }
   import testchild { prefix testchild; }
@@ -1175,6 +1177,20 @@ module integrationtest {
         type type8;
       }
 
+      leaf-list list5555 {
+        type string;
+      }
+
+      leaf leaf5555 {
+        description "Union with a leaf-ref not supported.";
+        type union {
+          type string;
+          type type5555;
+        }
+      }
+
+
+
       leaf leaf666 {
         description "Pretty nasty";
         type type6;
@@ -1224,7 +1240,6 @@ module integrationtest {
         c) something else";
         type type8-noenum;
       }
-
 
       leaf leaf8888 {
         description "Leafref to the complex stuff";
@@ -1468,5 +1483,11 @@ module integrationtest {
   container scaling {
       uses scale:thirty-lists;
 
+  }
+
+  typedef type5555 {
+    type leafref {
+      path "/integrationtest:morecomplex/integrationtest:inner/integrationtest:list5555";
+    }
   }
 }

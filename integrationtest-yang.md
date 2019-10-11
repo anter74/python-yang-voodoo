@@ -15,6 +15,8 @@ module: integrationtest
   |  +--rw adds
   |  |  +--rw a-leaf?               string
   |  |  +--rw a-2nd-leaf?           string
+  |  |  +--rw empty-leaf?           empty
+  |  |  +--rw boolean?              boolean
   |  |  +--rw a-list* [listkey]
   |  |  |  +--rw listkey       string
   |  |  |  +--rw listnonkey?   string
@@ -23,11 +25,15 @@ module: integrationtest
   |  +--rw modifies
   |     +--rw a-leaf?               string
   |     +--rw a-2nd-leaf?           string
+  |     +--rw empty-leaf?           empty
+  |     +--rw boolean?              boolean
   |     +--rw a-list* [listkey]
   |     |  +--rw listkey       string
   |     |  +--rw listnonkey?   string
   |     +--rw a-leaf-list*          string
   |     +--rw presence-container!
+  +--rw augments
+  |  +--rw xxx?   string
   +--rw validator
   |  +--rw strings
   |  |  +--rw nolen?                   string
@@ -234,32 +240,33 @@ module: integrationtest
   |           +--rw Z?        string
   |           +--rw deep?     string
   |           +--rw deeper!
-  |              +--rw A?   string
-  |              +--rw B?   string
-  |              +--rw C?   string
-  |              +--rw D?   string
-  |              +--rw E?   string
-  |              +--rw F?   string
-  |              +--rw G?   string
-  |              +--rw H?   string
-  |              +--rw I?   string
-  |              +--rw J?   string
-  |              +--rw K?   string
-  |              +--rw L?   string
-  |              +--rw M?   string
-  |              +--rw N?   string
-  |              +--rw O?   string
-  |              +--rw P?   string
-  |              +--rw Q?   string
-  |              +--rw R?   string
-  |              +--rw S?   string
-  |              +--rw T?   string
-  |              +--rw U?   string
-  |              +--rw V?   string
-  |              +--rw W?   string
-  |              +--rw X?   string
-  |              +--rw Y?   string
-  |              +--rw Z?   string
+  |              +--rw A?              string
+  |              +--rw B?              string
+  |              +--rw C?              string
+  |              +--rw D?              string
+  |              +--rw E?              string
+  |              +--rw F?              string
+  |              +--rw G?              string
+  |              +--rw H?              string
+  |              +--rw I?              string
+  |              +--rw J?              string
+  |              +--rw K?              string
+  |              +--rw L?              string
+  |              +--rw M?              string
+  |              +--rw N?              string
+  |              +--rw O?              string
+  |              +--rw P?              string
+  |              +--rw Q?              string
+  |              +--rw R?              string
+  |              +--rw S?              string
+  |              +--rw T?              string
+  |              +--rw U?              string
+  |              +--rw V?              string
+  |              +--rw W?              string
+  |              +--rw X?              string
+  |              +--rw Y?              string
+  |              +--rw Z?              string
+  |              +--rw gone-too-far?   string
   +--rw psychedelia
   |  +--rw bands* [band]
   |  |  +--rw band         string
@@ -360,15 +367,22 @@ module: integrationtest
   |  +--rw leaflists
   |  |  +--rw simple*       string
   |  |  +--rw viatypedef*   type3
-  |  +--rw superstar?       percentile95th
-  |  +--rw percentage?      decimal64
-  |  +--ro nonconfig?       string
-  |  +--rw extraboolean?    boolean
-  |  +--rw extraboolean2?   boolean
-  |  +--rw extraboolean3?   boolean
-  |  +--rw leaf2?           boolean
-  |  +--rw leaf3?           type2
-  |  +--rw leaf4?           type4
+  |  +--rw python-reserved-keywords
+  |  |  +--rw class?    string
+  |  |  +--rw import?   empty
+  |  |  +--rw and* [break not-break]
+  |  |  |  +--rw break        string
+  |  |  |  +--rw not-break    string
+  |  |  +--rw global*   string
+  |  +--rw superstar?                  percentile95th
+  |  +--rw percentage?                 decimal64
+  |  +--ro nonconfig?                  string
+  |  +--rw extraboolean?               boolean
+  |  +--rw extraboolean2?              boolean
+  |  +--rw extraboolean3?              boolean
+  |  +--rw leaf2?                      boolean
+  |  +--rw leaf3?                      type2
+  |  +--rw leaf4?                      type4
   |  +--rw inner!
   |     +--rw siblings
   |     |  +--rw a?   string
@@ -415,6 +429,8 @@ module: integrationtest
   |     +--rw leaf6?                       string
   |     +--rw leaf7?                       string
   |     +--rw leaf8?                       type8
+  |     +--rw list5555*                    string
+  |     +--rw leaf5555?                    union
   |     +--rw leaf666?                     type6
   |     +--rw leaf777?                     -> ../leaf7
   |     +--rw leaf888?                     type8
