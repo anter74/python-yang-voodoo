@@ -105,7 +105,7 @@ RUN \
       mv dist/*.tar.gz /artefacts
 
 # CHANGE VERSION NUMBER HERE
-ENV MY_VERSION=0.6.0
+ENV MY_VERSION=0.0.6
 ENV GIT_BRANCH=master
 ENV MY_ARCH=amd64
 

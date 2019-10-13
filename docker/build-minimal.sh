@@ -17,6 +17,7 @@ echo "Copying apk pacakges"
 rm -fr alpine-release/pkgs/*.whl
 
 docker cp $container:/pkgs alpine-release
+rm -fr alpine-release/pkgs/*kafka*
 docker stop $container
 
 img=`docker build --squash alpine-release | tail -n 1 | sed -e's/Successfully built //'`
