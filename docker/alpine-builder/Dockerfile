@@ -22,9 +22,12 @@ RUN mkdir /opt/dev && \
 WORKDIR /opt/dev
 
 RUN \
+      pip3 install wheel
+
+
+RUN \
       wget https://files.pythonhosted.org/packages/c4/43/3f1e7d742e2a7925be180b6af5e0f67d38de2f37560365ac1a0b9a04c015/lxml-4.4.1.tar.gz && \
       tar xvfz lxml-4.4.1.tar.gz && \
-      pip3 install wheel && \
       cd lxml-4.4.1 && \
       python3 setup.py bdist_wheel && \
       python3 -m pip install dist/*.whl && \
@@ -34,6 +37,30 @@ RUN \
       wget https://files.pythonhosted.org/packages/93/1a/ab8c62b5838722f29f3daffcc8d4bd61844aa9b5f437341cc890ceee483b/cffi-1.12.3.tar.gz && \
       tar xvfz cffi-1.12.3.tar.gz && \
       cd cffi-1.12.3 && \
+      python3 setup.py bdist_wheel && \
+      python3 -m pip install dist/*.whl && \
+      mv dist/*.whl /pkgs
+
+RUN \
+      wget https://files.pythonhosted.org/packages/fa/aa/025a3ab62469b5167bc397837c9ffc486c42a97ef12ceaa6699d8f5a5416/bcrypt-3.1.7.tar.gz && \
+      tar xvfz bcrypt-3.1.7.tar.gz && \
+      cd bcrypt-3.1.7 && \
+      python3 setup.py bdist_wheel && \
+      python3 -m pip install dist/*.whl && \
+      mv dist/*.whl /pkgs
+
+RUN \
+      wget https://files.pythonhosted.org/packages/61/ab/2ac6dea8489fa713e2b4c6c5b549cc962dd4a842b5998d9e80cf8440b7cd/PyNaCl-1.3.0.tar.gz && \
+      tar xvfz PyNaCl-1.3.0.tar.gz  && \
+      cd PyNaCl-1.3.0 && \
+      python3 setup.py bdist_wheel && \
+      python3 -m pip install dist/*.whl && \
+      mv dist/*.whl /pkgs
+
+RUN \
+      wget https://files.pythonhosted.org/packages/be/60/da377e1bed002716fb2d5d1d1cab720f298cb33ecff7bf7adea72788e4e4/cryptography-2.8.tar.gz && \
+      tar xvfz cryptography-2.8.tar.gz && \
+      cd cryptography-2.8 && \
       python3 setup.py bdist_wheel && \
       python3 -m pip install dist/*.whl && \
       mv dist/*.whl /pkgs
