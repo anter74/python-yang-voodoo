@@ -92,3 +92,7 @@
   - **CHANGE OF BEHAVIOUR** - yang location is now defaulted to None, which means use $YANGPATH environment variable.
   - **CHANGE OF BEHAVIOUR** - default data abstraction layer is now libyang_stub, the use\_stub option may be removed in the future.
   - **CHANGE OF BEHAVIOUR** - proxy now defaults to False (this was useful for sysrepo)
+
+# 0.0.6.x
+
+   - Fix race condition with libyang when creating list elements with multiple (or large number of) keys

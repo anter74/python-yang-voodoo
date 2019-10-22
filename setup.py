@@ -91,7 +91,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(name='yangvoodoo',
                  # CHANGE VERSION NUMBER HERE
-                 version='0.0.6', author='Adam Allen',
+                 version='0.0.6.1', author='Adam Allen',
                  author_email='allena29@users.noreply.github.com',
                  description='Python based access to YANG Datatstores',
                  long_description=long_description,

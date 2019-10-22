@@ -83,10 +83,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
             /integration:list[key1='val1'][key2='val2']
         """
         self.log.trace("CREATE: %s (keys: %s) (values: %s)", xpath, keys, values)
-        for key_num in range(len(keys)):
-            (value, _) = values[key_num]
-            self.log.trace("CREATE: %s/%s => %s", xpath, keys[key_num], value)
-            self.libyang_data.set_xpath(xpath + "/" + keys[key_num], value)
+        self.libyang_data.set_xpath(xpath, '')
 
     def uncreate(self, xpath):
         """
