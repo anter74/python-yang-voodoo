@@ -96,7 +96,7 @@ RUN \
       git clone https://github.com/allena29/libyang-cffi.git && \
       cd libyang-cffi && \
       git checkout libyang-data-tree-merge && \
-      echo "6" && \
+      echo "7" && \
       echo "#!/bin/bash" >rebuild.sh && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \

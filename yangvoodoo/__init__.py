@@ -31,7 +31,7 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.6.1"
+    __version__ = "0.0.6.2"
 
     def __init__(self, log=None, local_log=False, data_abstraction_layer=None,
                  disable_proxy=True, use_stub=False):
@@ -603,13 +603,15 @@ Children: %s""" % (str(children)[1:-1])
         val_type = Utils.get_yang_type(node_schema.type(), value, node_schema.real_schema_path)
         context.dal.set(data_path, value, val_type)
 
-    def load(self, filename, format=1):
+    def load(self, filename, format=1, trusted=False):
         """
         Load data from the filename in the format specified.
 
         Types.FORMAT['XML'] or Types.FORMAT['JSON']
+
+        If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
         """
-        return self.data_abstraction_layer.load(filename, format)
+        return self.data_abstraction_layer.load(filename, format, trusted)
 
     def dump(self, filename, format=1):
         """
@@ -619,13 +621,15 @@ Children: %s""" % (str(children)[1:-1])
         """
         return self.data_abstraction_layer.dump(filename, format)
 
-    def loads(self, payload, format=1):
+    def loads(self, payload, format=1, trusted=False):
         """
         Load data from the payload in the format specified.
 
         Types.FORMAT['XML'] or Types.FORMAT['JSON']
+
+        If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
         """
-        return self.data_abstraction_layer.loads(payload, format)
+        return self.data_abstraction_layer.loads(payload, format, trusted)
 
     def dumps(self, format=1):
         """
@@ -635,18 +639,12 @@ Children: %s""" % (str(children)[1:-1])
         """
         return self.data_abstraction_layer.dumps(format)
 
-    def merges(self, payload, format=1):
+    def merges(self, payload, format=1, trusted=True):
         """
         Merge data from the payload in the format specified.
 
         Types.FORMAT['XML'] or Types.FORMAT['JSON']
-        """
-        return self.data_abstraction_layer.merges(payload, format)
 
-    def merge(self, filename, format=1):
+        If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
         """
-        Merge data from the filename in the format specified.
-
-        Types.FORMAT['XML'] or Types.FORMAT['JSON']
-        """
-        return self.data_abstraction_layer.merge(filename, format)
+        return self.data_abstraction_layer.merges(payload, format, trusted)
