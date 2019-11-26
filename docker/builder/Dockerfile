@@ -96,7 +96,7 @@ RUN \
       git clone https://github.com/allena29/libyang-cffi.git && \
       cd libyang-cffi && \
       git checkout libyang-data-tree-merge && \
-      echo "7" && \
+      echo "10" && \
       echo "#!/bin/bash" >rebuild.sh && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
@@ -117,6 +117,7 @@ RUN \
       cd working && \
       git checkout $GIT_BRANCH && \
       cd /working && \
+      git checkout devel && \
       pip3 install -r requirements.txt && \
       pip3 install jinja2 lxml && \
       python3 setup.py install && \
@@ -261,7 +262,7 @@ RUN \
 
 RUN \
     touch /builder && \
-    echo "sysrepo-660552222ee6376efa560d9bcc7b832886ff460a-libyang-1.0r2-voodoo" >/voodoo-version
+    echo "sysrepo-660552222ee6376efa560d9bcc7b832886ff460a-libyang-1.0r3-voodoo" >/voodoo-version
 
 
 ENV EDITOR vim
