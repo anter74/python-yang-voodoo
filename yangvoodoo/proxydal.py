@@ -179,11 +179,11 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
     def dump(self, filename, format=1):
         return self.store.dump(filename, format)
 
-    def load(self, filename, format=1):
-        return self.store.load(filename, format)
+    def load(self, filename, format=1, trusted=False):
+        return self.store.load(filename, format, trusted)
 
     def dumps(self, format=1):
         return self.store.dumps(format)
 
-    def loads(self, payload, format=1):
-        return self.store.loads(payload, format)
+    def loads(self, payload, format=1, trusted=False):
+        return self.store.loads(payload, format, trusted)

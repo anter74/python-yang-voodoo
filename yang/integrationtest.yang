@@ -126,6 +126,14 @@ module integrationtest {
   }
 
   container validator {
+    container mandatories {
+      presence true;
+
+      leaf this-is-mandatory {
+        type string;
+        mandatory true;
+      }
+    }
     container strings {
       leaf nolen {
         type string;
