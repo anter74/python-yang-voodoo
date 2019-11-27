@@ -117,7 +117,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         except RuntimeError as err:
             self._handle_error(None, err)
 
-    def validate(self):
+    def validate(self, raise_exception=True):
         """
         Validate data against the sysrepo backend.
 
@@ -147,6 +147,8 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
         except RuntimeError as err:
             self._handle_error(None, err)
+            if raise_exception:
+                raise
 
         return True
 

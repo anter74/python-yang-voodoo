@@ -37,9 +37,15 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         self.log.debug("COMMIT: - null operation for the stub")
         return True
 
-    def validate(self):
-        self.log.debug("VALIDATE: - null operation for the stub")
-        return True
+    def validate(self, raise_exception=True):
+        try:
+            return self.libyang_data.validate()
+        except libyang.util.LibyangError as err:
+            self.log.error('Invalid data tree: %s', str(err))
+            if raise_exception:
+                raise
+
+        return False
 
     def container(self, xpath):
         """

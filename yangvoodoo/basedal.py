@@ -78,7 +78,7 @@ class BaseDataAbstractionLayer:
     def commit(self):
         raise NotImplementedError('commit not implemented')
 
-    def validate(self):
+    def validate(self, raise_exception=True):
         raise NotImplementedError('validate not implemented')
 
     def container(self, xpath):

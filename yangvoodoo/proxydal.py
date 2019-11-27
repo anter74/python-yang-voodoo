@@ -39,9 +39,9 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             pass
         return self.store.commit()
 
-    def validate(self):
-        self.cache.validate()
-        return self.store.validate()
+    def validate(self, raise_exception=True):
+        self.cache.validate(raise_exception)
+        return self.store.validate(raise_exception)
 
     def container(self, xpath):
         if xpath not in self.value_cached:
@@ -187,3 +187,6 @@ class ProxyDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
 
     def loads(self, payload, format=1, trusted=False):
         return self.store.loads(payload, format, trusted)
+
+    def merges(self, payload, format=1, trusted=False):
+        return self.store.merges(payload, format, trusted)
