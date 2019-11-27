@@ -31,7 +31,7 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.6.2"
+    __version__ = "0.0.6.3"
 
     def __init__(self, log=None, local_log=False, data_abstraction_layer=None,
                  disable_proxy=True, use_stub=False):
@@ -325,19 +325,21 @@ Children: %s""" % (str(children)[1:-1])
             raise yangvoodoo.Errors.NotConnect()
         return self.data_abstraction_layer.commit()
 
-    def validate(self):
+    def validate(self, raise_exception=True):
         """
         Validate the pending changes against the data in the backend datatstore without actually
         committing the data. The full set of rules within the YANG model/datatstore must be
         checked such that a user calling validate(), commit() in short sucession should get a
         failure to commit.
 
+        Depending on the datastore invalid data may return an exception.
+
         returns: True or False
         """
         self.log.trace("VALIDATE")
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.validate()
+        return self.data_abstraction_layer.validate(raise_exception)
 
     def container(self, xpath):
         """

@@ -64,7 +64,7 @@ class StubDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.dirty = False
         return True
 
-    def validate(self):
+    def validate(self, raise_exception=True):
         self.log.trace('VALIDATE')
         return True
 

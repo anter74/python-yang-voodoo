@@ -76,14 +76,15 @@ RUN \
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.6.2" >/version && \
+      echo "0.0.6.3" >/version && \
       git clone https://github.com/CESNET/libyang.git && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
+
 RUN \
       cd /working && \
-      git checkout master && \
+      git checkout devel && \
       pip3 install -r requirements.txt
 
 # libyang
@@ -99,7 +100,7 @@ RUN \
 
 RUN \
       cd /working && \
-      git checkout master && \
+      git checkout  devel && \
       LIBYANG_INSTALL=system python3 setup.py install
 
 
@@ -114,7 +115,7 @@ RUN \
 
 RUN \
       cd /working && \
-      git checkout master && \
+      git checkout devel && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs

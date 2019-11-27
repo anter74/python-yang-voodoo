@@ -16,6 +16,7 @@ class TemplateNinja:
         if not log:
             log = Common.Utils.get_logger("TemplateNinja")
         self.log = log
+        self.log.warning('TemplateNinja will be deprecated in favour of stublydal loads(), dumps(), merges()')
 
     def to_xmldoc(self, xpaths, first_node_name="data", namespace=None):
         cache = Cache()

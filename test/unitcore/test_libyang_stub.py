@@ -1,6 +1,8 @@
 import unittest
 import yangvoodoo
 import yangvoodoo.stublydal
+import libyang
+from libyang.util import LibyangError
 from mock import Mock
 
 """
@@ -236,3 +238,80 @@ class test_new_stuff(unittest.TestCase):
         }
 
         self.assertEqual(self.subject.dump_xpaths(), expected_result)
+
+    def test_json_loads_mandatories_satisified(self):
+        json_payload = """
+        {"integrationtest:validator":{"mandatories":{"this-is-mandatory":"abc"},"strings":{"nolen":"ABC"}}}
+        """
+
+        # Act
+        self.subject.loads(json_payload, 2, trusted=False)
+
+        # Assert
+        self.assertEqual(self.root.validator.mandatories.this_is_mandatory, "abc")
+        self.assertEqual(self.root.validator.strings.nolen, "ABC")
+
+    def test_json_loads_with_missing_mandatories(self):
+        json_payload = """
+        {"integrationtest:validator":{"mandatories":{},"strings":{"nolen":"ABC"}}}
+        """
+
+        # Act
+        with self.assertRaises(libyang.util.LibyangError):
+            self.subject.loads(json_payload, 2, trusted=False)
+
+    def test_json_loads_with_missing_mandatories_but_trusted(self):
+        json_payload = """
+        {"integrationtest:validator":{"mandatories":{},"strings":{"nolen":"ABC"}}}
+        """
+
+        # Act
+        self.subject.loads(json_payload, 2, trusted=True)
+
+        # Assert
+        self.assertEqual(self.root.validator.mandatories.this_is_mandatory, None)
+        self.assertEqual(self.root.validator.strings.nolen, "ABC")
+
+    def test_json_merges(self):
+        json_payload_first = """
+        {"integrationtest:validator":{"strings":{"nolen":"XYZ"}}}
+        """
+
+        json_payload_second = """
+        {"integrationtest:validator":{"mandatories":{},"strings":{"nolen":"ABC"}}}
+        """
+
+        # Act
+        self.subject.loads(json_payload_first, 2, trusted=False)
+
+        # Assert
+        self.assertEqual(self.root.validator.mandatories.exists(), False)
+
+        # Act 2
+        self.subject.merges(json_payload_second, 2, trusted=True)
+        self.assertEqual(self.root.validator.mandatories.exists(), True)
+        self.assertEqual(self.root.validator.strings.nolen, "ABC")
+
+    def test_validate_method(self):
+        json_payload_first_invalid = """
+        {"integrationtest:validator":{"mandatories":{},"strings":{"nolen":"ABC"}}}
+        """
+
+        # Act
+        self.subject.loads(json_payload_first_invalid, 2, trusted=True)
+
+        # Assert
+        expected_error = ('Validation Error: /integrationtest:validator/mandatories:'
+                          ' Missing required element "this-is-mandatory" in "mandatories".')
+        with self.assertRaises(LibyangError) as err:
+            self.subject.validate()
+        self.assertEqual(str(err.exception), expected_error)
+
+        result = self.subject.validate(raise_exception=False)
+        self.assertEqual(result, False)
+
+        json_payload_valid = """
+        {"integrationtest:validator":{"mandatories":{"this-is-mandatory":"abc"},"strings":{"nolen":"ABC"}}}
+        """
+        self.subject.merges(json_payload_valid, 2, trusted=False)
+        self.subject.validate()

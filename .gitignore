@@ -16,3 +16,4 @@ htmlcov/
 git-clone/
 .ipynb_checkpoints/
 .coverage-previous
+.DS_Store

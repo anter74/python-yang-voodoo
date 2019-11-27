@@ -37,9 +37,15 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         self.log.debug("COMMIT: - null operation for the stub")
         return True
 
-    def validate(self):
-        self.log.debug("VALIDATE: - null operation for the stub")
-        return True
+    def validate(self, raise_exception=True):
+        try:
+            return self.libyang_data.validate()
+        except libyang.util.LibyangError as err:
+            self.log.error('Invalid data tree: %s', str(err))
+            if raise_exception:
+                raise
+
+        return False
 
     def container(self, xpath):
         """
@@ -205,18 +211,18 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         self.log.trace("DUMP: %s (format: %s)", filename, format)
         self.libyang_data.dump(filename, format)
 
-    def load(self, filename, format=1):
+    def load(self, filename, format=1, trusted=False):
         self.log.trace("LOAD: %s (format: %s)", filename, format)
-        self.libyang_data.load(filename, format)
+        self.libyang_data.load(filename, format, trusted)
 
     def dumps(self, format=1):
         self.log.trace("DUMPs: (format: %s)",  format)
         return self.libyang_data.dumps(format)
 
-    def loads(self, payload, format=1):
+    def loads(self, payload, format=1, trusted=False):
         self.log.trace("LOADS: (format: %s)", format)
-        self.libyang_data.loads(payload, format)
+        self.libyang_data.loads(payload, format, trusted)
 
-    def merges(self, payload, format=1):
+    def merges(self, payload, format=1, trusted=True):
         self.log.trace("MERGES: (format: %s)", format)
-        self.libyang_data.merges(payload, format)
+        self.libyang_data.merges(payload, format, trusted)

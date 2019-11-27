@@ -78,7 +78,7 @@ class BaseDataAbstractionLayer:
     def commit(self):
         raise NotImplementedError('commit not implemented')
 
-    def validate(self):
+    def validate(self, raise_exception=True):
         raise NotImplementedError('validate not implemented')
 
     def container(self, xpath):
@@ -210,17 +210,14 @@ class BaseDataAbstractionLayer:
     def dump(self, filename, format=1):
         raise NotImplementedError("export not implemented")
 
-    def load(self, filename, format=1):
+    def load(self, filename, format=1, trusted=False):
         raise NotImplementedError("import not implemented")
 
     def dumps(self, format=1):
         raise NotImplementedError("export not implemented")
 
-    def loads(self, payload, format=1):
+    def loads(self, payload, format=1, trusted=False):
         raise NotImplementedError("import not implemented")
 
-    def merges(self, filename, format=1):
+    def merges(self, filename, format=1, trusted=True):
         raise NotImplementedError("merges not implemented")
-
-    def merge(self, payload, format=1):
-        raise NotImplementedError("merge not implemented")
