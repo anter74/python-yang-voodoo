@@ -137,7 +137,10 @@ class Node:
             # if leaf_type == 6:
             #    return Enum(context, new_xpath, new_spath, node_schema)
             context.log.trace("Returning Literal value from datastore for %s", node_schema.real_data_path)
-            return context.dal.get(node_schema.real_data_path, default_value=node_schema.default())
+            dal_value = context.dal.get(node_schema.real_data_path, default_value=node_schema.default())
+            if dal_value is None and leaf_type in Types.NUMBERS:
+                return 0
+            return dal_value
         elif node_type == Types.LIBYANG_NODETYPE['LIST']:
             # Return Object
             context._trace("List", node_schema, context, self)

@@ -3,6 +3,7 @@ import unittest
 import yangvoodoo
 from yangvoodoo.Common import IteratorToRaiseAnException, Utils
 from yangvoodoo.Cache import Cache
+from jinja2 import Template
 from mock import Mock, patch
 
 
@@ -177,3 +178,17 @@ class test_node_based_access(unittest.TestCase):
 
         result = yangvoodoo.Common.Utils._find_best_number_type([13, 14, 15, 16, 17], 2147483640)
         assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['INT32']
+
+    def test_jinja2_and_integers(self):
+        # Assert
+        self.root.validator.types.int_8 = 0
+        template = 'root.validator.types.int_8 {{ root.validator.types.int_8 }}'
+
+        # Act
+        template = Template(template)
+        answer = template.render(root=self.root)
+
+        # Assert
+        expected_answer = 'root.validator.types.int_8 0'
+
+        assert answer == expected_answer

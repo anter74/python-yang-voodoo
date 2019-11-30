@@ -1015,6 +1015,17 @@ module integrationtest {
     container inner {
       presence true;
 
+      list uint8keylist {
+        key mykey;
+        leaf mykey {
+          type uint8 {
+            range "0..7";
+          }
+        }
+        leaf nonkey {
+          type string;
+        }
+      }
       container siblings {
         leaf a {
           type string;
