@@ -1,6 +1,7 @@
 import unittest
 import yangvoodoo
 import yangvoodoo.stublydal
+from yangvoodoo.Errors import ListItemsMustBeAccesssedByAnElementError
 import libyang
 from libyang.util import LibyangError
 from mock import Mock
@@ -315,3 +316,14 @@ class test_new_stuff(unittest.TestCase):
         """
         self.subject.merges(json_payload_valid, 2, trusted=False)
         self.subject.validate()
+
+    def test_accessing_via_list_instead_of_list_element(self):
+        with self.assertRaises(ListItemsMustBeAccesssedByAnElementError):
+            print(self.root.simplelist.simplekey)
+
+        self.root.simplelist.create('a').nonleafkey = 59
+        self.assertEqual(self.root.simplelist.get('a').simplekey, 'a')
+        self.assertEqual(self.root.simplelist.get('a').nonleafkey, 59)
+
+        with self.assertRaises(ListItemsMustBeAccesssedByAnElementError) as err:
+            self.root.simplelist.simplekey = 'sdf'

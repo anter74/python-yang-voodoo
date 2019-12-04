@@ -109,11 +109,6 @@ class Node:
         # path = self.__dict__['_path']
         # spath = self.__dict__['_spath']
 
-        if attr == '_xpath_sorted' and self._NODE_TYPE == 'List':
-            # Return Object
-            context._trace("SortedList", node, context, self)
-            return SortedList(context, node, self)
-
         node_schema = Common.Utils.get_yangnode(node, context, attr)
         node_type = node_schema.nodetype()
 
@@ -439,6 +434,21 @@ class List(ContainingNode):
         # Return Object
         new_node = Common.YangNode(node.libyang_node, node.real_schema_path, node.real_data_path)
         return ListElement(context, new_node, self)
+
+    def __getattr__(self, attr):
+        node = self._node
+        context = self._context
+
+        if attr == '_xpath_sorted':
+            # Return Object
+            context._trace("SortedList", node, context, self)
+            return SortedList(context, node, self)
+
+        raise Errors.ListItemsMustBeAccesssedByAnElementError(node.real_data_path, attr)
+
+    def __setattr__(self, attr, value):
+        node = self._node
+        raise Errors.ListItemsMustBeAccesssedByAnElementError(node.real_data_path, attr)
 
     def __len__(self):
         context = self.__dict__['_context']

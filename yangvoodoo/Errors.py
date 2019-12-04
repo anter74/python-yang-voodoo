@@ -47,6 +47,13 @@ class CannotAssignValueToContainingNode(Exception):
         super().__init__("Cannot assign a value to %s" % (xpath))
 
 
+class ListItemsMustBeAccesssedByAnElementError(Exception):
+
+    def __init__(self, xpath, attr):
+        msg = "The path: %s is a list access elements like %s by iterating the list or using .get()\n" % (xpath, attr)
+        super().__init__(msg)
+
+
 class ListWrongNumberOfKeys(Exception):
 
     def __init__(self, xpath, require, given):
