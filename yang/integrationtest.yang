@@ -1196,6 +1196,22 @@ module integrationtest {
         type type8;
       }
 
+      leaf leaf9 {
+        type type9;
+      }
+
+      leaf leaf90 {
+        type union {
+          type uint8;
+          type decimal64 {
+            fraction-digits 2;
+          }
+          type enumeration {
+            enum A;
+          }
+        }
+      }
+
       leaf-list list5555 {
         type string;
       }
@@ -1391,6 +1407,19 @@ module integrationtest {
       type type5;
     }
   }
+
+  typedef type9 {
+    type union {
+      type uint8;
+      type decimal64 {
+        fraction-digits 2;
+      }
+      type enumeration {
+        enum A;
+      }
+    }
+  }
+
   typedef typeu8 {
     type uint8;
   }

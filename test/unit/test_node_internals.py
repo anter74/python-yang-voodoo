@@ -2,6 +2,7 @@ import libyang
 import unittest
 import yangvoodoo
 from yangvoodoo.Common import IteratorToRaiseAnException, Utils
+from yangvoodoo import Errors
 from yangvoodoo.Cache import Cache
 from jinja2 import Template
 from mock import Mock, patch
@@ -136,6 +137,42 @@ class test_node_based_access(unittest.TestCase):
         result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), 'Z')
         self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['STRING'])
 
+        yangnode = next(self.schemactx.find_path(
+            '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf9'))
+        result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), '45')
+        self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['UINT8'])
+
+        yangnode = next(self.schemactx.find_path(
+            '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf9'))
+        result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), 'A')
+        self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['ENUM'])
+
+        yangnode = next(self.schemactx.find_path(
+            '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf9'))
+        result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), '34.4')
+        self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['DECIMAL64'])
+
+        yangnode = next(self.schemactx.find_path(
+            '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf9'))
+        with self.assertRaises(Errors.ValueNotMappedToTypeUnion):
+            yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), 'B')
+
+        yangnode = next(self.schemactx.find_path(
+            '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf90'))
+        result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), '45')
+        self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['UINT8'])
+
+        yangnode = next(self.schemactx.find_path(
+            '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf90'))
+        result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), 'A')
+        self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['ENUM'])
+
+        yangnode = next(self.schemactx.find_path(
+            '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf90'))
+        result = yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), '34.4')
+        self.assertEqual(result, yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['DECIMAL64'])
+
+        # More complex case where we have a union of int8,int16,int32,int64, uint8,uint16,uint32,uint64
         # More complex case where we have a union of int8,int16,int32,int64, uint8,uint16,uint32,uint64
         yangnode = next(self.schemactx.find_path(
             '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf000'))
@@ -146,12 +183,8 @@ class test_node_based_access(unittest.TestCase):
         yangnode = next(self.schemactx.find_path(
             '/integrationtest:morecomplex/integrationtest:inner/integrationtest:leaf112'))
 
-        with self.assertRaises(yangvoodoo.Errors.ValueNotMappedToType) as context:
+        with self.assertRaises(yangvoodoo.Errors.ValueNotMappedToTypeUnion) as context:
             yangvoodoo.Common.Utils.get_yang_type(yangnode.type(), "not-valid", "/xpath")
-
-        # Assert
-        expected_msg = "Unable to match the value 'not-valid' to a yang type for path /xpath - check the yang schema"
-        self.assertEqual(str(context.exception), expected_msg)
 
     def test_ipython_canary(self):
         with self.assertRaises(AttributeError):

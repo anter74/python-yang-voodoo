@@ -145,6 +145,15 @@ class ValueNotMappedToType(Exception):
         super().__init__(message)
 
 
+class ValueNotMappedToTypeUnion(Exception):
+
+    def __init__(self, path, val):
+        message = "Unable to match the value '%s' to a yang type for path %s - check the yang schema" % (val, str(path))
+        message += "\nThis is within a union so may be a type above yangvoodoo's supported complexity threshold"
+
+        super().__init__(message)
+
+
 class PathIsNotALeaf(Exception):
 
     def __init__(self, path):

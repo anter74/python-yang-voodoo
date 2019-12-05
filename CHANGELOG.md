@@ -100,3 +100,4 @@
    - Implement validate for stubly using lyd_validation from libyang.
    - If a DAL returns None for a number looking type return 0 instead.
    - Deprecated TemplateNinja
+   - Fix for matching uint/decimal64 in a union (the dal returns a string not a python int)
