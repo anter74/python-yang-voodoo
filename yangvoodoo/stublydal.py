@@ -163,12 +163,14 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         try:
             val = next(self.libyang_data.get_xpath(xpath)).value
         except StopIteration:
-            return None
+            val = None
 
         if val:
             return val
+
         if default_value:
             return default_value
+
         return None
 
     def delete(self, xpath):

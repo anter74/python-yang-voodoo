@@ -24,6 +24,10 @@ class test_libyang_stub(unittest.TestCase):
     def test_basic_insantiation(self):
         pass
 
+    def test_basic_get_based_on_yang_schema_default(self):
+        # Act
+        self.assertEqual(self.root.default, "statusquo")
+
     def test_basic_set(self):
         # Act
         self.root.simpleleaf = "A"
