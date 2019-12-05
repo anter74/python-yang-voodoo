@@ -258,15 +258,6 @@ class test_getdata(unittest.TestCase):
         with self.assertRaises(StopIteration) as context:
             next(items)
 
-        # this test case originally failed because the data did not exist not because it wsan't a list
-        # gets() works on leaves.
-        # with self.assertRaises(datalayer.NodeNotAList) as context:
-        xpath = "/integrationtest:simpleleaf"
-        items = self.subject.gets_unsorted(xpath, xpath)
-        # However if we iterate around the answer we will get
-        # each character of the string '/integrationtest:simpleleaf'
-        # self.assertEqual(str(context.exception), "The path: /integrationtest:simpleleaf is not a list")
-
     def test_lists_ordering(self):
 
         xpath = "/integrationtest:simplelist[simplekey='A']"

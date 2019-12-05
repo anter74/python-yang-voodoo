@@ -206,6 +206,18 @@ class test_node_based_access(unittest.TestCase):
         result = yangvoodoo.Common.Utils._find_best_number_type([13, 14], 40)
         assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['UINT8']
 
+        result = yangvoodoo.Common.Utils._find_best_number_type([13, 14, 15], 65035)
+        assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['UINT16']
+
+        result = yangvoodoo.Common.Utils._find_best_number_type([13, 14, 15, 17, 19], 4294967295)
+        assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['UINT32']
+
+        result = yangvoodoo.Common.Utils._find_best_number_type([13, 14, 15, 19], 42949673950)
+        assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['UINT64']
+
+        result = yangvoodoo.Common.Utils._find_best_number_type([13, 14, 15, 19], -21474823648)
+        assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['INT64']
+
         result = yangvoodoo.Common.Utils._find_best_number_type([13, 14], 30000)
         assert result == yangvoodoo.Types.DATA_ABSTRACTION_MAPPING['INT16']
 

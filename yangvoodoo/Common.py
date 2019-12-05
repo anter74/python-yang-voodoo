@@ -76,7 +76,6 @@ class Utils:
     LOG_SILENT = 99
     LOG_ERROR = logging.ERROR
     LOG_TRACE = 7
-    LOG_CRAZY = 4
 
     LOOKS_LIKE_A_FLOAT = re.compile(r"^\d+\.\d+$")
     LOOKS_LIKE_A_NUMBER = re.compile(r"^\d+$")
@@ -87,11 +86,6 @@ class Utils:
     XPATH_DECODER_V4 = re.compile(r"(([A-Za-z0-9_-]*:)?([A-Za-z0-9_-]+))((\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])+)?")
     MODULE_AND_LEAF_REGEX = re.compile(r"/([A-Za-z0-9_-]+:)?([A-Za-z0-9_-]+)")
     EXTRACT_ALL_KEYS = re.compile(r"(\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])")
-
-    @staticmethod
-    def pretty_xmldoc(xmldoc):
-        xmlstr = str(etree.tostring(xmldoc, pretty_print=True))
-        return str(xmlstr).replace('\\n', '\n')[2:-1]
 
     @staticmethod
     def convert_path_to_schema_path(path, module):
@@ -135,12 +129,6 @@ class Utils:
         log.setLevel(level)
 
         logging.addLevelName(7, "TRACE")
-        logging.addLevelName(4, "CRAZY")
-
-        def crazy(self, message, *args, **kws):
-            if self.isEnabledFor(4):
-                self._log(4, message, args, **kws)
-        logging.Logger.crazy = crazy
 
         def trace(self, message, *args, **kws):
             if self.isEnabledFor(7):

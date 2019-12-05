@@ -365,3 +365,17 @@ class test_diff_engine(unittest.TestCase):
         ]
 
         self.assertEqual(list(differ.remove(start_filter="/integrationtest:diff")), expected_results_when_filtering_on_return_method)
+
+    def test_diff_engine_all_filtered(self):
+        self.root_a.morecomplex.leaflists.simple.create('e')
+
+        self.root_b.morecomplex.leaflists.simple.create('E')
+
+        # Act
+        differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b,
+                                                    start_filter="/integrationtest:morecomplex")
+
+        # Assert
+        expected_results = []
+        self.assertEqual(list(differ.all(start_filter='/sdfsdf')), expected_results)
+    #

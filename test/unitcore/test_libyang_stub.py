@@ -7,12 +7,12 @@ from libyang.util import LibyangError
 from mock import Mock
 
 """
-This set of unit tests uses the stub backend datastore, which is not preseeded with
+This set of unit tests uses the libyang stub backend datastore, which is not preseeded with
 any data.
 """
 
 
-class test_new_stuff(unittest.TestCase):
+class test_libyang_stub(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
@@ -327,3 +327,10 @@ class test_new_stuff(unittest.TestCase):
 
         with self.assertRaises(ListItemsMustBeAccesssedByAnElementError) as err:
             self.root.simplelist.simplekey = 'sdf'
+
+    def test_load(self):
+        with self.assertRaises(libyang.util.LibyangError):
+            self.subject.load('test/invalid.json', 2)
+
+        self.subject.load('test/valid.xml', 1)
+        self.assertEqual(self.root.simpleenum, 'A')

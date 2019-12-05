@@ -1,5 +1,6 @@
 import yangvoodoo
 from yangvoodoo.Common import Utils, PlainIterator, PlainObject
+from yangvoodoo import Errors
 from mock import Mock
 import unittest
 
@@ -101,6 +102,9 @@ class test_common(unittest.TestCase):
         expected_result = ("/integrationtest:web/bands[name='Longpigs']/gigs", ('year', 'month', 'day',
                                                                                 'venue', 'location'), ('1999', '9', '1', 'SHU Nelson Mandella', 'Sheffield'))
         self.assertEqual(result, expected_result)
+
+        with self.assertRaises(Errors.XpathDecodingError):
+            Utils.decode_xpath_predicate('/xpath/but/not/quite/right')
 
     def test_encode_xpath_predciates(self):
         result = Utils.encode_xpath_predicates('attri-bute', keys=['k1', 'k2'], values=[('v1', 10), ('v2', 10)])

@@ -1,5 +1,6 @@
 import unittest
 import yangvoodoo
+from yangvoodoo import Errors
 import yangvoodoo.stubdal
 
 
@@ -309,6 +310,9 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
         ll.create('Z')
         ll.create('B')
 
+        with self.assertRaises(yangvoodoo.Errors.ListItemCannotBeBlank):
+            self.root.morecomplex.leaflists.simple.create('')
+
         expected_result = {
             '/integrationtest:morecomplex/leaflists/simple': ['A', 'Z', 'B']
         }
@@ -373,3 +377,10 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
     def test_getitem_and_steitem(self):
         self.root.bronze['A'] = 'bronze-set-by-set-attr'
         self.assertEqual(self.root.bronze['A'], 'bronze-set-by-set-attr')
+
+    def test_set_data_by_xpath(self):
+        self.subject.set_data_by_xpath(self.root._context, '/integrationtest:simpleleaf', 'A')
+        self.assertEqual(self.root.simpleleaf, 'A')
+
+        with self.assertRaises(yangvoodoo.Errors.PathIsNotALeaf):
+            self.subject.set_data_by_xpath(self.root._context, '/integrationtest:morecomplex', 'A')

@@ -11,12 +11,6 @@ class NodeHasNoValue(Exception):
         super().__init__("The node: %s at %s has no value" % (nodetype, xpath))
 
 
-class NodeNotAList(Exception):
-
-    def __init__(self, xpath):
-        super().__init__("The path: %s is not a list" % (xpath))
-
-
 class ListDoesNotContainElement(Exception):
 
     def __init__(self, xpath):
@@ -27,12 +21,6 @@ class ListItemCannotBeBlank(Exception):
 
     def __init__(self, xpath):
         super().__init__("The list item for %s cannot be blank" % (xpath))
-
-
-class ListKeyCannotBeBlank(Exception):
-
-    def __init__(self, xpath, key):
-        super().__init__("The list key: %s for %s cannot be blank" % (key, xpath))
 
 
 class ListKeyCannotBeChanged(Exception):
@@ -107,16 +95,6 @@ class BackendDatastoreError(Exception):
 
         for c in range(cnt):
             message = message + "Error %s: %s (Path: %s)\n" % (c, errors[c][0], errors[c][1])
-
-        super().__init__(message)
-
-
-class XmlTemplateParsingBadKeys(Exception):
-
-    def __init__(self, key_expected, key_found):
-        if not key_found:
-            key_found = "nothing"
-        message = "Expecting to find list key '%s' but found '%s' instead" % (key_expected, key_found)
 
         super().__init__(message)
 
