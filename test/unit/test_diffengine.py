@@ -366,6 +366,50 @@ class test_diff_engine(unittest.TestCase):
 
         self.assertEqual(list(differ.remove(start_filter="/integrationtest:diff")), expected_results_when_filtering_on_return_method)
 
+    def test_diff_engine_with_filtering_sent_in_later_remove_modify(self):
+        self.root_a.diff.deletes.a_list.create('Avril Lavigne')
+        self.root_a.diff.modifies.a_list.create('Lissie').listnonkey = 'earworm'
+        self.root_a.diff.deletes.a_leaf = 'a'
+        self.root_a.diff.modifies.a_leaf = 'original value'
+        self.root_a.diff.modifies.a_2nd_leaf = 'original value2'
+        self.root_a.simpleleaf = 'A'
+
+        self.root_b.diff.modifies.a_leaf = 'new value'
+        self.root_b.diff.modifies.a_2nd_leaf = 'new value2'
+        self.root_b.diff.adds.a_list.create('Ghouls')
+        self.root_b.diff.adds.a_list.create('Jim Lockey')
+        self.root_b.diff.modifies.a_list.create('Lissie').listnonkey = 'earworm!'
+        self.root_b.diff.adds.a_leaf = 'b'
+        self.root_b.diff.adds.a_2nd_leaf = 'b2'
+        self.root_b.simpleleaf = 'B'
+
+        # Act
+        differ = yangvoodoo.DiffEngine.DiffIterator(self.stub_a.stub_store, self.stub_b.stub_store)
+
+        expected_results = [
+            ("/integrationtest:diff/deletes/a-list[listkey='Avril Lavigne']/listkey", 'Avril Lavigne', None, 3),
+            ('/integrationtest:diff/deletes/a-leaf', 'a', None, 3),
+            ("/integrationtest:diff/modifies/a-list[listkey='Lissie']/listnonkey", 'earworm', 'earworm!', 2),
+            ('/integrationtest:diff/modifies/a-leaf', 'original value', 'new value', 2),
+            ('/integrationtest:diff/modifies/a-2nd-leaf', 'original value2', 'new value2', 2),
+            ('/integrationtest:simpleleaf', 'A', 'B', 2),
+        ]
+
+        self.assertEqual(list(differ.remove_then_modify()), expected_results)
+
+        expected_results_when_filtering = [
+            ("/integrationtest:diff/deletes/a-list[listkey='Avril Lavigne']/listkey", 'Avril Lavigne', None, 3),
+            ('/integrationtest:diff/deletes/a-leaf', 'a', None, 3),
+            ("/integrationtest:diff/modifies/a-list[listkey='Lissie']/listnonkey", 'earworm', 'earworm!', 2),
+            ('/integrationtest:diff/modifies/a-leaf', 'original value', 'new value', 2),
+            ('/integrationtest:diff/modifies/a-2nd-leaf', 'original value2', 'new value2', 2),
+        ]
+
+        self.assertEqual(list(differ.remove_then_modify(start_filter="/integrationtest:diff")),
+                         expected_results_when_filtering)
+        self.assertEqual(list(differ.remove_then_modify(start_filter="/integrationtest:diff")),
+                         expected_results_when_filtering)
+
     def test_diff_engine_all_filtered(self):
         self.root_a.morecomplex.leaflists.simple.create('e')
 
