@@ -328,37 +328,19 @@ dir(root)
 
 It is possible to apply templates to set data instead of manually setting every element of data individually. [Jinja2](http://jinja.pocoo.org/docs/2.10/) is used to provide the ability to make templates less static.
 
-It is important to note the template is rendered **first** with the existing data, and then applied. The implication of this is that even though we set `root.simpleleaf` to `HELLO WOLRD` as the second line in the template - when we substitute the value in the 14th line will take the existing value at the time of rendering the template.
+Templates are only supported on the libyang stub
 
-**NOTE: The TemplateNinja will be deprecated in favour of libyang based stubs.**
+ - `root._context.dal.loads(<template_string)`
+ - `root._context.dal.load(filename)`
+ - `root._context.dal.merges(filename)`
 
+It is not possible to use the load/loads operation on a data-tree that already has data, instead the merges
+must be used.
 
-```xml
-<integrationtest>
-  <simpleleaf>HELLO WORLD</simpleleaf>
-  <morecomplex>
-    <leaf2>True</leaf2>
-  </morecomplex>
-  <simplelist>
-    <simplekey>KEY</simplekey>
-    <nonleafkey>NONKEY</nonleafkey>
-  </simplelist>
-  <bronze>
-    <silver>
-      <gold>
-        <platinum>
-          <deep>{{ root.simpleleaf }}</deep>
-        </platinum>
-      </gold>
-    </silver>
-  </bronze>
-</integrationtest>
-```
+By default loads will enforce constraints on the yang model and merges will not, but the operations take a trusted
+flag to change this behaviour.
 
-```python
-root.simpleleaf='Before Value'
-root.from_template('templates/sample.xml')
-```
+Along with the load/loads methods there are dump/dumps methods.
 
 
 #### Using a stub and writing unit tests
@@ -368,13 +350,13 @@ When writing unit tests it is expensive to make use of the real sysrepo backend,
 ```python
 import unittest
 import yangvoodoo
-import yangvoodoo.stubdal
+import yangvoodoo.stulybdal
 
 
 class test_node_based_access(unittest.TestCase):
 
     def setUp(self):
-        self.stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
+        self.stub = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
         self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
         self.subject.connect('integrationtest')
         self.root = self.subject.get_node()
