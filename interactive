@@ -33,7 +33,6 @@ yang = root._context.schema
 yangctx = root._context.schemactx
 context = root._context
 backend = root._context.dal.data_abstraction_layer
-ninja = yangvoodoo.TemplateNinja.TemplateNinja()
 
 import IPython
 

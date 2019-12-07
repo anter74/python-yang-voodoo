@@ -1,17 +1,18 @@
 import unittest
 import yangvoodoo
 import yangvoodoo.stublydal
+from yangvoodoo.Errors import ListItemsMustBeAccesssedByAnElementError
 import libyang
 from libyang.util import LibyangError
 from mock import Mock
 
 """
-This set of unit tests uses the stub backend datastore, which is not preseeded with
+This set of unit tests uses the libyang stub backend datastore, which is not preseeded with
 any data.
 """
 
 
-class test_new_stuff(unittest.TestCase):
+class test_libyang_stub(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
@@ -22,6 +23,10 @@ class test_new_stuff(unittest.TestCase):
 
     def test_basic_insantiation(self):
         pass
+
+    def test_basic_get_based_on_yang_schema_default(self):
+        # Act
+        self.assertEqual(self.root.default, "statusquo")
 
     def test_basic_set(self):
         # Act
@@ -315,3 +320,21 @@ class test_new_stuff(unittest.TestCase):
         """
         self.subject.merges(json_payload_valid, 2, trusted=False)
         self.subject.validate()
+
+    def test_accessing_via_list_instead_of_list_element(self):
+        with self.assertRaises(ListItemsMustBeAccesssedByAnElementError):
+            print(self.root.simplelist.simplekey)
+
+        self.root.simplelist.create('a').nonleafkey = 59
+        self.assertEqual(self.root.simplelist.get('a').simplekey, 'a')
+        self.assertEqual(self.root.simplelist.get('a').nonleafkey, 59)
+
+        with self.assertRaises(ListItemsMustBeAccesssedByAnElementError) as err:
+            self.root.simplelist.simplekey = 'sdf'
+
+    def test_load(self):
+        with self.assertRaises(libyang.util.LibyangError):
+            self.subject.load('test/invalid.json', 2)
+
+        self.subject.load('test/valid.xml', 1)
+        self.assertEqual(self.root.simpleenum, 'A')

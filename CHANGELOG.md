@@ -98,3 +98,6 @@
    - Fix race condition with libyang when creating list elements with multiple (or large number of) keys
    - Allow data to be loaded as libyang TRUSTED (i.e. don't enfoce when/must/mandatory checks). (default for merges)
    - Implement validate for stubly using lyd_validation from libyang.
+   - If a DAL returns None for a number looking type return 0 instead.
+   - Deprecated TemplateNinja
+   - Fix for matching uint/decimal64 in a union (the dal returns a string not a python int)

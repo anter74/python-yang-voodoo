@@ -25,6 +25,7 @@ class DiffIterator:
         differ.modified()   - return only XPATH's that have been modified (different values in dataset_A and dataset_B)
         differ.remove_modify_then_add()  - a convenience function of the above
         differ.modify_then_add()  - a convenience function of the above
+        differ.remove_then_modify()  - a convenience function of the above
 
     The filters
     TODO: this implementation is not optimal - the format data comes back from dictdiffer is a little different depending
@@ -136,4 +137,12 @@ class DiffIterator:
                 yield (path, old, new, op)
         for (path, old, new, op) in self.results:
             if op == self.ADD and not self.is_filtered(path, start_filter, end_filter):
+                yield (path, old, new, op)
+
+    def remove_then_modify(self, start_filter='', end_filter=''):
+        for (path, old, new, op) in self.results:
+            if op == self.REMOVE and not self.is_filtered(path, start_filter, end_filter):
+                yield (path, old, new, op)
+        for (path, old, new, op) in self.results:
+            if op == self.MODIFY and not self.is_filtered(path, start_filter, end_filter):
                 yield (path, old, new, op)

@@ -11,12 +11,6 @@ class NodeHasNoValue(Exception):
         super().__init__("The node: %s at %s has no value" % (nodetype, xpath))
 
 
-class NodeNotAList(Exception):
-
-    def __init__(self, xpath):
-        super().__init__("The path: %s is not a list" % (xpath))
-
-
 class ListDoesNotContainElement(Exception):
 
     def __init__(self, xpath):
@@ -29,12 +23,6 @@ class ListItemCannotBeBlank(Exception):
         super().__init__("The list item for %s cannot be blank" % (xpath))
 
 
-class ListKeyCannotBeBlank(Exception):
-
-    def __init__(self, xpath, key):
-        super().__init__("The list key: %s for %s cannot be blank" % (key, xpath))
-
-
 class ListKeyCannotBeChanged(Exception):
 
     def __init__(self, xpath, key):
@@ -45,6 +33,13 @@ class CannotAssignValueToContainingNode(Exception):
 
     def __init__(self, xpath):
         super().__init__("Cannot assign a value to %s" % (xpath))
+
+
+class ListItemsMustBeAccesssedByAnElementError(Exception):
+
+    def __init__(self, xpath, attr):
+        msg = "The path: %s is a list access elements like %s by iterating the list or using .get()\n" % (xpath, attr)
+        super().__init__(msg)
 
 
 class ListWrongNumberOfKeys(Exception):
@@ -104,16 +99,6 @@ class BackendDatastoreError(Exception):
         super().__init__(message)
 
 
-class XmlTemplateParsingBadKeys(Exception):
-
-    def __init__(self, key_expected, key_found):
-        if not key_found:
-            key_found = "nothing"
-        message = "Expecting to find list key '%s' but found '%s' instead" % (key_expected, key_found)
-
-        super().__init__(message)
-
-
 class XpathDecodingError(Exception):
 
     def __init__(self, path):
@@ -134,6 +119,15 @@ class ValueNotMappedToType(Exception):
 
     def __init__(self, path, val):
         message = "Unable to match the value '%s' to a yang type for path %s - check the yang schema" % (val, str(path))
+
+        super().__init__(message)
+
+
+class ValueNotMappedToTypeUnion(Exception):
+
+    def __init__(self, path, val):
+        message = "Unable to match the value '%s' to a yang type for path %s - check the yang schema" % (val, str(path))
+        message += "\nThis is within a union so may be a type above yangvoodoo's supported complexity threshold"
 
         super().__init__(message)
 
@@ -159,5 +153,12 @@ class ReadonlyError(Exception):
     def __init__(self):
 
         message = "This node is read-only"
+
+        super().__init__(message)
+
+
+class NodeAlreadyProvidedCannotChangeSchemaError(Exception):
+    def __init__(self):
+        message = "A node has already been returned, it is not longer possible to change the schema."
 
         super().__init__(message)

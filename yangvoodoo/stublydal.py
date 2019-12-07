@@ -33,10 +33,6 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         del self.libyang_ctx
         del self.libyang_data
 
-    def commit(self):
-        self.log.debug("COMMIT: - null operation for the stub")
-        return True
-
     def validate(self, raise_exception=True):
         try:
             return self.libyang_data.validate()
@@ -167,29 +163,19 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         try:
             val = next(self.libyang_data.get_xpath(xpath)).value
         except StopIteration:
-            return None
+            val = None
 
         if val:
             return val
+
         if default_value:
             return default_value
+
         return None
 
     def delete(self, xpath):
         self.log.trace('DELETE: %s', xpath)
         self.libyang_data.set_xpath(xpath, None)
-
-    def refresh(self):
-        self.log.trace("REFRESH: null operation")
-        return True
-
-    def is_session_dirty(self):
-        self.log.trace("IS_SESSION_DIRTY: null operation")
-        return True
-
-    def has_datastore_changed(self):
-        self.log.trace("HAS_DATA_STORE_CHANGED: null operation")
-        return False
 
     def dump_xpaths(self):
         """

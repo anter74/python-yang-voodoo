@@ -1,0 +1,26 @@
+module test-deviation {
+
+  namespace "http://brewerslabng.mellon-collie.net/yang/test-deviation";
+  prefix "testdeviation";
+
+  import integrationtest { prefix integrationtest; }
+  import crux { prefix crux; }
+
+  deviation /integrationtest:morecomplex/integrationtest:inner/integrationtest:deviant/integrationtest:to-make-not-supported {
+    deviate not-supported;
+  }
+
+  deviation /integrationtest:morecomplex/integrationtest:inner/integrationtest:deviant/integrationtest:a-string {
+    deviate replace {
+      type enumeration {
+        enum X;
+      }
+    }
+  }
+
+  deviation /integrationtest:simpleenum {
+    deviate add {
+      crux:info "this came from a deviation";
+    }
+  }
+}

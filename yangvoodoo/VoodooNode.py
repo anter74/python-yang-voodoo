@@ -1,4 +1,4 @@
-from yangvoodoo import Cache, Common, Errors, TemplateNinja, Types
+from yangvoodoo import Cache, Common, Errors, Types
 
 
 class Context:
@@ -109,11 +109,6 @@ class Node:
         # path = self.__dict__['_path']
         # spath = self.__dict__['_spath']
 
-        if attr == '_xpath_sorted' and self._NODE_TYPE == 'List':
-            # Return Object
-            context._trace("SortedList", node, context, self)
-            return SortedList(context, node, self)
-
         node_schema = Common.Utils.get_yangnode(node, context, attr)
         node_type = node_schema.nodetype()
 
@@ -137,7 +132,10 @@ class Node:
             # if leaf_type == 6:
             #    return Enum(context, new_xpath, new_spath, node_schema)
             context.log.trace("Returning Literal value from datastore for %s", node_schema.real_data_path)
-            return context.dal.get(node_schema.real_data_path, default_value=node_schema.default())
+            dal_value = context.dal.get(node_schema.real_data_path, default_value=node_schema.default())
+            if dal_value is None and leaf_type in Types.NUMBERS:
+                return 0
+            return dal_value
         elif node_type == Types.LIBYANG_NODETYPE['LIST']:
             # Return Object
             context._trace("List", node_schema, context, self)
@@ -272,38 +270,7 @@ class Empty():
 
 class ContainingNode(Node):
 
-    def _from_template(self, template, **kwargs):
-        """
-        TODO: decide if this is good here or if it should move to session.
-
-        This is misleading because the template still applies from root (although
-        potentially we cahnge templater to handle an abritary node)
-
-        """
-        templater = TemplateNinja.TemplateNinja()
-        templater.from_template(self, template, **kwargs)
-
-    def _from_xmlstr(self, xmlstr):
-        """
-        TODO: decide if this is good here or if it should move to session.
-
-        This is misleading because the template still applies from root (although
-        potentially we cahnge templater to handle an abritary node)
-
-        """
-        templater = TemplateNinja.TemplateNinja()
-        templater.from_xmlstr(self, xmlstr)
-
-    def _to_xmlstr(self):
-        """
-        TODO: decide if this is good here or if it should move to session.
-
-        This is misleading because the template still applies from root (although
-        potentially we cahnge templater to handle an abritary node)
-        """
-
-        templater = TemplateNinja.TemplateNinja()
-        return templater.to_xmlstr(self._context.dal.dump_xpaths())
+    pass
 
 
 class Choice(Node):
@@ -436,6 +403,21 @@ class List(ContainingNode):
         # Return Object
         new_node = Common.YangNode(node.libyang_node, node.real_schema_path, node.real_data_path)
         return ListElement(context, new_node, self)
+
+    def __getattr__(self, attr):
+        node = self._node
+        context = self._context
+
+        if attr == '_xpath_sorted':
+            # Return Object
+            context._trace("SortedList", node, context, self)
+            return SortedList(context, node, self)
+
+        raise Errors.ListItemsMustBeAccesssedByAnElementError(node.real_data_path, attr)
+
+    def __setattr__(self, attr, value):
+        node = self._node
+        raise Errors.ListItemsMustBeAccesssedByAnElementError(node.real_data_path, attr)
 
     def __len__(self):
         context = self.__dict__['_context']
@@ -673,68 +655,6 @@ class Root(ContainingNode):
         context = self.__dict__['_context']
         return "VoodooTopNode{} YANG Module: " + context.module
 
-    def from_template(self, template, **kwargs):
-        """
-        Process a template with a number of data nodes. The result of processing the template
-        with Jinja2 must be a valid XML document.
-
-        Example:
-            session.from_template(root, 'template1.xml')
-
-            Process the template from the the path specified (i.e. template1.xml)
-            In the Jinja2 templates the root object is available as 'root.'
-
-            session.from_template(root, 'template1.xml', data_a=root.morecomplex)
-
-            In this case the Jinja2 template will receive both 'data_a' as the subset of
-            data at /morecomplex and root.
-
-        The path to the template may be specified as a relative path (to where the python
-        process is running (i.e. os.getcwd) or an exact path.
-
-        IMPORTANT to note is that variable and logic is processed in the template based upon
-        the data available at the time, then the result of the entire template is applied.
-        To be clear consdiering this template
-
-        This template isn't quite the same as NETCONF - we don't have any namespaces in it,
-        instead the contents are wrapped in a node matching the name of the yang module.
-            <integrationtest>
-                <simpleleaf>HELLO</simpleleaf>
-                <default>{{ root.simpleleaf }}</default>
-            </integrationtest>
-
-            root.simpleleaf = 'GOODBYE'
-            session.from_template(root, 'hello-goodbye.xml')
-
-        The resulting value for simpleleaf will be 'GOODBYE' not hello.
-
-        """
-
-        templater = TemplateNinja.TemplateNinja()
-        templater.from_template(self, template, **kwargs)
-
-    def to_xmlstr(self):
-        """
-        Return an XML Template from this node.
-        """
-
-        templater = TemplateNinja.TemplateNinja()
-        return templater.to_xmlstr(self._context.dal.dump_xpaths())
-
-    def from_xmlstr(self, xmlstr):
-        """
-        This template isn't quite the same as NETCONF - we don't have any namespaces in it,
-        instead the contents are wrapped in a node matching the name of the yang module.
-            xmlstr = "<integrationtest><simpleleaf>HELLO</simpleleaf></integrationtest>"
-
-            root.simpleleaf = 'GOODBYE'
-            session.from_xmlstr(root, xmlstr)
-
-        """
-
-        templater = TemplateNinja.TemplateNinja()
-        templater.from_xmlstr(self, xmlstr)
-
 
 class SuperRoot:
 
@@ -764,40 +684,3 @@ class SuperRoot:
 
     def __repr__(self):
         return "VoodooSuperRoot{}"
-
-    def from_template(self, template, **kwargs):
-        """
-        Process a template with a number of data nodes. The result of processing the template
-        with Jinja2 must be a valid XML document.
-
-        Example:
-            session.from_template(root, 'template1.xml')
-
-            Process the template from the the path specified (i.e. template1.xml)
-            In the Jinja2 templates the root object is available as 'root.'
-
-            session.from_template(root, 'template1.xml', data_a=root.morecomplex)
-
-            In this case the Jinja2 template will receive both 'data_a' as the subset of
-            data at /morecomplex and root.
-
-        The path to the template may be specified as a relative path (to where the python
-        process is running (i.e. os.getcwd) or an exact path.
-
-        IMPORTANT to note is that variable and logic is processed in the template based upon
-        the data available at the time, then the result of the entire template is applied.
-        To be clear consdiering this template
-            <integrationtest>
-                <simpleleaf>HELLO</simpleleaf>
-                <default>{{ root.simpleleaf }}</default>
-            </integrationtest>
-
-            root.simpleleaf = 'GOODBYE'
-            session.from_template(root, 'hello-goodbye.xml')
-
-        The resulting value for simpleleaf will be 'GOODBYE' not hello.
-
-        """
-
-        templater = TemplateNinja.TemplateNinja()
-        templater.from_template(self._node, template, **kwargs)

@@ -1015,6 +1015,26 @@ module integrationtest {
     container inner {
       presence true;
 
+      container deviant {
+        container to-make-not-supported {
+          presence true;
+        }
+        leaf a-string {
+          type string;
+        }
+      }
+
+      list uint8keylist {
+        key mykey;
+        leaf mykey {
+          type uint8 {
+            range "0..7";
+          }
+        }
+        leaf nonkey {
+          type string;
+        }
+      }
       container siblings {
         leaf a {
           type string;
@@ -1183,6 +1203,22 @@ module integrationtest {
 
       leaf leaf8 {
         type type8;
+      }
+
+      leaf leaf9 {
+        type type9;
+      }
+
+      leaf leaf90 {
+        type union {
+          type uint8;
+          type decimal64 {
+            fraction-digits 2;
+          }
+          type enumeration {
+            enum A;
+          }
+        }
       }
 
       leaf-list list5555 {
@@ -1380,6 +1416,19 @@ module integrationtest {
       type type5;
     }
   }
+
+  typedef type9 {
+    type union {
+      type uint8;
+      type decimal64 {
+        fraction-digits 2;
+      }
+      type enumeration {
+        enum A;
+      }
+    }
+  }
+
   typedef typeu8 {
     type uint8;
   }

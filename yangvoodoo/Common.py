@@ -76,8 +76,9 @@ class Utils:
     LOG_SILENT = 99
     LOG_ERROR = logging.ERROR
     LOG_TRACE = 7
-    LOG_CRAZY = 4
 
+    LOOKS_LIKE_A_FLOAT = re.compile(r"^\d+\.\d+$")
+    LOOKS_LIKE_A_NUMBER = re.compile(r"^\d+$")
     LAST_LEAF_AND_PREDICTAES = re.compile(r"(.*/)([A-Za-z\.]+[A-Za-z0-9_:-]*)(\[.*\])$")
     PREDICATE_KEY_VALUES_SINGLE = re.compile(r"\[([A-z\.]+[A-z0-9_\-]*)='([^']*)'\]")
     PREDICATE_KEY_VALUES_DOUBLE = re.compile(r"\[([A-z\.]+[A-z0-9_\-]*)=\"([^\"]*)\"\]")
@@ -85,11 +86,6 @@ class Utils:
     XPATH_DECODER_V4 = re.compile(r"(([A-Za-z0-9_-]*:)?([A-Za-z0-9_-]+))((\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])+)?")
     MODULE_AND_LEAF_REGEX = re.compile(r"/([A-Za-z0-9_-]+:)?([A-Za-z0-9_-]+)")
     EXTRACT_ALL_KEYS = re.compile(r"(\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])")
-
-    @staticmethod
-    def pretty_xmldoc(xmldoc):
-        xmlstr = str(etree.tostring(xmldoc, pretty_print=True))
-        return str(xmlstr).replace('\\n', '\n')[2:-1]
 
     @staticmethod
     def convert_path_to_schema_path(path, module):
@@ -133,12 +129,6 @@ class Utils:
         log.setLevel(level)
 
         logging.addLevelName(7, "TRACE")
-        logging.addLevelName(4, "CRAZY")
-
-        def crazy(self, message, *args, **kws):
-            if self.isEnabledFor(4):
-                self._log(4, message, args, **kws)
-        logging.Logger.crazy = crazy
 
         def trace(self, message, *args, **kws):
             if self.isEnabledFor(7):
@@ -206,15 +196,16 @@ class Utils:
 
             if 10 in u_types and isinstance(value, str):
                 return Types.DATA_ABSTRACTION_MAPPING['STRING']
-            elif isinstance(value, float):
+            elif Utils.LOOKS_LIKE_A_FLOAT.match(str(value)):
                 return Types.DATA_ABSTRACTION_MAPPING['DECIMAL64']
-            if isinstance(value, int):
-                return Utils._find_best_number_type(u_types, value)
+            elif Utils.LOOKS_LIKE_A_NUMBER.match(str(value)):
+                return Utils._find_best_number_type(u_types, int(value))
+            if value:
+                raise Errors.ValueNotMappedToTypeUnion(xpath, value)
         if default_to_string:
             return Types.DATA_ABSTRACTION_MAPPING['STRING']
 
         if value:
-            msg = "Unable to match the value '%s' to a yang type for path %s - check the value." % (value, str(xpath))
             raise Errors.ValueNotMappedToType(xpath, value)
 
         msg = 'Unable to handle the yang type at path ' + str(xpath)
@@ -438,21 +429,6 @@ class Utils:
             real_values.append((value, key_yang_type))
 
         return keys, real_values
-
-    @staticmethod
-    def best_guess_of_yang_type(node_schema_type, child_text, this_path):
-        """
-        TODO: still want to create a proper validator class to properly recurse through union/typedef/leafrefs
-        and find the best match. This will do for now.
-
-        This is currently used by TemplateNinja
-        """
-        try:
-            return Utils.get_yang_type(node_schema_type, child_text, this_path)
-        except Errors.ValueNotMappedToType:
-            pass
-
-        return Utils.get_yang_type(node_schema_type, int(child_text), this_path)
 
     @staticmethod
     def convert_xpath_to_list_v4(xpath):

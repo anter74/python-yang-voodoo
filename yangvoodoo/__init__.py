@@ -31,7 +31,7 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.6.3"
+    __version__ = "0.0.6.5"
 
     def __init__(self, log=None, local_log=False, data_abstraction_layer=None,
                  disable_proxy=True, use_stub=False):
@@ -42,6 +42,7 @@ class DataAccess:
         self.conn = None
         self.connected = False
         self.context = None
+        self.node_returned = False
         if data_abstraction_layer:
             non_proxy_data_abstraction_layer = data_abstraction_layer
         else:
@@ -257,7 +258,7 @@ Children: %s""" % (str(children)[1:-1])
         self.log.trace("GET_NODE")
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
-
+        self.node_returned = True
         self.data_abstraction_layer.setup_root()
 
         yang_node = YangNode(PlainObject(), '', '')
@@ -297,6 +298,20 @@ Children: %s""" % (str(children)[1:-1])
         self.log.trace("       : context %s", self.context)
         self.log.trace("       : data_abstraction_layer %s", self.data_abstraction_layer)
         return connect_status
+
+    def add_module(self, module):
+        """
+        Add an aditional yang module.
+
+        returns: True
+        """
+        self.log.trace("ADD_MODULE")
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        if self.node_returned:
+            raise yangvoodoo.Errors.NodeAlreadyProvidedCannotChangeSchemaError()
+
+        self.data_abstraction_layer.libyang_ctx.load_module(module)
 
     def disconnect(self):
         """
