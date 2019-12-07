@@ -155,3 +155,10 @@ class ReadonlyError(Exception):
         message = "This node is read-only"
 
         super().__init__(message)
+
+
+class NodeAlreadyProvidedCannotChangeSchemaError(Exception):
+    def __init__(self):
+        message = "A node has already been returned, it is not longer possible to change the schema."
+
+        super().__init__(message)

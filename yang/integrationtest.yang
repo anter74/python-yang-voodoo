@@ -1015,6 +1015,15 @@ module integrationtest {
     container inner {
       presence true;
 
+      container deviant {
+        container to-make-not-supported {
+          presence true;
+        }
+        leaf a-string {
+          type string;
+        }
+      }
+
       list uint8keylist {
         key mykey;
         leaf mykey {
