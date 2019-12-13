@@ -338,3 +338,17 @@ class test_libyang_stub(unittest.TestCase):
 
         self.subject.load('test/valid.xml', 1)
         self.assertEqual(self.root.simpleenum, 'A')
+
+    def test_get_raw_xpath(self):
+        result = list(self.subject.data_abstraction_layer.get_raw_xpath('/integrationtest:simpleleaf'))
+        self.assertEqual(result, [])
+
+        self.root.simpleleaf = 'abc'
+        result = list(self.subject.data_abstraction_layer.get_raw_xpath('/integrationtest:simpleleaf'))
+        self.assertEqual(result, ['/integrationtest:simpleleaf'])
+
+        self.root.simpleleaf = 'abc'
+        result = list(self.subject.data_abstraction_layer.get_raw_xpath('/integrationtest:simpleleaf', with_val=True))
+        self.assertEqual(result, [('/integrationtest:simpleleaf', 'abc')])
+        result = list(self.subject.get_raw_xpath('/integrationtest:simpleleaf', with_val=True))
+        self.assertEqual(result, [('/integrationtest:simpleleaf', 'abc')])

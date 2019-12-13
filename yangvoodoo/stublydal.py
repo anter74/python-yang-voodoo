@@ -132,6 +132,25 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         self.log.trace("REMOVE: %s %s", xpath, value)
         self.libyang_data.delete_xpath("%s[.='%s']" % (xpath, value))
 
+    def get_raw_xpath(self, xpath, with_val=False):
+        """
+        Get raw xpath
+        xpath:       /integrationtest:web/bands[name='Idlewild']/gigs
+        schema_path: /integrationtest:web/integrationtest:bands/integrationtest:gigs
+
+        returns a generator.
+        """
+        self.log.trace("GETS_RAW_XPATH: %s", xpath)
+        for xpath in self.libyang_data.gets_xpath(xpath):
+            if with_val:
+                val = next(self.libyang_data.get_xpath(xpath))
+                if val:
+                    yield xpath, val.value
+                else:
+                    yield xpath, None
+            else:
+                yield xpath
+
     def gets_unsorted(self, xpath, schema_path, ignore_empty_lists=False):
         """
         To retrieve a list of XPATH's as a generator to each list element in the list.
