@@ -224,3 +224,6 @@ class BaseDataAbstractionLayer:
 
     def get_raw_xpath(self, xpath, with_val=False):
         raise NotImplementedError("get_raw_xpath not implemented")
+
+    def get_raw_xpath_single_val(self, xpath):
+        raise NotImplementedError("get_raw_xpath_single_val not implemented")

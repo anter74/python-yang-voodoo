@@ -611,6 +611,17 @@ Children: %s""" % (str(children)[1:-1])
         for result in self.data_abstraction_layer.get_raw_xpath(xpath, with_val):
             yield result
 
+    def get_raw_xpath_single_val(self, xpath):
+        """
+        Return a single value from the XPATH provided, or return None.
+        If there are multiple values return the first result only.
+        This is intended only to be used with leaves.
+        """
+        self.log.trace("GET_RAW_XPATH_SINGLE_VAL: %s", xpath)
+        for result in self.data_abstraction_layer.get_raw_xpath(xpath, True):
+            return result[1]
+        return None
+
     def set_data_by_xpath(self, context, data_path, value):
         """
         This method is a backdoor way to set data in the datastore.

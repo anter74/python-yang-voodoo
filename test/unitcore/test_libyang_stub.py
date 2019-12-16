@@ -343,12 +343,25 @@ class test_libyang_stub(unittest.TestCase):
         result = list(self.subject.data_abstraction_layer.get_raw_xpath('/integrationtest:simpleleaf'))
         self.assertEqual(result, [])
 
+        result = list(self.subject.get_raw_xpath('/integrationtest:simpleleaf'))
+        self.assertEqual(result, [])
+
+        result = self.subject.get_raw_xpath_single_val('/integrationtest:simpleleaf')
+        self.assertEqual(result, None)
+
         self.root.simpleleaf = 'abc'
         result = list(self.subject.data_abstraction_layer.get_raw_xpath('/integrationtest:simpleleaf'))
         self.assertEqual(result, ['/integrationtest:simpleleaf'])
 
+        result = self.subject.get_raw_xpath_single_val('/integrationtest:simpleleaf')
+        self.assertEqual(result, 'abc')
+
         self.root.simpleleaf = 'abc'
         result = list(self.subject.data_abstraction_layer.get_raw_xpath('/integrationtest:simpleleaf', with_val=True))
         self.assertEqual(result, [('/integrationtest:simpleleaf', 'abc')])
+
+        result = list(self.subject.get_raw_xpath('/integrationtest:simpleleaf', with_val=True))
+        self.assertEqual(result, [('/integrationtest:simpleleaf', 'abc')])
+
         result = list(self.subject.get_raw_xpath('/integrationtest:simpleleaf', with_val=True))
         self.assertEqual(result, [('/integrationtest:simpleleaf', 'abc')])
