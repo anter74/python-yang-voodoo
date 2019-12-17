@@ -11,6 +11,18 @@ class NodeHasNoValue(Exception):
         super().__init__("The node: %s at %s has no value" % (nodetype, xpath))
 
 
+class LeafListDoesNotContainIndexError(Exception):
+
+    def __init__(self, len, index, xpath):
+        super().__init__("The leaf-list only contains %s elements, could not return index %s\n%s" % (len, index, xpath))
+
+
+class ListDoesNotContainIndexError(Exception):
+
+    def __init__(self, len, index, xpath):
+        super().__init__("The list only contains %s elements, could not return index %s\n%s" % (len, index, xpath))
+
+
 class ListDoesNotContainElement(Exception):
 
     def __init__(self, xpath):

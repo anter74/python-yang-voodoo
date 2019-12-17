@@ -102,3 +102,4 @@
    - Deprecated TemplateNinja
    - Fix for matching uint/decimal64 in a union (the dal returns a string not a python int)
    - Add `get_raw_xpath` to sublydal
+   - Add get_index(n) to a List to return the item at position if it exists.

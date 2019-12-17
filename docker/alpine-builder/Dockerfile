@@ -76,7 +76,7 @@ RUN \
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.6.6" >/version && \
+      echo "0.0.6.7" >/version && \
       git clone https://github.com/CESNET/libyang.git && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
