@@ -33,6 +33,7 @@ RUN \
       python3 -m pip install dist/*.whl && \
       mv dist/*.whl /pkgs
 
+
 RUN \
       wget https://files.pythonhosted.org/packages/93/1a/ab8c62b5838722f29f3daffcc8d4bd61844aa9b5f437341cc890ceee483b/cffi-1.12.3.tar.gz && \
       tar xvfz cffi-1.12.3.tar.gz && \
@@ -66,17 +67,8 @@ RUN \
       mv dist/*.whl /pkgs
 
 RUN \
-    sudo apk add librdkafka-dev && \
-    wget https://files.pythonhosted.org/packages/c7/27/e7f6d54dafb050dcb66622742d8a39c5742ca6aa00c337b043738da78abf/confluent-kafka-1.1.0.tar.gz && \
-    tar xvfz confluent-kafka-1.1.0.tar.gz && \
-    cd confluent-kafka-1.1.0 && \
-    python3 setup.py build bdist_wheel && \
-    cp dist/*.whl /pkgs && \
-    sudo python3 setup.py install
-
-RUN \
       # CHANGE VERSION HERE
-      echo "0.0.6.7" >/version && \
+      echo "0.0.7.0" >/version && \
       git clone https://github.com/CESNET/libyang.git && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
@@ -91,7 +83,7 @@ RUN \
 RUN \
       cd /opt/dev && \
       cd libyang && \
-      git checkout v1.0-r3 && \
+      git checkout v1.0.130 && \
       mkdir build && cd build && \
       cmake .. && \
       make -j6  && \
@@ -108,7 +100,7 @@ RUN \
       cd /opt/dev && \
       cd libyang-cffi && \
       git pull && \
-      git checkout libyang-data-tree-merge && \
+      git checkout master && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs
@@ -130,5 +122,7 @@ RUN \
      sudo chown builder /home/builder -R  && \
      cd /home/builder/libyang && \
      abuild checksum && \
-     abuild -r && \
-     cp /home/builder/packages/builder/x86_64/libyang-v1.0r3-r0.apk /pkgs
+     abuild -r
+
+RUN \
+     cp /home/builder/packages/builder/x86_64/libyang-v1.0.130r0-r0.apk /pkgs/libyang-v1.0.130.apk

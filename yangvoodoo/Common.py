@@ -1,6 +1,5 @@
 import libyang
 import logging
-from lxml import etree
 from yangvoodoo import Types, Errors
 import re
 

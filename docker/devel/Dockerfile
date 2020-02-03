@@ -39,7 +39,7 @@ RUN \
 RUN \
       python3 /get-pip.py && \
       rm -f /get-pip.py && \
-      pip3 install lxml jinja2 dictdiffer six asn1crypto
+      pip3 install  jinja2 dictdiffer six asn1crypto
 
 RUN \
     cd /working && \
@@ -51,7 +51,7 @@ RUN \
     echo -n "YangVoodoo:" >>.buildinfo && \
     # git log | head -n 1 >>.buildinfo && \
     # CHANGE VERSION NUMBER HERE
-    echo "0.0.6.6" >>.buildinfo && \
+    echo "0.0.7.0" >>.buildinfo && \
     python3 setup.py install
 
 RUN \

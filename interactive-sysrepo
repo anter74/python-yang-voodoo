@@ -4,7 +4,6 @@ from yangvoodoo.Common import Utils
 
 try:
     import jinja2
-    from lxml import etree
     import dictdiffer
 except ImportError as err:
     print("")

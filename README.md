@@ -34,7 +34,7 @@ container bronze {
 ```
 
 
-This project builds upon [Sysrepo](http://www.sysrepo.org/) as the **default** datastore, and [Libyang](https://github.com/CESNET/libyang) to tightly couple the data model to a set of standard yang models. [lxml](https://lxml.de/index.html) is used for processing of templates.
+This project builds upon [Sysrepo](http://www.sysrepo.org/) as the **default** datastore, and [Libyang](https://github.com/CESNET/libyang) to tightly couple the data model to a set of standard yang models.
 
 
 

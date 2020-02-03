@@ -93,14 +93,14 @@ RUN \
 
 
 # CHANGE VERSION NUMBER HERE
-ENV MY_VERSION=0.0.6.7
+ENV MY_VERSION=0.0.7.0
 ENV GIT_BRANCH=master
 ENV MY_ARCH=amd64
 
 RUN \
       git clone https://github.com/allena29/libyang-cffi.git && \
       cd libyang-cffi && \
-      git checkout libyang-data-tree-merge && \
+      git checkout master && \
       echo "#!/bin/bash" >rebuild.sh && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
@@ -118,7 +118,7 @@ RUN \
       cd /working && \
       git checkout devel && \
       pip3 install -r requirements.txt && \
-      pip3 install jinja2 lxml && \
+      pip3 install jinja2 && \
       python3 setup.py install && \
       python3 setup.py bdist_wheel && \
       python3 setup.py sdist && \
@@ -251,7 +251,7 @@ RUN \
 
 
 RUN \
-    pip3 install lxml jinja2 dictdiffer six asn1crypto && \
+    pip3 install jinja2 dictdiffer six asn1crypto && \
     pip3 install mock coverage nose2 autopep8 pyflakes xenon coveralls && \
     cd /working && \
     echo "Git Pull (v2)" && \

@@ -1,7 +1,7 @@
 # Contributor:
 # Maintainer:
 pkgname="libyang"
-pkgver="v1.0r3"
+pkgver="v1.0.130r0"
 pkgrel=0
 pkgdesc="C-library for parsing yang models."
 url="https://github.com/CESNET/libyang"
@@ -11,8 +11,8 @@ depends="pcre"
 makedepends="cmake"
 install=""
 subpackages="$pkgname-dev $pkgname-doc"
-source="https://github.com/CESNET/libyang/archive/v1.0-r3.tar.gz"
-builddir="$srcdir/libyang-1.0-r3"
+source="https://github.com/CESNET/libyang/archive/v1.0.130.tar.gz"
+builddir="$srcdir/libyang-1.0.130"
 
 build() {
 	if [ "$CBUILD" != "$CHOST" ]; then
@@ -40,4 +40,4 @@ package() {
 	make DESTDIR="$pkgdir" install
 }
 
-sha512sums="02573db0085c9d15b49f38d1f4eea311ea91c20b4c45c33194bbcd0e2e7f00a286dd7053919138a543744913387c8c47f5024740d70477f40d700ca9d3f5bbd6  v1.0-r3.tar.gz"
+sha512sums="208c5a0ba5400664c6bbdcb5e374b6a6b23cd30be51726783a4553b4e4beaa7dfe21e8abbf5f1277c6dcff506cb1253046944468a22a2ecdb68708ab8944a9b7  v1.0.130.tar.gz"
