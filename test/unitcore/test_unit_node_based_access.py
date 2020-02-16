@@ -279,6 +279,14 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
         for i in range(len(items)):
             self.assertEqual(repr(items[i]), expected_results[i])
 
+        self.assertEqual(repr(self.root.simplelist.get_index(1)),
+                         "VoodooListElement{/integrationtest:simplelist[simplekey='Z']}")
+        self.assertEqual(repr(self.root.simplelist.get_index(0)),
+                         "VoodooListElement{/integrationtest:simplelist[simplekey='A']}")
+        with self.assertRaises(Errors.ListDoesNotContainIndexError):
+            self.assertEqual(repr(self.root.simplelist.get_index(990)),
+                             "VoodooListElement{/integrationtest:simplelist[simplekey='A']}")
+
         outside_a = self.root.outsidelist.create('a')
         outside_a.insidelist.create('1')
         outside_a.insidelist.create('2')
@@ -309,6 +317,10 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
         ll.create('A')
         ll.create('Z')
         ll.create('B')
+
+        self.assertEqual(ll.get_index(1), 'Z')
+        with self.assertRaises(Errors.LeafListDoesNotContainIndexError):
+            self.assertEqual(ll.get_index(14), 'Z')
 
         with self.assertRaises(yangvoodoo.Errors.ListItemCannotBeBlank):
             self.root.morecomplex.leaflists.simple.create('')

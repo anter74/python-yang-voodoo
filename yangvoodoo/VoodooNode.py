@@ -346,6 +346,24 @@ class LeafList(Node):
 
         return None
 
+    def get_index(self, index):
+        """
+        Get an item from the list by index.
+
+        Example:
+            node.get_index(0)               - returns the value for the leaf-list at the index requested.
+        """
+        context = self._context
+        node = self._node
+
+        results = list(context.dal.gets(node.real_data_path))
+        try:
+            result = results[index]
+        except IndexError:
+            raise Errors.LeafListDoesNotContainIndexError(len(results), index, node.real_data_path)
+
+        return result
+
 
 class List(ContainingNode):
 
@@ -481,6 +499,28 @@ class List(ContainingNode):
             raise Errors.ListDoesNotContainElement(node.real_data_path + predicates)
         # Return Object
         new_node = Common.YangNode(node.libyang_node, node.real_schema_path, node.real_data_path+predicates)
+        return ListElement(context, new_node, self)
+
+    def get_index(self, index):
+        """
+        Get an item from the list by index.
+
+        Example:
+            node.get_index(0)               - returns the first list element assuming the list is big enough
+        """
+        context = self._context
+        node = self._node
+
+        results = list(context.dal.gets_unsorted(node.real_data_path, node.real_schema_path,
+                                                 ignore_empty_lists=True))
+
+        try:
+            result = results[index]
+        except IndexError:
+            raise Errors.ListDoesNotContainIndexError(len(results), index, node.real_data_path)
+
+        # Return Object
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, result)
         return ListElement(context, new_node, self)
 
     def __iter__(self):

@@ -31,7 +31,7 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.6.5"
+    __version__ = "0.0.6.7"
 
     def __init__(self, log=None, local_log=False, data_abstraction_layer=None,
                  disable_proxy=True, use_stub=False):
@@ -603,6 +603,25 @@ Children: %s""" % (str(children)[1:-1])
             with open('.buildinfo') as fh:
                 print(fh.read())
 
+    def get_raw_xpath(self, xpath, with_val=False):
+        """
+        Return a generator of matching xpaths, optionall with the value.
+        """
+        self.log.trace("GET_RAW_XPATH: %s", xpath)
+        for result in self.data_abstraction_layer.get_raw_xpath(xpath, with_val):
+            yield result
+
+    def get_raw_xpath_single_val(self, xpath):
+        """
+        Return a single value from the XPATH provided, or return None.
+        If there are multiple values return the first result only.
+        This is intended only to be used with leaves.
+        """
+        self.log.trace("GET_RAW_XPATH_SINGLE_VAL: %s", xpath)
+        for result in self.data_abstraction_layer.get_raw_xpath(xpath, True):
+            return result[1]
+        return None
+
     def set_data_by_xpath(self, context, data_path, value):
         """
         This method is a backdoor way to set data in the datastore.
@@ -618,7 +637,7 @@ Children: %s""" % (str(children)[1:-1])
         if not node_schema.nodetype() == Types.LIBYANG_NODETYPE['LEAF']:
             raise PathIsNotALeaf("set_raw_data only operates on leaves")
         val_type = Utils.get_yang_type(node_schema.type(), value, node_schema.real_schema_path)
-        context.dal.set(data_path, value, val_type)
+        self.data_abstraction_layer.set(data_path, value, val_type)
 
     def load(self, filename, format=1, trusted=False):
         """
