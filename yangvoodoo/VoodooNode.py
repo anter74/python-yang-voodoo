@@ -186,7 +186,7 @@ class Node:
                 if str(enum_valid_val) == str(val):
                     match = True
             if not match:
-                raise Errors.ValueDoesMatchEnumeration(node_schema.real_data_path, val)
+                self._raise_ValueDoesMatchEnumeration(node_schema, val)
 
         if val is None:
             context.dal.delete(node_schema.real_data_path)
@@ -194,6 +194,10 @@ class Node:
 
         backend_type = Common.Utils.get_yang_type(node_schema.type(), val, node_schema.real_data_path)
         context.dal.set(node_schema.real_data_path, val, backend_type)
+
+    @staticmethod
+    def _raise_ValueDoesMatchEnumeration(node_schema, val):
+        raise Errors.ValueDoesMatchEnumeration(node_schema.real_data_path, val)
 
     def __dir__(self, no_translations=False):
         node = self._node

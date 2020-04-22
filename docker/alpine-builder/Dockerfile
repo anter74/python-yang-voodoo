@@ -100,7 +100,7 @@ RUN \
       cd /opt/dev && \
       cd libyang-cffi && \
       git pull && \
-      git checkout master && \
+      git checkout validate-strict && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs
