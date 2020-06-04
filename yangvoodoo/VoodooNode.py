@@ -135,6 +135,11 @@ class Node:
             dal_value = context.dal.get(node_schema.real_data_path, default_value=node_schema.default())
             if dal_value is None and leaf_type in Types.NUMBERS:
                 return 0
+            if leaf_type == Types.DATA_ABSTRACTION_MAPPING['BOOLEAN']:
+                if dal_value == 'true':
+                    return True
+                elif dal_value == 'false':
+                    return False
             return dal_value
         elif node_type == Types.LIBYANG_NODETYPE['LIST']:
             # Return Object

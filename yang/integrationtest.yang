@@ -215,6 +215,10 @@ module integrationtest {
       leaf bool {
         type boolean;
       }
+      leaf bool_with_default {
+        type boolean;
+        default true;
+      }
       leaf dec_64 {
         type decimal64 {
           fraction-digits 3;

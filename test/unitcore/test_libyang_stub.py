@@ -163,7 +163,7 @@ class test_libyang_stub(unittest.TestCase):
         self.root.simpleleaf = None
 
         # Assert
-        self.assertEqual(self.root.simpleleaf, None)
+        self.assertEqual(self.root.simpleleaf, '')
 
     def test_leaf_empty(self):
         # Arrange
@@ -175,7 +175,7 @@ class test_libyang_stub(unittest.TestCase):
         self.root.simpleleaf = None
 
         # Assert
-        self.assertEqual(self.root.simpleleaf, None)
+        self.assertEqual(self.root.simpleleaf, '')
 
     def test_leaf_empty_not_existing(self):
         # Act
@@ -183,6 +183,21 @@ class test_libyang_stub(unittest.TestCase):
 
         # Assert
         self.assertEqual(self.root.simpleleaf, None)
+
+    def test_boolean_defaults_case_true(self):
+        # Act
+        self.root.validator.types.bool_with_default = False
+
+        # Assert
+        if self.root.validator.types.bool_with_default is not False:
+            self.fail('value returned was not False - was %s' % (str(self.root.validator.types.bool_with_default)))
+
+    def test_boolean_defaults_case_false(self):
+        # Act
+
+        # Assert
+        if self.root.validator.types.bool_with_default is not True:
+            self.fail('value returned was not True - was %s' % (str(self.root.validator.types.bool_with_default)))
 
     def test_connect_connects_if_libyang_data_already_exists(self):
         stubly = Mock()
