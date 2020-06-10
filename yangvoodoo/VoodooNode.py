@@ -267,7 +267,7 @@ class Empty():
     def remove(self):
         context = self._context
         node = self._node
-        context.dal.delete(node.real_data_path)
+        context.dal.uncreate(node.real_data_path)
 
     def __repr__(self):
         node = self._node
@@ -688,6 +688,16 @@ class PresenceContainer(Container):
 
         context.dal.create_container(node.real_data_path)
         return PresenceContainer(context, node, self)
+
+    def destroy(self):
+        context = self._context
+        node = self._node
+
+        if context.readonly:
+            raise Errors.ReadonlyError()
+
+        context.dal.uncreate(node.real_data_path)
+        return None
 
     def __repr__(self):
         base_repr = self._base_repr()

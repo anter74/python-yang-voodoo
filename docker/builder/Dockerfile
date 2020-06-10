@@ -75,7 +75,7 @@ RUN \
       cd libyang && \
       git checkout 85d09f3bdf5ea01ea2e01deb384b2b0dde057e3f && \
       git checkout v0.16-r3 && \
-      git checkout v1.0-r3 && \
+      git checkout v1.0.176 && \
       mkdir build && cd build && \
       # We may not end up using these bindings (yang) and instead use (libyang - see below)
       # But it's useful to debug with both
@@ -85,15 +85,15 @@ RUN \
       make install && \
       ldconfig && \
       echo "libyang - programmatic access to yang modles" >description-pak && \
-      checkinstall --nodoc --pkglicense=CESNET --requires=libpcre3 --provides=libyang --pkgname=libyang --maintainer=adam.allen --pkgversion=1.1.30  --pkggroup=devel -y && \
+      checkinstall --nodoc --pkglicense=CESNET --requires=libpcre3 --provides=libyang --pkgname=libyang --maintainer=adam.allen --pkgversion=1.0.176  --pkggroup=devel -y && \
       mkdir /artefacts && \
-      alien -r libyang_1.1.30-1_amd64.deb && \
+      alien -r libyang_1.0.176-1_amd64.deb && \
       mv libyang*.rpm /artefacts && \
-      mv libyang_1.1.30-1_amd64.deb /artefacts
+      mv libyang_1.0.176-1_amd64.deb /artefacts
 
 
 # CHANGE VERSION NUMBER HERE
-ENV MY_VERSION=0.0.7.2
+ENV MY_VERSION=0.0.8.0
 ENV GIT_BRANCH=master
 ENV MY_ARCH=amd64
 
@@ -156,9 +156,9 @@ RUN \
       git clone https://github.com/sysrepo/sysrepo.git && \
       cd sysrepo && \
       # git checkout 724a62fa830df7fcb2736b1ec41b320abe5064d2 && \
-      git checkout v0.7.7 && \
-      git checkout 660552222ee6376efa560d9bcc7b832886ff460a && \
-      mkdir build_python3 && \
+      # git checkout v0.7.7 && \
+      # git checkout 660552222ee6376efa560d9bcc7b832886ff460a && \
+      git checkout v1.4.66 && \
       cd build_python3 && \
       cmake -DREPOSITORY_LOC=/sysrepo -DGEN_PYTHON_VERSION=3 .. && \
       make -j6 && \
@@ -185,6 +185,7 @@ RUN \
       cd libnetconf2 && mkdir build && cd build && \
       # git checkout 54ba1c7a1dbd85f3e700c1629ced8e4b52bac4ec && \
       git checkout v0.12-r1 && \
+      git checkout v1.1.24 && \
       cmake .. && \
       make -j6 && \
       make install && \
@@ -199,6 +200,7 @@ RUN \
       git checkout v0.7-r1 && \
       # This commit fixes keystored method signature (original-xpath missing)
       git checkout 6db56863fcac3fc21c18835576314a75ceea1267 && \
+      git checkout v1.1.34 && \
       cd keystored && mkdir build && cd build && \
       cmake .. && \
       make -j6  && \

@@ -68,7 +68,7 @@ RUN \
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.7.2" >/version && \
+      echo "0.0.8.0" >/version && \
       git clone https://github.com/CESNET/libyang.git && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
@@ -83,7 +83,7 @@ RUN \
 RUN \
       cd /opt/dev && \
       cd libyang && \
-      git checkout v1.0.130 && \
+      git checkout v1.0.176 && \
       mkdir build && cd build && \
       cmake .. && \
       make -j6  && \
@@ -100,7 +100,7 @@ RUN \
       cd /opt/dev && \
       cd libyang-cffi && \
       git pull && \
-      git checkout validate-strict && \
+      git checkout master && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs

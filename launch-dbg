@@ -12,7 +12,7 @@ fi
 echo "Building Image"
 if [ "$1" = "" ]
 then
-  image=`docker build docker/builder | tail -n 1 | awk '{print $3}'`
+  image=`docker build docker/alpine-builder | tail -n 1 | awk '{print $3}'`
 else
   image=$1
 fi
