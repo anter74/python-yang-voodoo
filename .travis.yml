@@ -23,7 +23,7 @@ install:
 
 script:
   - docker exec -i working /bin/sh -c "cd /working; git checkout $TRAVIS_COMMIT"
-  - docker exec -i working /working/test-in-docker.sh  - sysrepo not in play
+  - docker exec -i working /working/run-test.sh
 
 after_success:
   - pwd
