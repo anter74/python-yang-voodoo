@@ -25,12 +25,12 @@ class DataAccess:
 
 
     Dependencies:
-     - libyang v1.0.130 (https://github.com/CESNET/libyang/tree/v1.0.130)
+     - libyang v1.0.176 (https://github.com/CESNET/libyang/tree/v1.0.176)
      - libyang-cffi   (https://github.com/allena29/libyang-cffi/tree/master)
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.7"
+    __version__ = "0.0.8.0"
 
     def __init__(self, log=None, local_log=False, data_abstraction_layer=None,
                  disable_proxy=True, use_stub=False):

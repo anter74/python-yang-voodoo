@@ -135,6 +135,11 @@ class Node:
             dal_value = context.dal.get(node_schema.real_data_path, default_value=node_schema.default())
             if dal_value is None and leaf_type in Types.NUMBERS:
                 return 0
+            if leaf_type == Types.DATA_ABSTRACTION_MAPPING['BOOLEAN']:
+                if dal_value == 'true':
+                    return True
+                elif dal_value == 'false':
+                    return False
             return dal_value
         elif node_type == Types.LIBYANG_NODETYPE['LIST']:
             # Return Object
@@ -186,7 +191,7 @@ class Node:
                 if str(enum_valid_val) == str(val):
                     match = True
             if not match:
-                raise Errors.ValueDoesMatchEnumeration(node_schema.real_data_path, val)
+                self._raise_ValueDoesMatchEnumeration(node_schema, val)
 
         if val is None:
             context.dal.delete(node_schema.real_data_path)
@@ -194,6 +199,10 @@ class Node:
 
         backend_type = Common.Utils.get_yang_type(node_schema.type(), val, node_schema.real_data_path)
         context.dal.set(node_schema.real_data_path, val, backend_type)
+
+    @staticmethod
+    def _raise_ValueDoesMatchEnumeration(node_schema, val):
+        raise Errors.ValueDoesMatchEnumeration(node_schema.real_data_path, val)
 
     def __dir__(self, no_translations=False):
         node = self._node
@@ -258,7 +267,7 @@ class Empty():
     def remove(self):
         context = self._context
         node = self._node
-        context.dal.delete(node.real_data_path)
+        context.dal.uncreate(node.real_data_path)
 
     def __repr__(self):
         node = self._node
@@ -679,6 +688,16 @@ class PresenceContainer(Container):
 
         context.dal.create_container(node.real_data_path)
         return PresenceContainer(context, node, self)
+
+    def destroy(self):
+        context = self._context
+        node = self._node
+
+        if context.readonly:
+            raise Errors.ReadonlyError()
+
+        context.dal.uncreate(node.real_data_path)
+        return None
 
     def __repr__(self):
         base_repr = self._base_repr()

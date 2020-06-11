@@ -103,3 +103,18 @@
    - Fix for matching uint/decimal64 in a union (the dal returns a string not a python int)
    - Add `get_raw_xpath` to sublydal
    - Add get_index(n) to a List to return the item at position if it exists.
+
+# 0.0.7.x
+
+   - When loading/merging payloads enable LIBYANG's strict validation.
+   - BUGFIX: booleans with a default of 'true' would return the default when set to False.
+   - BUGFIX: booleans returned strings 'true', 'false' instead of python True/False in libyang stub
+
+
+# 0.0.8.x
+
+   - Upgrade libyang to 1.0.176, otherwise setting a leaf to an invalid value will take effect in the data tree.
+   - Add `destroy()` operation to presence containers.
+
+   - **THE DICTIONARY BASED STUB NEEDS TO BE DEPRECATED.**
+   - **PYTHON API FOR SYSREPO HAS CHANGED (OR DISABLED) - ONLY LIBYANG BASED STUB IS TESTED FROM 0.7.3**

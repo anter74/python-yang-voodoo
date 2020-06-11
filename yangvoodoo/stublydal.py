@@ -184,7 +184,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         except StopIteration:
             val = None
 
-        if val:
+        if val is not None:
             return val
 
         if default_value:

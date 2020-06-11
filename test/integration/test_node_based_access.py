@@ -349,6 +349,7 @@ class test_node_based_access(unittest.TestCase):
             '/integrationtest:imports-in-here/name': 'foo',
             '/integrationtest:default': 'statusquo',
             '/integrationtest:whencontainer/then': 'thendefault',
+            '/integrationtest:validator/types/bool_with_default': True,
             "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/band": 'Dead Meadow',
             "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/favourite": True,
             "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/albums[album='Old Growth']/album": 'Old Growth',

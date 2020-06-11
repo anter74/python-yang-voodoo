@@ -218,3 +218,55 @@ class test_new_stuff(unittest.TestCase):
         self.assertEqual(repr(list_element2), expected_result2)
         self.assertEqual(list_element.contain.leafa, 'ABCDEF')
         self.assertEqual(list_element.contain.leafb, 44)
+
+    def test_destroy_presence_container(self):
+        self.root.validator.mandatories.create()
+
+        # Assert
+        result = self.subject.dumps()
+        expected_result = ('<validator xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest">'
+                           '<mandatories/></validator>')
+        self.assertEqual(result, expected_result)
+
+        # Second Act
+        self.root.validator.mandatories.destroy()
+
+        # Assert
+        result = self.subject.dumps()
+        expected_result = '<validator xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest"/>'
+        self.assertEqual(result, expected_result)
+
+    def test_destroy_presence_container_with_child_data(self):
+        self.root.validator.mandatories.create()
+        self.root.validator.mandatories.this_is_mandatory = 'bob'
+        # Assert
+        result = self.subject.dumps()
+        expected_result = ('<validator xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest">'
+                           '<mandatories><this-is-mandatory>bob</this-is-mandatory></mandatories></validator>')
+        self.assertEqual(result, expected_result)
+
+        # Second Act
+        self.root.validator.mandatories.destroy()
+
+        # Assert
+        result = self.subject.dumps()
+        expected_result = '<validator xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest"/>'
+        self.assertEqual(result, expected_result)
+
+    def test_deleting_an_empty_node(self):
+        self.root.validator.types.void.create()
+
+        # Assert
+        result = self.subject.dumps()
+        expected_result = ('<validator xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest">'
+                           '<types><void/></types></validator>')
+        self.assertEqual(result, expected_result)
+
+        # Second Act
+        self.root.validator.types.void.remove()
+
+        # Assert
+        result = self.subject.dumps()
+        expected_result = ('<validator xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest">'
+                           '<types/></validator>')
+        self.assertEqual(result, expected_result)
