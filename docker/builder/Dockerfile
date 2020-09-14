@@ -1,8 +1,8 @@
-FROM ubuntu:disco
+FROM ubuntu:focal
 
 
 RUN \
-      apt-get update && apt-get install -y \
+      apt-get update && DEBIAN_FRONTEND=noninteractive  apt-get install -yq \
       # general tools
       git \
       vim \
@@ -14,7 +14,7 @@ RUN \
       libpython3.7
 
 RUN \
-      apt-get update && apt-get install -y \
+      apt-get update && DEBIAN_FRONTEND=noninteractive  apt-get install -yq \
       cmake \
       build-essential \
       supervisor \
@@ -93,14 +93,14 @@ RUN \
 
 
 # CHANGE VERSION NUMBER HERE
-ENV MY_VERSION=0.0.8.1
+ENV MY_VERSION=0.0.8.2
 ENV GIT_BRANCH=master
 ENV MY_ARCH=amd64
 
 RUN \
       git clone https://github.com/allena29/libyang-cffi.git && \
       cd libyang-cffi && \
-      git checkout master && \
+      git checkout add-support-annotations && \
       echo "#!/bin/bash" >rebuild.sh && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \

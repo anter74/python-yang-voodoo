@@ -30,7 +30,7 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.8.1"
+    __version__ = "0.0.8.2"
 
     def __init__(self, log=None, local_log=False, data_abstraction_layer=None,
                  disable_proxy=True, use_stub=False):
@@ -97,7 +97,8 @@ class DataAccess:
         type = Types.LIBYANG_NODETYPE[node_type][0] + Types.LIBYANG_NODETYPE[node_type][1:].lower()
         if node_type in Types.LIBYANG_LEAF_LIKE_NODES:
             leaf_type = node_schema.type().base()
-            type = type + " of type " + Types.LIBYANG_LEAF_TYPES[leaf_type][0] + Types.LIBYANG_LEAF_TYPES[leaf_type][1:].lower()
+            type = type + " of type " + \
+                Types.LIBYANG_LEAF_TYPES[leaf_type][0] + Types.LIBYANG_LEAF_TYPES[leaf_type][1:].lower()
         if not description:
             description = "N/A"
         values = {
@@ -243,7 +244,8 @@ Children: %s""" % (str(children)[1:-1])
         return super_root
 
     def _trace(self, vnt, yn, context):
-        self.log.trace("%s: %s %s\nschema: %s\ndata: %s", vnt, context, yn.libyang_node,  yn.real_schema_path,  yn.real_data_path)
+        self.log.trace("%s: %s %s\nschema: %s\ndata: %s", vnt, context,
+                       yn.libyang_node,  yn.real_schema_path,  yn.real_data_path)
 
     def get_node(self, readonly=False):
         """
@@ -683,3 +685,14 @@ Children: %s""" % (str(children)[1:-1])
         If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
         """
         return self.data_abstraction_layer.merges(payload, format, trusted)
+
+    def advanced_merges(self, payload, format=1, trusted=True):
+        """
+        Merge data from the payload in the format specified, implementing replace/delete netconf
+        tags in the process.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+
+        If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
+        """
+        return self.data_abstraction_layer.advanced_merges(payload, format, trusted)

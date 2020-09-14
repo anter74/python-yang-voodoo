@@ -222,6 +222,9 @@ class BaseDataAbstractionLayer:
     def merges(self, filename, format=1, trusted=True):
         raise NotImplementedError("merges not implemented")
 
+    def advanced_merges(self, filename, format=1, trusted=True):
+        raise NotImplementedError("advanced merges not implemented")
+
     def get_raw_xpath(self, xpath, with_val=False):
         raise NotImplementedError("get_raw_xpath not implemented")
 

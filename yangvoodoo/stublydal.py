@@ -231,3 +231,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
     def merges(self, payload, format=1, trusted=True):
         self.log.trace("MERGES: (format: %s)", format)
         self.libyang_data.merges(payload, format, trusted)
+
+    def advanced_merges(self, payload, format=1, trusted=True):
+        self.log.trace("ADVANCED-MERGES: (format: %s)", format)
+        self.libyang_data.advancedmerge(payload, format, trusted)

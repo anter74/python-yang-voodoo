@@ -20,7 +20,7 @@ RUN \
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.8.1" >/version && \
+      echo "0.0.8.2" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
@@ -35,7 +35,7 @@ RUN \
       cd /opt/dev && \
       cd libyang-cffi && \
       git pull && \
-      git checkout master && \
+      git checkout add-support-annotations && \
       git submodule update --init --recursive && \
       python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs
