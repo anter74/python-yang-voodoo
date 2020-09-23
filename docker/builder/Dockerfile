@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:bionic
 
 
 RUN \
@@ -134,7 +134,7 @@ RUN \
       tar xvf /tmp/working.tar && \
       rm -fr usr/local/games && \
       rm -fr usr/local/lib/python2.7 && \
-      tar cvpf /tmp/libyang.tar usr/local/lib/python3.7/dist-packages/*libyang* usr/local/lib/python3.7/dist-packages/*yangvoodoo* && \
+      tar cvpf /tmp/libyang.tar usr/local/lib/python3.6/dist-packages/*libyang* usr/local/lib/python3.6/dist-packages/*yangvoodoo* && \
       tar xvf /tmp/libyang.tar && \
       mkdir ~/python-bundle/DEBIAN && \
       echo "Package: python-yang-vooodoo-bundle" >~/python-bundle/DEBIAN/control && \

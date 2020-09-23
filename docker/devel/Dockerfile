@@ -1,4 +1,4 @@
-FROM ubuntu:disco
+FROM ubuntu:bionic
 
 # See the builder directory which compiles our dependencies from scratch.
 # This is trying to build a minimal file and will just install those packages.

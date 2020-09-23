@@ -21,5 +21,5 @@ docker cp $container:/pkgs centos-release
 docker stop $container
 rm -fr centos-release/pkgs/*.tar.gz
 
-img=`docker build  centos-release | tail -n 1 | sed -e's/Successfully built //'`
+img=`docker build --squash centos-release | tail -n 1 | sed -e's/Successfully built //'`
 docker tag $img allena29/yangvoodoo:centos-release
