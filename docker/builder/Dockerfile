@@ -1,8 +1,8 @@
-FROM ubuntu:disco
+FROM ubuntu:bionic
 
 
 RUN \
-      apt-get update && apt-get install -y \
+      apt-get update && DEBIAN_FRONTEND=noninteractive  apt-get install -yq \
       # general tools
       git \
       vim \
@@ -14,7 +14,7 @@ RUN \
       libpython3.7
 
 RUN \
-      apt-get update && apt-get install -y \
+      apt-get update && DEBIAN_FRONTEND=noninteractive  apt-get install -yq \
       cmake \
       build-essential \
       supervisor \
@@ -93,14 +93,14 @@ RUN \
 
 
 # CHANGE VERSION NUMBER HERE
-ENV MY_VERSION=0.0.8.0
+ENV MY_VERSION=0.0.8.3
 ENV GIT_BRANCH=master
 ENV MY_ARCH=amd64
 
 RUN \
       git clone https://github.com/allena29/libyang-cffi.git && \
       cd libyang-cffi && \
-      git checkout master && \
+      git checkout add-support-annotations && \
       echo "#!/bin/bash" >rebuild.sh && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \
@@ -134,7 +134,7 @@ RUN \
       tar xvf /tmp/working.tar && \
       rm -fr usr/local/games && \
       rm -fr usr/local/lib/python2.7 && \
-      tar cvpf /tmp/libyang.tar usr/local/lib/python3.7/dist-packages/*libyang* usr/local/lib/python3.7/dist-packages/*yangvoodoo* && \
+      tar cvpf /tmp/libyang.tar usr/local/lib/python3.6/dist-packages/*libyang* usr/local/lib/python3.6/dist-packages/*yangvoodoo* && \
       tar xvf /tmp/libyang.tar && \
       mkdir ~/python-bundle/DEBIAN && \
       echo "Package: python-yang-vooodoo-bundle" >~/python-bundle/DEBIAN/control && \

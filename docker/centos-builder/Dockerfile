@@ -20,7 +20,7 @@ RUN \
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.8.0" >/version && \
+      echo "0.0.8.3" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
@@ -28,6 +28,7 @@ RUN \
 RUN \
       cd /working && \
       mkdir /pkgs && \
+      git checkout -b add-support-annotations && \ 
       python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs
 
@@ -35,7 +36,7 @@ RUN \
       cd /opt/dev && \
       cd libyang-cffi && \
       git pull && \
-      git checkout master && \
+      git checkout add-support-annotations && \
       git submodule update --init --recursive && \
       python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs
@@ -51,4 +52,9 @@ RUN \
       mv dist/*.whl /pkgs
 
 RUN \
-       tar cvpfz /pkgs/python-3.7-centos-7.tar.gz /usr/local/bin /usr/local/include/ /usr/local/lib
+      mkdir /cleanpython && \
+      rsync -avz /usr/local/bin /cleanpython/ && \
+      rsync -avz /usr/local/include /cleanpython/ && \
+      rsync -avz  --exclude='test/' --exclude='__pycache__/' /usr/local/lib /cleanpython/ && \
+      cd /cleanpython && \
+      tar cvpfz /pkgs/python-3.7-centos-7.tar.gz bin include lib

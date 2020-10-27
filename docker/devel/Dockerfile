@@ -1,10 +1,10 @@
-FROM ubuntu:disco
+FROM ubuntu:bionic
 
 # See the builder directory which compiles our dependencies from scratch.
 # This is trying to build a minimal file and will just install those packages.
 
 RUN \
-      apt-get update && apt-get install -y \
+      apt-get update && DEBIAN_FRONTEND=noninteractive  apt-get install -yq \
       python3 \
       libprotobuf-c1 \
       libev4 \
@@ -47,11 +47,11 @@ RUN \
     echo -n "Build Date:" >.buildinfo && \
     date >>.buildinfo && \
     echo "Sysrepo: Commit 660552222ee6376efa560d9bcc7b832886ff460a" >>.buildinfo && \
-    echo "Libyang: 1.0.176" >>.buildinfo && \
+    echo "Libyang: 1.0.184" >>.buildinfo && \
     echo -n "YangVoodoo:" >>.buildinfo && \
     # git log | head -n 1 >>.buildinfo && \
     # CHANGE VERSION NUMBER HERE
-    echo "0.0.8.0" >>.buildinfo && \
+    echo "0.0.8.3" >>.buildinfo && \
     python3 setup.py install
 
 RUN \
