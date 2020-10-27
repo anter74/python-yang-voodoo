@@ -79,9 +79,9 @@ class test_datastore_voodooentry_point(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             self.subject.dumps(format=1)
         with self.assertRaises(NotImplementedError):
-            self.subject.merges(format=1)
+            self.subject.merges('', format=1)
         with self.assertRaises(NotImplementedError):
-            self.subject.advanced_merges(format=1)
+            self.subject.advanced_merges('', format=1)
         with self.assertRaises(NotImplementedError):
             self.subject.get_raw_xpath('/xpath', with_val=False)
         self.subject.setup_root()

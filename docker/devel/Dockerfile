@@ -51,7 +51,7 @@ RUN \
     echo -n "YangVoodoo:" >>.buildinfo && \
     # git log | head -n 1 >>.buildinfo && \
     # CHANGE VERSION NUMBER HERE
-    echo "0.0.8.2" >>.buildinfo && \
+    echo "0.0.8.3" >>.buildinfo && \
     python3 setup.py install
 
 RUN \
