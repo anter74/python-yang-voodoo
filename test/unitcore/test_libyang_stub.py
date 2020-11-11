@@ -243,15 +243,15 @@ class test_libyang_stub(unittest.TestCase):
         self.assertEqual(self.root.morecomplex.python_reserved_keywords.class_, 'class')
 
         expected_result = {
-            '/integrationtest:morecomplex': True,
-            '/integrationtest:morecomplex/python-reserved-keywords': True,
+            '/integrationtest:morecomplex': '',
+            '/integrationtest:morecomplex/python-reserved-keywords': '',
             '/integrationtest:morecomplex/python-reserved-keywords/class': 'class',
-            '/integrationtest:morecomplex/python-reserved-keywords/import': True,
+            '/integrationtest:morecomplex/python-reserved-keywords/import': '',
             "/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']/break": 'x',
             "/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']/not-break": 'y',
             "/integrationtest:morecomplex/python-reserved-keywords/global[.='x']": 'x',
             "/integrationtest:morecomplex/python-reserved-keywords/global[.='y']": 'y',
-            '/integrationtest:morecomplex/leaflists': True,
+            '/integrationtest:morecomplex/leaflists': '',
             "/integrationtest:morecomplex/leaflists/simple[.='a']": 'a',
             "/integrationtest:morecomplex/leaflists/simple[.='b']": 'b',
             "/integrationtest:morecomplex/leaflists/simple[.='c']": 'c'

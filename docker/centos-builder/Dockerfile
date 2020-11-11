@@ -18,9 +18,11 @@ RUN \
       pip3 install wheel
 
 
+ENV GIT_BRANCH=remove-true-from-datanode
+
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.8.3" >/version && \
+      echo "0.0.8.4" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
@@ -28,7 +30,7 @@ RUN \
 RUN \
       cd /working && \
       mkdir /pkgs && \
-      git checkout -b add-support-annotations && \ 
+      git checkout -b $GIT_BRANCH && \
       python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs
 
@@ -36,7 +38,7 @@ RUN \
       cd /opt/dev && \
       cd libyang-cffi && \
       git pull && \
-      git checkout add-support-annotations && \
+      git checkout $GIT_BRANCH && \
       git submodule update --init --recursive && \
       python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs
