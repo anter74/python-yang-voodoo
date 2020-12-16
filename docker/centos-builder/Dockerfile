@@ -22,7 +22,7 @@ ENV GIT_BRANCH=remove-true-from-datanode
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.8.4" >/version && \
+      echo "0.0.8.5" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
@@ -30,7 +30,7 @@ RUN \
 RUN \
       cd /working && \
       mkdir /pkgs && \
-      git checkout -b $GIT_BRANCH && \
+      git checkout $GIT_BRANCH && \
       python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs
 
