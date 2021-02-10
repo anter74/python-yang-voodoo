@@ -12,7 +12,7 @@ colorama==0.3.9
 contextvars==2.4
 coverage==4.5.3
 coveralls==1.8.1
-cryptography==3.2
+cryptography==3.3.2
 decorator==4.4.0
 dictdiffer==0.8.0
 dill==0.2.9
