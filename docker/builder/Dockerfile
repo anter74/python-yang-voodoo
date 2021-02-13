@@ -93,14 +93,14 @@ RUN \
 
 
 # CHANGE VERSION NUMBER HERE
-ENV MY_VERSION=0.0.8.3
-ENV GIT_BRANCH=master
+ENV MY_VERSION=0.0.8.5
+ENV GIT_BRANCH=remove-true-from-datanode
 ENV MY_ARCH=amd64
 
 RUN \
       git clone https://github.com/allena29/libyang-cffi.git && \
       cd libyang-cffi && \
-      git checkout add-support-annotations && \
+      git checkout $GIT_BRANCH && \
       echo "#!/bin/bash" >rebuild.sh && \
       LIBYANG_INSTALL=system python3 setup.py install && \
       LIBYANG_INSTALL=system python3 setup.py bdist_wheel && \

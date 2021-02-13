@@ -144,10 +144,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         for xpath in self.libyang_data.gets_xpath(xpath):
             if with_val:
                 val = next(self.libyang_data.get_xpath(xpath))
-                if val:
-                    yield xpath, val.value
-                else:
-                    yield xpath, None
+                yield xpath, val.value
             else:
                 yield xpath
 

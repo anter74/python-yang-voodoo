@@ -102,8 +102,8 @@ class test_new_stuff(unittest.TestCase):
         }
 
         expected_xpaths2 = {
-            '/integrationtest:diff': True,
-            '/integrationtest:diff/adds': True,
+            '/integrationtest:diff': '',
+            '/integrationtest:diff/adds': '',
             '/integrationtest:diff/adds/a-2nd-leaf': 'A second leaf',
             '/integrationtest:diff/adds/a-leaf': 'A Leaf Value',
             "/integrationtest:diff/adds/a-leaf-list[.='A']": 'A',
@@ -116,8 +116,8 @@ class test_new_stuff(unittest.TestCase):
             "/integrationtest:diff/adds/a-list[listkey='KEY3']/listkey": 'KEY3',
             "/integrationtest:diff/adds/a-list[listkey='KEY3']/listnonkey": 'VAL3',
             '/integrationtest:diff/adds/boolean': True,
-            '/integrationtest:diff/adds/empty-leaf': True,
-            '/integrationtest:diff/adds/presence-container': True
+            '/integrationtest:diff/adds/empty-leaf': '',
+            '/integrationtest:diff/adds/presence-container': ''
         }
 
         self.assertEqual(xpaths, expected_xpaths)
@@ -126,8 +126,8 @@ class test_new_stuff(unittest.TestCase):
         differ = yangvoodoo.DiffEngine.DiffIterator(xpaths, xpaths2)
 
         expected_diff_results = {
-            '/integrationtest:diff': (None, True, 1),
-            '/integrationtest:diff/adds': (None, True, 1),
+            '/integrationtest:diff': (None, '', 1),
+            '/integrationtest:diff/adds': (None, '', 1),
             '/integrationtest:diff/adds/a-leaf': (None, 'A Leaf Value', 1),
             '/integrationtest:diff/adds/a-2nd-leaf': (None, 'A second leaf', 1),
             "/integrationtest:diff/adds/a-list[listkey='KEY1']/listkey": (None, 'KEY1', 1),
@@ -139,9 +139,9 @@ class test_new_stuff(unittest.TestCase):
             "/integrationtest:diff/adds/a-leaf-list[.='A']": (None, 'A', 1),
             "/integrationtest:diff/adds/a-leaf-list[.='B']": (None, 'B', 1),
             "/integrationtest:diff/adds/a-leaf-list[.='C']": (None, 'C', 1),
-            '/integrationtest:diff/adds/empty-leaf': (None, True, 1),
+            '/integrationtest:diff/adds/empty-leaf': (None, '', 1),
             '/integrationtest:diff/adds/boolean': (None, True, 1),
-            '/integrationtest:diff/adds/presence-container': (None, True, 1),
+            '/integrationtest:diff/adds/presence-container': (None, '', 1),
             '/integrationtest:simpleleaf': ('NonEmptyDoc', None, 3)
         }
 
