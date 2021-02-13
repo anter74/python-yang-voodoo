@@ -118,3 +118,16 @@
 
    - **THE DICTIONARY BASED STUB NEEDS TO BE DEPRECATED.**
    - **PYTHON API FOR SYSREPO HAS CHANGED (OR DISABLED) - ONLY LIBYANG BASED STUB IS TESTED FROM 0.7.3**
+
+   - Mimic netconf replace/remove
+
+   - Return '' instead of True for presence containers/empty leaves to closer tie in with libyang
+
+   - Raise `InvalidListKeyValueError` when creating a list/leaf-list entry with both single (') and
+     double (") quotes as they cannot be encoded in XPATH
+
+   - Upgrade libyang to 1.0.218  (COMMIT) fe3c0ce49c26ac84c6e1d6e235a7d6f74f80bf6a
+     NOTE: 1.0.215 has a regression https://github.com/CESNET/libyang/issues/1415
+
+   - **CONSTRAINT**: yangvoodoo assumes that all XPATH's belong to the same module, this assumption breaks
+     some yang model's with augments in an imported module.

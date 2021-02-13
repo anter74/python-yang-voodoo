@@ -134,6 +134,23 @@ class test_libyang_stub(unittest.TestCase):
         expected_results = ['sdf']
         self.assertEqual(results, expected_results)
 
+    def test_single_vs_double_quotes(self):
+        # Act
+        list_element = self.root.simplelist.create("ABX'C")
+        list_element.nonleafkey = 5
+        list_element = self.root.simplelist.create('AB"C')
+        list_element.nonleafkey = 6
+        with self.assertRaises(yangvoodoo.Errors.InvalidListKeyValueError):
+            list_element = self.root.simplelist.create("AB\"'''C")
+        self.assertEqual(len(self.root.simplelist), 2)
+
+        self.root.morecomplex.leaflists.simple.create('AB"C')
+        self.root.morecomplex.leaflists.simple.create("A\"BC")
+        self.root.morecomplex.leaflists.simple.create("DE'\"F")
+
+        self.assertTrue("DE'\"F" in self.root.morecomplex.leaflists.simple)
+        self.assertEqual(len(self.root.morecomplex.leaflists.simple), 4)
+
     def test_leaf_list(self):
         # Act
         self.root.morecomplex.leaflists.simple.create('ABC')
