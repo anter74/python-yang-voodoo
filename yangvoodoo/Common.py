@@ -237,7 +237,11 @@ class Utils:
         they are not.
         example - [x='X'X'] is not safe.
         """
-        return "[%s='%s']" % (k, v)
+        if '"' in v and "'" in v:
+            raise Errors.InvalidListKeyValueError(v)
+        if "'" not in v:
+            return "[%s='%s']" % (k, v)
+        return '[%s="%s"]' % (k, v)
 
     @staticmethod
     def encode_xpath_predicates(attr, keys, values):

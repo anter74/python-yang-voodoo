@@ -317,6 +317,9 @@ class LeafList(Node):
 
         If the item already exists in the list this operation will silenty
         do nothing.
+
+        libyang supports creating leaf-list elements with both single/double quotes,
+        however when using XPATH to select leaf-list elements this isn't possible.
         """
         context = self._context
         node = self._node

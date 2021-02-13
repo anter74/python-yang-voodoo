@@ -1,3 +1,9 @@
+class InvalidListKeyValueError(Exception):
+
+    def __init__(self, v):
+
+        super().__init__("The value of the list key cannot contain both single and double quotes\n%s" % (v))
+
 
 class NodeHasNoValue(Exception):
 
