@@ -25,15 +25,13 @@ class DataAccess:
 
 
     Dependencies:
-     - libyang v1.0.184 - so version 1.9.2
-        # NOTE: v1.0.215 more tighly enforces JSON parsing of numbers that are strings
-        # but has a defect with canonization of ip prefixes - so we actually want.
-        # https://github.com/CESNET/libyang/commit/e9b544acbde759e067c261d88405249996fd0fa4
+     - libyang v1.0.225 - so version 1.10.17
+        # NOTE: v1.0.215+ more tighly enforces JSON parsing of numbers that are strings
      - libyang-cffi   (https://github.com/allena29/libyang-cffi/tree/master)
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.8.6"
+    __version__ = "0.0.8.7"
 
     def __init__(self, log=None, local_log=False, data_abstraction_layer=None,
                  disable_proxy=True, use_stub=False):

@@ -22,7 +22,7 @@ ENV GIT_BRANCH=remove-true-from-datanode
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.8.6" >/version && \
+      echo "0.0.8.7" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
