@@ -1,10 +1,22 @@
+import libyang
+
+
+class InvalidValueError(libyang.util.InvalidSchemaOrValueError):
+    def __init__(self, value, xpath, error):
+        raise libyang.util.LibyangError(
+            (
+                "The value could not be set, either the value or path is invalid\n"
+                f'Value: "{value}"\n'
+                f"XPATH: {xpath}\n"
+                f"Constraint: {error}\n"
+            )
+        )
+
+
 class InvalidListKeyValueError(Exception):
     def __init__(self, v):
 
-        super().__init__(
-            "The value of the list key cannot contain both single and double quotes\n%s"
-            % (v)
-        )
+        super().__init__("The value of the list key cannot contain both single and double quotes\n%s" % (v))
 
 
 class NodeHasNoValue(Exception):

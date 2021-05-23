@@ -1,5 +1,5 @@
 from typing import Generator, Tuple
-from yangvoodoo.Errors import NotConnect, PathIsNotALeaf
+from yangvoodoo.Errors import InvalidValueError, NotConnect, PathIsNotALeaf
 from yangvoodoo.basedal import BaseDataAbstractionLayer
 from yangvoodoo.Common import PlainObject, Types, Utils, YangNode
 
@@ -198,7 +198,10 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         if not self.connected:
             raise NotConnect()
         # self.log.trace("SET: StubLy Datastore- %s => %s", xpath, value)
+        self._libyang_errors.clear()
         self.libyang_data.set_xpath(xpath, value)
+        if self._libyang_errors:
+            raise InvalidValueError(value, xpath, "; ".join(self._libyang_errors))
 
     def libyang_get_xpath(self, xpath):
         """

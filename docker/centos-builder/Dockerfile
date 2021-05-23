@@ -27,11 +27,11 @@ RUN \
       pip3 install wheel
 
 
-ENV GIT_BRANCH=support-attrs
+ENV GIT_BRANCH=expander-for-html-forms
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.13" >/version && \
+      echo "0.0.14" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
