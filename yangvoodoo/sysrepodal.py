@@ -35,18 +35,15 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         10: sr.SR_STRING_T,
         3: sr.SR_BOOL_T,
         6: sr.SR_ENUM_T,
-        4: sr.SR_DECIMAL64_T,   # DECIMAL 64
-        5: sr.SR_LEAF_EMPTY_T,    # Empty
+        4: sr.SR_DECIMAL64_T,  # DECIMAL 64
+        5: sr.SR_LEAF_EMPTY_T,  # Empty
         # 100: 4,  # Presence container has no libyang type but does have a sysrepo type
         # 16: 2,   # List (
     }
 
-    SYSREPO_NODE_MAPPING = {
-        16: sr.SR_LIST_T,
-        100: sr.SR_CONTAINER_PRESENCE_T
-    }
+    SYSREPO_NODE_MAPPING = {16: sr.SR_LIST_T, 100: sr.SR_CONTAINER_PRESENCE_T}
 
-    def connect(self, module, yang_location=None, tag='client', yang_ctx=None):
+    def connect(self, module, yang_location=None, tag="client", yang_ctx=None):
         """
         Connect to the datastore.
         """
@@ -79,7 +76,9 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         self.running_conf_last_changed = self._get_datstore_timestamp()
 
     def _get_datstore_timestamp(self):
-        return os.stat(self.SYSREPO_DATASTORE_LOCATION + "/" + self.module + ".running").st_mtime
+        return os.stat(
+            self.SYSREPO_DATASTORE_LOCATION + "/" + self.module + ".running"
+        ).st_mtime
 
     def is_session_dirty(self):
         return self.dirty
@@ -137,7 +136,10 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             for attempt in range(attempts):
                 try:
                     self.session.validate()
-                    self.log.error("Validation of transaction failed - Attempt %s of %s" % (attempt + 1, attempts))
+                    self.log.error(
+                        "Validation of transaction failed - Attempt %s of %s"
+                        % (attempt + 1, attempts)
+                    )
                     return True
                     time.sleep(delay)
                 except Exception:
@@ -196,7 +198,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         In the case of Decimal64 we cannot use a value type
             v=sr.Val(2.344)
         """
-        self.log.trace('SET: %s => %s (%s)' % (xpath, value, valtype))
+        self.log.trace("SET: %s => %s (%s)" % (xpath, value, valtype))
         if valtype:
             valtype = self.SYSREPO_DATA_ABSTRACTION_MAPPING[valtype]
         elif nodetype:
@@ -366,7 +368,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         elif type == sr.SR_CONTAINER_PRESENCE_T:
             return True
         elif type == sr.SR_CONTAINER_T:
-            raise yangvoodoo.Errors.NodeHasNoValue('container', xpath)
+            raise yangvoodoo.Errors.NodeHasNoValue("container", xpath)
         elif type == sr.SR_LEAF_EMPTY_T:
             return True
         elif type == sr.SR_LIST_T:
@@ -374,7 +376,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         elif type == sr.SR_DECIMAL64_T:
             return valObject.data().get_decimal64()
 
-        raise yangvoodoo.Errors.NodeHasNoValue('unknown', xpath)
+        raise yangvoodoo.Errors.NodeHasNoValue("unknown", xpath)
 
     def refresh(self):
         """
@@ -398,15 +400,20 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
         for index in range(sysrepo_errors.error_cnt()):
             sysrepo_error = sysrepo_errors.error(index)
             if sysrepo_error.xpath() == xpath:
-                if sysrepo_error.message() == "The node is not enabled in running datastore":
-                    raise yangvoodoo.Errors.SubscriberNotEnabledOnBackendDatastore(xpath)
+                if (
+                    sysrepo_error.message()
+                    == "The node is not enabled in running datastore"
+                ):
+                    raise yangvoodoo.Errors.SubscriberNotEnabledOnBackendDatastore(
+                        xpath
+                    )
             errors.append((sysrepo_error.message(), sysrepo_error.xpath()))
 
         raise yangvoodoo.Errors.BackendDatastoreError(errors)
 
     def dump_xpaths(self):
         new_dict = {}
-        xpath = '/' + self.module + ':*'
+        xpath = "/" + self.module + ":*"
         self._recurse_dump_xpaths(xpath, new_dict)
 
         return new_dict
@@ -417,7 +424,7 @@ class SysrepoDataAbstractionLayer(yangvoodoo.basedal.BaseDataAbstractionLayer):
             for i in range(vals.val_cnt()):
                 sysrepo_item = vals.val(i)
                 xpath = sysrepo_item.xpath()
-                self._recurse_dump_xpaths(xpath+'/*', new_dict)
+                self._recurse_dump_xpaths(xpath + "/*", new_dict)
                 try:
                     v = self._get_python_datatype_from_sysrepo_val(sysrepo_item, xpath)
                     if xpath in new_dict:

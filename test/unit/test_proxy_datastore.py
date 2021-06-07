@@ -21,21 +21,21 @@ class test_proxy_datastore(unittest.TestCase):
         datastore method is not called multiple types.
         """
 
-        self.real.get.side_effect = ['ABC']
+        self.real.get.side_effect = ["ABC"]
 
         # Uncached
-        self.assertFalse('/xpath' in self.subject.value_cached)
-        result = self.subject.get('/xpath')
-        self.assertEqual(result, 'ABC')
-        self.assertTrue('/xpath' in self.subject.value_cached)
+        self.assertFalse("/xpath" in self.subject.value_cached)
+        result = self.subject.get("/xpath")
+        self.assertEqual(result, "ABC")
+        self.assertTrue("/xpath" in self.subject.value_cached)
 
         # Cached
-        result = self.subject.get('/xpath')
-        self.assertEqual(result, 'ABC')
+        result = self.subject.get("/xpath")
+        self.assertEqual(result, "ABC")
 
         # Drop cache
         self.subject.refresh()
-        self.assertFalse('/xpath' in self.subject.value_cached)
+        self.assertFalse("/xpath" in self.subject.value_cached)
 
     @patch("yangvoodoo.Common.Utils.get_yang_type_from_path")
     def test_reading_lists(self, mockGetYangType):
@@ -48,13 +48,15 @@ class test_proxy_datastore(unittest.TestCase):
         self.subject.module = "integrationtest"
         mockGetYangType.return_value = 18
 
-        self.real.gets_unsorted.side_effect = [["/listxpath[key='value'][key2='value2']"]]
+        self.real.gets_unsorted.side_effect = [
+            ["/listxpath[key='value'][key2='value2']"]
+        ]
 
         # Uncached
-        self.assertFalse('/listxpath' in self.subject.unsorted_cached)
-        result = self.subject.gets_unsorted('/listxpath', '/integrationtest:listxpath')
+        self.assertFalse("/listxpath" in self.subject.unsorted_cached)
+        result = self.subject.gets_unsorted("/listxpath", "/integrationtest:listxpath")
         self.assertEqual(list(result), ["/listxpath[key='value'][key2='value2']"])
 
         # Cached
-        self.assertTrue('/listxpath' in self.subject.unsorted_cached)
-        result = self.subject.gets_unsorted('/listxpath', '/integrationtest:listxpath')
+        self.assertTrue("/listxpath" in self.subject.unsorted_cached)
+        result = self.subject.gets_unsorted("/listxpath", "/integrationtest:listxpath")

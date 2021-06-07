@@ -17,7 +17,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
     DAL_ID = "StubLy"
     DAL_IN_MEMORY = False
 
-    def connect(self, module, yang_location, tag='client', yang_ctx=None):
+    def connect(self, module, yang_location, tag="client", yang_ctx=None):
         if yang_ctx:
             self.libyang_ctx = yang_ctx
         elif yang_location:
@@ -26,7 +26,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
             self.libyang_ctx = libyang.Context()
         self.libyang_ctx.load_module(module)
         self.module = module
-        if not hasattr(self, 'libyang_data'):
+        if not hasattr(self, "libyang_data"):
             self.libyang_data = libyang.DataTree(self.libyang_ctx)
 
     def disconnect(self):
@@ -37,7 +37,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         try:
             return self.libyang_data.validate()
         except libyang.util.LibyangError as err:
-            self.log.error('Invalid data tree: %s', str(err))
+            self.log.error("Invalid data tree: %s", str(err))
             if raise_exception:
                 raise
 
@@ -49,7 +49,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
 
         xpath:     /integrationtest:simplecontainer
         """
-        self.log.trace('CONTAINER: %s', xpath)
+        self.log.trace("CONTAINER: %s", xpath)
         results = list(self.libyang_data.get_xpath(xpath))
         if len(results):
             return True
@@ -61,7 +61,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
 
         xpath:     /integrationtest:simplecontainer
         """
-        self.log.trace('CREATE_CONTAINER: %s', xpath)
+        self.log.trace("CREATE_CONTAINER: %s", xpath)
         self.libyang_data.set_xpath(xpath, None)
 
     def create(self, xpath, keys=None, values=None, module=None):
@@ -85,7 +85,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
             /integration:list[key1='val1'][key2='val2']
         """
         self.log.trace("CREATE: %s (keys: %s) (values: %s)", xpath, keys, values)
-        self.libyang_data.set_xpath(xpath, '')
+        self.libyang_data.set_xpath(xpath, "")
 
     def uncreate(self, xpath):
         """
@@ -97,7 +97,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         self.libyang_data.delete_xpath(xpath)
 
     def set(self, xpath, value, valtype=18, nodetype=4):
-        self.log.trace('SET: StubLy Datastore- %s => %s', xpath, value)
+        self.log.trace("SET: StubLy Datastore- %s => %s", xpath, value)
 
         self.libyang_data.set_xpath(xpath, value)
 
@@ -158,7 +158,12 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
 
         returns a generator.
         """
-        self.log.trace("GETS_UNSORTED: %s (schema: %s, ignore_empty: %s)", xpath, schema_path, ignore_empty_lists)
+        self.log.trace(
+            "GETS_UNSORTED: %s (schema: %s, ignore_empty: %s)",
+            xpath,
+            schema_path,
+            ignore_empty_lists,
+        )
         for xpath in self.libyang_data.gets_xpath(xpath):
             yield xpath
 
@@ -175,7 +180,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         return True
 
     def get(self, xpath, default_value=None):
-        self.log.trace('GET: StubLy Datastore- %s (default: %s)', xpath, default_value)
+        self.log.trace("GET: StubLy Datastore- %s (default: %s)", xpath, default_value)
         try:
             val = next(self.libyang_data.get_xpath(xpath)).value
         except StopIteration:
@@ -190,7 +195,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         return None
 
     def delete(self, xpath):
-        self.log.trace('DELETE: %s', xpath)
+        self.log.trace("DELETE: %s", xpath)
         self.libyang_data.set_xpath(xpath, None)
 
     def dump_xpaths(self):
@@ -218,7 +223,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         self.libyang_data.load(filename, format, trusted)
 
     def dumps(self, format=1):
-        self.log.trace("DUMPs: (format: %s)",  format)
+        self.log.trace("DUMPs: (format: %s)", format)
         return self.libyang_data.dumps(format)
 
     def loads(self, payload, format=1, trusted=False):

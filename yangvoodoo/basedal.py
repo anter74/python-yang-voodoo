@@ -69,17 +69,17 @@ class BaseDataAbstractionLayer:
     #             elif value:
     #                 self.set(xpath, value, valuetype)
 
-    def connect(self, module, yang_location=None,  tag='client', yang_ctx=None):
-        raise NotImplementedError('connect not implemented')
+    def connect(self, module, yang_location=None, tag="client", yang_ctx=None):
+        raise NotImplementedError("connect not implemented")
 
     def disconnect(self):
-        raise NotImplementedError('disconnect not implemented')
+        raise NotImplementedError("disconnect not implemented")
 
     def commit(self):
-        raise NotImplementedError('commit not implemented')
+        raise NotImplementedError("commit not implemented")
 
     def validate(self, raise_exception=True):
-        raise NotImplementedError('validate not implemented')
+        raise NotImplementedError("validate not implemented")
 
     def container(self, xpath):
         """
@@ -87,7 +87,7 @@ class BaseDataAbstractionLayer:
 
         xpath:     /integrationtest:simplecontainer
         """
-        raise NotImplementedError('container not implemented')
+        raise NotImplementedError("container not implemented")
 
     def create_container(self, xpath):
         """
@@ -95,7 +95,7 @@ class BaseDataAbstractionLayer:
 
         xpath:     /integrationtest:simplecontainer
         """
-        raise NotImplementedError('create_container not implemented')
+        raise NotImplementedError("create_container not implemented")
 
     def create(self, xpath, keys=None, values=None, module=None):
         """

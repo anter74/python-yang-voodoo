@@ -37,7 +37,7 @@ class DiffIterator:
     MODIFY = 2
     REMOVE = 3
 
-    def __init__(self, dataset_a, dataset_b, start_filter='', end_filter=''):
+    def __init__(self, dataset_a, dataset_b, start_filter="", end_filter=""):
         if isinstance(dataset_a, yangvoodoo.VoodooNode.Node):
             dataset_a = dataset_a._context.dal.dump_xpaths()
         if isinstance(dataset_b, yangvoodoo.VoodooNode.Node):
@@ -54,7 +54,7 @@ class DiffIterator:
             if isinstance(path, list):
                 path = path[0]
 
-            if op == 'change':
+            if op == "change":
                 if not DiffIterator.is_filtered(path, start_filter, end_filter):
                     self._handle_modify(path, values)
             else:
@@ -62,7 +62,9 @@ class DiffIterator:
 
     @staticmethod
     def is_filtered(path, filter, end_filter):
-        if path[0:len(filter)] == filter and (end_filter == '' or path[-len(end_filter):] == end_filter):
+        if path[0 : len(filter)] == filter and (
+            end_filter == "" or path[-len(end_filter) :] == end_filter
+        ):
             return False
         return True
 
@@ -77,7 +79,7 @@ class DiffIterator:
             # lookups.
             if isinstance(value, tuple):
                 continue
-            if op == 'remove':
+            if op == "remove":
                 if isinstance(value, list):
                     pass
                 else:
@@ -99,50 +101,64 @@ class DiffIterator:
         if not isinstance(new, tuple):
             self.results.append((path, old, new, self.MODIFY))
 
-    def all(self, start_filter='', end_filter=''):
+    def all(self, start_filter="", end_filter=""):
         for (path, oldval, newval, op) in self.results:
             if self.is_filtered(path, start_filter, end_filter):
                 continue
             yield (path, oldval, newval, op)
 
-    def remove(self, start_filter='', end_filter=''):
+    def remove(self, start_filter="", end_filter=""):
         for (path, old, new, op) in self.results:
-            if op == self.REMOVE and not self.is_filtered(path, start_filter, end_filter):
+            if op == self.REMOVE and not self.is_filtered(
+                path, start_filter, end_filter
+            ):
                 yield (path, old, new, op)
 
-    def add(self, start_filter='', end_filter=''):
+    def add(self, start_filter="", end_filter=""):
         for (path, old, new, op) in self.results:
             if op == self.ADD and not self.is_filtered(path, start_filter, end_filter):
                 yield (path, old, new, op)
 
-    def modified(self, start_filter='', end_filter=''):
+    def modified(self, start_filter="", end_filter=""):
         for (path, old, new, op) in self.results:
-            if op == self.MODIFY and not self.is_filtered(path, start_filter, end_filter):
+            if op == self.MODIFY and not self.is_filtered(
+                path, start_filter, end_filter
+            ):
                 yield (path, old, new, op)
 
-    def remove_modify_then_add(self, start_filter='', end_filter=''):
+    def remove_modify_then_add(self, start_filter="", end_filter=""):
         for (path, old, new, op) in self.results:
-            if op == self.REMOVE and not self.is_filtered(path, start_filter, end_filter):
+            if op == self.REMOVE and not self.is_filtered(
+                path, start_filter, end_filter
+            ):
                 yield (path, old, new, op)
         for (path, old, new, op) in self.results:
-            if op == self.MODIFY and not self.is_filtered(path, start_filter, end_filter):
+            if op == self.MODIFY and not self.is_filtered(
+                path, start_filter, end_filter
+            ):
                 yield (path, old, new, op)
         for (path, old, new, op) in self.results:
             if op == self.ADD and not self.is_filtered(path, start_filter, end_filter):
                 yield (path, old, new, op)
 
-    def modify_then_add(self, start_filter='', end_filter=''):
+    def modify_then_add(self, start_filter="", end_filter=""):
         for (path, old, new, op) in self.results:
-            if op == self.MODIFY and not self.is_filtered(path, start_filter, end_filter):
+            if op == self.MODIFY and not self.is_filtered(
+                path, start_filter, end_filter
+            ):
                 yield (path, old, new, op)
         for (path, old, new, op) in self.results:
             if op == self.ADD and not self.is_filtered(path, start_filter, end_filter):
                 yield (path, old, new, op)
 
-    def remove_then_modify(self, start_filter='', end_filter=''):
+    def remove_then_modify(self, start_filter="", end_filter=""):
         for (path, old, new, op) in self.results:
-            if op == self.REMOVE and not self.is_filtered(path, start_filter, end_filter):
+            if op == self.REMOVE and not self.is_filtered(
+                path, start_filter, end_filter
+            ):
                 yield (path, old, new, op)
         for (path, old, new, op) in self.results:
-            if op == self.MODIFY and not self.is_filtered(path, start_filter, end_filter):
+            if op == self.MODIFY and not self.is_filtered(
+                path, start_filter, end_filter
+            ):
                 yield (path, old, new, op)

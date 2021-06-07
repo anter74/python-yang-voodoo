@@ -41,8 +41,8 @@ class test_advanced_merge(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.subject = yangvoodoo.DataAccess()
-        self.subject.connect('integrationtest', yang_location='yang')
-        self.subject.add_module('ietf-netconf')
+        self.subject.connect("integrationtest", yang_location="yang")
+        self.subject.add_module("ietf-netconf")
         self.root = self.subject.get_node(readonly=True)
         self.subject.loads(self.BASE_TEMPLATE)
 

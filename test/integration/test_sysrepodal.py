@@ -7,7 +7,6 @@ import yangvoodoo.sysrepodal
 
 
 class test_sysrepodal(unittest.TestCase):
-
     def setUp(self):
         self.subject = yangvoodoo.sysrepodal.SysrepoDataAbstractionLayer()
         self.subject.session = Mock()
@@ -21,10 +20,14 @@ class test_sysrepodal(unittest.TestCase):
         errors_mock.error.return_value = error_mock
         self.subject.session.get_last_errors = Mock(return_value=errors_mock)
 
-        with self.assertRaises(yangvoodoo.Errors.SubscriberNotEnabledOnBackendDatastore) as context:
-            self.subject._handle_error('/path', 'err')
-        self.assertEqual(str(context.exception),
-                         "There is no subscriber connected able to process data for the following path.\n /path")
+        with self.assertRaises(
+            yangvoodoo.Errors.SubscriberNotEnabledOnBackendDatastore
+        ) as context:
+            self.subject._handle_error("/path", "err")
+        self.assertEqual(
+            str(context.exception),
+            "There is no subscriber connected able to process data for the following path.\n /path",
+        )
 
     def test_handle_error_no_other_backend_error(self):
         error_mock = Mock()
@@ -36,6 +39,8 @@ class test_sysrepodal(unittest.TestCase):
         self.subject.session.get_last_errors = Mock(return_value=errors_mock)
 
         with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
-            self.subject._handle_error('/path', 'err')
-        self.assertEqual(str(context.exception),
-                         "1 Errors occured\nError 0: Someother stuff went wrong (Path: /path)\n")
+            self.subject._handle_error("/path", "err")
+        self.assertEqual(
+            str(context.exception),
+            "1 Errors occured\nError 0: Someother stuff went wrong (Path: /path)\n",
+        )

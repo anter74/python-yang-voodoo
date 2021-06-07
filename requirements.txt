@@ -3,6 +3,7 @@ asn1crypto==0.24.0
 astroid==2.2.5
 autopep8==1.4.4
 backcall==0.1.0
+black==20.8b1
 bcrypt==3.1.7
 behave==1.2.6
 certifi==2019.6.16

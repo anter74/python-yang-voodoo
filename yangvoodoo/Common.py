@@ -23,7 +23,7 @@ class YangNode:
         self.real_schema_path = real_schema_path
 
     def __getattr__(self, attr):
-        if attr in ('real_schema_path', 'real_data_path'):
+        if attr in ("real_schema_path", "real_data_path"):
             return getattr(self, attr)
         return getattr(self.libyang_node, attr)
 
@@ -33,7 +33,6 @@ class PlainObject:
 
 
 class PlainIterator:
-
     def __init__(self, children):
         self.children = children
         self.index = 0
@@ -44,12 +43,11 @@ class PlainIterator:
     def __next__(self):
         if len(self.children) > self.index:
             self.index = self.index + 1
-            return self.children[self.index-1]
+            return self.children[self.index - 1]
         raise StopIteration
 
 
 class IteratorToRaiseAnException:
-
     def __init__(self, children, error_at=-1, error_type=Exception):
         self.children = children
         self.index = 0
@@ -64,7 +62,7 @@ class IteratorToRaiseAnException:
             raise self.error_type()
         if len(self.children) > self.index:
             self.index = self.index + 1
-            return self.children[self.index-1]
+            return self.children[self.index - 1]
         raise StopIteration
 
 
@@ -82,9 +80,13 @@ class Utils:
     PREDICATE_KEY_VALUES_SINGLE = re.compile(r"\[([A-z\.]+[A-z0-9_\-]*)='([^']*)'\]")
     PREDICATE_KEY_VALUES_DOUBLE = re.compile(r"\[([A-z\.]+[A-z0-9_\-]*)=\"([^\"]*)\"\]")
     FIND_KEYS = re.compile(r"\[([A-Za-z\.]+[A-Za-z0-9_-]*)=.*?\]")
-    XPATH_DECODER_V4 = re.compile(r"(([A-Za-z0-9_-]*:)?([A-Za-z0-9_-]+))((\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])+)?")
+    XPATH_DECODER_V4 = re.compile(
+        r"(([A-Za-z0-9_-]*:)?([A-Za-z0-9_-]+))((\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])+)?"
+    )
     MODULE_AND_LEAF_REGEX = re.compile(r"/([A-Za-z0-9_-]+:)?([A-Za-z0-9_-]+)")
-    EXTRACT_ALL_KEYS = re.compile(r"(\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])")
+    EXTRACT_ALL_KEYS = re.compile(
+        r"(\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])"
+    )
 
     @staticmethod
     def convert_path_to_schema_path(path, module):
@@ -101,10 +103,12 @@ class Utils:
             ('', '', 'sdf')
             ("[fdsf='fg']", '', 'zzz')
         """
-        if path[0:len(module)+2] == "/"+module+":":
-            path = "/" + path[len(module)+2:]
+        if path[0 : len(module) + 2] == "/" + module + ":":
+            path = "/" + path[len(module) + 2 :]
         if path[-1] == "/":
-            raise ValueError("Path is not valid as it ends with a trailing slash. (%s)" % (path))
+            raise ValueError(
+                "Path is not valid as it ends with a trailing slash. (%s)" % (path)
+            )
         schema_path = ""
         parent_schema_path = ""
         for path in Utils.convert_path_to_nodelist(path):
@@ -132,11 +136,12 @@ class Utils:
         def trace(self, message, *args, **kws):
             if self.isEnabledFor(7):
                 self._log(7, message, args, **kws)
+
         logging.Logger.trace = trace
         return log
 
     @staticmethod
-    def get_yang_type_from_path(context, schema_path,  value, child_attr=None):
+    def get_yang_type_from_path(context, schema_path, value, child_attr=None):
         if child_attr:
             schema_path = schema_path + "/" + context.module + ":" + child_attr
         node_schema = next(context.schemactx.find_path(schema_path))
@@ -183,52 +188,56 @@ class Utils:
             u_types = []
             for union_type in node_schema.union_types():
                 if union_type.base() == 11:
-                    raise NotImplementedError('Union containing unions not supported (see README.md)')
+                    raise NotImplementedError(
+                        "Union containing unions not supported (see README.md)"
+                    )
                 elif union_type.base() == 9:
-                    raise NotImplementedError('Union containing leafrefs not supported (see README.md)')
+                    raise NotImplementedError(
+                        "Union containing leafrefs not supported (see README.md)"
+                    )
                 elif union_type.base() == 6:
                     # TODO: we need to lookup enumerations
                     for (val, validx) in union_type.enums():
                         if str(val) == str(value):
-                            return Types.DATA_ABSTRACTION_MAPPING['ENUM']
+                            return Types.DATA_ABSTRACTION_MAPPING["ENUM"]
                 u_types.append(union_type.base())
 
             if 10 in u_types and isinstance(value, str):
-                return Types.DATA_ABSTRACTION_MAPPING['STRING']
+                return Types.DATA_ABSTRACTION_MAPPING["STRING"]
             elif Utils.LOOKS_LIKE_A_FLOAT.match(str(value)):
-                return Types.DATA_ABSTRACTION_MAPPING['DECIMAL64']
+                return Types.DATA_ABSTRACTION_MAPPING["DECIMAL64"]
             elif Utils.LOOKS_LIKE_A_NUMBER.match(str(value)):
                 return Utils._find_best_number_type(u_types, int(value))
             if value:
                 raise Errors.ValueNotMappedToTypeUnion(xpath, value)
         if default_to_string:
-            return Types.DATA_ABSTRACTION_MAPPING['STRING']
+            return Types.DATA_ABSTRACTION_MAPPING["STRING"]
 
         if value:
             raise Errors.ValueNotMappedToType(xpath, value)
 
-        msg = 'Unable to handle the yang type at path ' + str(xpath)
-        msg += ' (this may be listed as a corner-case on the README already'
+        msg = "Unable to handle the yang type at path " + str(xpath)
+        msg += " (this may be listed as a corner-case on the README already"
         raise NotImplementedError(msg)
 
     @staticmethod
     def _find_best_number_type(u_types, value):
         if 12 in u_types and value >= -127 and value <= 128:
-            return Types.DATA_ABSTRACTION_MAPPING['INT8']
+            return Types.DATA_ABSTRACTION_MAPPING["INT8"]
         elif 13 in u_types and value >= 0 and value <= 255:
-            return Types.DATA_ABSTRACTION_MAPPING['UINT8']
+            return Types.DATA_ABSTRACTION_MAPPING["UINT8"]
         elif 14 in u_types and value >= -32768 and value <= 32767:
-            return Types.DATA_ABSTRACTION_MAPPING['INT16']
+            return Types.DATA_ABSTRACTION_MAPPING["INT16"]
         elif 15 in u_types and value >= 0 and value <= 65535:
-            return Types.DATA_ABSTRACTION_MAPPING['UINT16']
+            return Types.DATA_ABSTRACTION_MAPPING["UINT16"]
         elif 16 in u_types and value >= -2147483648 and value <= 2147483647:
-            return Types.DATA_ABSTRACTION_MAPPING['INT32']
+            return Types.DATA_ABSTRACTION_MAPPING["INT32"]
         elif 17 in u_types and value >= 0 and value <= 4294967295:
-            return Types.DATA_ABSTRACTION_MAPPING['UINT32']
+            return Types.DATA_ABSTRACTION_MAPPING["UINT32"]
         elif 19 in u_types and value >= 0:
-            return Types.DATA_ABSTRACTION_MAPPING['UINT64']
+            return Types.DATA_ABSTRACTION_MAPPING["UINT64"]
         else:
-            return Types.DATA_ABSTRACTION_MAPPING['INT64']
+            return Types.DATA_ABSTRACTION_MAPPING["INT64"]
 
     @staticmethod
     def encode_xpath_predicate(k, v):
@@ -249,19 +258,27 @@ class Utils:
         This method takes a list of keys and a list of value/value-type tuples)
         """
         if not isinstance(keys, list):
-            raise NotImplementedError("encode_attribute_with_xpath_predicates does not work with non-list input - %s" % (keys))
+            raise NotImplementedError(
+                "encode_attribute_with_xpath_predicates does not work with non-list input - %s"
+                % (keys)
+            )
         if not isinstance(values, list):
-            raise NotImplementedError("encode_attribute_with_xpath_predicates does not work with non-list input - %s" % (values))
+            raise NotImplementedError(
+                "encode_attribute_with_xpath_predicates does not work with non-list input - %s"
+                % (values)
+            )
         answer = attr
 
         for i in range(len(keys)):
             (val, valtype) = values[i]
-            answer = answer + Utils.encode_xpath_predicate(keys[i], Utils.get_xpath_value_from_python_value(val, valtype))
+            answer = answer + Utils.encode_xpath_predicate(
+                keys[i], Utils.get_xpath_value_from_python_value(val, valtype)
+            )
         return answer
 
     @staticmethod
     def get_xpath_value_from_python_value(v, t):
-        if t == Types.DATA_ABSTRACTION_MAPPING['BOOLEAN']:
+        if t == Types.DATA_ABSTRACTION_MAPPING["BOOLEAN"]:
             return str(v).lower()
         else:
             return str(v)
@@ -304,10 +321,10 @@ class Utils:
         """
         if valtype in Types.INT_CONVERSION:
             return int(value)
-        elif valtype == Types.DATA_ABSTRACTION_MAPPING['DECIMAL64']:
+        elif valtype == Types.DATA_ABSTRACTION_MAPPING["DECIMAL64"]:
             return float(value)
-        elif valtype == Types.DATA_ABSTRACTION_MAPPING['BOOLEAN']:
-            if value.toLower() == 'false':
+        elif valtype == Types.DATA_ABSTRACTION_MAPPING["BOOLEAN"]:
+            if value.toLower() == "false":
                 return False
             return True
         return value
@@ -330,7 +347,7 @@ class Utils:
         return node_schema
 
     @staticmethod
-    def get_yangnode(node, context, attr='', keys=[], values=[], predicates=""):
+    def get_yangnode(node, context, attr="", keys=[], values=[], predicates=""):
         """
         Given a node, with a child attribute name, and list of key/values return a libyang schema object
         and the value path.
@@ -350,30 +367,51 @@ class Utils:
         """
 
         if len(keys) and len(values):
-            predicates = Utils.encode_xpath_predicates('', keys, values)
+            predicates = Utils.encode_xpath_predicates("", keys, values)
 
-        cache_entry = "!" + node.real_data_path + attr + "!" + predicates + "!" + node.real_schema_path
+        cache_entry = (
+            "!"
+            + node.real_data_path
+            + attr
+            + "!"
+            + predicates
+            + "!"
+            + node.real_schema_path
+        )
 
         if context.schemacache.is_path_cached(cache_entry):
             return context.schemacache.get_item_from_cache(cache_entry)
 
         real_schema_path = node.real_schema_path
-        if not attr == '':
-            real_attribute_name = Utils.get_original_name(real_schema_path, context, attr)
-            real_schema_path = real_schema_path + '/' + context.module + ":" + real_attribute_name
+        if not attr == "":
+            real_attribute_name = Utils.get_original_name(
+                real_schema_path, context, attr
+            )
+            real_schema_path = (
+                real_schema_path + "/" + context.module + ":" + real_attribute_name
+            )
 
         try:
             node_schema = next(context.schemactx.find_path(real_schema_path))
         except libyang.util.LibyangError:
-            raise Errors.NonExistingNode(node.real_schema_path + '/'+context.module+":"+attr)
+            raise Errors.NonExistingNode(
+                node.real_schema_path + "/" + context.module + ":" + attr
+            )
 
-        if not attr == '':
+        if not attr == "":
             real_data_path = node.real_data_path
-            if node_schema.nodetype() not in (Types.LIBYANG_NODETYPE['CHOICE'], Types.LIBYANG_NODETYPE['CASE']):
-                if node.real_data_path == '':
-                    real_data_path = '/' + context.module + ':' + real_attribute_name + predicates
+            if node_schema.nodetype() not in (
+                Types.LIBYANG_NODETYPE["CHOICE"],
+                Types.LIBYANG_NODETYPE["CASE"],
+            ):
+                if node.real_data_path == "":
+                    real_data_path = (
+                        "/" + context.module + ":" + real_attribute_name + predicates
+                    )
                 else:
-                    real_data_path = real_data_path + '/' + real_attribute_name + predicates
+                    real_data_path = (
+                        real_data_path + "/" + real_attribute_name + predicates
+                    )
 
         if not attr:
             real_data_path = node.real_data_path + predicates
@@ -391,7 +429,7 @@ class Utils:
         """
         Given a schema-path return the original name.
         """
-        if '_' not in attr:
+        if "_" not in attr:
             return attr
 
         if schema_path == "":
@@ -399,14 +437,16 @@ class Utils:
         else:
             schema_path = schema_path + "/*"
 
-        if attr[-1] == '_':
+        if attr[-1] == "_":
             attr = attr[:-1]
 
         for child in context.schemactx.find_path(schema_path):
-            if child.name().replace('-', '_') == attr:
+            if child.name().replace("-", "_") == attr:
                 return child.name()
 
-        raise NotImplementedError("get_original_name could not find a matching node name for %s" % (attr))
+        raise NotImplementedError(
+            "get_original_name could not find a matching node name for %s" % (attr)
+        )
 
     @staticmethod
     def get_keys_from_a_node(node_schema):
@@ -417,7 +457,7 @@ class Utils:
         return keys
 
     @staticmethod
-    def get_key_val_tuples(context, node,  values):
+    def get_key_val_tuples(context, node, values):
         real_values = []
         keys = Utils.get_keys_from_a_node(node)
 
@@ -426,9 +466,13 @@ class Utils:
             values = values[0]
 
         if not len(keys) == len(values):
-            raise Errors.ListWrongNumberOfKeys(node.real_data_path, len(keys), len(values))
+            raise Errors.ListWrongNumberOfKeys(
+                node.real_data_path, len(keys), len(values)
+            )
         for value in values:
-            key_yang_type = Utils.get_yang_type_from_path(context, node.real_schema_path, value, keys[i])
+            key_yang_type = Utils.get_yang_type_from_path(
+                context, node.real_schema_path, value, keys[i]
+            )
             real_values.append((value, key_yang_type))
 
         return keys, real_values
@@ -445,11 +489,19 @@ class Utils:
         working_path = ""
         parent_path = ""
 
-        for (a, b, leaf_name, predicates, e, f) in Utils.XPATH_DECODER_V4.findall(xpath):
+        for (a, b, leaf_name, predicates, e, f) in Utils.XPATH_DECODER_V4.findall(
+            xpath
+        ):
             parent_path = working_path
             working_path = working_path + "/" + leaf_name + predicates
-            working_schema_path = working_schema_path + "/" + module + ":"+leaf_name
-            yield (working_path, leaf_name, predicates, working_schema_path, parent_path)
+            working_schema_path = working_schema_path + "/" + module + ":" + leaf_name
+            yield (
+                working_path,
+                leaf_name,
+                predicates,
+                working_schema_path,
+                parent_path,
+            )
 
     @staticmethod
     def return_module_name_and_leaf(in_string):
@@ -460,20 +512,20 @@ class Utils:
 
     @staticmethod
     def return_until_first_predicate(in_string):
-        return in_string[0:in_string.find('[')]
+        return in_string[0 : in_string.find("[")]
 
     @staticmethod
     def drop_last_node(in_string):
-        return in_string[0:in_string.rfind('/')]
+        return in_string[0 : in_string.rfind("/")]
 
     @staticmethod
     def get_last_node_name(in_string):
-        return in_string[in_string.rfind('/')+1:]
+        return in_string[in_string.rfind("/") + 1 :]
 
     @staticmethod
     def drop_module_name_from_xpath(in_string, module):
-        if in_string[0:len(module)+2] == "/"+module+":":
-            return "/" + in_string[len(module)+2:]
+        if in_string[0 : len(module) + 2] == "/" + module + ":":
+            return "/" + in_string[len(module) + 2 :]
         return in_string
 
     @staticmethod
@@ -481,8 +533,14 @@ class Utils:
         response = []
         for (match, quote_type) in Utils.EXTRACT_ALL_KEYS.findall(in_string):
             if quote_type == "'":
-                (predicate_key, predicate_value) = Utils.PREDICATE_KEY_VALUES_SINGLE.match(match).groups()
+                (
+                    predicate_key,
+                    predicate_value,
+                ) = Utils.PREDICATE_KEY_VALUES_SINGLE.match(match).groups()
             else:
-                (predicate_key, predicate_value) = Utils.PREDICATE_KEY_VALUES_DOUBLE.match(match).groups()
+                (
+                    predicate_key,
+                    predicate_value,
+                ) = Utils.PREDICATE_KEY_VALUES_DOUBLE.match(match).groups()
             response.append((predicate_key, predicate_value))
         return response
