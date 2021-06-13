@@ -195,7 +195,7 @@ class Node:
         if context.readonly:
             raise Errors.ReadonlyError()
 
-        if not node_schema.nodetype() == Types.LIBYANG_NODETYPE["LEAF"]:
+        if node_schema.nodetype() != Types.LIBYANG_NODETYPE["LEAF"]:
             raise Errors.CannotAssignValueToContainingNode(attr)
 
         if node_schema.is_key():
@@ -204,10 +204,11 @@ class Node:
         leaf_type = node_schema.type().base()
         # Enumeration:
         if leaf_type == 6:
-            match = False
-            for (enum_valid_val, _) in node_schema.type().enums():
-                if str(enum_valid_val) == str(val):
-                    match = True
+            match = any(
+                str(enum_valid_val) == str(val)
+                for (enum_valid_val, _) in node_schema.type().enums()
+            )
+
             if not match:
                 self._raise_ValueDoesMatchEnumeration(node_schema, val)
 
@@ -498,16 +499,13 @@ class List(ContainingNode):
         node = self._node
 
         if sorted_by_xpath:
-            results = context.dal.gets_sorted(
-                node.real_data_path, node.real_schema_path, ignore_empty_lists=True
-            )
-        else:
-            results = context.dal.gets_unsorted(
+            return context.dal.gets_sorted(
                 node.real_data_path, node.real_schema_path, ignore_empty_lists=True
             )
 
-        # Return Object
-        return results
+        return context.dal.gets_unsorted(
+            node.real_data_path, node.real_schema_path, ignore_empty_lists=True
+        )
 
     def keys(self, sorted_by_xpath=False):
         """

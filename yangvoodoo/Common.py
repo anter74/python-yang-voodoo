@@ -118,11 +118,10 @@ class Utils:
 
     @staticmethod
     def convert_path_to_nodelist(xpath):
-        result = []
-
-        for (_, _, leaf_name, _, _, _) in Utils.XPATH_DECODER_V4.findall(xpath):
-            result.append(leaf_name)
-        return result
+        return [
+            leaf_name
+            for (_, _, leaf_name, _, _, _) in Utils.XPATH_DECODER_V4.findall(xpath)
+        ]
 
     @staticmethod
     def get_logger(name, level=logging.DEBUG):
@@ -292,14 +291,15 @@ class Utils:
         """
 
         results = self.LAST_LEAF_AND_PREDICTAES.findall(path)
-        if not len(results) == 1:
+        if len(results) != 1:
             raise Errors.XpathDecodingError(path)
 
         (list_element_path_a, list_element_path_b, last_set_of_predicates) = results[0]
 
-        predicates = {}
-        for (key, val) in self.PREDICATE_KEY_VALUES_SINGLE.findall(path):
-            predicates[key] = val
+        predicates = {
+            key: val for (key, val) in self.PREDICATE_KEY_VALUES_SINGLE.findall(path)
+        }
+
         for (key, val) in self.PREDICATE_KEY_VALUES_DOUBLE.findall(path):
             predicates[key] = val
 
@@ -324,9 +324,7 @@ class Utils:
         elif valtype == Types.DATA_ABSTRACTION_MAPPING["DECIMAL64"]:
             return float(value)
         elif valtype == Types.DATA_ABSTRACTION_MAPPING["BOOLEAN"]:
-            if value.toLower() == "false":
-                return False
-            return True
+            return value.toLower() != "false"
         return value
 
     @staticmethod
@@ -398,7 +396,7 @@ class Utils:
                 node.real_schema_path + "/" + context.module + ":" + attr
             )
 
-        if not attr == "":
+        if attr != "":
             real_data_path = node.real_data_path
             if node_schema.nodetype() not in (
                 Types.LIBYANG_NODETYPE["CHOICE"],
@@ -450,11 +448,7 @@ class Utils:
 
     @staticmethod
     def get_keys_from_a_node(node_schema):
-        keys = []
-        for k in node_schema.keys():
-            keys.append(k.name())
-        # keys.sort()
-        return keys
+        return [k.name() for k in node_schema.keys()]
 
     @staticmethod
     def get_key_val_tuples(context, node, values):
@@ -465,7 +459,7 @@ class Utils:
         if isinstance(values[0], tuple):
             values = values[0]
 
-        if not len(keys) == len(values):
+        if len(keys) != len(values):
             raise Errors.ListWrongNumberOfKeys(
                 node.real_data_path, len(keys), len(values)
             )

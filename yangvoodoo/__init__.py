@@ -74,7 +74,7 @@ class DataAccess:
         node_schema = node._node
         context = node._context
 
-        if not attr == "":
+        if attr != "":
             node_schema = Utils.get_yangnode(node_schema, context, attr)
 
         leaf_type = None
@@ -167,7 +167,7 @@ Children: %s"""
         node = node._node
 
         node_schema = node
-        if not attr == "":
+        if attr != "":
             node_schema = Utils.get_yangnode(node_schema, context, attr)
 
         for extension in node_schema.extensions():
@@ -203,12 +203,8 @@ Children: %s"""
 
         extensions = DataAccess.get_extensions(node, attr, module)
         for (m, a) in extensions:
-            if module:
-                if m == module + ":" + name:
-                    return a
-            else:
-                if ":" + name in m:
-                    return a
+            if module and m == module + ":" + name or not module and ":" + name in m:
+                return a
         return None
 
     @classmethod
@@ -292,13 +288,8 @@ Children: %s"""
                 "YANG Module " + module + " not present in " + yang_location
             )
         self.module = module
-        if not yang_ctx:
-            self.yang_ctx = libyang.Context(yang_location)
-            self.yang_schema = self.yang_ctx.load_module(self.module)
-        else:
-            self.yang_ctx = yang_ctx
-            self.yang_schema = self.yang_ctx.load_module(self.module)
-
+        self.yang_ctx = libyang.Context(yang_location) if not yang_ctx else yang_ctx
+        self.yang_schema = self.yang_ctx.load_module(self.module)
         connect_status = self.data_abstraction_layer.connect(
             self.module, yang_location, tag, self.yang_ctx
         )
@@ -635,8 +626,7 @@ Children: %s"""
         Return a generator of matching xpaths, optionall with the value.
         """
         self.log.trace("GET_RAW_XPATH: %s", xpath)
-        for result in self.data_abstraction_layer.get_raw_xpath(xpath, with_val):
-            yield result
+        yield from self.data_abstraction_layer.get_raw_xpath(xpath, with_val)
 
     def get_raw_xpath_single_val(self, xpath):
         """
@@ -661,7 +651,7 @@ Children: %s"""
         """
         self.log.trace("SET_DATA_BY_XPATH: %s %s %s", context, data_path, value)
         node_schema = Utils.get_nodeschema_from_data_path(context, data_path)
-        if not node_schema.nodetype() == Types.LIBYANG_NODETYPE["LEAF"]:
+        if node_schema.nodetype() != Types.LIBYANG_NODETYPE["LEAF"]:
             raise PathIsNotALeaf("set_raw_data only operates on leaves")
         val_type = Utils.get_yang_type(
             node_schema.type(), value, node_schema.real_schema_path

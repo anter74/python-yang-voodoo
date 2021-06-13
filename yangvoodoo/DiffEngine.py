@@ -61,11 +61,11 @@ class DiffIterator:
 
     @staticmethod
     def is_filtered(path, filter, end_filter):
-        if path[0 : len(filter)] == filter and (
-            end_filter == "" or path[-len(end_filter) :] == end_filter
-        ):
-            return False
-        return True
+        return (
+            path[0 : len(filter)] != filter
+            or end_filter != ""
+            and path[-len(end_filter) :] != end_filter
+        )
 
     def _handle_add_or_remove(self, op, path, values):
         for (leaf_path, value) in values:
@@ -78,19 +78,12 @@ class DiffIterator:
             # lookups.
             if isinstance(value, tuple):
                 continue
-            if op == "remove":
-                if isinstance(value, list):
-                    pass
-                else:
-                    value = [value]
-                for v in value:
+            if not isinstance(value, list):
+                value = [value]
+            for v in value:
+                if op == "remove":
                     self.results.append((path, v, None, self.REMOVE))
-            else:
-                if isinstance(value, list):
-                    pass
                 else:
-                    value = [value]
-                for v in value:
                     self.results.append((path, None, v, self.ADD))
 
     def _handle_modify(self, path, values):

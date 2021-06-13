@@ -54,9 +54,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         """
         self.log.trace("CONTAINER: %s", xpath)
         results = list(self.libyang_data.get_xpath(xpath))
-        if len(results):
-            return True
-        return False
+        return bool(len(results))
 
     def create_container(self, xpath):
         """
@@ -167,8 +165,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
             schema_path,
             ignore_empty_lists,
         )
-        for xpath in self.libyang_data.gets_xpath(xpath):
-            yield xpath
+        yield from self.libyang_data.gets_xpath(xpath)
 
     def has_item(self, xpath):
         """
@@ -178,9 +175,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         """
         self.log.trace("HAS_ITEM: %s", xpath)
         x = self.libyang_data.get_xpath(xpath)
-        if len(list(x)) == 0:
-            return False
-        return True
+        return len(list(x)) != 0
 
     def get(self, xpath, default_value=None):
         self.log.trace("GET: StubLy Datastore- %s (default: %s)", xpath, default_value)
@@ -209,10 +204,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         paths). We could add logic to find if they infact have values and skip
         them- but that is more work and we have dump() available now.
         """
-        dict = {}
-        for node in self.libyang_data.dump_datanodes():
-            dict[node.xpath] = node.value
-        return dict
+        return {node.xpath: node.value for node in self.libyang_data.dump_datanodes()}
 
     def empty(self):
         raise NotImplementedError("empty not implemented")
