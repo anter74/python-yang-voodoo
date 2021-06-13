@@ -15,6 +15,20 @@ RESERVED_PYTHON_KEYWORDS = (
     "is",
     "break",
     "except",
+    "nonlocal",
+    "lambda",
+    "yield",
+    "while",
+    "with",
+    "try",
+    "raise",
+    "finally",
+    "del",
+    "def" "continue",
+    "assert",
+    "False",
+    "True",
+    "None",
 )
 DATA_ABSTRACTION_MAPPING = {
     # These values are now libyang types, instead of sysrepo
