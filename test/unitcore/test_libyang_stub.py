@@ -16,9 +16,7 @@ class test_libyang_stub(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.stubly = yangvoodoo.stublydal.StubLyDataAbstractionLayer(log_level=2)
-        self.subject = yangvoodoo.DataAccess(
-            data_abstraction_layer=self.stubly, disable_proxy=True
-        )
+        self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stubly)
         self.subject.connect("integrationtest", yang_location="yang")
         self.root = self.subject.get_node()
 
@@ -150,7 +148,7 @@ class test_libyang_stub(unittest.TestCase):
         self.root.morecomplex.leaflists.simple.create("DE'\"F")
 
         self.assertTrue("DE'\"F" in self.root.morecomplex.leaflists.simple)
-        self.assertEqual(len(self.root.morecomplex.leaflists.simple), 4)
+        self.assertEqual(len(self.root.morecomplex.leaflists.simple), 3)
 
     def test_leaf_list(self):
         # Act
@@ -225,18 +223,14 @@ class test_libyang_stub(unittest.TestCase):
 
     def test_connect_connects_if_libyang_data_already_exists(self):
         stubly = Mock()
-        subject = yangvoodoo.DataAccess(
-            data_abstraction_layer=stubly, disable_proxy=True
-        )
+        subject = yangvoodoo.DataAccess(data_abstraction_layer=stubly)
         subject.connect("integrationtest", yang_location="yang")
 
         self.assertNotEqual(stubly, subject.data_abstraction_layer.libyang_data)
 
     def test_connect_avoids_connecting_if_libyang_data_already_exists(self):
         stubly = Mock()
-        subject = yangvoodoo.DataAccess(
-            data_abstraction_layer=stubly, disable_proxy=True
-        )
+        subject = yangvoodoo.DataAccess(data_abstraction_layer=stubly)
         subject.data_abstraction_layer.libyang_data = stubly
         subject.connect("integrationtest", yang_location="yang")
 

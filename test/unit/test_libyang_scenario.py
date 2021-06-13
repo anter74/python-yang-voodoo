@@ -13,17 +13,13 @@ class test_new_stuff(unittest.TestCase):
         self.maxDiff = None
 
         self.stubly = yangvoodoo.stublydal.StubLyDataAbstractionLayer(log_level=2)
-        self.subject = yangvoodoo.DataAccess(
-            data_abstraction_layer=self.stubly, disable_proxy=True
-        )
+        self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stubly)
         self.subject.connect("integrationtest", yang_location="yang")
         yang_ctx = self.subject.yang_ctx
         self.root = self.subject.get_node()
 
         self.stubly2 = yangvoodoo.stublydal.StubLyDataAbstractionLayer(log_level=2)
-        self.subject2 = yangvoodoo.DataAccess(
-            data_abstraction_layer=self.stubly2, disable_proxy=True
-        )
+        self.subject2 = yangvoodoo.DataAccess(data_abstraction_layer=self.stubly2)
         self.subject2.connect(
             "integrationtest", yang_location="yang", yang_ctx=yang_ctx
         )

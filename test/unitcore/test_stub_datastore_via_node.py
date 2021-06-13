@@ -1,7 +1,7 @@
 import libyang
 import unittest
 import yangvoodoo
-import yangvoodoo.stubdal
+import yangvoodoo.stublydal
 
 
 """
@@ -13,7 +13,7 @@ any data.
 class test_datastore_via_node(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
-        self.stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
+        self.stub = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
         self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
         self.subject.connect("integrationtest", yang_location="yang")
         self.root = self.subject.get_node()

@@ -1,27 +1,30 @@
 import unittest
 import yangvoodoo
-import yangvoodoo.stubdal
+import yangvoodoo.stublydal
 import yangvoodoo.DiffEngine
 
 
 class test_diff_engine(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
-        self.stub_a = yangvoodoo.stubdal.StubDataAbstractionLayer()
+        self.stub_a = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
         self.session_a = yangvoodoo.DataAccess(data_abstraction_layer=self.stub_a)
         self.session_a.connect("integrationtest", yang_location="yang")
         self.root_a = self.session_a.get_node()
+        self.root_a.empty.create()
 
-        self.stub_b = yangvoodoo.stubdal.StubDataAbstractionLayer()
+        self.stub_b = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
         self.session_b = yangvoodoo.DataAccess(data_abstraction_layer=self.stub_b)
         self.session_b.connect("integrationtest", yang_location="yang")
         self.root_b = self.session_b.get_node()
+        self.root_b.empty.create()
 
     def test_diff_engine_modifies_the_adds(self):
         self.root_a.simpleleaf = "a"
         self.root_a.simpleenum = "A"
         self.root_b.simpleleaf = "b"
         self.root_b.bronze.silver.gold.platinum.deep = "c"
+
         # Act
         differ = yangvoodoo.DiffEngine.DiffIterator(self.root_a, self.root_b)
 
@@ -30,6 +33,10 @@ class test_diff_engine(unittest.TestCase):
             list(differ.all()),
             [
                 ("/integrationtest:simpleleaf", "a", "b", 2),
+                ("/integrationtest:bronze", None, "", 1),
+                ("/integrationtest:bronze/silver", None, "", 1),
+                ("/integrationtest:bronze/silver/gold", None, "", 1),
+                ("/integrationtest:bronze/silver/gold/platinum", None, "", 1),
                 ("/integrationtest:bronze/silver/gold/platinum/deep", None, "c", 1),
                 ("/integrationtest:simpleenum", "A", None, 3),
             ],
@@ -43,13 +50,23 @@ class test_diff_engine(unittest.TestCase):
         )
         self.assertEqual(
             list(differ.add()),
-            [("/integrationtest:bronze/silver/gold/platinum/deep", None, "c", 1)],
+            [
+                ("/integrationtest:bronze", None, "", 1),
+                ("/integrationtest:bronze/silver", None, "", 1),
+                ("/integrationtest:bronze/silver/gold", None, "", 1),
+                ("/integrationtest:bronze/silver/gold/platinum", None, "", 1),
+                ("/integrationtest:bronze/silver/gold/platinum/deep", None, "c", 1),
+            ],
         )
 
         self.assertEqual(
             list(differ.modify_then_add()),
             [
                 ("/integrationtest:simpleleaf", "a", "b", 2),
+                ("/integrationtest:bronze", None, "", 1),
+                ("/integrationtest:bronze/silver", None, "", 1),
+                ("/integrationtest:bronze/silver/gold", None, "", 1),
+                ("/integrationtest:bronze/silver/gold/platinum", None, "", 1),
                 ("/integrationtest:bronze/silver/gold/platinum/deep", None, "c", 1),
             ],
         )
@@ -67,6 +84,10 @@ class test_diff_engine(unittest.TestCase):
             list(differ.all()),
             [
                 ("/integrationtest:simpleleaf", "a", "b", 2),
+                ("/integrationtest:bronze", None, "", 1),
+                ("/integrationtest:bronze/silver", None, "", 1),
+                ("/integrationtest:bronze/silver/gold", None, "", 1),
+                ("/integrationtest:bronze/silver/gold/platinum", None, "", 1),
                 ("/integrationtest:bronze/silver/gold/platinum/deep", None, "c", 1),
                 ("/integrationtest:simpleenum", "A", None, 3),
             ],
@@ -80,7 +101,13 @@ class test_diff_engine(unittest.TestCase):
         )
         self.assertEqual(
             list(differ.add()),
-            [("/integrationtest:bronze/silver/gold/platinum/deep", None, "c", 1)],
+            [
+                ("/integrationtest:bronze", None, "", 1),
+                ("/integrationtest:bronze/silver", None, "", 1),
+                ("/integrationtest:bronze/silver/gold", None, "", 1),
+                ("/integrationtest:bronze/silver/gold/platinum", None, "", 1),
+                ("/integrationtest:bronze/silver/gold/platinum/deep", None, "c", 1),
+            ],
         )
 
         self.assertEqual(
@@ -88,6 +115,10 @@ class test_diff_engine(unittest.TestCase):
             [
                 ("/integrationtest:simpleenum", "A", None, 3),
                 ("/integrationtest:simpleleaf", "a", "b", 2),
+                ("/integrationtest:bronze", None, "", 1),
+                ("/integrationtest:bronze/silver", None, "", 1),
+                ("/integrationtest:bronze/silver/gold", None, "", 1),
+                ("/integrationtest:bronze/silver/gold/platinum", None, "", 1),
                 ("/integrationtest:bronze/silver/gold/platinum/deep", None, "c", 1),
             ],
         )
@@ -129,64 +160,10 @@ class test_diff_engine(unittest.TestCase):
 
         # Assert
         expected_results = [
-            ("/integrationtest:morecomplex/leaflists/simple", "e", "E", 2)
-        ]
-        self.assertEqual(list(differ.all()), expected_results)
-
-    #
-
-    def test_diff_engine_with_leaflist_version1(self):
-        self.root_a.morecomplex.leaflists.simple.create("e")
-
-        self.root_b.morecomplex.leaflists.simple.create("e")
-        self.root_b.morecomplex.leaflists.simple.create("f")
-        self.root_b.morecomplex.leaflists.simple.create("g")
-
-        # Act
-        differ = yangvoodoo.DiffEngine.DiffIterator(
-            self.root_a, self.root_b, start_filter="/integrationtest:morecomplex"
-        )
-
-        # Assert
-        expected_results = [
-            ("/integrationtest:morecomplex/leaflists/simple", None, "f", 1),
-            ("/integrationtest:morecomplex/leaflists/simple", None, "g", 1),
-        ]
-        self.assertEqual(list(differ.all()), expected_results)
-
-    def test_diff_engine_with_leaflist_version2(self):
-        self.root_a.morecomplex.leaflists.simple.create("e")
-        self.root_a.morecomplex.leaflists.simple.create("d")
-
-        self.root_b.morecomplex.leaflists.simple.create("e")
-        self.root_b.morecomplex.leaflists.simple.create("f")
-        self.root_b.morecomplex.leaflists.simple.create("g")
-
-        # Act
-        differ = yangvoodoo.DiffEngine.DiffIterator(
-            self.root_a, self.root_b, start_filter="/integrationtest:morecomplex"
-        )
-
-        # Assert
-        expected_results = [
-            ("/integrationtest:morecomplex/leaflists/simple", "d", "f", 2),
-            ("/integrationtest:morecomplex/leaflists/simple", None, "g", 1),
-        ]
-        self.assertEqual(list(differ.all()), expected_results)
-
-    def test_diff_engine_with_leaflist_version3(self):
-        self.root_a.morecomplex.leaflists.simple.create("e")
-        self.root_a.morecomplex.leaflists.simple.create("d")
-
-        # Act
-        differ = yangvoodoo.DiffEngine.DiffIterator(
-            self.root_a, self.root_b, start_filter="/integrationtest:morecomplex"
-        )
-
-        # Assert
-        expected_results = [
-            ("/integrationtest:morecomplex/leaflists/simple", "e", None, 3),
-            ("/integrationtest:morecomplex/leaflists/simple", "d", None, 3),
+            # with libyang stub leaf-lists are never modified they are always
+            # treated independently.
+            ("/integrationtest:morecomplex/leaflists/simple[.='E']", None, "E", 1),
+            ("/integrationtest:morecomplex/leaflists/simple[.='e']", "e", None, 3),
         ]
         self.assertEqual(list(differ.all()), expected_results)
 
@@ -208,10 +185,12 @@ class test_diff_engine(unittest.TestCase):
 
         # Assert
         expected_results = [
-            ("/integrationtest:morecomplex/leaflists/simple", "a", "A", 2),
-            ("/integrationtest:morecomplex/leaflists/simple", "c", "C", 2),
-            ("/integrationtest:morecomplex/leaflists/simple", "e", None, 3),
-            ("/integrationtest:morecomplex/leaflists/simple", "d", None, 3),
+            ("/integrationtest:morecomplex/leaflists/simple[.='A']", None, "A", 1),
+            ("/integrationtest:morecomplex/leaflists/simple[.='C']", None, "C", 1),
+            ("/integrationtest:morecomplex/leaflists/simple[.='a']", "a", None, 3),
+            ("/integrationtest:morecomplex/leaflists/simple[.='c']", "c", None, 3),
+            ("/integrationtest:morecomplex/leaflists/simple[.='d']", "d", None, 3),
+            ("/integrationtest:morecomplex/leaflists/simple[.='e']", "e", None, 3),
         ]
         self.assertEqual(list(differ.all()), expected_results)
 
@@ -225,7 +204,9 @@ class test_diff_engine(unittest.TestCase):
 
         # Assert
         expected_results = [
-            ("/integrationtest:morecomplex/leaflists/simple", None, "A", 1),
+            ("/integrationtest:morecomplex", None, "", 1),
+            ("/integrationtest:morecomplex/leaflists", None, "", 1),
+            ("/integrationtest:morecomplex/leaflists/simple[.='A']", None, "A", 1),
         ]
         self.assertEqual(list(differ.all()), expected_results)
 
@@ -248,8 +229,8 @@ class test_diff_engine(unittest.TestCase):
 
         # Act
         differ = yangvoodoo.DiffEngine.DiffIterator(
-            self.stub_a.stub_store,
-            self.stub_b.stub_store,
+            self.stub_a.dump_xpaths(),
+            self.stub_b.dump_xpaths(),
             start_filter="/integrationtest:diff",
         )
 
@@ -268,6 +249,12 @@ class test_diff_engine(unittest.TestCase):
                 2,
             ),
             (
+                "/integrationtest:diff/adds",
+                None,
+                "",
+                1,
+            ),
+            (
                 "/integrationtest:diff/adds/a-list[listkey='Ghouls']/listkey",
                 None,
                 "Ghouls",
@@ -281,6 +268,12 @@ class test_diff_engine(unittest.TestCase):
             ),
             ("/integrationtest:diff/adds/a-leaf", None, "b", 1),
             ("/integrationtest:diff/adds/a-2nd-leaf", None, "b2", 1),
+            (
+                "/integrationtest:diff/deletes",
+                "",
+                None,
+                3,
+            ),
             (
                 "/integrationtest:diff/deletes/a-list[listkey='Avril Lavigne']/listkey",
                 "Avril Lavigne",
@@ -311,6 +304,12 @@ class test_diff_engine(unittest.TestCase):
 
         expected_results = [
             (
+                "/integrationtest:diff/deletes",
+                "",
+                None,
+                3,
+            ),
+            (
                 "/integrationtest:diff/deletes/a-list[listkey='Avril Lavigne']/listkey",
                 "Avril Lavigne",
                 None,
@@ -321,6 +320,12 @@ class test_diff_engine(unittest.TestCase):
         self.assertEqual(list(differ.remove()), expected_results)
 
         expected_results = [
+            (
+                "/integrationtest:diff/adds",
+                None,
+                "",
+                1,
+            ),
             (
                 "/integrationtest:diff/adds/a-list[listkey='Ghouls']/listkey",
                 None,
@@ -380,7 +385,8 @@ class test_diff_engine(unittest.TestCase):
 
         # Act
         differ = yangvoodoo.DiffEngine.DiffIterator(
-            self.stub_a.stub_store, self.stub_b.stub_store
+            self.stub_a.dump_xpaths(),
+            self.stub_b.dump_xpaths(),
         )
 
         expected_results = [
@@ -398,6 +404,12 @@ class test_diff_engine(unittest.TestCase):
                 2,
             ),
             ("/integrationtest:simpleleaf", "A", "B", 2),
+            (
+                "/integrationtest:diff/adds",
+                None,
+                "",
+                1,
+            ),
             (
                 "/integrationtest:diff/adds/a-list[listkey='Ghouls']/listkey",
                 None,
@@ -488,7 +500,8 @@ class test_diff_engine(unittest.TestCase):
 
         # Act
         differ = yangvoodoo.DiffEngine.DiffIterator(
-            self.stub_a.stub_store, self.stub_b.stub_store
+            self.stub_a.dump_xpaths(),
+            self.stub_b.dump_xpaths(),
         )
 
         expected_results_when_filtering_on_return_method = [
@@ -504,6 +517,12 @@ class test_diff_engine(unittest.TestCase):
                 "original value2",
                 "new value2",
                 2,
+            ),
+            (
+                "/integrationtest:diff/adds",
+                None,
+                "",
+                1,
             ),
             (
                 "/integrationtest:diff/adds/a-list[listkey='Ghouls']/listkey",
@@ -528,6 +547,12 @@ class test_diff_engine(unittest.TestCase):
 
         expected_results_when_filtering_on_return_method = [
             (
+                "/integrationtest:diff/deletes",
+                "",
+                None,
+                3,
+            ),
+            (
                 "/integrationtest:diff/deletes/a-list[listkey='Avril Lavigne']/listkey",
                 "Avril Lavigne",
                 None,
@@ -546,6 +571,12 @@ class test_diff_engine(unittest.TestCase):
                 "original value2",
                 "new value2",
                 2,
+            ),
+            (
+                "/integrationtest:diff/adds",
+                None,
+                "",
+                1,
             ),
             (
                 "/integrationtest:diff/adds/a-list[listkey='Ghouls']/listkey",
@@ -595,6 +626,12 @@ class test_diff_engine(unittest.TestCase):
 
         expected_results_when_filtering_on_return_method = [
             (
+                "/integrationtest:diff/adds",
+                None,
+                "",
+                1,
+            ),
+            (
                 "/integrationtest:diff/adds/a-list[listkey='Ghouls']/listkey",
                 None,
                 "Ghouls",
@@ -616,6 +653,12 @@ class test_diff_engine(unittest.TestCase):
         )
 
         expected_results_when_filtering_on_return_method = [
+            (
+                "/integrationtest:diff/deletes",
+                "",
+                None,
+                3,
+            ),
             (
                 "/integrationtest:diff/deletes/a-list[listkey='Avril Lavigne']/listkey",
                 "Avril Lavigne",
@@ -649,10 +692,16 @@ class test_diff_engine(unittest.TestCase):
 
         # Act
         differ = yangvoodoo.DiffEngine.DiffIterator(
-            self.stub_a.stub_store, self.stub_b.stub_store
+            self.stub_a.dump_xpaths(), self.stub_b.dump_xpaths()
         )
 
         expected_results = [
+            (
+                "/integrationtest:diff/deletes",
+                "",
+                None,
+                3,
+            ),
             (
                 "/integrationtest:diff/deletes/a-list[listkey='Avril Lavigne']/listkey",
                 "Avril Lavigne",
@@ -679,6 +728,12 @@ class test_diff_engine(unittest.TestCase):
         self.assertEqual(list(differ.remove_then_modify()), expected_results)
 
         expected_results_when_filtering = [
+            (
+                "/integrationtest:diff/deletes",
+                "",
+                None,
+                3,
+            ),
             (
                 "/integrationtest:diff/deletes/a-list[listkey='Avril Lavigne']/listkey",
                 "Avril Lavigne",

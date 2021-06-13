@@ -1,6 +1,5 @@
 import unittest
 import yangvoodoo
-from yangvoodoo.TemplateNinja import TemplateNinja
 import yangvoodoo.stublydal
 import time
 
@@ -10,11 +9,10 @@ class test_nested_list_stuff(unittest.TestCase):
         self.maxDiff = None
         self.stub = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
         self.session = yangvoodoo.DataAccess(
-            data_abstraction_layer=self.stub, disable_proxy=True
+            data_abstraction_layer=self.stub
         )
         self.session.connect("integrationtest")
         self.root = self.session.get_node()
-        self.template_ninja = TemplateNinja()
 
     def assertExecutionTime(self, start_time, end_time, limit, threshold=0.75):
         if end_time - start_time > limit:
@@ -192,7 +190,7 @@ class test_nested_list_stuff(unittest.TestCase):
         This test is against sysrepo datastore, when we proxy read/requests from the proxy data store.
         """
         start_time = time.time()
-        for d in range(3000):
+        for d in range(3900000):
             this_node = self.root.scaling
             for c in range(1):
                 key = "created%sx%s" % (c, d)
@@ -201,6 +199,7 @@ class test_nested_list_stuff(unittest.TestCase):
                     this_node = this_node._parent.get(key)
 
         end_time = time.time()
+        this_node._context.dal.dump('/tmp/a.json',2)
         self.assertExecutionTime(start_time, end_time, 0.25, 0.6)
         print("Add three thousand entries to one list", end_time - start_time)
 

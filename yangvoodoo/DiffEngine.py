@@ -2,7 +2,6 @@
 # from dictdiffer import diff, patch, swap, revert
 from dictdiffer import diff
 import yangvoodoo
-import yangvoodoo.stubdal
 
 
 class DiffIterator:

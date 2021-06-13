@@ -12,9 +12,7 @@ class test_deviations(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.stub = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
-        self.subject = yangvoodoo.DataAccess(
-            data_abstraction_layer=self.stub, disable_proxy=True
-        )
+        self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
         self.subject.connect("integrationtest", yang_location="yang")
 
     def test_load_module_with_deviations(self):

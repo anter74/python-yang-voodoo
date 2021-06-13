@@ -1,7 +1,7 @@
 import libyang
 import unittest
 import yangvoodoo
-import yangvoodoo.stubdal
+import yangvoodoo.stublydal
 
 
 """
@@ -13,7 +13,7 @@ any data.
 class test_datastore_voodooentry_point(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
-        self.stub = yangvoodoo.stubdal.StubDataAbstractionLayer()
+        self.stub = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
         self.subject = yangvoodoo.basedal.BaseDataAbstractionLayer()
 
     def test_method_signatures_of_dal_does_not_change(self):
