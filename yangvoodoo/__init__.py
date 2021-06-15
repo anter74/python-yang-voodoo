@@ -47,6 +47,12 @@ class DataAccess:
         else:
             self.data_abstraction_layer = self._get_data_abastraction_layer(log)
 
+    def __del__(self):
+        try:
+            self.disconnect()
+        except:
+            pass
+
     def _get_data_abastraction_layer(self, log):
         return StubLyDataAbstractionLayer(log)
 

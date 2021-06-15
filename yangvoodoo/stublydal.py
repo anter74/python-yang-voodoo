@@ -1,4 +1,3 @@
-import gc
 from yangvoodoo.basedal import BaseDataAbstractionLayer
 import libyang
 
@@ -33,8 +32,6 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
     def disconnect(self):
         self.libyang_data = None
         self.libyang_ctx = None
-        objs = gc.collect()
-        print(f"yangvoodoo disconnect got {objs} objects")
 
     def validate(self, raise_exception=True):
         try:
