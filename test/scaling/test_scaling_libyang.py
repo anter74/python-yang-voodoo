@@ -8,9 +8,7 @@ class test_nested_list_stuff(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.stub = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
-        self.session = yangvoodoo.DataAccess(
-            data_abstraction_layer=self.stub
-        )
+        self.session = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
         self.session.connect("integrationtest")
         self.root = self.session.get_node()
 
@@ -199,7 +197,7 @@ class test_nested_list_stuff(unittest.TestCase):
                     this_node = this_node._parent.get(key)
 
         end_time = time.time()
-        this_node._context.dal.dump('/tmp/a.json',2)
+        this_node._context.dal.dump("/tmp/a.json", 2)
         self.assertExecutionTime(start_time, end_time, 0.25, 0.6)
         print("Add three thousand entries to one list", end_time - start_time)
 

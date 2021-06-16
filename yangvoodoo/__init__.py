@@ -33,7 +33,14 @@ class DataAccess:
     # CHANGE VERSION NUMBER HERE
     __version__ = "0.0.9.0"
 
-    def __init__(self, log=None, local_log=False, data_abstraction_layer=None):
+    def __init__(
+        self,
+        log=None,
+        local_log=False,
+        data_abstraction_layer=None,
+        yang_model=None,
+        yang_location=None,
+    ):
         if not log:
             log = Utils.get_logger("yangvoodoo", 10)
         self.log = log
@@ -42,16 +49,27 @@ class DataAccess:
         self.connected = False
         self.context = None
         self.node_returned = False
+        self.root_voodoo = None
         if data_abstraction_layer:
             self.data_abstraction_layer = data_abstraction_layer
         else:
             self.data_abstraction_layer = self._get_data_abastraction_layer(log)
+        if yang_model:
+            self.connect(yang_model, yang_location)
 
+    # pylint: disable=bare-except
     def __del__(self):
         try:
             self.disconnect()
         except:
             pass
+
+    def __enter__(self):
+        self.root_voodoo = self.get_node()
+        return self.root_voodoo
+
+    def __exit__(self, type, value, traceback):
+        self.disconnect()
 
     def _get_data_abastraction_layer(self, log):
         return StubLyDataAbstractionLayer(log)
@@ -341,6 +359,7 @@ Children: %s"""
         """
         self.log.trace("DISCONNECT")
         self.connected = False
+        self.root_voodoo
         return self.data_abstraction_layer.disconnect()
 
     def commit(self):
@@ -699,6 +718,16 @@ Children: %s"""
         Types.FORMAT['XML'] or Types.FORMAT['JSON']
         """
         return self.data_abstraction_layer.dumps(format)
+
+    def merge(self, filename, format=1, trusted=True):
+        """
+        Merge data from the filename in the format specified.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+
+        If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
+        """
+        return self.data_abstraction_layer.merge(filename, format, trusted)
 
     def merges(self, payload, format=1, trusted=True):
         """

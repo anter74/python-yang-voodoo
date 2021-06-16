@@ -131,3 +131,9 @@
 
    - **CONSTRAINT**: yangvoodoo assumes that all XPATH's belong to the same module, this assumption breaks
      some yang model's with augments in an imported module.
+
+
+# 0.0.9.x
+
+
+   - Implement context manager/disconnect
