@@ -1,0 +1,87 @@
+=
+
+Massive payload with massive number of nodes (3.9Million list elements)
+
+c52307c7af28   zealous_heyrovsky   399.45%   14.57GiB / 31.1GiB   46.86%    1.27MB / 0B   22.1MB / 25.6MB   12
+
+- we can see ~ 3G memory footprint in the OS per fully loaded payload using valgrind memcheck=full
+- we can see ~ 1.8G memory footprint int he OS per fully loaded payload using massif tool
+- with lyd_free_withsiblings + garbage collect we see memory go back to 0 (lc5-massif.log)- goes down to 600M
+- without lyd_free_withsiblings we see memory stay at 1,8G whilst the process is alive (lc5-massif.without-cleanup.log)
+
+valgrind --leak-check=full --show-leak-kinds=all -s --log-file=lc6.log python3 vv.py
+valgrind --tool=massif --log-file=lc5-massif.without-cleanup.log python3 zz.py
+
+
+.ly_ctx_destroy
+----
+
+API void
+ly_ctx_destroy(struct ly_ctx *ctx, void (*private_destructor)(const struct lys_node *node, void *priv))
+{
+    FUN_IN;
+
+    int i;
+
+    if (!ctx) {
+        return;
+    }
+
+    /* models list */
+    for (; ctx->models.used > 0; ctx->models.used--) {
+        /* remove the applied deviations and augments */
+        lys_sub_module_remove_devs_augs(ctx->models.list[ctx->models.used - 1]);
+        /* remove the module */
+        lys_free(ctx->models.list[ctx->models.used - 1], private_destructor, 1, 0);
+    }
+    if (ctx->models.search_paths) {
+        for(i = 0; ctx->models.search_paths[i]; i++) {
+            free(ctx->models.search_paths[i]);
+        }
+        free(ctx->models.search_paths);
+    }
+    free(ctx->models.list);
+
+    /* clean the error list */
+    ly_err_clean(ctx, 0);
+    pthread_key_delete(ctx->errlist_key);
+
+    /* dictionary */
+    lydict_clean(&ctx->dict);
+
+    /* plugins - will be removed only if this is the last context */
+    ly_clean_plugins();
+
+    free(ctx);
+}
+
+----
+
+
+.The massive payload
+----
+{"integrationtest:scaling":{"scale0":[{"key0-a":"created0x0"},{"key0-a":"created0x1"},{"key0-a":"created0x2"},{"key0-a":"created0x3"},{"key0-a":"created0x4"},{"key0-a":"created0x5"},{"key0-a":"created0x6"},{"key0-a":"created0x7"},{"key0-a":"created0x8"},{"key0-a":"created0x9"},{"key0-a":"created0x10"},{"key0-a":"created0x11"},{"key0-a":"created0x12"},{"key0-a":"created0x13"},{"key0-a":"created0x14"},{"key0-a":"created0x15"},{"key0-a":"created0x16"},{"key0-a":"created0x17"},{"key0-a":"created0x18⏎
+...
+reated0x3899983"},{"key0-a":"created0x3899984"},{"key0-a":"created0x3899985"},{"key0-a":"created0x3899986"},{"key0-a":"created0x3899987"},{"key0-a":"created0x3899988"},{"key0-a":"created0x3899989"},{"key0-a":"created0x3899990"},{"key0-a":"created0x3899991"},{"key0-a":"created0x3899992"},{"key0-a":"created0x3899993"},{"key0-a":"created0x3899994"},{"key0-a":"created0x3899995"},{"key0-a":"created0x3899996"},{"key0-a":"created0x3899997"},{"key0-a":"created0x3899998"},{"key0-a":"created0x3899999"}]}}⏎   ---
+
+
+At the end of these tests two tests were running
+ - lc5-with-cleanup.without-garbage-collection.wait-at-end.log
+ - lc5-without-cleanup.wait-at-end.log
+
+
+which means garbage collection is important
+
+
+
+
+
+
+
+
+
+
+- glances
+
+https://stackoverflow.com/questions/15455048/releasing-memory-in-python
+https://hg.python.org/cpython/file/3.3/Objects/obmalloc.c#l27
