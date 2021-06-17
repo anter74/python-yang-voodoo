@@ -57,13 +57,6 @@ class DataAccess:
         if yang_model:
             self.connect(yang_model, yang_location)
 
-    # pylint: disable=bare-except
-    def __del__(self):
-        try:
-            self.disconnect()
-        except:
-            pass
-
     def __enter__(self):
         self.root_voodoo = self.get_node()
         return self.root_voodoo
