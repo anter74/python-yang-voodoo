@@ -12,13 +12,15 @@ any data.
 
 
 class test_new(unittest.TestCase):
-
     def setUp(self):
         self.maxDiff = None
         self.stub = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
-        self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub, disable_proxy=True)
-        self.subject.connect('integrationtest', yang_location='yang')
+        self.subject = yangvoodoo.DataAccess(
+            data_abstraction_layer=self.stub, disable_proxy=True
+        )
+        self.subject.connect("integrationtest", yang_location="yang")
         self.root = self.subject.get_node()
+
     #
     # def test_a(self):
     #     print(self.root.morecomplex.inner.leaf63636363)
@@ -75,6 +77,8 @@ class test_new(unittest.TestCase):
     #     print('from the merged in case')
     #     self.subject.loads("""<morecomplex xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest"><inner><uint8keylist><mykey>1</mykey><nonkey>o</nonkey></uint8keylist><uint8keylist><mykey>0</mykey><nonkey>z</nonkey></uint8keylist></inner></morecomplex>""", trusted=True)
     #     print(self.subject.dumps())
+
+
 #
 #     def test_i(self):
 #         class pythondata:

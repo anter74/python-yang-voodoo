@@ -17,20 +17,23 @@ little expensive, so there is bleed between each individual test.
 
 
 class test_node_based_access(unittest.TestCase):
-
     def setUp(self):
         self.maxDiff = None
-        command = 'sysrepocfg --import=init-data/integrationtest.xml --format=xml --datastore=running integrationtest'
-        process = subprocess.Popen(["bash"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        (out, err) = process.communicate(command.encode('UTF-8'))
+        command = "sysrepocfg --import=init-data/integrationtest.xml --format=xml --datastore=running integrationtest"
+        process = subprocess.Popen(
+            ["bash"], stdin=subprocess.PIPE, stdout=subprocess.PIPE
+        )
+        (out, err) = process.communicate(command.encode("UTF-8"))
         if err:
-            raise ValueError('Unable to import data\n%s\n%s' % (out, err))
+            raise ValueError("Unable to import data\n%s\n%s" % (out, err))
 
         time.sleep(0.25)
 
         sysrepodal = SysrepoDataAbstractionLayer()
-        self.subject = yangvoodoo.DataAccess(disable_proxy=False, data_abstraction_layer=sysrepodal)
-        self.subject.connect('integrationtest', yang_location='yang')
+        self.subject = yangvoodoo.DataAccess(
+            disable_proxy=False, data_abstraction_layer=sysrepodal
+        )
+        self.subject.connect("integrationtest", yang_location="yang")
         self.root = self.subject.get_node()
 
     def tearDown(self):
@@ -43,10 +46,10 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(self.root.simpleleaf, "/path/inside/a/leaf[key='sdf']/dsfsdf")
 
     def test_simplest_leaf(self):
-        self.assertEqual(self.root.simpleleaf, 'duke')
+        self.assertEqual(self.root.simpleleaf, "duke")
 
-        self.root.simpleleaf = 'spirit'
-        self.assertEqual(self.root.simpleleaf, 'spirit')
+        self.root.simpleleaf = "spirit"
+        self.assertEqual(self.root.simpleleaf, "spirit")
 
         self.root.simpleleaf = None
         # TODO: assert here that the leaf is not persisted in the sysrepo data.
@@ -65,21 +68,27 @@ class test_node_based_access(unittest.TestCase):
 
     def test_containers(self):
         morecomplex = self.root.morecomplex
-        self.assertEqual(repr(morecomplex), "VoodooContainer{/integrationtest:morecomplex}")
+        self.assertEqual(
+            repr(morecomplex), "VoodooContainer{/integrationtest:morecomplex}"
+        )
 
         self.assertEqual(morecomplex.leaf3, 12345)
-        self.assertEqual(morecomplex.inner.leaf7, 'this-is-a-default')
+        self.assertEqual(morecomplex.inner.leaf7, "this-is-a-default")
 
         inner = morecomplex.inner
-        self.assertEqual(repr(inner),
-                         'VoodooPresenceContainer{/integrationtest:morecomplex/inner} Exists')
-        inner.leaf7 = 'this-is-not-a-default-now'
-        self.assertEqual(morecomplex.inner.leaf7, 'this-is-not-a-default-now')
+        self.assertEqual(
+            repr(inner),
+            "VoodooPresenceContainer{/integrationtest:morecomplex/inner} Exists",
+        )
+        inner.leaf7 = "this-is-not-a-default-now"
+        self.assertEqual(morecomplex.inner.leaf7, "this-is-not-a-default-now")
         self.assertTrue(morecomplex.inner.exists())
 
         simplecontainer = self.root.simplecontainer
-        self.assertEqual(repr(simplecontainer),
-                         "VoodooPresenceContainer{/integrationtest:simplecontainer} Does Not Exist")
+        self.assertEqual(
+            repr(simplecontainer),
+            "VoodooPresenceContainer{/integrationtest:simplecontainer} Does Not Exist",
+        )
         self.assertFalse(simplecontainer.exists())
 
         simplecontainer.create()
@@ -88,17 +97,21 @@ class test_node_based_access(unittest.TestCase):
     def test_list(self):
         twolist = self.root.twokeylist
         self.assertEqual(repr(twolist), "VoodooList{/integrationtest:twokeylist}")
-        self.assertEqual(twolist._path, '/integrationtest:twokeylist')
+        self.assertEqual(twolist._path, "/integrationtest:twokeylist")
 
         with self.assertRaises(yangvoodoo.Errors.ListWrongNumberOfKeys) as context:
-            twolist.get('true')
-        self.assertEqual(str(context.exception),
-                         'The path: /integrationtest:twokeylist is a list requiring 2 keys but was given 1 keys')
+            twolist.get("true")
+        self.assertEqual(
+            str(context.exception),
+            "The path: /integrationtest:twokeylist is a list requiring 2 keys but was given 1 keys",
+        )
 
         listelement = twolist.get(True, False)
-        expected_children = ['primary', 'secondary', 'tertiary']
-        self.assertEqual(repr(listelement),
-                         "VoodooListElement{/integrationtest:twokeylist[primary='true'][secondary='false']}")
+        expected_children = ["primary", "secondary", "tertiary"]
+        self.assertEqual(
+            repr(listelement),
+            "VoodooListElement{/integrationtest:twokeylist[primary='true'][secondary='false']}",
+        )
         self.assertEqual(dir(listelement), expected_children)
         self.assertEqual(listelement.tertiary, True)
 
@@ -106,27 +119,43 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(listelement.tertiary, False)
 
         listelement = twolist.get(True, True)
-        expected_children = ['primary', 'secondary', 'tertiary']
-        self.assertEqual(repr(listelement),
-                         "VoodooListElement{/integrationtest:twokeylist[primary='true'][secondary='true']}")
+        expected_children = ["primary", "secondary", "tertiary"]
+        self.assertEqual(
+            repr(listelement),
+            "VoodooListElement{/integrationtest:twokeylist[primary='true'][secondary='true']}",
+        )
         self.assertEqual(dir(listelement), expected_children)
         self.assertEqual(listelement.tertiary, True)
 
     def test_complex(self):
-        outside = self.root.outsidelist.create('its cold outside')
-        italian_numbers = outside.otherinsidelist.create('uno', 'due', 'tre')
-        italian_numbers.language = 'italian'
+        outside = self.root.outsidelist.create("its cold outside")
+        italian_numbers = outside.otherinsidelist.create("uno", "due", "tre")
+        italian_numbers.language = "italian"
 
-        expected_children = ['language', 'otherlist1', 'otherlist2', 'otherlist3', 'otherlist4', 'otherlist5']
-        self.assertEqual(repr(
-            italian_numbers), ("VoodooListElement{/integrationtest:outsidelist[leafo='its cold outside']/"
-                               "otherinsidelist"
-                               "[otherlist1='uno'][otherlist2='due'][otherlist3='tre']}"))
+        expected_children = [
+            "language",
+            "otherlist1",
+            "otherlist2",
+            "otherlist3",
+            "otherlist4",
+            "otherlist5",
+        ]
+        self.assertEqual(
+            repr(italian_numbers),
+            (
+                "VoodooListElement{/integrationtest:outsidelist[leafo='its cold outside']/"
+                "otherinsidelist"
+                "[otherlist1='uno'][otherlist2='due'][otherlist3='tre']}"
+            ),
+        )
         self.assertEqual(dir(italian_numbers), expected_children)
-        self.assertEqual(italian_numbers.language, 'italian')
+        self.assertEqual(italian_numbers.language, "italian")
         value = self.subject.get(
-            ("/integrationtest:outsidelist[leafo='its cold outside']/integrationtest:otherinsidelist"
-             "[otherlist1='uno'][otherlist2='due'][otherlist3='tre']/language"))
+            (
+                "/integrationtest:outsidelist[leafo='its cold outside']/integrationtest:otherinsidelist"
+                "[otherlist1='uno'][otherlist2='due'][otherlist3='tre']/language"
+            )
+        )
         self.assertEqual(value, "italian")
         self.subject.commit()
 
@@ -165,133 +194,174 @@ class test_node_based_access(unittest.TestCase):
         self.root.underscoretests.underscore_only
         self.root.underscoretests.hyphen_only
 
-        self.root.underscoretests.underscore_and_hyphen = 'HELLO-Hyphen-And-Underscore'
-        self.assertEqual(self.root.underscoretests.underscore_and_hyphen, 'HELLO-Hyphen-And-Underscore')
+        self.root.underscoretests.underscore_and_hyphen = "HELLO-Hyphen-And-Underscore"
+        self.assertEqual(
+            self.root.underscoretests.underscore_and_hyphen,
+            "HELLO-Hyphen-And-Underscore",
+        )
 
         psychedelia = self.root.psychedelia
         psychedelic_rock = psychedelia.psychedelic_rock
-        x = psychedelic_rock.bands.create('The 13th Floor Elevators')
-        x = psychedelic_rock.bands['The 13th Floor Elevators']
-        psychedelic_rock.noise_pop.bands.create('The Jesus and Mary Chain')
-        psychedelic_rock.noise_pop.dream_pop.bands.create('Mazzy Star').favourite = True
-        psychedelic_rock.noise_pop.shoe_gaze.bands.create('Slowdive').favourite = False
-        psychedelic_rock.noise_pop.shoe_gaze.bands.create('The Brian Jonestown Massacre').favourite = True
+        x = psychedelic_rock.bands.create("The 13th Floor Elevators")
+        x = psychedelic_rock.bands["The 13th Floor Elevators"]
+        psychedelic_rock.noise_pop.bands.create("The Jesus and Mary Chain")
+        psychedelic_rock.noise_pop.dream_pop.bands.create("Mazzy Star").favourite = True
+        psychedelic_rock.noise_pop.shoe_gaze.bands.create("Slowdive").favourite = False
+        psychedelic_rock.noise_pop.shoe_gaze.bands.create(
+            "The Brian Jonestown Massacre"
+        ).favourite = True
 
         """
         Note sysrepo gives us this protection for free in the backend.
         """
         with self.assertRaises(yangvoodoo.Errors.ListKeyCannotBeChanged) as context:
-            x.band = 'list-keys-must-not-be-renamed'
-        self.assertEqual(str(context.exception),
-                         ("The list key: band for "
-                          "/integrationtest:psychedelia/psychedelic-rock/bands[band='The 13th Floor Elevators']/band "
-                          "cannot be changed"))
+            x.band = "list-keys-must-not-be-renamed"
+        self.assertEqual(
+            str(context.exception),
+            (
+                "The list key: band for "
+                "/integrationtest:psychedelia/psychedelic-rock/bands[band='The 13th Floor Elevators']/band "
+                "cannot be changed"
+            ),
+        )
 
-        self.assertTrue(psychedelic_rock.stoner_rock.bands.get('Dead Meadow'))
-        self.assertEqual(psychedelic_rock.stoner_rock.bands.get('Dead Meadow').albums.get('Old Growth').album,
-                         'Old Growth')
+        self.assertTrue(psychedelic_rock.stoner_rock.bands.get("Dead Meadow"))
+        self.assertEqual(
+            psychedelic_rock.stoner_rock.bands.get("Dead Meadow")
+            .albums.get("Old Growth")
+            .album,
+            "Old Growth",
+        )
 
         # We should already have Dead Meadow as a favourite in this category, and a must condition in yange
         with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError) as context:
-            psychedelic_rock.stoner_rock.bands.get('Wooden Shjips').favourite = True
+            psychedelic_rock.stoner_rock.bands.get("Wooden Shjips").favourite = True
             self.subject.commit()
-        self.assertEqual(str(context.exception),
-                         ("1 Errors occured\nError 0: Must condition \"count(current()/bands[favourite='true'])<2\" "
-                          "not satisfied. (Path: /integrationtest:psychedelia/psychedelic-rock/stoner-rock)\n"))
+        self.assertEqual(
+            str(context.exception),
+            (
+                "1 Errors occured\nError 0: Must condition \"count(current()/bands[favourite='true'])<2\" "
+                "not satisfied. (Path: /integrationtest:psychedelia/psychedelic-rock/stoner-rock)\n"
+            ),
+        )
 
-        psychedelic_rock.stoner_rock.bands.get('Wooden Shjips').favourite = False
+        psychedelic_rock.stoner_rock.bands.get("Wooden Shjips").favourite = False
 
         with self.assertRaises(yangvoodoo.Errors.ListDoesNotContainElement) as context:
-            psychedelic_rock.stoner_rock.bands.get('Taylor Swift').favourite = False
-        self.assertEqual(str(context.exception),
-                         ("The list does not contain the list element: "
-                          "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/"
-                          "bands[band='Taylor Swift']"))
+            psychedelic_rock.stoner_rock.bands.get("Taylor Swift").favourite = False
+        self.assertEqual(
+            str(context.exception),
+            (
+                "The list does not contain the list element: "
+                "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/"
+                "bands[band='Taylor Swift']"
+            ),
+        )
 
         self.assertEqual(len(psychedelic_rock.noise_pop.shoe_gaze.bands), 2)
-        self.assertEqual(repr(psychedelic_rock),
-                         "VoodooContainer{/integrationtest:psychedelia/psychedelic-rock}")
+        self.assertEqual(
+            repr(psychedelic_rock),
+            "VoodooContainer{/integrationtest:psychedelia/psychedelic-rock}",
+        )
 
     def test_iteration_of_lists(self):
 
         expected_answers = [
             "VoodooListElement{/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']}",
-            "VoodooListElement{/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']}"
+            "VoodooListElement{/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']}",
         ]
         for band in self.root.psychedelia.psychedelic_rock.stoner_rock.bands:
             expected_answer = expected_answers.pop(0)
             self.assertEqual(repr(band), expected_answer)
 
-        self.assertTrue("Dead Meadow" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)
-        self.assertFalse("Taylor Swift" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)
+        self.assertTrue(
+            "Dead Meadow" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands
+        )
+        self.assertFalse(
+            "Taylor Swift" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands
+        )
 
         twolist = self.root.twokeylist
         self.assertTrue((True, True) in twolist)
 
         other_list = self.root.container_and_lists.multi_key_list
-        self.assertFalse(('A', 'Z') in other_list)
+        self.assertFalse(("A", "Z") in other_list)
 
-        item = other_list.create('A', 'Z')
-        self.assertTrue(('A', 'Z') in other_list)
+        item = other_list.create("A", "Z")
+        self.assertTrue(("A", "Z") in other_list)
 
         # Test __getitem__
-        self.assertEqual(repr(other_list['A', 'Z']), repr(item))
+        self.assertEqual(repr(other_list["A", "Z"]), repr(item))
 
         # Test delete item
         self.assertEqual(len(other_list), 1)
-        other_list.create('thing', 'todelete').inner.C = 'soon'
+        other_list.create("thing", "todelete").inner.C = "soon"
         self.assertEqual(len(other_list), 2)
-        self.assertEqual(other_list['thing', 'todelete'].inner.C, 'soon')
-        del other_list['thing', 'todelete']
+        self.assertEqual(other_list["thing", "todelete"].inner.C, "soon")
+        del other_list["thing", "todelete"]
         self.assertEqual(len(other_list), 1)
 
         number_list = self.root.container_and_lists.numberkey_list
         element = number_list.create(3)
         number_list.create(4)
-        self.assertEqual(repr(element),
-                         ("VoodooListElement{/integrationtest:container-and-lists/"
-                          "numberkey-list[numberkey='3']}"))
+        self.assertEqual(
+            repr(element),
+            (
+                "VoodooListElement{/integrationtest:container-and-lists/"
+                "numberkey-list[numberkey='3']}"
+            ),
+        )
         element = number_list.get(4)
-        self.assertEqual(repr(element),
-                         ("VoodooListElement{/integrationtest:container-and-lists/"
-                          "numberkey-list[numberkey='4']}"))
+        self.assertEqual(
+            repr(element),
+            (
+                "VoodooListElement{/integrationtest:container-and-lists/"
+                "numberkey-list[numberkey='4']}"
+            ),
+        )
         element = number_list.get(3)
-        self.assertEqual(repr(element),
-                         ("VoodooListElement{/integrationtest:container-and-lists/"
-                          "numberkey-list[numberkey='3']}"))
+        self.assertEqual(
+            repr(element),
+            (
+                "VoodooListElement{/integrationtest:container-and-lists/"
+                "numberkey-list[numberkey='3']}"
+            ),
+        )
 
         for x in self.root.morecomplex.inner.list_that_will_stay_empty:
-            self.fail('Did not expect any data in the list')
+            self.fail("Did not expect any data in the list")
 
         self.assertEqual(len(self.root.morecomplex.inner.list_that_will_stay_empty), 0)
 
-        self.assertFalse('x' in self.root.morecomplex.inner.list_that_will_stay_empty)
+        self.assertFalse("x" in self.root.morecomplex.inner.list_that_will_stay_empty)
 
     def test_decimal64_and_typedef_resolving(self):
         self.root.morecomplex.superstar = 95.6
         self.assertEqual(int(self.root.morecomplex.superstar * 100), 9560)
 
     def test_ietf(self):
-        self.root.morecomplex.inner.ietf_inet_types.ip.address = 'ff::1'
-        self.root.morecomplex.inner.ietf_inet_types.ip.address = '1.2.3.4'
+        self.root.morecomplex.inner.ietf_inet_types.ip.address = "ff::1"
+        self.root.morecomplex.inner.ietf_inet_types.ip.address = "1.2.3.4"
         with self.assertRaises(yangvoodoo.Errors.BackendDatastoreError):
-            self.root.morecomplex.inner.ietf_inet_types.ip.address = '1.2.3.444'
+            self.root.morecomplex.inner.ietf_inet_types.ip.address = "1.2.3.444"
 
     def test_lists_ordering(self):
-        self.root.simplelist.create('A')
-        self.root.simplelist.create('Z')
-        self.root.simplelist.create('middle')
-        self.root.simplelist.create('M')
+        self.root.simplelist.create("A")
+        self.root.simplelist.create("Z")
+        self.root.simplelist.create("middle")
+        self.root.simplelist.create("M")
 
         # GETS is based on user defined order
         # Act
         items = list(self.root.simplelist)
 
         # Assert
-        expected_results = ["VoodooListElement{/integrationtest:simplelist[simplekey='A']}",
-                            "VoodooListElement{/integrationtest:simplelist[simplekey='Z']}",
-                            "VoodooListElement{/integrationtest:simplelist[simplekey='middle']}",
-                            "VoodooListElement{/integrationtest:simplelist[simplekey='M']}"]
+        expected_results = [
+            "VoodooListElement{/integrationtest:simplelist[simplekey='A']}",
+            "VoodooListElement{/integrationtest:simplelist[simplekey='Z']}",
+            "VoodooListElement{/integrationtest:simplelist[simplekey='middle']}",
+            "VoodooListElement{/integrationtest:simplelist[simplekey='M']}",
+        ]
 
         for i in range(len(items)):
             self.assertEqual(repr(items[i]), expected_results[i])
@@ -301,32 +371,36 @@ class test_node_based_access(unittest.TestCase):
         items = list(self.root.simplelist._xpath_sorted)
 
         # Assert
-        expected_results = ["VoodooListElement{/integrationtest:simplelist[simplekey='A']}",
-                            "VoodooListElement{/integrationtest:simplelist[simplekey='M']}",
-                            "VoodooListElement{/integrationtest:simplelist[simplekey='Z']}",
-                            "VoodooListElement{/integrationtest:simplelist[simplekey='middle']}"]
+        expected_results = [
+            "VoodooListElement{/integrationtest:simplelist[simplekey='A']}",
+            "VoodooListElement{/integrationtest:simplelist[simplekey='M']}",
+            "VoodooListElement{/integrationtest:simplelist[simplekey='Z']}",
+            "VoodooListElement{/integrationtest:simplelist[simplekey='middle']}",
+        ]
 
         for i in range(len(items)):
             self.assertEqual(repr(items[i]), expected_results[i])
 
-        outside_a = self.root.outsidelist.create('a')
-        outside_a.insidelist.create('1')
-        outside_a.insidelist.create('2')
-        outside_b = self.root.outsidelist.create('b')
-        outside_b.insidelist.create('3')
+        outside_a = self.root.outsidelist.create("a")
+        outside_a.insidelist.create("1")
+        outside_a.insidelist.create("2")
+        outside_b = self.root.outsidelist.create("b")
+        outside_b.insidelist.create("3")
         self.assertEqual(len(outside_a.insidelist), 2)
         self.assertEqual(len(outside_b.insidelist), 1)
 
     def test_leaf_lists(self):
-        self.assertEqual(repr(self.root.morecomplex.leaflists.simple),
-                         "VoodooLeafList{/integrationtest:morecomplex/leaflists/simple}")
+        self.assertEqual(
+            repr(self.root.morecomplex.leaflists.simple),
+            "VoodooLeafList{/integrationtest:morecomplex/leaflists/simple}",
+        )
 
         ll = self.root.morecomplex.leaflists.simple
-        ll.create('A')
-        ll.create('Z')
-        ll.create('B')
+        ll.create("A")
+        ll.create("Z")
+        ll.create("B")
 
-        expected = ['A', 'Z', 'B']
+        expected = ["A", "Z", "B"]
         received = []
         for x in self.root.morecomplex.leaflists.simple:
             received.append(x)
@@ -334,39 +408,39 @@ class test_node_based_access(unittest.TestCase):
 
         self.assertEqual(3, len(self.root.morecomplex.leaflists.simple))
 
-        self.assertFalse('non-existant' in self.root.morecomplex.leaflists.simple)
-        self.assertTrue('A' in self.root.morecomplex.leaflists.simple)
+        self.assertFalse("non-existant" in self.root.morecomplex.leaflists.simple)
+        self.assertTrue("A" in self.root.morecomplex.leaflists.simple)
 
-        del self.root.morecomplex.leaflists.simple['A']
+        del self.root.morecomplex.leaflists.simple["A"]
 
         self.assertEqual(2, len(self.root.morecomplex.leaflists.simple))
-        self.assertFalse('A' in self.root.morecomplex.leaflists.simple)
+        self.assertFalse("A" in self.root.morecomplex.leaflists.simple)
 
     def test_dump_xpaths(self):
         self.subject.module = "integrationtest"
         result = self.subject.dump_xpaths()
         expected_answer = {
-            '/integrationtest:imports-in-here/name': 'foo',
-            '/integrationtest:default': 'statusquo',
-            '/integrationtest:whencontainer/then': 'thendefault',
-            '/integrationtest:validator/types/bool_with_default': True,
-            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/band": 'Dead Meadow',
+            "/integrationtest:imports-in-here/name": "foo",
+            "/integrationtest:default": "statusquo",
+            "/integrationtest:whencontainer/then": "thendefault",
+            "/integrationtest:validator/types/bool_with_default": True,
+            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/band": "Dead Meadow",
             "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/favourite": True,
-            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/albums[album='Old Growth']/album": 'Old Growth',
+            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/albums[album='Old Growth']/album": "Old Growth",
             "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']/albums[album='Old Growth']": None,
             "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Dead Meadow']": None,
-            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']/band": 'Wooden Shjips',
+            "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']/band": "Wooden Shjips",
             "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']/favourite": False,
             "/integrationtest:psychedelia/psychedelic-rock/stoner-rock/bands[band='Wooden Shjips']": None,
-            '/integrationtest:morecomplex/extraboolean2': False,
-            '/integrationtest:morecomplex/extraboolean3': True,
-            '/integrationtest:morecomplex/leaf3': 12345,
-            '/integrationtest:morecomplex/inner/leaf5': 'Inside',
-            '/integrationtest:morecomplex/inner/leaf7': 'this-is-a-default',
-            '/integrationtest:morecomplex/inner': True,
-            '/integrationtest:morecomplex/leaf2': True,
-            '/integrationtest:morecomplex/nonconfig': 'hello',
-            '/integrationtest:simpleenum': 'A',
+            "/integrationtest:morecomplex/extraboolean2": False,
+            "/integrationtest:morecomplex/extraboolean3": True,
+            "/integrationtest:morecomplex/leaf3": 12345,
+            "/integrationtest:morecomplex/inner/leaf5": "Inside",
+            "/integrationtest:morecomplex/inner/leaf7": "this-is-a-default",
+            "/integrationtest:morecomplex/inner": True,
+            "/integrationtest:morecomplex/leaf2": True,
+            "/integrationtest:morecomplex/nonconfig": "hello",
+            "/integrationtest:simpleenum": "A",
             "/integrationtest:twokeylist[primary='true'][secondary='true']/primary": True,
             "/integrationtest:twokeylist[primary='true'][secondary='true']/secondary": True,
             "/integrationtest:twokeylist[primary='true'][secondary='true']/tertiary": True,
@@ -383,14 +457,15 @@ class test_node_based_access(unittest.TestCase):
             "/integrationtest:twokeylist[primary='false'][secondary='false']/secondary": False,
             "/integrationtest:twokeylist[primary='false'][secondary='false']/tertiary": False,
             "/integrationtest:twokeylist[primary='false'][secondary='false']": None,
-            '/integrationtest:thing-that-is-leafref': 'GHI',
-            '/integrationtest:thing-to-leafref-against': 'GHI',
-            "/integrationtest:list-to-leafref-against[idle='i']/idle": 'i',
-            "/integrationtest:list-to-leafref-against[idle='i']/wild": 'I',
+            "/integrationtest:thing-that-is-leafref": "GHI",
+            "/integrationtest:thing-to-leafref-against": "GHI",
+            "/integrationtest:list-to-leafref-against[idle='i']/idle": "i",
+            "/integrationtest:list-to-leafref-against[idle='i']/wild": "I",
             "/integrationtest:list-to-leafref-against[idle='i']": None,
-            "/integrationtest:list-to-leafref-against[idle='w']/idle": 'w',
-            "/integrationtest:list-to-leafref-against[idle='w']/wild": 'W',
+            "/integrationtest:list-to-leafref-against[idle='w']/idle": "w",
+            "/integrationtest:list-to-leafref-against[idle='w']/wild": "W",
             "/integrationtest:list-to-leafref-against[idle='w']": None,
-            '/integrationtest:simpleleaf': 'duke'}
+            "/integrationtest:simpleleaf": "duke",
+        }
 
         self.assertDictEqual(result, expected_answer)

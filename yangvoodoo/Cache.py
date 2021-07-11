@@ -1,14 +1,9 @@
-
-
 class Cache:
-
     def __init__(self):
         self.items = {}
 
     def is_path_cached(self, path):
-        if path in self.items:
-            return True
-        return False
+        return path in self.items
 
     def get_item_from_cache(self, path):
         return self.items[path]

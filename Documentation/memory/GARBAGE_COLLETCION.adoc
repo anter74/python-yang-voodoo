@@ -1,0 +1,236 @@
+
+= Summary
+
+With `test.py`
+
+- `gc.collect()` helps *after* `session = None` and removing all voodoo nodes
+
+With `test2.py`
+
+- `gc.collect()` helps *after* exiting the function but no deliberate setting session/voodoo to None
+
+
+== Case 1
+
+- SET_INNER_NODE = True
+- NUM_OF_LIST_ITEMS = 1843
+- WAIT_BEFORE_GC = 30
+- DO_DUMPS = False
+- RESET_TOP = True
+
+----
+~/memory $ YANGPATH=/home/adam/python-yang-voodoo/yang python3 test.py
+Creating 1843 of list elements
+****************************************************************************************************
+...................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+[ Top 10 ]
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:373: size=1068 KiB, count=5531, average=198 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:21: size=562 KiB, count=11062, average=52 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:391: size=529 KiB, count=3688, average=147 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:413: size=444 KiB, count=3687, average=123 B
+/home/adam/libyang-cffi/libyang/schema.py:585: size=374 KiB, count=7374, average=52 B
+/home/adam/python-yang-voodoo/yangvoodoo/Cache.py:25: size=288 KiB, count=1, average=288 KiB
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:421: size=260 KiB, count=5532, average=48 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:417: size=209 KiB, count=1843, average=116 B
+/home/adam/libyang-cffi/libyang/schema.py:680: size=174 KiB, count=3691, average=48 B
+/home/adam/libyang-cffi/libyang/__init__.py:89: size=144 KiB, count=3689, average=40 B
+####################################################################################################
+Setting session/top to None
+####################################################################################################
+refcount to <yangvoodoo.DataAccess object at 0x7fa67e2ab550> 5
+Waiting 30 seconds
+..............................
+Snapshot after waiting 30
+[ Top 10 ]
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:373: size=1068 KiB, count=5531, average=198 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:21: size=562 KiB, count=11061, average=52 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:391: size=529 KiB, count=3688, average=147 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:413: size=444 KiB, count=3687, average=123 B
+/home/adam/libyang-cffi/libyang/schema.py:585: size=374 KiB, count=7374, average=52 B
+/home/adam/python-yang-voodoo/yangvoodoo/Cache.py:25: size=288 KiB, count=1, average=288 KiB
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:421: size=260 KiB, count=5532, average=48 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:417: size=209 KiB, count=1843, average=116 B
+/home/adam/libyang-cffi/libyang/schema.py:680: size=174 KiB, count=3691, average=48 B
+/home/adam/libyang-cffi/libyang/__init__.py:89: size=144 KiB, count=3689, average=40 B
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+====================================================================================================
+Tracemalloc after explicit garbage collect
+====================================================================================================
+[ Top 10 ]
+/home/adam/libyang-cffi/libyang/schema.py:698: size=10.3 KiB, count=112, average=94 B
+/home/adam/libyang-cffi/libyang/schema.py:679: size=4693 B, count=54, average=87 B
+/home/adam/libyang-cffi/libyang/__init__.py:69: size=2734 B, count=6, average=456 B
+/home/adam/libyang-cffi/libyang/__init__.py:88: size=1573 B, count=20, average=79 B
+/home/adam/memory/test.py:44: size=1560 B, count=2, average=780 B
+/home/adam/memory/test.py:47: size=1504 B, count=3, average=501 B
+/home/adam/libyang-cffi/libyang/schema.py:785: size=1409 B, count=4, average=352 B
+/home/adam/libyang-cffi/libyang/schema.py:680: size=1344 B, count=3, average=448 B
+/home/adam/libyang-cffi/libyang/schema.py:761: size=1266 B, count=12, average=106 B
+/home/adam/.pyenv/versions/3.9.5-debug/lib/python3.9/tracemalloc.py:535: size=1264 B, count=3, average=421 B
+----
+
+
+
+== Counter-itutitve but creating simpler data is harder? slower? to garbage collect
+
+In this case we create less data, as we can see from the count of 1845 vs 5531
+
+----
+    if SET_INNER_NODE:
+        top.container_and_lists.multi_key_list.create("z", str(x)).inner.C = str(x)
+    else:
+        top.container_and_lists.multi_key_list.create("z", str(x))
+----
+
+But waiting 4 times longer doesn't naturally garbage collect.
+
+
+
+- SET_INNER_NODE = False
+- NUM_OF_LIST_ITEMS = 1843
+- WAIT_BEFORE_GC = 120
+- DO_DUMPS = False
+- RESET_TOP = True
+
+
+----
+Creating 1843 of list elements
+****************************************************************************************************
+...................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+[ Top 10 ]
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:373: size=336 KiB, count=1845, average=186 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:417: size=209 KiB, count=1843, average=116 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:21: size=187 KiB, count=3688, average=52 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:421: size=86.5 KiB, count=1845, average=48 B
+/home/adam/python-yang-voodoo/yangvoodoo/Cache.py:25: size=72.0 KiB, count=1, average=72.0 KiB
+/home/adam/libyang-cffi/libyang/schema.py:698: size=11.7 KiB, count=132, average=91 B
+/home/adam/libyang-cffi/libyang/schema.py:679: size=4861 B, count=55, average=88 B
+/home/adam/python-yang-voodoo/yangvoodoo/VoodooNode.py:458: size=2808 B, count=42, average=67 B
+/home/adam/libyang-cffi/libyang/__init__.py:69: size=2774 B, count=7, average=396 B
+/home/adam/libyang-cffi/libyang/__init__.py:88: size=1573 B, count=20, average=79 B
+####################################################################################################
+Setting session/top to None
+####################################################################################################
+refcount to <yangvoodoo.DataAccess object at 0x7f92faa615f0> 5
+Waiting 120 seconds
+........................................................................................................................
+Snapshot after waiting 120
+[ Top 10 ]
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:373: size=336 KiB, count=1845, average=186 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:417: size=209 KiB, count=1843, average=116 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:21: size=187 KiB, count=3686, average=52 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:421: size=86.5 KiB, count=1845, average=48 B
+/home/adam/python-yang-voodoo/yangvoodoo/Cache.py:25: size=72.0 KiB, count=1, average=72.0 KiB
+/home/adam/libyang-cffi/libyang/schema.py:698: size=10.5 KiB, count=114, average=94 B
+/home/adam/.pyenv/versions/3.9.5-debug/lib/python3.9/tracemalloc.py:67: size=6336 B, count=99, average=64 B
+/home/adam/.pyenv/versions/3.9.5-debug/lib/python3.9/tracemalloc.py:193: size=4944 B, count=103, average=48 B
+/home/adam/libyang-cffi/libyang/schema.py:679: size=4861 B, count=55, average=88 B
+/home/adam/libyang-cffi/libyang/__init__.py:69: size=2774 B, count=7, average=396 B
+Cleaned up 3710
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+====================================================================================================
+Tracemalloc after explicit garbage collect
+====================================================================================================
+[ Top 10 ]
+/home/adam/libyang-cffi/libyang/schema.py:698: size=10.3 KiB, count=112, average=94 B
+/home/adam/libyang-cffi/libyang/schema.py:679: size=4693 B, count=54, average=87 B
+/home/adam/libyang-cffi/libyang/__init__.py:69: size=2734 B, count=6, average=456 B
+/home/adam/libyang-cffi/libyang/__init__.py:88: size=1573 B, count=20, average=79 B
+/home/adam/libyang-cffi/libyang/schema.py:785: size=1409 B, count=4, average=352 B
+/home/adam/libyang-cffi/libyang/schema.py:680: size=1344 B, count=3, average=448 B
+/home/adam/.pyenv/versions/3.9.5-debug/lib/python3.9/tracemalloc.py:535: size=1264 B, count=3, average=421 B
+/home/adam/memory/test.py:44: size=1112 B, count=1, average=1112 B
+/home/adam/memory/test.py:51: size=984 B, count=2, average=492 B
+/home/adam/libyang-cffi/libyang/__init__.py:83: size=960 B, count=6, average=160 B
+----
+
+
+
+== Using a function to scope the garabase collecting
+
+----
+****************************************************************************************************
+Creating 1843 of list elements inside a function
+****************************************************************************************************
+...................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+[ Top 10 ]
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:373: size=336 KiB, count=1845, average=186 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:417: size=209 KiB, count=1843, average=116 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:21: size=187 KiB, count=3688, average=52 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:421: size=86.5 KiB, count=1845, average=48 B
+/home/adam/python-yang-voodoo/yangvoodoo/Cache.py:25: size=72.0 KiB, count=1, average=72.0 KiB
+/home/adam/libyang-cffi/libyang/schema.py:698: size=11.7 KiB, count=132, average=91 B
+/home/adam/libyang-cffi/libyang/schema.py:679: size=4861 B, count=55, average=88 B
+/home/adam/python-yang-voodoo/yangvoodoo/VoodooNode.py:458: size=2808 B, count=42, average=67 B
+/home/adam/libyang-cffi/libyang/__init__.py:69: size=2774 B, count=7, average=396 B
+/home/adam/libyang-cffi/libyang/__init__.py:88: size=1573 B, count=20, average=79 B
+tracemalloc after function exit
+[ Top 10 ]
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:373: size=336 KiB, count=1845, average=186 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:417: size=209 KiB, count=1843, average=116 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:21: size=187 KiB, count=3686, average=52 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:421: size=86.5 KiB, count=1845, average=48 B
+/home/adam/python-yang-voodoo/yangvoodoo/Cache.py:25: size=72.0 KiB, count=1, average=72.0 KiB
+/home/adam/libyang-cffi/libyang/schema.py:698: size=10.5 KiB, count=114, average=94 B
+/home/adam/.pyenv/versions/3.9.5-debug/lib/python3.9/tracemalloc.py:67: size=6464 B, count=101, average=64 B
+/home/adam/.pyenv/versions/3.9.5-debug/lib/python3.9/tracemalloc.py:193: size=5040 B, count=105, average=48 B
+/home/adam/libyang-cffi/libyang/schema.py:679: size=4861 B, count=55, average=88 B
+/home/adam/libyang-cffi/libyang/__init__.py:69: size=2774 B, count=7, average=396 B
+Waiting 30 seconds
+..............................
+Snapshot after waiting 30
+[ Top 10 ]
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:373: size=336 KiB, count=1845, average=186 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:417: size=209 KiB, count=1843, average=116 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:21: size=187 KiB, count=3686, average=52 B
+/home/adam/python-yang-voodoo/yangvoodoo/Common.py:421: size=86.5 KiB, count=1845, average=48 B
+/home/adam/python-yang-voodoo/yangvoodoo/Cache.py:25: size=72.0 KiB, count=1, average=72.0 KiB
+/home/adam/libyang-cffi/libyang/schema.py:698: size=10.5 KiB, count=114, average=94 B
+/home/adam/.pyenv/versions/3.9.5-debug/lib/python3.9/tracemalloc.py:67: size=7680 B, count=120, average=64 B
+/home/adam/.pyenv/versions/3.9.5-debug/lib/python3.9/tracemalloc.py:558: size=5152 B, count=107, average=48 B
+/home/adam/libyang-cffi/libyang/schema.py:679: size=4861 B, count=55, average=88 B
+/home/adam/libyang-cffi/libyang/__init__.py:69: size=2774 B, count=7, average=396 B
+Cleaned up 3710
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+Cleaned up 0
+====================================================================================================
+Tracemalloc after explicit garbage collect
+====================================================================================================
+[ Top 10 ]
+/home/adam/libyang-cffi/libyang/schema.py:698: size=10.3 KiB, count=112, average=94 B
+/home/adam/libyang-cffi/libyang/schema.py:679: size=4693 B, count=54, average=87 B
+/home/adam/libyang-cffi/libyang/__init__.py:69: size=2734 B, count=6, average=456 B
+/home/adam/libyang-cffi/libyang/__init__.py:88: size=1573 B, count=20, average=79 B
+/home/adam/libyang-cffi/libyang/schema.py:785: size=1409 B, count=4, average=352 B
+/home/adam/libyang-cffi/libyang/schema.py:680: size=1344 B, count=3, average=448 B
+/home/adam/.pyenv/versions/3.9.5-debug/lib/python3.9/tracemalloc.py:535: size=1264 B, count=3, average=421 B
+/home/adam/memory/test2.py:40: size=1248 B, count=2, average=624 B
+/home/adam/memory/test2.py:52: size=984 B, count=2, average=492 B
+/home/adam/libyang-cffi/libyang/__init__.py:83: size=960 B, count=6, average=160 B
+----

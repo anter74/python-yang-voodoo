@@ -13,12 +13,11 @@ any data.
 
 
 class test_libyang_stub(unittest.TestCase):
-
     def setUp(self):
         self.maxDiff = None
         self.stubly = yangvoodoo.stublydal.StubLyDataAbstractionLayer(log_level=2)
-        self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stubly, disable_proxy=True)
-        self.subject.connect('integrationtest', yang_location='yang')
+        self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stubly)
+        self.subject.connect("integrationtest", yang_location="yang")
         self.root = self.subject.get_node()
 
     def test_basic_insantiation(self):
@@ -41,8 +40,8 @@ class test_libyang_stub(unittest.TestCase):
         list_element.nonleafkey = 5
 
         # Assert
-        self.assertEqual('ABC' in self.root.simplelist, True)
-        self.assertEqual(self.root.simplelist['ABC'].nonleafkey, 5)
+        self.assertEqual("ABC" in self.root.simplelist, True)
+        self.assertEqual(self.root.simplelist["ABC"].nonleafkey, 5)
 
     def test_delete_list(self):
         # Arrange
@@ -50,14 +49,14 @@ class test_libyang_stub(unittest.TestCase):
         self.root.simplelist.create("DEF")
 
         # Assert
-        self.assertFalse('A' in self.root.simplelist)
+        self.assertFalse("A" in self.root.simplelist)
         self.assertEqual(len(self.root.simplelist), 2)
 
         # Act
-        del self.root.simplelist['ABC']
+        del self.root.simplelist["ABC"]
 
         # Assert
-        self.assertFalse('A' in self.root.simplelist)
+        self.assertFalse("A" in self.root.simplelist)
         self.assertEqual(len(self.root.simplelist), 1)
 
     def test_list_iteration(self):
@@ -83,7 +82,7 @@ class test_libyang_stub(unittest.TestCase):
             "VoodooListElement{/integrationtest:simplelist[simplekey='DEF']}",
             "VoodooListElement{/integrationtest:simplelist[simplekey='GHI']}",
             "VoodooListElement{/integrationtest:simplelist[simplekey='JKL']}",
-            "VoodooListElement{/integrationtest:simplelist[simplekey='MNO']}"
+            "VoodooListElement{/integrationtest:simplelist[simplekey='MNO']}",
         ]
 
         for result in results:
@@ -131,7 +130,7 @@ class test_libyang_stub(unittest.TestCase):
         results = list(self.subject.dump_xpaths())
 
         # Assert
-        expected_results = ['sdf']
+        expected_results = ["sdf"]
         self.assertEqual(results, expected_results)
 
     def test_single_vs_double_quotes(self):
@@ -145,27 +144,27 @@ class test_libyang_stub(unittest.TestCase):
         self.assertEqual(len(self.root.simplelist), 2)
 
         self.root.morecomplex.leaflists.simple.create('AB"C')
-        self.root.morecomplex.leaflists.simple.create("A\"BC")
+        self.root.morecomplex.leaflists.simple.create('A"BC')
         self.root.morecomplex.leaflists.simple.create("DE'\"F")
 
         self.assertTrue("DE'\"F" in self.root.morecomplex.leaflists.simple)
-        self.assertEqual(len(self.root.morecomplex.leaflists.simple), 4)
+        self.assertEqual(len(self.root.morecomplex.leaflists.simple), 3)
 
     def test_leaf_list(self):
         # Act
-        self.root.morecomplex.leaflists.simple.create('ABC')
-        self.root.morecomplex.leaflists.simple.create('ABC')
-        self.root.morecomplex.leaflists.simple.create('DEF')
-        self.root.morecomplex.leaflists.simple.create('GHI')
+        self.root.morecomplex.leaflists.simple.create("ABC")
+        self.root.morecomplex.leaflists.simple.create("ABC")
+        self.root.morecomplex.leaflists.simple.create("DEF")
+        self.root.morecomplex.leaflists.simple.create("GHI")
         results = list(self.root.morecomplex.leaflists.simple)
 
         # Assert
-        expected_results = ['ABC', 'DEF', 'GHI']
+        expected_results = ["ABC", "DEF", "GHI"]
         self.assertEqual(results, expected_results)
 
         # Act
-        del self.root.morecomplex.leaflists.simple['ABC']
-        expected_results = ['DEF', 'GHI']
+        del self.root.morecomplex.leaflists.simple["ABC"]
+        expected_results = ["DEF", "GHI"]
         results = list(self.root.morecomplex.leaflists.simple)
 
         # Assert
@@ -173,14 +172,14 @@ class test_libyang_stub(unittest.TestCase):
 
     def test_list(self):
         # Arrange
-        self.root.simpleleaf = 'ABC'
+        self.root.simpleleaf = "ABC"
         self.assertEqual(self.root.simpleleaf, "ABC")
 
         # Act
         self.root.simpleleaf = None
 
         # Assert
-        self.assertEqual(self.root.simpleleaf, '')
+        self.assertEqual(self.root.simpleleaf, "")
 
     def test_leaf_empty(self):
         # Arrange
@@ -192,7 +191,7 @@ class test_libyang_stub(unittest.TestCase):
         self.root.simpleleaf = None
 
         # Assert
-        self.assertEqual(self.root.simpleleaf, '')
+        self.assertEqual(self.root.simpleleaf, "")
 
     def test_leaf_empty_not_existing(self):
         # Act
@@ -207,71 +206,84 @@ class test_libyang_stub(unittest.TestCase):
 
         # Assert
         if self.root.validator.types.bool_with_default is not False:
-            self.fail('value returned was not False - was %s' % (str(self.root.validator.types.bool_with_default)))
+            self.fail(
+                "value returned was not False - was %s"
+                % (str(self.root.validator.types.bool_with_default))
+            )
 
     def test_boolean_defaults_case_false(self):
         # Act
 
         # Assert
         if self.root.validator.types.bool_with_default is not True:
-            self.fail('value returned was not True - was %s' % (str(self.root.validator.types.bool_with_default)))
+            self.fail(
+                "value returned was not True - was %s"
+                % (str(self.root.validator.types.bool_with_default))
+            )
 
     def test_connect_connects_if_libyang_data_already_exists(self):
         stubly = Mock()
-        subject = yangvoodoo.DataAccess(data_abstraction_layer=stubly, disable_proxy=True)
-        subject.connect('integrationtest', yang_location='yang')
+        subject = yangvoodoo.DataAccess(data_abstraction_layer=stubly)
+        subject.connect("integrationtest", yang_location="yang")
 
         self.assertNotEqual(stubly, subject.data_abstraction_layer.libyang_data)
 
     def test_connect_avoids_connecting_if_libyang_data_already_exists(self):
         stubly = Mock()
-        subject = yangvoodoo.DataAccess(data_abstraction_layer=stubly, disable_proxy=True)
+        subject = yangvoodoo.DataAccess(data_abstraction_layer=stubly)
         subject.data_abstraction_layer.libyang_data = stubly
-        subject.connect('integrationtest', yang_location='yang')
+        subject.connect("integrationtest", yang_location="yang")
 
         self.assertEqual(stubly, subject.data_abstraction_layer.libyang_data)
 
     def test_reserved_kewords(self):
-        self.root.morecomplex.python_reserved_keywords.class_ = 'class'
-        self.assertEqual(repr(self.root.morecomplex.python_reserved_keywords.import_),
-                         "VoodooEmpty{/integrationtest:morecomplex/python-reserved-keywords/import} - Does Not Exist")
+        self.root.morecomplex.python_reserved_keywords.class_ = "class"
+        self.assertEqual(
+            repr(self.root.morecomplex.python_reserved_keywords.import_),
+            "VoodooEmpty{/integrationtest:morecomplex/python-reserved-keywords/import} - Does Not Exist",
+        )
         self.root.morecomplex.python_reserved_keywords.import_.create()
-        self.assertEqual(repr(self.root.morecomplex.python_reserved_keywords.import_),
-                         "VoodooEmpty{/integrationtest:morecomplex/python-reserved-keywords/import} - Exists")
+        self.assertEqual(
+            repr(self.root.morecomplex.python_reserved_keywords.import_),
+            "VoodooEmpty{/integrationtest:morecomplex/python-reserved-keywords/import} - Exists",
+        )
 
         self.assertEqual(len(self.root.morecomplex.python_reserved_keywords.and_), 0)
-        self.root.morecomplex.python_reserved_keywords.and_.create('x', 'y')
+        self.root.morecomplex.python_reserved_keywords.and_.create("x", "y")
         self.assertEqual(len(self.root.morecomplex.python_reserved_keywords.and_), 1)
-        self.assertEqual(repr(list(self.root.morecomplex.python_reserved_keywords.and_)[0]),
-                         "VoodooListElement{/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']}"
-                         )
+        self.assertEqual(
+            repr(list(self.root.morecomplex.python_reserved_keywords.and_)[0]),
+            "VoodooListElement{/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']}",
+        )
 
-        self.root.morecomplex.leaflists.simple.create('a')
-        self.root.morecomplex.leaflists.simple.create('b')
-        self.root.morecomplex.leaflists.simple.create('c')
+        self.root.morecomplex.leaflists.simple.create("a")
+        self.root.morecomplex.leaflists.simple.create("b")
+        self.root.morecomplex.leaflists.simple.create("c")
         self.assertEqual(len(self.root.morecomplex.leaflists.simple), 3)
         self.assertEqual(len(self.root.morecomplex.python_reserved_keywords.global_), 0)
-        self.root.morecomplex.python_reserved_keywords.global_.create('x')
-        self.root.morecomplex.python_reserved_keywords.global_.create('y')
+        self.root.morecomplex.python_reserved_keywords.global_.create("x")
+        self.root.morecomplex.python_reserved_keywords.global_.create("y")
         self.assertEqual(len(self.root.morecomplex.python_reserved_keywords.global_), 2)
-        self.assertEqual(list(self.root.morecomplex.python_reserved_keywords.global_), ['x', 'y'])
+        self.assertEqual(
+            list(self.root.morecomplex.python_reserved_keywords.global_), ["x", "y"]
+        )
 
         # Assert
-        self.assertEqual(self.root.morecomplex.python_reserved_keywords.class_, 'class')
+        self.assertEqual(self.root.morecomplex.python_reserved_keywords.class_, "class")
 
         expected_result = {
-            '/integrationtest:morecomplex': '',
-            '/integrationtest:morecomplex/python-reserved-keywords': '',
-            '/integrationtest:morecomplex/python-reserved-keywords/class': 'class',
-            '/integrationtest:morecomplex/python-reserved-keywords/import': '',
-            "/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']/break": 'x',
-            "/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']/not-break": 'y',
-            "/integrationtest:morecomplex/python-reserved-keywords/global[.='x']": 'x',
-            "/integrationtest:morecomplex/python-reserved-keywords/global[.='y']": 'y',
-            '/integrationtest:morecomplex/leaflists': '',
-            "/integrationtest:morecomplex/leaflists/simple[.='a']": 'a',
-            "/integrationtest:morecomplex/leaflists/simple[.='b']": 'b',
-            "/integrationtest:morecomplex/leaflists/simple[.='c']": 'c'
+            "/integrationtest:morecomplex": "",
+            "/integrationtest:morecomplex/python-reserved-keywords": "",
+            "/integrationtest:morecomplex/python-reserved-keywords/class": "class",
+            "/integrationtest:morecomplex/python-reserved-keywords/import": "",
+            "/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']/break": "x",
+            "/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']/not-break": "y",
+            "/integrationtest:morecomplex/python-reserved-keywords/global[.='x']": "x",
+            "/integrationtest:morecomplex/python-reserved-keywords/global[.='y']": "y",
+            "/integrationtest:morecomplex/leaflists": "",
+            "/integrationtest:morecomplex/leaflists/simple[.='a']": "a",
+            "/integrationtest:morecomplex/leaflists/simple[.='b']": "b",
+            "/integrationtest:morecomplex/leaflists/simple[.='c']": "c",
         }
 
         self.assertEqual(self.subject.dump_xpaths(), expected_result)
@@ -338,8 +350,10 @@ class test_libyang_stub(unittest.TestCase):
         self.subject.loads(json_payload_first_invalid, 2, trusted=True)
 
         # Assert
-        expected_error = ('Validation Error: /integrationtest:validator/mandatories:'
-                          ' Missing required element "this-is-mandatory" in "mandatories".')
+        expected_error = (
+            "Validation Error: /integrationtest:validator/mandatories:"
+            ' Missing required element "this-is-mandatory" in "mandatories".'
+        )
         with self.assertRaises(LibyangError) as err:
             self.subject.validate()
         self.assertEqual(str(err.exception), expected_error)
@@ -357,43 +371,81 @@ class test_libyang_stub(unittest.TestCase):
         with self.assertRaises(ListItemsMustBeAccesssedByAnElementError):
             print(self.root.simplelist.simplekey)
 
-        self.root.simplelist.create('a').nonleafkey = 59
-        self.assertEqual(self.root.simplelist.get('a').simplekey, 'a')
-        self.assertEqual(self.root.simplelist.get('a').nonleafkey, 59)
+        self.root.simplelist.create("a").nonleafkey = 59
+        self.assertEqual(self.root.simplelist.get("a").simplekey, "a")
+        self.assertEqual(self.root.simplelist.get("a").nonleafkey, 59)
 
         with self.assertRaises(ListItemsMustBeAccesssedByAnElementError) as err:
-            self.root.simplelist.simplekey = 'sdf'
+            self.root.simplelist.simplekey = "sdf"
 
     def test_load(self):
         with self.assertRaises(libyang.util.LibyangError):
-            self.subject.load('test/invalid.json', 2)
+            self.subject.load("test/invalid.json", 2)
 
-        self.subject.load('test/valid.xml', 1)
-        self.assertEqual(self.root.simpleenum, 'A')
+        self.subject.load("test/valid.xml", 1)
+        self.assertEqual(self.root.simpleenum, "A")
 
     def test_get_raw_xpath(self):
-        result = list(self.subject.data_abstraction_layer.get_raw_xpath('/integrationtest:simpleleaf'))
+        result = list(
+            self.subject.data_abstraction_layer.get_raw_xpath(
+                "/integrationtest:simpleleaf"
+            )
+        )
         self.assertEqual(result, [])
 
-        result = list(self.subject.get_raw_xpath('/integrationtest:simpleleaf'))
+        result = list(self.subject.get_raw_xpath("/integrationtest:simpleleaf"))
         self.assertEqual(result, [])
 
-        result = self.subject.get_raw_xpath_single_val('/integrationtest:simpleleaf')
+        result = self.subject.get_raw_xpath_single_val("/integrationtest:simpleleaf")
         self.assertEqual(result, None)
 
-        self.root.simpleleaf = 'abc'
-        result = list(self.subject.data_abstraction_layer.get_raw_xpath('/integrationtest:simpleleaf'))
-        self.assertEqual(result, ['/integrationtest:simpleleaf'])
+        self.root.simpleleaf = "abc"
+        result = list(
+            self.subject.data_abstraction_layer.get_raw_xpath(
+                "/integrationtest:simpleleaf"
+            )
+        )
+        self.assertEqual(result, ["/integrationtest:simpleleaf"])
 
-        result = self.subject.get_raw_xpath_single_val('/integrationtest:simpleleaf')
-        self.assertEqual(result, 'abc')
+        result = self.subject.get_raw_xpath_single_val("/integrationtest:simpleleaf")
+        self.assertEqual(result, "abc")
 
-        self.root.simpleleaf = 'abc'
-        result = list(self.subject.data_abstraction_layer.get_raw_xpath('/integrationtest:simpleleaf', with_val=True))
-        self.assertEqual(result, [('/integrationtest:simpleleaf', 'abc')])
+        self.root.simpleleaf = "abc"
+        result = list(
+            self.subject.data_abstraction_layer.get_raw_xpath(
+                "/integrationtest:simpleleaf", with_val=True
+            )
+        )
+        self.assertEqual(result, [("/integrationtest:simpleleaf", "abc")])
 
-        result = list(self.subject.get_raw_xpath('/integrationtest:simpleleaf', with_val=True))
-        self.assertEqual(result, [('/integrationtest:simpleleaf', 'abc')])
+        result = list(
+            self.subject.get_raw_xpath("/integrationtest:simpleleaf", with_val=True)
+        )
+        self.assertEqual(result, [("/integrationtest:simpleleaf", "abc")])
 
-        result = list(self.subject.get_raw_xpath('/integrationtest:simpleleaf', with_val=True))
-        self.assertEqual(result, [('/integrationtest:simpleleaf', 'abc')])
+        result = list(
+            self.subject.get_raw_xpath("/integrationtest:simpleleaf", with_val=True)
+        )
+        self.assertEqual(result, [("/integrationtest:simpleleaf", "abc")])
+
+    def test_libyang_get_xpath(self):
+        # Act
+        self.root.validator.types.bool_with_default = False
+
+        # Assert
+        result = self.subject.libyang_get_xpath(
+            "/integrationtest:validator/types/bool_with_default"
+        )
+
+        self.assertTrue(isinstance(result, libyang.data.DataNode))
+        self.assertEqual(
+            result.xpath, "/integrationtest:validator/types/bool_with_default"
+        )
+        self.assertEqual(result.parent().xpath, "/integrationtest:validator/types")
+        self.assertEqual(result.parent().parent().xpath, "/integrationtest:validator")
+        with self.assertRaises(libyang.util.LibyangError) as context:
+            result.parent().parent().parent(), "/integrationtest:validator"
+        self.assertEqual(
+            str(context.exception),
+            "cannot use parent() to go above a root node /integrationtest:validator",
+        )

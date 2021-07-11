@@ -3,7 +3,7 @@ import libyang
 import os
 import importlib
 import yangvoodoo.VoodooNode
-import yangvoodoo.proxydal
+from yangvoodoo.stublydal import StubLyDataAbstractionLayer
 from yangvoodoo.Errors import PathIsNotALeaf
 from yangvoodoo.Common import PlainObject, Types, Utils, YangNode
 
@@ -31,39 +31,41 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.8.7"
+    __version__ = "0.0.9.1"
 
-    def __init__(self, log=None, local_log=False, data_abstraction_layer=None,
-                 disable_proxy=True, use_stub=False):
+    def __init__(
+        self,
+        log=None,
+        local_log=False,
+        data_abstraction_layer=None,
+        yang_model=None,
+        yang_location=None,
+    ):
         if not log:
-            log = Utils.get_logger('yangvoodoo', 10)
+            log = Utils.get_logger("yangvoodoo", 10)
         self.log = log
         self.session = None
         self.conn = None
         self.connected = False
         self.context = None
         self.node_returned = False
+        self.root_voodoo = None
         if data_abstraction_layer:
-            non_proxy_data_abstraction_layer = data_abstraction_layer
+            self.data_abstraction_layer = data_abstraction_layer
         else:
-            non_proxy_data_abstraction_layer = self._get_data_abastraction_layer(use_stub, None)
+            self.data_abstraction_layer = self._get_data_abastraction_layer(log)
+        if yang_model:
+            self.connect(yang_model, yang_location)
 
-        if disable_proxy or use_stub:
-            self.data_abstraction_layer = non_proxy_data_abstraction_layer
-        else:
-            self.data_abstraction_layer = self._proxify_data_abstraction_layer(non_proxy_data_abstraction_layer)
+    def __enter__(self):
+        self.root_voodoo = self.get_node()
+        return self.root_voodoo
 
-    def _get_data_abastraction_layer(self, use_stub, log):
-        if use_stub:
-            importlib.import_module('yangvoodoo.stubdal')
-            return yangvoodoo.stubdal.StubDataAbstractionLayer(log)
+    def __exit__(self, type, value, traceback):
+        self.disconnect()
 
-        importlib.import_module('yangvoodoo.stublydal')
-        return yangvoodoo.stublydal.StubLyDataAbstractionLayer(log)
-
-    def _proxify_data_abstraction_layer(self, dal):
-        # return dal
-        return yangvoodoo.proxydal.ProxyDataAbstractionLayer(dal)
+    def _get_data_abastraction_layer(self, log):
+        return StubLyDataAbstractionLayer(log)
 
     def tree(self, print_tree=True):
         """
@@ -77,11 +79,11 @@ class DataAccess:
             return self.context.schema.dump_str()
 
     @classmethod
-    def describe(self, node, attr='', print_description=True):
+    def describe(self, node, attr="", print_description=True):
         """
         Provide help text from the yang module if available.
         """
-        if not isinstance(node, yangvoodoo.VoodooNode.Node):
+        if not isinstance(node, VoodooNode.Node):
             raise yangvoodoo.Errors.NodeProvidedIsNotAContainer()
         if node._NODE_TYPE == "Empty":
             raise yangvoodoo.Errors.NodeProvidedIsNotAContainer()
@@ -89,26 +91,33 @@ class DataAccess:
         node_schema = node._node
         context = node._context
 
-        if not attr == '':
+        if attr != "":
             node_schema = Utils.get_yangnode(node_schema, context, attr)
 
         leaf_type = None
         node_type = node_schema.nodetype()
         description = node_schema.description()
-        type = Types.LIBYANG_NODETYPE[node_type][0] + Types.LIBYANG_NODETYPE[node_type][1:].lower()
+        type = (
+            Types.LIBYANG_NODETYPE[node_type][0]
+            + Types.LIBYANG_NODETYPE[node_type][1:].lower()
+        )
         if node_type in Types.LIBYANG_LEAF_LIKE_NODES:
             leaf_type = node_schema.type().base()
-            type = type + " of type " + \
-                Types.LIBYANG_LEAF_TYPES[leaf_type][0] + Types.LIBYANG_LEAF_TYPES[leaf_type][1:].lower()
+            type = (
+                type
+                + " of type "
+                + Types.LIBYANG_LEAF_TYPES[leaf_type][0]
+                + Types.LIBYANG_LEAF_TYPES[leaf_type][1:].lower()
+            )
         if not description:
             description = "N/A"
         values = {
-            'schema_path': node_schema.real_schema_path,
-            'value_path': node_schema.real_data_path,
-            'description': str(description).replace('\n', '\n  '),
-            'type': type,
-            'linebreak': '-'*len(node_schema.name()),
-            'node_name': node_schema.name()
+            "schema_path": node_schema.real_schema_path,
+            "value_path": node_schema.real_data_path,
+            "description": str(description).replace("\n", "\n  "),
+            "type": type,
+            "linebreak": "-" * len(node_schema.name()),
+            "node_name": node_schema.name(),
         }
         description = """Description of {node_name}
 ---------------{linebreak}
@@ -116,34 +125,45 @@ class DataAccess:
 Schema Path: {schema_path}
 Value Path: {value_path}
 NodeType: {type}
-""".format(**values)
+""".format(
+            **values
+        )
 
-        if leaf_type and leaf_type == Types.LIBYANG_LEAFTYPE['ENUM']:
+        if leaf_type and leaf_type == Types.LIBYANG_LEAFTYPE["ENUM"]:
             description = description + "Enumeration Values: "
             comma = ""
             for (enum, _) in node_schema.type().enums():
                 description = description + comma + enum
                 comma = ", "
-        description = description + """
+        description = (
+            description
+            + """
 Description:
   {description}
-""".format(**values)
-        if attr == '':
+""".format(
+                **values
+            )
+        )
+        if attr == "":
             children = node.__dir__(no_translations=True)
         else:
             try:
                 children = node[attr].__dir__(no_translations=True)
             except Exception:
-                children = '[No Child Nodes]'
-        description = description + """
-Children: %s""" % (str(children)[1:-1])
+                children = "[No Child Nodes]"
+        description = (
+            description
+            + """
+Children: %s"""
+            % (str(children)[1:-1])
+        )
         if print_description:
             print(description)
             return
         return description
 
     @classmethod
-    def get_extensions(self, node, attr='', module=None):
+    def get_extensions(self, node, attr="", module=None):
         """
         Return a list of extension with the given name.
 
@@ -157,25 +177,27 @@ Children: %s""" % (str(children)[1:-1])
         """
 
         if node._NODE_TYPE == "Root" and not attr:
-            raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
+            raise ValueError(
+                "Attribute name of a child leaf is required for 'has_extension' on root"
+            )
         context = node._context
         node = node._node
 
         node_schema = node
-        if not attr == '':
+        if attr != "":
             node_schema = Utils.get_yangnode(node_schema, context, attr)
 
         for extension in node_schema.extensions():
             if not module or extension.module().name() == module:
                 arg = extension.argument()
-                if arg == 'true':
+                if arg == "true":
                     arg = True
-                elif arg == 'false':
+                elif arg == "false":
                     arg = False
-                yield (extension.module().name()+":"+extension.name(), arg)
+                yield (extension.module().name() + ":" + extension.name(), arg)
 
     @classmethod
-    def get_extension(self,  node, name, attr='', module=None):
+    def get_extension(self, node, name, attr="", module=None):
         """
         Look for an extension with the given name.
 
@@ -192,16 +214,14 @@ Children: %s""" % (str(children)[1:-1])
         If the extension is not present None is returned.
         """
         if node._NODE_TYPE == "Root" and not attr:
-            raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
+            raise ValueError(
+                "Attribute name of a child leaf is required for 'has_extension' on root"
+            )
 
-        extensions = yangvoodoo.DataAccess.get_extensions(node, attr, module)
+        extensions = DataAccess.get_extensions(node, attr, module)
         for (m, a) in extensions:
-            if module:
-                if m == module + ":" + name:
-                    return a
-            else:
-                if ":" + name in m:
-                    return a
+            if module and m == module + ":" + name or not module and ":" + name in m:
+                return a
         return None
 
     @classmethod
@@ -239,14 +259,20 @@ Children: %s""" % (str(children)[1:-1])
          - ordering of commits (session a creates new data that session b requires for a leafref)
          - rollbacks if one commit fails.
         """
-        super_root = yangvoodoo.VoodooNode.SuperRoot()
+        super_root = VoodooNode.SuperRoot()
         if session and attribute:
             super_root.attach_node_from_session(session, attribute)
         return super_root
 
     def _trace(self, vnt, yn, context):
-        self.log.trace("%s: %s %s\nschema: %s\ndata: %s", vnt, context,
-                       yn.libyang_node,  yn.real_schema_path,  yn.real_data_path)
+        self.log.trace(
+            "%s: %s %s\nschema: %s\ndata: %s",
+            vnt,
+            context,
+            yn.libyang_node,
+            yn.real_schema_path,
+            yn.real_data_path,
+        )
 
     def get_node(self, readonly=False):
         """
@@ -263,42 +289,43 @@ Children: %s""" % (str(children)[1:-1])
         self.node_returned = True
         self.data_abstraction_layer.setup_root()
 
-        yang_node = YangNode(PlainObject(), '', '')
+        yang_node = YangNode(PlainObject(), "", "")
         self._trace("VoodooNode.Root", yang_node, self.context)
         self.context.readonly = readonly
-        return yangvoodoo.VoodooNode.Root(self.context, yang_node)
+        return VoodooNode.Root(self.context, yang_node)
 
-    def connect(self, module=None,  yang_location=None, tag='client', yang_ctx=None):
+    def connect(self, module=None, yang_location=None, tag="client", yang_ctx=None):
         """
         Connect to the datastore.
 
         returns: True
         """
         if yang_location and not os.path.exists(yang_location + "/" + module + ".yang"):
-            raise ValueError("YANG Module "+module+" not present in "+yang_location)
+            raise ValueError(
+                "YANG Module " + module + " not present in " + yang_location
+            )
         self.module = module
-        if not yang_ctx:
-            self.yang_ctx = libyang.Context(yang_location)
-            self.yang_schema = self.yang_ctx.load_module(self.module)
-        else:
-            self.yang_ctx = yang_ctx
-            self.yang_schema = self.yang_ctx.load_module(self.module)
-
-        connect_status = self.data_abstraction_layer.connect(self.module, yang_location, tag,
-                                                             self.yang_ctx)
+        self.yang_ctx = libyang.Context(yang_location) if not yang_ctx else yang_ctx
+        self.yang_schema = self.yang_ctx.load_module(self.module)
+        connect_status = self.data_abstraction_layer.connect(
+            self.module, yang_location, tag, self.yang_ctx
+        )
 
         self.session = self.data_abstraction_layer.session
         self.conn = self.data_abstraction_layer.conn
         self.connected = True
 
-        self.context = yangvoodoo.VoodooNode.Context(self.module, self, self.yang_schema,
-                                                     self.yang_ctx, log=self.log)
+        self.context = VoodooNode.Context(
+            self.module, self, self.yang_schema, self.yang_ctx, log=self.log
+        )
         self.data_abstraction_layer.context = self.context
 
         self.log.trace("CONNECT: module %s. yang_location %s", module, yang_location)
         self.log.trace("       : libyangctx %s ", self.yang_ctx)
         self.log.trace("       : context %s", self.context)
-        self.log.trace("       : data_abstraction_layer %s", self.data_abstraction_layer)
+        self.log.trace(
+            "       : data_abstraction_layer %s", self.data_abstraction_layer
+        )
         return connect_status
 
     def add_module(self, module):
@@ -325,6 +352,7 @@ Children: %s""" % (str(children)[1:-1])
         """
         self.log.trace("DISCONNECT")
         self.connected = False
+        self.root_voodoo
         return self.data_abstraction_layer.disconnect()
 
     def commit(self):
@@ -441,7 +469,18 @@ Children: %s""" % (str(children)[1:-1])
         """
         if not self.connected:
             raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.gets_unsorted(xpath, spath, ignore_empty_lists)
+        return self.data_abstraction_layer.gets_unsorted(
+            xpath, spath, ignore_empty_lists
+        )
+
+    def libyang_get_xpath(self, xpath):
+        """
+        Return a libyang-cffi DataNode directly - this must be called with a specific XPATH
+        as only the first result will be returned.
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.libyang_get_xpath(xpath)
 
     def gets(self, xpath):
         """
@@ -595,14 +634,18 @@ Children: %s""" % (str(children)[1:-1])
 
     @staticmethod
     def _welcome():
-        if os.path.exists('.colour') and 'TERM' in os.environ and 'xterm' in os.environ['TERM']:
-            with open('.colour') as fh:
+        if (
+            os.path.exists(".colour")
+            and "TERM" in os.environ
+            and "xterm" in os.environ["TERM"]
+        ):
+            with open(".colour") as fh:
                 print(fh.read())
-        elif os.path.exists('.black'):
-            with open('.black') as fh:
+        elif os.path.exists(".black"):
+            with open(".black") as fh:
                 print(fh.read())
-        if os.path.exists('.buildinfo'):
-            with open('.buildinfo') as fh:
+        if os.path.exists(".buildinfo"):
+            with open(".buildinfo") as fh:
                 print(fh.read())
 
     def get_raw_xpath(self, xpath, with_val=False):
@@ -610,8 +653,7 @@ Children: %s""" % (str(children)[1:-1])
         Return a generator of matching xpaths, optionall with the value.
         """
         self.log.trace("GET_RAW_XPATH: %s", xpath)
-        for result in self.data_abstraction_layer.get_raw_xpath(xpath, with_val):
-            yield result
+        yield from self.data_abstraction_layer.get_raw_xpath(xpath, with_val)
 
     def get_raw_xpath_single_val(self, xpath):
         """
@@ -636,9 +678,11 @@ Children: %s""" % (str(children)[1:-1])
         """
         self.log.trace("SET_DATA_BY_XPATH: %s %s %s", context, data_path, value)
         node_schema = Utils.get_nodeschema_from_data_path(context, data_path)
-        if not node_schema.nodetype() == Types.LIBYANG_NODETYPE['LEAF']:
+        if node_schema.nodetype() != Types.LIBYANG_NODETYPE["LEAF"]:
             raise PathIsNotALeaf("set_raw_data only operates on leaves")
-        val_type = Utils.get_yang_type(node_schema.type(), value, node_schema.real_schema_path)
+        val_type = Utils.get_yang_type(
+            node_schema.type(), value, node_schema.real_schema_path
+        )
         self.data_abstraction_layer.set(data_path, value, val_type)
 
     def load(self, filename, format=1, trusted=False):
@@ -676,6 +720,16 @@ Children: %s""" % (str(children)[1:-1])
         Types.FORMAT['XML'] or Types.FORMAT['JSON']
         """
         return self.data_abstraction_layer.dumps(format)
+
+    def merge(self, filename, format=1, trusted=True):
+        """
+        Merge data from the filename in the format specified.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+
+        If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
+        """
+        return self.data_abstraction_layer.merge(filename, format, trusted)
 
     def merges(self, payload, format=1, trusted=True):
         """

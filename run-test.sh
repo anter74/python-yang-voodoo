@@ -90,14 +90,6 @@ else
   combine_reports 0 1 0 0
 fi
 
-if [ -f "/.dockerenv" ]
-then
-  printf "\n\e[1;33mIntegration Tests.....\e[0m\n"
-else
-  printf "\n\e[0;33mNot running inside docker - skipping integration tests.\e[0m\n"
-  testtype="unit"
-fi
-
 printf "\n\e[1;33mCoverage Report.....\e[0m\n"
 coverage report
 

@@ -1,4 +1,4 @@
-# Python access to YANG based Datastore (based on libyang/sysrepo)
+# Python access to YANG based Datastore (based on libyang1)
 
 [![](https://travis-ci.org/allena29/python-yang-voodoo.svg?branch=master)](https://travis-ci.org/allena29/python-yang-voodoo)
 [![Coverage Status](https://coveralls.io/repos/github/allena29/python-yang-voodoo/badge.svg?branch=master)]
@@ -6,6 +6,8 @@
 The aim of this project is to provide the ability to write python code where there is a strong YANG based data model.
 By providing an object based access layer it allows data to be traversed without worrying about lower level details, and
 allow a stronger focus on getting the 'value add' correct.
+
+This is a **proof of concept** project.
 
 To see screencasts demonstrating the concepts see:
 
@@ -34,8 +36,9 @@ container bronze {
 ```
 
 
-This project builds upon [Sysrepo](http://www.sysrepo.org/) as the **default** datastore, and [Libyang](https://github.com/CESNET/libyang) to tightly couple the data model to a set of standard yang models.
-
+This project builds upon [Libyang](https://github.com/CESNET/libyang) to tightly couple the data model to a set of standard yang models.
+In the early project sysrepo was used to provide a persistent data-store - however an in-memory libyang data-tree was favoured instead of
+tightly coupling into a persistent datastore.
 
 
 ```python
@@ -43,23 +46,8 @@ root.bronze.silver.gold.platinum.deep = 'DOWN'
 print(root.bronze.silver.gold.platinum.deep)
 ```
 
-We can then imagine other ways we might WRITE and READ this data, if this was a database backend like SQL we might access the data as.
 
-```sql
-UPDATE bronze_silver_gold_platinum SET deep = 'DOWN';
-SELECT deep FROM bronze_silver_gold_platinum;
-```
-
-Or perhaps with the sysrepo vanilla python bindings with XPATH.
-
-```python
-session.set_item('/module:bronze/silver/gold/platinum/deep', 'DOWN'. sr.SR_STRING_T)
-
-item = session.get_item('/module:bronze/silver/gold/platinum/deep')
-print(item.val_to_string)
-```
-
-Or Perhaps modelled as xml
+This can be expressed as XML
 
 ```xml
   <bronze>
@@ -98,7 +86,7 @@ Or Perhaps modelled as xml
 
 ## Abstraction of Data Access
 
-This project was written around sysrepo for data storage, however there is no strong dependency on using sysrepo. In order to support unit testing of code there is already an alternative datastore provided as **stubdal** (although that is not production grade).
+The original project started by abstracting the datastore, however only the libyang stub based datastore remains.
 
 Implementing a new data_abastraction_layer is as simple as implementing the following methods.
 
@@ -198,7 +186,6 @@ The `./launch-dbg` script in this repository will build a docker image (*first t
 
 - **unitcore** Unit tests (against stub) for voodoo node based access
 - **unit** Unit tests (against stub) for extended test cases
-- **integration** Integration tests (against sysrepo)
 - In addition to tests *pycodestyle* and *xenon* are used for linting and complexity checks.
 
 
@@ -292,12 +279,10 @@ for gig in root.web.bands['Yuck'].gigs._xpath_sorted:
    #  2011 11 24 Electric Ballroom Camden
    #  2011 5 18 Scala Kings Cross
 
-# Validate data with the sysrepo backend datastore.
+# Validate data with libyang.
 session.validate()
 
-# Refresh data from the sysrepo backend datastore.
-session.refresh()
-session.commit()
+# Disconnect
 session.disconnect()
 ```
 
@@ -343,27 +328,6 @@ flag to change this behaviour.
 Along with the load/loads methods there are dump/dumps methods.
 
 
-#### Using a stub and writing unit tests
-
-When writing unit tests it is expensive to make use of the real sysrepo backend, this projectThis is a proof of concept style quality of code at this stage. This reduces the dependencies to just libyang library and the forked libyang-cffi bindings.
-
-```python
-import unittest
-import yangvoodoo
-import yangvoodoo.stulybdal
-
-
-class test_node_based_access(unittest.TestCase):
-
-    def setUp(self):
-        self.stub = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
-        self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
-        self.subject.connect('integrationtest')
-        self.root = self.subject.get_node()
-```
-
-
-
 
 # Install
 
@@ -378,7 +342,7 @@ see [TODO LIST](TODO.md)
 
 # Reference:
 
-- [Sysrepo](http://www.sysrepo.org/)
-- [Libyang](https://github.com/CESNET/libyang)
-- [libyang python bindings](https://github.com/allena29/libyang-cffi)
+- [Sysrepo](http://www.sysrepo.org/) - no longer implemented
+- [Libyang](https://github.com/CESNET/libyang) 
+- [libyang python bindings](https://github.com/allena29/libyang-cffi) - NOTE: this project targets libyang version 1 still.
 - [Low level C development notes](DEVEL.md)
