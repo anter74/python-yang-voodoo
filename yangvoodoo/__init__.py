@@ -31,7 +31,7 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.9.0"
+    __version__ = "0.0.9.1"
 
     def __init__(
         self,
@@ -472,6 +472,15 @@ Children: %s"""
         return self.data_abstraction_layer.gets_unsorted(
             xpath, spath, ignore_empty_lists
         )
+
+    def libyang_get_xpath(self, xpath):
+        """
+        Return a libyang-cffi DataNode directly - this must be called with a specific XPATH
+        as only the first result will be returned.
+        """
+        if not self.connected:
+            raise yangvoodoo.Errors.NotConnect()
+        return self.data_abstraction_layer.libyang_get_xpath(xpath)
 
     def gets(self, xpath):
         """

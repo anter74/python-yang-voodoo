@@ -142,6 +142,9 @@ class BaseDataAbstractionLayer:
         """
         raise NotImplementedError("gets_sorted not implemented")
 
+    def libyang_get_xpath(self, xpath):
+        raise NotImplementedError("gets not implemented")
+
     def gets(self, xpath):
         raise NotImplementedError("gets not implemented")
 

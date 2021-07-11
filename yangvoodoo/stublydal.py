@@ -113,6 +113,12 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         self.log.trace("SET: StubLy Datastore- %s => %s", xpath, value)
         self.libyang_data.set_xpath(xpath, value)
 
+    def libyang_get_xpath(self, xpath):
+        if not self.connected:
+            raise NotConnect()
+        self.log.trace("LIBYANG-GET: %s", xpath)
+        return next(self.libyang_data.get_xpath(xpath))
+
     def gets(self, xpath):
         if not self.connected:
             raise NotConnect()

@@ -427,3 +427,25 @@ class test_libyang_stub(unittest.TestCase):
             self.subject.get_raw_xpath("/integrationtest:simpleleaf", with_val=True)
         )
         self.assertEqual(result, [("/integrationtest:simpleleaf", "abc")])
+
+    def test_libyang_get_xpath(self):
+        # Act
+        self.root.validator.types.bool_with_default = False
+
+        # Assert
+        result = self.subject.libyang_get_xpath(
+            "/integrationtest:validator/types/bool_with_default"
+        )
+
+        self.assertTrue(isinstance(result, libyang.data.DataNode))
+        self.assertEqual(
+            result.xpath, "/integrationtest:validator/types/bool_with_default"
+        )
+        self.assertEqual(result.parent().xpath, "/integrationtest:validator/types")
+        self.assertEqual(result.parent().parent().xpath, "/integrationtest:validator")
+        with self.assertRaises(libyang.util.LibyangError) as context:
+            result.parent().parent().parent(), "/integrationtest:validator"
+        self.assertEqual(
+            str(context.exception),
+            "cannot use parent() to go above a root node /integrationtest:validator",
+        )

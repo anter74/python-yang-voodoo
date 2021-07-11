@@ -137,3 +137,8 @@
 
 
    - Implement context manager/disconnect
+
+# 0.0.9.1
+
+   - Rebuild docker images with new libyang __init__
+   - Implement `libyang_get_xpath`
