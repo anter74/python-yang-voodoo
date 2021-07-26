@@ -204,7 +204,7 @@ class BaseDataAbstractionLayer:
     def has_datastore_changed(self):
         raise NotImplementedError("has_datastore_changed not implemented")
 
-    def dump_xpaths(self):
+    def dump_xpaths(self, start_xpath=None):
         raise NotImplementedError("dump_xpaths not implemented")
 
     def empty(self):

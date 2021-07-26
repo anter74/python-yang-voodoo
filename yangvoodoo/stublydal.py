@@ -231,17 +231,20 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         self.log.trace("DELETE: %s", xpath)
         self.libyang_data.set_xpath(xpath, None)
 
-    def dump_xpaths(self):
-        """
-        This is not supported because libyang does not give us a convenient data
-        path. We can keep iterating around the children - but intermediate
-        nodes (like, bronze, silver, gold would by default get yielded as their
-        paths). We could add logic to find if they infact have values and skip
-        them- but that is more work and we have dump() available now.
-        """
+    def dump_xpaths(self, start_xpath=None):
         if not self.connected:
             raise NotConnect()
-        return {node.xpath: node.value for node in self.libyang_data.dump_datanodes()}
+        data_node = None
+        if start_xpath:
+            try:
+                data_node = next(self.libyang_data.get_xpath(start_xpath))
+            except StopIteration:
+                pass
+
+        return {
+            node.xpath: node.value
+            for node in self.libyang_data.dump_datanodes(start_node=data_node)
+        }
 
     def empty(self):
         raise NotImplementedError("empty not implemented")

@@ -31,7 +31,7 @@ class DataAccess:
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.9.1"
+    __version__ = "0.0.9.2"
 
     def __init__(
         self,
@@ -625,12 +625,12 @@ Children: %s"""
         """
         return self.data_abstraction_layer.has_datastore_changed()
 
-    def dump_xpaths(self):
+    def dump_xpaths(self, start_xpath=None):
         """
         dump the datastore in xpath format.
         """
         self.log.trace("DUMP_XPATHS")
-        return self.data_abstraction_layer.dump_xpaths()
+        return self.data_abstraction_layer.dump_xpaths(start_xpath=start_xpath)
 
     @staticmethod
     def _welcome():

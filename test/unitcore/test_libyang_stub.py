@@ -111,28 +111,6 @@ class test_libyang_stub(unittest.TestCase):
 
         self.subject.dump("/tmp/xyz.json", 2)
 
-    def not_implementedtest_dump_xpaths(self):
-        """
-        # search_path = "/%s:*" % (self.module)
-        # self.log.trace("DUMP_XPATHS: %s", search_path)
-        # for xpath in self.libyang_data.dump_xpaths(search_path):
-        #     yield xpath
-
-        This gave us
-        - ["/integrationtest:simplelist[simplekey='ABC']", '/integrationtest:bronze']
-
-        """
-        list_element = self.root.simplelist.create("ABC")
-        list_element.nonleafkey = 5
-        self.root.bronze.silver.gold.platinum.deeper.gone_too_far = "Inner value"
-
-        # Act
-        results = list(self.subject.dump_xpaths())
-
-        # Assert
-        expected_results = ["sdf"]
-        self.assertEqual(results, expected_results)
-
     def test_single_vs_double_quotes(self):
         # Act
         list_element = self.root.simplelist.create("ABX'C")
@@ -287,6 +265,23 @@ class test_libyang_stub(unittest.TestCase):
         }
 
         self.assertEqual(self.subject.dump_xpaths(), expected_result)
+
+        expected_result = {
+            "/integrationtest:morecomplex/python-reserved-keywords": "",
+            "/integrationtest:morecomplex/python-reserved-keywords/class": "class",
+            "/integrationtest:morecomplex/python-reserved-keywords/import": "",
+            "/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']/break": "x",
+            "/integrationtest:morecomplex/python-reserved-keywords/and[break='x'][not-break='y']/not-break": "y",
+            "/integrationtest:morecomplex/python-reserved-keywords/global[.='x']": "x",
+            "/integrationtest:morecomplex/python-reserved-keywords/global[.='y']": "y",
+        }
+
+        self.assertEqual(
+            self.subject.dump_xpaths(
+                "/integrationtest:morecomplex/python-reserved-keywords"
+            ),
+            expected_result,
+        )
 
     def test_json_loads_mandatories_satisified(self):
         json_payload = """

@@ -142,3 +142,8 @@
 
    - Rebuild docker images with new libyang __init__
    - Implement `libyang_get_xpath`
+
+# 0.0.9.2
+
+   - Allow dump_xpaths() to take in a starting xpath
+     (requires upgraded libyang-cfii)
