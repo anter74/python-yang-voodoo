@@ -22,16 +22,14 @@ print("   SCHEMA based validation will still occur.")
 print()
 
 # Using Stub backend
-import yangvoodoo.stublydal
-stub = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
-session = yangvoodoo.DataAccess(data_abstraction_layer=stub)
+session = yangvoodoo.DataAccess()
 
 session.connect('integrationtest', yang_location='yang')
 root = session.get_node()
 yang = root._context.schema
 yangctx = root._context.schemactx
 context = root._context
-backend = root._context.dal.data_abstraction_layer
+backend = root._context.dal
 
 import IPython
 

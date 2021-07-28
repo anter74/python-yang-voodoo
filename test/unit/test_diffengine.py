@@ -7,15 +7,15 @@ import yangvoodoo.DiffEngine
 class test_diff_engine(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
-        self.stub_a = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
-        self.session_a = yangvoodoo.DataAccess(data_abstraction_layer=self.stub_a)
+        self.session_a = yangvoodoo.DataAccess()
         self.session_a.connect("integrationtest", yang_location="yang")
+        self.stub_a = self.session_a
         self.root_a = self.session_a.get_node()
         self.root_a.empty.create()
 
-        self.stub_b = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
-        self.session_b = yangvoodoo.DataAccess(data_abstraction_layer=self.stub_b)
+        self.session_b = yangvoodoo.DataAccess()
         self.session_b.connect("integrationtest", yang_location="yang")
+        self.stub_b = self.session_b
         self.root_b = self.session_b.get_node()
         self.root_b.empty.create()
 

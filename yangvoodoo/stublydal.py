@@ -273,7 +273,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         self.log.trace("LOADS: (format: %s)", format)
         self.libyang_data.loads(payload, format, trusted)
 
-    def merges(self, filename, format=1, trusted=True):
+    def merge(self, filename, format=1, trusted=True):
         if not self.connected:
             raise NotConnect()
         self.log.trace("MERGE: (format: %s)", format)

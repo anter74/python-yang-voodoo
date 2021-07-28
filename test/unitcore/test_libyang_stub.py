@@ -204,15 +204,15 @@ class test_libyang_stub(unittest.TestCase):
         subject = yangvoodoo.DataAccess(data_abstraction_layer=stubly)
         subject.connect("integrationtest", yang_location="yang")
 
-        self.assertNotEqual(stubly, subject.data_abstraction_layer.libyang_data)
+        self.assertNotEqual(stubly, subject.libyang_data)
 
     def test_connect_avoids_connecting_if_libyang_data_already_exists(self):
         stubly = Mock()
         subject = yangvoodoo.DataAccess(data_abstraction_layer=stubly)
-        subject.data_abstraction_layer.libyang_data = stubly
+        subject.libyang_data = stubly
         subject.connect("integrationtest", yang_location="yang")
 
-        self.assertEqual(stubly, subject.data_abstraction_layer.libyang_data)
+        self.assertEqual(stubly, subject.libyang_data)
 
     def test_reserved_kewords(self):
         self.root.morecomplex.python_reserved_keywords.class_ = "class"
@@ -381,11 +381,7 @@ class test_libyang_stub(unittest.TestCase):
         self.assertEqual(self.root.simpleenum, "A")
 
     def test_get_raw_xpath(self):
-        result = list(
-            self.subject.data_abstraction_layer.get_raw_xpath(
-                "/integrationtest:simpleleaf"
-            )
-        )
+        result = list(self.subject.get_raw_xpath("/integrationtest:simpleleaf"))
         self.assertEqual(result, [])
 
         result = list(self.subject.get_raw_xpath("/integrationtest:simpleleaf"))
@@ -395,11 +391,7 @@ class test_libyang_stub(unittest.TestCase):
         self.assertEqual(result, None)
 
         self.root.simpleleaf = "abc"
-        result = list(
-            self.subject.data_abstraction_layer.get_raw_xpath(
-                "/integrationtest:simpleleaf"
-            )
-        )
+        result = list(self.subject.get_raw_xpath("/integrationtest:simpleleaf"))
         self.assertEqual(result, ["/integrationtest:simpleleaf"])
 
         result = self.subject.get_raw_xpath_single_val("/integrationtest:simpleleaf")
@@ -407,9 +399,7 @@ class test_libyang_stub(unittest.TestCase):
 
         self.root.simpleleaf = "abc"
         result = list(
-            self.subject.data_abstraction_layer.get_raw_xpath(
-                "/integrationtest:simpleleaf", with_val=True
-            )
+            self.subject.get_raw_xpath("/integrationtest:simpleleaf", with_val=True)
         )
         self.assertEqual(result, [("/integrationtest:simpleleaf", "abc")])
 

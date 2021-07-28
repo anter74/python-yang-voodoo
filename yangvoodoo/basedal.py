@@ -28,7 +28,7 @@ class BaseDataAbstractionLayer:
             log.setLevel(log_level)
         self.log = log
         self.session = None
-        self.conn = None
+        self.connected = False
         self.dirty = None
         self.datastore_changed = None
         self.module = None
