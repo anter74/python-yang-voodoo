@@ -147,3 +147,9 @@
 
    - Allow dump_xpaths() to take in a starting xpath
      (requires upgraded libyang-cfii)
+
+
+# 0.0.10
+
+   - Upgrade libyang to v1.0.240
+   - Utility function to `show_example_xpaths()`

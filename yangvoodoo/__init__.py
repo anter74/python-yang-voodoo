@@ -66,6 +66,27 @@ class DataAccess:
     def _get_data_abastraction_layer(self, log):
         return StubLyDataAbstractionLayer(log)
 
+    def show_example_xpaths(self, print_xpaths=True):
+        if not self.connected:
+            raise Errors.NotConnect()
+        answer = []
+        for node in self.yang_ctx.find_path(f"/{self.module}:*"):
+            if print_xpaths:
+                print(node.data_path())
+            else:
+                answer.append(node.data_path())
+
+            try:
+                for subnode in self.yang_ctx.find_path(f"/{self.module}:{node}//*"):
+                    if print_xpaths:
+                        print(subnode.data_path())
+                    else:
+                        answer.append(node.data_path())
+            except libyang.util.LibyangError:
+                pass
+        if not print_xpaths:
+            return "\n".join(answer)
+
     def tree(self, print_tree=True):
         """
         Print a tree representation of the YANG Schema.
