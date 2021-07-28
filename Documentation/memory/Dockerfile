@@ -24,11 +24,12 @@ RUN \
       pip3 install wheel ipython
 
 
-ENV GIT_BRANCH=master
+ENV GIT_BRANCH=libyang-dump-improvements
+
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.9.0" >/version && \
+      echo "0.0.10" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
@@ -45,7 +46,7 @@ RUN \
       cd libyang-cffi && \
       git pull && \
       git checkout $GIT_BRANCH && \
-      git submodule update --init --recursive 
+      git submodule update --init --recursive
 
 
 RUN \
@@ -72,7 +73,7 @@ RUN \
 
 RUN \
 	cd /working && \
-	LIBYANG_INSTALL=system python3 setup.py install 
+	LIBYANG_INSTALL=system python3 setup.py install
 
 WORKDIR /vol
 ENV YANGPATH=/working/yang

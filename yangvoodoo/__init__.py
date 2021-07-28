@@ -25,13 +25,12 @@ class DataAccess:
 
 
     Dependencies:
-     - libyang v1.0.225 - so version 1.10.17
-        # NOTE: v1.0.215+ more tighly enforces JSON parsing of numbers that are strings
+     - libyang v1.0.240 - so version 1.10.32
      - libyang-cffi   (https://github.com/allena29/libyang-cffi/tree/master)
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.9.2"
+    __version__ = "0.0.10"
 
     def __init__(
         self,
