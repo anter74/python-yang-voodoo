@@ -88,6 +88,49 @@ class test_libyang_stub(unittest.TestCase):
         for result in results:
             self.assertEqual(repr(result), expected_results.pop(0))
 
+        # Act
+        results = list(self.subject.libyang_gets_xpath("/integrationtest:simplelist"))
+        self.assertEqual(
+            results[0].xpath, "/integrationtest:simplelist[simplekey='ABC']"
+        )
+        self.assertEqual(results[0].value, "")
+        self.assertEqual(
+            results[1].xpath, "/integrationtest:simplelist[simplekey='DEF']"
+        )
+        self.assertEqual(results[1].value, "")
+        self.assertEqual(
+            results[2].xpath, "/integrationtest:simplelist[simplekey='GHI']"
+        )
+        self.assertEqual(results[2].value, "")
+        self.assertEqual(
+            results[3].xpath, "/integrationtest:simplelist[simplekey='JKL']"
+        )
+        self.assertEqual(results[3].value, "")
+        self.assertEqual(
+            results[4].xpath, "/integrationtest:simplelist[simplekey='MNO']"
+        )
+        self.assertEqual(results[4].value, "")
+
+        results = list(
+            self.subject.libyang_gets_xpath("/integrationtest:simplelist/simplekey")
+        )
+        self.assertEqual(
+            results[0].xpath, "/integrationtest:simplelist[simplekey='ABC']/simplekey"
+        )
+        self.assertEqual(results[0].value, "ABC")
+        self.assertEqual(len(results), 5)
+
+        results = list(
+            self.subject.libyang_gets_xpath(
+                "/integrationtest:simplelist[simplekey='ABC']/simplekey"
+            )
+        )
+        self.assertEqual(
+            results[0].xpath, "/integrationtest:simplelist[simplekey='ABC']/simplekey"
+        )
+        self.assertEqual(results[0].value, "ABC")
+        self.assertEqual(len(results), 1)
+
     def test_container_presence_explicit(self):
         # Act
         self.root.bronze.silver.gold.platinum.deeper.create()

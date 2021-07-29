@@ -23,7 +23,7 @@ class DataAccess(StubLyDataAbstractionLayer):
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.10"
+    __version__ = "0.0.11"
 
     def __init__(
         self,
@@ -41,6 +41,7 @@ class DataAccess(StubLyDataAbstractionLayer):
         self.context = None
         self.node_returned = False
         self.root_voodoo = None
+        self.data_abstraction_layer = self
         if hasattr(data_abstraction_layer, "libyang_data"):
             self.libyang_data = data_abstraction_layer.libyang_data
         if yang_model:
@@ -482,6 +483,14 @@ Children: %s"""
         if not self.connected:
             raise Errors.NotConnect()
         return super().libyang_get_xpath(xpath)
+
+    def libyang_gets_xpath(self, xpath):
+        """
+        Return a generator of libyang-cffi DataNode's
+        """
+        if not self.connected:
+            raise Errors.NotConnect()
+        return super().libyang_gets_xpath(xpath)
 
     def gets(self, xpath):
         """

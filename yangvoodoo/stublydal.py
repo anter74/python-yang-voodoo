@@ -117,7 +117,19 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         if not self.connected:
             raise NotConnect()
         self.log.trace("LIBYANG-GET: %s", xpath)
-        return next(self.libyang_data.get_xpath(xpath))
+        try:
+            return next(self.libyang_data.get_xpath(xpath))
+        except libyang.util.LibyangError:
+            return None
+
+    def libyang_gets_xpath(self, xpath):
+        """
+        Return a libyang-cffi DataNode directly, returning a generator of all entries that match
+        the XPATH.
+        """
+        if not self.connected:
+            raise Errors.NotConnect()
+        return self.libyang_data.get_xpath(xpath)
 
     def gets(self, xpath):
         if not self.connected:

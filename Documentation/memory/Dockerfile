@@ -29,7 +29,7 @@ ENV GIT_BRANCH=libyang-dump-improvements
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.10" >/version && \
+      echo "0.0.11" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
