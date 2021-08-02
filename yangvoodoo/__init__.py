@@ -1,37 +1,29 @@
 #!/usr/bin/python3
 import libyang
 import os
-import importlib
-import yangvoodoo.VoodooNode
+import yangvoodoo.VoodooNode as VoodooNode
+import yangvoodoo.Errors as Errors
 from yangvoodoo.stublydal import StubLyDataAbstractionLayer
-from yangvoodoo.Errors import PathIsNotALeaf
 from yangvoodoo.Common import PlainObject, Types, Utils, YangNode
 
 
-class DataAccess:
+class DataAccess(StubLyDataAbstractionLayer):
 
     """
     This module provides two methods to access data, either XPATH based (low-level) or
     Node based (high-level).
 
-    The default backend for this module is sysrepo, however when instantiating this class
-    it is possible to send in an alternative 'data_abstraction_layer'. For the sysrepo based
-    implementation see sysrepodal.py
-
-    The data_abstraction_layer itself supports primitive operations such as get, set, create,
-    create_container, gets_sorted, gets_unsorted, delete, commit, validate, refresh, connect.
-    The key assumption is that the datastore itself will stored data based upon XPATH or
-    similair path structure.
-
+    Earlier versions of yangvoodoo supported different backends through a data abstraction
+    layer, however should another datastore backend be required this class can be extended
+    and specific methods overwritten.
 
     Dependencies:
-     - libyang v1.0.225 - so version 1.10.17
-        # NOTE: v1.0.215+ more tighly enforces JSON parsing of numbers that are strings
+     - libyang v1.0.240 - so version 1.10.32
      - libyang-cffi   (https://github.com/allena29/libyang-cffi/tree/master)
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.9.1"
+    __version__ = "0.0.11"
 
     def __init__(
         self,
@@ -45,15 +37,13 @@ class DataAccess:
             log = Utils.get_logger("yangvoodoo", 10)
         self.log = log
         self.session = None
-        self.conn = None
         self.connected = False
         self.context = None
         self.node_returned = False
         self.root_voodoo = None
-        if data_abstraction_layer:
-            self.data_abstraction_layer = data_abstraction_layer
-        else:
-            self.data_abstraction_layer = self._get_data_abastraction_layer(log)
+        self.data_abstraction_layer = self
+        if hasattr(data_abstraction_layer, "libyang_data"):
+            self.libyang_data = data_abstraction_layer.libyang_data
         if yang_model:
             self.connect(yang_model, yang_location)
 
@@ -67,12 +57,33 @@ class DataAccess:
     def _get_data_abastraction_layer(self, log):
         return StubLyDataAbstractionLayer(log)
 
+    def show_example_xpaths(self, print_xpaths=True):
+        if not self.connected:
+            raise Errors.NotConnect()
+        answer = []
+        for node in self.yang_ctx.find_path(f"/{self.module}:*"):
+            if print_xpaths:
+                print(node.data_path())
+            else:
+                answer.append(node.data_path())
+
+            try:
+                for subnode in self.yang_ctx.find_path(f"/{self.module}:{node}//*"):
+                    if print_xpaths:
+                        print(subnode.data_path())
+                    else:
+                        answer.append(node.data_path())
+            except libyang.util.LibyangError:
+                pass
+        if not print_xpaths:
+            return "\n".join(answer)
+
     def tree(self, print_tree=True):
         """
         Print a tree representation of the YANG Schema.
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
+            raise Errors.NotConnect()
         if print_tree:
             print(self.context.schema.dump_str())
         else:
@@ -84,9 +95,9 @@ class DataAccess:
         Provide help text from the yang module if available.
         """
         if not isinstance(node, VoodooNode.Node):
-            raise yangvoodoo.Errors.NodeProvidedIsNotAContainer()
+            raise Errors.NodeProvidedIsNotAContainer()
         if node._NODE_TYPE == "Empty":
-            raise yangvoodoo.Errors.NodeProvidedIsNotAContainer()
+            raise Errors.NodeProvidedIsNotAContainer()
 
         node_schema = node._node
         context = node._context
@@ -285,9 +296,9 @@ Children: %s"""
         """
         self.log.trace("GET_NODE")
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
+            raise Errors.NotConnect()
         self.node_returned = True
-        self.data_abstraction_layer.setup_root()
+        super().setup_root()
 
         yang_node = YangNode(PlainObject(), "", "")
         self._trace("VoodooNode.Root", yang_node, self.context)
@@ -307,25 +318,18 @@ Children: %s"""
         self.module = module
         self.yang_ctx = libyang.Context(yang_location) if not yang_ctx else yang_ctx
         self.yang_schema = self.yang_ctx.load_module(self.module)
-        connect_status = self.data_abstraction_layer.connect(
-            self.module, yang_location, tag, self.yang_ctx
-        )
+        connect_status = super().connect(self.module, yang_location, tag, self.yang_ctx)
 
-        self.session = self.data_abstraction_layer.session
-        self.conn = self.data_abstraction_layer.conn
+        self.session = self
         self.connected = True
 
         self.context = VoodooNode.Context(
             self.module, self, self.yang_schema, self.yang_ctx, log=self.log
         )
-        self.data_abstraction_layer.context = self.context
 
         self.log.trace("CONNECT: module %s. yang_location %s", module, yang_location)
         self.log.trace("       : libyangctx %s ", self.yang_ctx)
         self.log.trace("       : context %s", self.context)
-        self.log.trace(
-            "       : data_abstraction_layer %s", self.data_abstraction_layer
-        )
         return connect_status
 
     def add_module(self, module):
@@ -336,11 +340,11 @@ Children: %s"""
         """
         self.log.trace("ADD_MODULE")
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
+            raise Errors.NotConnect()
         if self.node_returned:
-            raise yangvoodoo.Errors.NodeAlreadyProvidedCannotChangeSchemaError()
+            raise Errors.NodeAlreadyProvidedCannotChangeSchemaError()
 
-        self.data_abstraction_layer.libyang_ctx.load_module(module)
+        self.libyang_ctx.load_module(module)
 
     def disconnect(self):
         """
@@ -353,7 +357,7 @@ Children: %s"""
         self.log.trace("DISCONNECT")
         self.connected = False
         self.root_voodoo
-        return self.data_abstraction_layer.disconnect()
+        return super().disconnect()
 
     def commit(self):
         """
@@ -367,8 +371,8 @@ Children: %s"""
         """
         self.log.trace("COMMIT")
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.commit()
+            raise Errors.NotConnect()
+        return super().commit()
 
     def validate(self, raise_exception=True):
         """
@@ -383,16 +387,16 @@ Children: %s"""
         """
         self.log.trace("VALIDATE")
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.validate(raise_exception)
+            raise Errors.NotConnect()
+        return super().validate(raise_exception)
 
     def container(self, xpath):
         """
         Retrieve the status of the presence container. Returns True if it exists.
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.container(xpath)
+            raise Errors.NotConnect()
+        return super().container(xpath)
 
     def create_container(self, xpath):
         """
@@ -401,8 +405,8 @@ Children: %s"""
         returns: VoodoooPresenceContainer()
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.create_container(xpath)
+            raise Errors.NotConnect()
+        return super().create_container(xpath)
 
     def create(self, xpath, keys=None, values=None):
         """
@@ -412,8 +416,8 @@ Children: %s"""
          returns: VoodooListElement()
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.create(xpath, keys=keys, values=values)
+            raise Errors.NotConnect()
+        return super().create(xpath, keys=keys, values=values)
 
     def uncreate(self, xpath):
         """
@@ -423,8 +427,8 @@ Children: %s"""
          returns: True
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.uncreate(xpath)
+            raise Errors.NotConnect()
+        return super().uncreate(xpath)
 
     def set(self, xpath, value, valtype=10, nodetype=4):
         """
@@ -437,16 +441,16 @@ Children: %s"""
         returns: value
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.set(xpath, value, valtype, nodetype)
+            raise Errors.NotConnect()
+        return super().set(xpath, value, valtype, nodetype)
 
     def gets_len(self, xpath):
         """
         For the given XPATH of a list return the length
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.gets_len(xpath)
+            raise Errors.NotConnect()
+        return super().gets_len(xpath)
 
     def gets_sorted(self, xpath, spath, ignore_empty_lists=False):
         """
@@ -456,8 +460,8 @@ Children: %s"""
         returns: generator of sorted XPATHS
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.gets_sorted(xpath, spath, ignore_empty_lists)
+            raise Errors.NotConnect()
+        return super().gets_sorted(xpath, spath, ignore_empty_lists)
 
     def gets_unsorted(self, xpath, spath, ignore_empty_lists=False):
         """
@@ -468,10 +472,8 @@ Children: %s"""
         returns: generator of XPATHS
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.gets_unsorted(
-            xpath, spath, ignore_empty_lists
-        )
+            raise Errors.NotConnect()
+        return super().gets_unsorted(xpath, spath, ignore_empty_lists)
 
     def libyang_get_xpath(self, xpath):
         """
@@ -479,8 +481,16 @@ Children: %s"""
         as only the first result will be returned.
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.libyang_get_xpath(xpath)
+            raise Errors.NotConnect()
+        return super().libyang_get_xpath(xpath)
+
+    def libyang_gets_xpath(self, xpath):
+        """
+        Return a generator of libyang-cffi DataNode's
+        """
+        if not self.connected:
+            raise Errors.NotConnect()
+        return super().libyang_gets_xpath(xpath)
 
     def gets(self, xpath):
         """
@@ -490,8 +500,8 @@ Children: %s"""
         returns: generator of Values
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.gets(xpath)
+            raise Errors.NotConnect()
+        return super().gets(xpath)
 
     def add(self, xpath, value, valtype=18):
         """
@@ -500,8 +510,8 @@ Children: %s"""
         returns: the value
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.add(xpath, value, valtype)
+            raise Errors.NotConnect()
+        return super().add(xpath, value, valtype)
 
     def remove(self, xpath, value):
         """
@@ -511,8 +521,8 @@ Children: %s"""
         returns: None.
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.remove(xpath, value)
+            raise Errors.NotConnect()
+        return super().remove(xpath, value)
 
     def has_item(self, xpath):
         """
@@ -522,8 +532,8 @@ Children: %s"""
         returns: True or False
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.has_item(xpath)
+            raise Errors.NotConnect()
+        return super().has_item(xpath)
 
     def get(self, xpath, default_value=None):
         """
@@ -541,9 +551,9 @@ Children: %s"""
         returns: value or Vooodoo<X>
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
+            raise Errors.NotConnect()
 
-        return self.data_abstraction_layer.get(xpath, default_value)
+        return super().get(xpath, default_value)
 
     def delete(self, xpath):
         """
@@ -552,8 +562,8 @@ Children: %s"""
         returns: True
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.delete(xpath)
+            raise Errors.NotConnect()
+        return super().delete(xpath)
 
     def refresh(self):
         """
@@ -565,8 +575,8 @@ Children: %s"""
         returns: True
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.refresh()
+            raise Errors.NotConnect()
+        return super().refresh()
 
     def empty(self):
         """
@@ -575,8 +585,8 @@ Children: %s"""
         returns: True
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.empty()
+            raise Errors.NotConnect()
+        return super().empty()
 
     def is_session_dirty(self):
         """
@@ -584,8 +594,8 @@ Children: %s"""
         or last refreshed against the baceknd.
         """
         if not self.connected:
-            raise yangvoodoo.Errors.NotConnect()
-        return self.data_abstraction_layer.is_session_dirty()
+            raise Errors.NotConnect()
+        return super().is_session_dirty()
 
     def has_datastore_changed(self):
         """
@@ -623,14 +633,14 @@ Children: %s"""
           In this case the commit from session2 doesn't remove ListElement 'A' because the
           transaction for session2 did not make any changes.
         """
-        return self.data_abstraction_layer.has_datastore_changed()
+        return super().has_datastore_changed()
 
-    def dump_xpaths(self):
+    def dump_xpaths(self, start_xpath=None):
         """
         dump the datastore in xpath format.
         """
         self.log.trace("DUMP_XPATHS")
-        return self.data_abstraction_layer.dump_xpaths()
+        return super().dump_xpaths(start_xpath=start_xpath)
 
     @staticmethod
     def _welcome():
@@ -653,7 +663,7 @@ Children: %s"""
         Return a generator of matching xpaths, optionall with the value.
         """
         self.log.trace("GET_RAW_XPATH: %s", xpath)
-        yield from self.data_abstraction_layer.get_raw_xpath(xpath, with_val)
+        yield from super().get_raw_xpath(xpath, with_val)
 
     def get_raw_xpath_single_val(self, xpath):
         """
@@ -662,7 +672,7 @@ Children: %s"""
         This is intended only to be used with leaves.
         """
         self.log.trace("GET_RAW_XPATH_SINGLE_VAL: %s", xpath)
-        for result in self.data_abstraction_layer.get_raw_xpath(xpath, True):
+        for result in self.get_raw_xpath(xpath, True):
             return result[1]
         return None
 
@@ -679,11 +689,11 @@ Children: %s"""
         self.log.trace("SET_DATA_BY_XPATH: %s %s %s", context, data_path, value)
         node_schema = Utils.get_nodeschema_from_data_path(context, data_path)
         if node_schema.nodetype() != Types.LIBYANG_NODETYPE["LEAF"]:
-            raise PathIsNotALeaf("set_raw_data only operates on leaves")
+            raise Errors.PathIsNotALeaf("set_raw_data only operates on leaves")
         val_type = Utils.get_yang_type(
             node_schema.type(), value, node_schema.real_schema_path
         )
-        self.data_abstraction_layer.set(data_path, value, val_type)
+        self.set(data_path, value, val_type)
 
     def load(self, filename, format=1, trusted=False):
         """
@@ -693,7 +703,7 @@ Children: %s"""
 
         If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
         """
-        return self.data_abstraction_layer.load(filename, format, trusted)
+        return super().load(filename, format, trusted)
 
     def dump(self, filename, format=1):
         """
@@ -701,7 +711,7 @@ Children: %s"""
 
         Types.FORMAT['XML'] or Types.FORMAT['JSON']
         """
-        return self.data_abstraction_layer.dump(filename, format)
+        return super().dump(filename, format)
 
     def loads(self, payload, format=1, trusted=False):
         """
@@ -711,7 +721,7 @@ Children: %s"""
 
         If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
         """
-        return self.data_abstraction_layer.loads(payload, format, trusted)
+        return super().loads(payload, format, trusted)
 
     def dumps(self, format=1):
         """
@@ -719,7 +729,7 @@ Children: %s"""
 
         Types.FORMAT['XML'] or Types.FORMAT['JSON']
         """
-        return self.data_abstraction_layer.dumps(format)
+        return super().dumps(format)
 
     def merge(self, filename, format=1, trusted=True):
         """
@@ -729,7 +739,7 @@ Children: %s"""
 
         If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
         """
-        return self.data_abstraction_layer.merge(filename, format, trusted)
+        return super().merge(filename, format, trusted)
 
     def merges(self, payload, format=1, trusted=True):
         """
@@ -739,7 +749,7 @@ Children: %s"""
 
         If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
         """
-        return self.data_abstraction_layer.merges(payload, format, trusted)
+        return super().merges(payload, format, trusted)
 
     def advanced_merges(self, payload, format=1, trusted=True):
         """
@@ -750,4 +760,4 @@ Children: %s"""
 
         If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
         """
-        return self.data_abstraction_layer.advanced_merges(payload, format, trusted)
+        return super().advanced_merges(payload, format, trusted)

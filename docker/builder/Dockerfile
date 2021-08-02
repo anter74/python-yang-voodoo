@@ -93,8 +93,8 @@ RUN \
 
 
 # CHANGE VERSION NUMBER HERE
-ENV MY_VERSION=0.0.9.1
-ENV GIT_BRANCH=remove-true-from-datanode
+ENV MY_VERSION=0.0.11
+ENV GIT_BRANCH=libyang-dump-improvements
 ENV MY_ARCH=amd64
 
 RUN \

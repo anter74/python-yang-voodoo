@@ -535,7 +535,7 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
             repr(self.root.underscore_and_hyphen),
             "VoodooEmpty{/integrationtest:underscore_and-hyphen} - Exists",
         )
-        xpaths = self.stub.dump_xpaths()
+        xpaths = self.root._context.dal.dump_xpaths()
         self.assertEqual(
             xpaths["/integrationtest:underscoretests/underscore_and-hyphen"], "sdf"
         )
