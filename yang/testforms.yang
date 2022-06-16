@@ -1,0 +1,22 @@
+module testforms {
+  prefix "testforms";
+  namespace "http://testforms";
+
+  container toplevel {
+    presence true;
+
+    leaf hello {
+      type string;
+    }
+
+    list mylist {
+      key simplekey;
+      leaf simplekey {
+	type string;
+      }
+      leaf nonkey {
+	type string;
+      }
+    }
+  }
+}
