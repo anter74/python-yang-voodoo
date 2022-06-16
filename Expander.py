@@ -43,9 +43,14 @@ class SchemaDataExpander:
 
     def _handle_schema_leaf(self, node):
         yield SchemaDataExpander._form_structure(node, "leaf")
+        self.log.warning("TODO: add in enumeration so we can present valid options")
+        self.log.warning("TODO: add in boolean/emptyleaf so we can present a checkbox")
+        self.log.warning("TODO: add in union - future?")
+        self.log.warning("TODO: add in custom types so we can do regex validation?")
 
     def _handle_schema_list(self, node):
         yield SchemaDataExpander._form_structure(node, "list")
+        self.log.warning("TODO: add in list keys - so we know mandatory minimum information")
 
         for node in self.ctx.find_path(f"{node.schema_path()}/*"):
             if node.nodetype() not in self.SCHEMA_NODE_TYPE_MAP:
@@ -65,11 +70,21 @@ class SchemaDataExpander:
         if node:
             return node.parent().schema_node()
 
+    @staticmethod
+    def _find_best_parent(node):
+        parent = node.parent()
+        if not parent:
+            return ""
+        return parent.xpath
+
     def _handle_data_containing_node(self, schema: dict, schema_node, node):
         return
 
     def _handle_data_leaf(self, schema: dict, schema_node, node):
-        schema[schema_node.schema_path()]["data"][node.xpath] = node.value
+        schema[schema_node.schema_path()]["data"][node.xpath] = {
+            "value": node.value,
+            "parent": SchemaDataExpander._find_best_parent(node),
+        }
 
     def process_data(self, schema: dict, data_xml: str):
         """
