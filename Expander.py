@@ -8,7 +8,7 @@ class SchemaDataExpander:
 
     SCHEMA_NODE_TYPE_MAP = {1: "_handle_schema_containing_node", 4: "_handle_schema_leaf", 16: "_handle_schema_list"}
     DATA_NODE_TYPE_MAP = {1: "_handle_data_containing_node", 4: "_handle_data_leaf"}
-    LEAF_TYPE_MAP = {10: "string", 6: "enum", 3: "boolean", 13: "uint8"}
+    LEAF_TYPE_MAP = {10: "string", 6: "enum", 3: "boolean", 5: "empty", 13: "uint8"}
 
     def __init__(self, yang_module, log):
         self.log = log
@@ -86,13 +86,19 @@ class SchemaDataExpander:
 
     @staticmethod
     def _find_best_parent(node):
-        parent = node.parent()
-        if not parent:
+        try:
+            parent = node.parent()
+        except libyang.util.LibyangError as err:
+            if "cannot use parent() to go above a root node" not in str(err):
+                raise
             return ""
         return parent.xpath
 
     def _handle_data_containing_node(self, schema: dict, schema_node, node):
-        return
+        schema[schema_node.schema_path()]["data"][node.xpath] = {
+            "value": node.value,
+            "parent": SchemaDataExpander._find_best_parent(node),
+        }
 
     def _handle_data_leaf(self, schema: dict, schema_node, node):
         schema[schema_node.schema_path()]["data"][node.xpath] = {

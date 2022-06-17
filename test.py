@@ -11,7 +11,7 @@ from Expander import SchemaDataExpander
 
 expander = SchemaDataExpander("testforms", log)
 
-data_xml = open("resources/simplelist.xml").read()
+data_xml = open("resources/inner.xml").read()
 
 schema = expander.process_schema()
 print(schema)

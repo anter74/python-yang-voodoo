@@ -45,6 +45,15 @@ module testforms {
 	      pattern "bob[0-9]{1,4}";
 	    }
 	  }
+	  leaf anothercheckbox {
+	    type empty;
+	  }
+	  container deep {
+	    presence true;
+	    leaf mine {
+	      type string;
+	    }
+	  }
         }
       }
     }
