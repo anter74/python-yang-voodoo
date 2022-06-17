@@ -7,6 +7,7 @@ module testforms {
 
     leaf hello {
       type string;
+      default 'put something here';
     }
 
     list mylist {
@@ -15,7 +16,7 @@ module testforms {
 	type string;
       }
       leaf nonkey {
-	type string;
+	type string; 
       }
        
       container inner {
@@ -55,6 +56,27 @@ module testforms {
 	    }
 	  }
         }
+      }
+    }
+  }
+
+  container other {
+    presence true;
+    leaf foreign {
+      type string;
+    }
+  }
+
+  list mainlist {
+    key mainkey;
+    leaf mainkey {
+      type string;
+    }
+
+    container maincontainer {
+      presence true;
+      leaf mainleaf {
+	type string;
       }
     }
   }

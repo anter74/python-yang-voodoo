@@ -72,6 +72,11 @@ class SchemaDataExpander:
             patterns = [pattern[0] for pattern in node.type().all_patterns()]
             if patterns:
                 structure["validations"].append({"regex": patterns})
+
+        if node.default():
+            structure["default"] = node.default()
+        else:
+            structure["default"] = None
         return structure
 
     @staticmethod
