@@ -14,7 +14,7 @@ expander = SchemaDataExpander("testforms", log)
 data_xml = open("resources/inner.xml").read()
 
 schema = expander.process_schema()
-print(schema)
+#print(json.dumps(schema, indent=4))
 
 combined = expander.process_data(schema, data_xml)
 print(json.dumps(combined, indent=4))

@@ -1,0 +1,216 @@
+{
+    "/testforms:topleaf": {
+        "schema": "/testforms:topleaf",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "",
+        "subtype": "string",
+        "default": null
+    },
+    "/testforms:toplevel": {
+        "schema": "/testforms:toplevel",
+        "type": "container",
+        "data": {},
+        "validations": [],
+        "parent": ""
+    },
+    "/testforms:toplevel/testforms:hello": {
+        "schema": "/testforms:toplevel/testforms:hello",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel",
+        "subtype": "string",
+        "default": "put something here"
+    },
+    "/testforms:toplevel/testforms:mylist": {
+        "schema": "/testforms:toplevel/testforms:mylist",
+        "type": "list-element",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel",
+        "keys": [
+            "simplekey"
+        ]
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:simplekey": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:simplekey",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel/testforms:mylist",
+        "subtype": "string",
+        "default": null
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:nonkey": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:nonkey",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel/testforms:mylist",
+        "subtype": "string",
+        "default": null
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:inner": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:inner",
+        "type": "container",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel/testforms:mylist"
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist",
+        "type": "list-element",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel/testforms:mylist/testforms:inner",
+        "keys": [
+            "key1",
+            "key2"
+        ]
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:key1": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:key1",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist",
+        "subtype": "string",
+        "default": null
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:key2": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:key2",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist",
+        "subtype": "string",
+        "default": null
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:dropdownbox": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:dropdownbox",
+        "type": "leaf",
+        "data": {},
+        "validations": [
+            {
+                "explicit": [
+                    "bob",
+                    "alice"
+                ]
+            }
+        ],
+        "parent": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist",
+        "subtype": "enum",
+        "default": null
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:checkbox": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:checkbox",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist",
+        "subtype": "boolean",
+        "default": null
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:number": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:number",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist",
+        "subtype": "uint8",
+        "default": null
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:regex": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:regex",
+        "type": "leaf",
+        "data": {},
+        "validations": [
+            {
+                "regex": [
+                    "bob[0-9]{1,4}"
+                ]
+            }
+        ],
+        "parent": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist",
+        "subtype": "string",
+        "default": null
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:anothercheckbox": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:anothercheckbox",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist",
+        "subtype": "empty",
+        "default": null
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:deep": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:deep",
+        "type": "container",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist"
+    },
+    "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:deep/testforms:mine": {
+        "schema": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:deep/testforms:mine",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:toplevel/testforms:mylist/testforms:inner/testforms:innerlist/testforms:deep",
+        "subtype": "string",
+        "default": null
+    },
+    "/testforms:other": {
+        "schema": "/testforms:other",
+        "type": "container",
+        "data": {},
+        "validations": [],
+        "parent": ""
+    },
+    "/testforms:other/testforms:foreign": {
+        "schema": "/testforms:other/testforms:foreign",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:other",
+        "subtype": "string",
+        "default": null
+    },
+    "/testforms:mainlist": {
+        "schema": "/testforms:mainlist",
+        "type": "list-element",
+        "data": {},
+        "validations": [],
+        "parent": "",
+        "keys": [
+            "mainkey"
+        ]
+    },
+    "/testforms:mainlist/testforms:mainkey": {
+        "schema": "/testforms:mainlist/testforms:mainkey",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:mainlist",
+        "subtype": "string",
+        "default": null
+    },
+    "/testforms:mainlist/testforms:maincontainer": {
+        "schema": "/testforms:mainlist/testforms:maincontainer",
+        "type": "container",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:mainlist"
+    },
+    "/testforms:mainlist/testforms:maincontainer/testforms:mainleaf": {
+        "schema": "/testforms:mainlist/testforms:maincontainer/testforms:mainleaf",
+        "type": "leaf",
+        "data": {},
+        "validations": [],
+        "parent": "/testforms:mainlist/testforms:maincontainer",
+        "subtype": "string",
+        "default": null
+    }
+}

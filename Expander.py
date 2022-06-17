@@ -55,7 +55,8 @@ class SchemaDataExpander:
 
     @staticmethod
     def _form_structure(node, nodetype):
-        return {"schema": node.schema_path(), "type": nodetype, "data": {}, "validations": []}
+        return {"schema": node.schema_path(), "type": nodetype, "data": {}, "validations": [],
+                "parent": SchemaDataExpander._find_schema_parent(node)}
 
     @classmethod
     def _add_leaf_type(cls, node, structure):
@@ -90,7 +91,19 @@ class SchemaDataExpander:
             return node.parent().schema_node()
 
     @staticmethod
-    def _find_best_parent(node):
+    def _find_schema_parent(node):
+        try:
+            parent = node.parent()
+        except libyang.util.LibyangError as err:
+            if "cannot use parent() to go above a root node" not in str(err):
+                raise
+            return ""
+        if not parent:
+            return ""
+        return parent.schema_path()
+
+    @staticmethod
+    def _find_data_parent(node):
         try:
             parent = node.parent()
         except libyang.util.LibyangError as err:
@@ -102,13 +115,13 @@ class SchemaDataExpander:
     def _handle_data_containing_node(self, schema: dict, schema_node, node):
         schema[schema_node.schema_path()]["data"][node.xpath] = {
             "value": node.value,
-            "parent": SchemaDataExpander._find_best_parent(node),
+            "parent": SchemaDataExpander._find_data_parent(node),
         }
 
     def _handle_data_leaf(self, schema: dict, schema_node, node):
         schema[schema_node.schema_path()]["data"][node.xpath] = {
             "value": node.value,
-            "parent": SchemaDataExpander._find_best_parent(node),
+            "parent": SchemaDataExpander._find_data_parent(node),
         }
 
     def process_data(self, schema: dict, data_xml: str):
@@ -132,5 +145,4 @@ class SchemaDataExpander:
                 )
             getattr(self, self.DATA_NODE_TYPE_MAP[schema_node.nodetype()])(schema, schema_node, node)
 
-            print(node)
         return schema

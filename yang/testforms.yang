@@ -2,6 +2,10 @@ module testforms {
   prefix "testforms";
   namespace "http://testforms";
 
+
+  leaf topleaf {
+    type string;
+  }
   container toplevel {
     presence true;
 
