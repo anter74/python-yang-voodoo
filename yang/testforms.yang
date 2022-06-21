@@ -3,9 +3,9 @@ module testforms {
   namespace "http://testforms";
 
 
-  leaf topleaf {
+  /* leaf topleaf {
     type string;
-  }
+  } */
   container toplevel {
     presence true;
 
@@ -14,20 +14,28 @@ module testforms {
       default 'put something here';
     }
 
+    list simplelist {
+      key simplekey;
+
+      leaf simplekey {
+        type string;
+      }
+    } // end list simplelist
+/*
     list mylist {
       key simplekey;
       leaf simplekey {
 	type string;
       }
       leaf nonkey {
-	type string; 
+	type string;
       }
-       
+
       container inner {
         presence true;
         list innerlist {
           key "key1 key2";
-          leaf key1 { 
+          leaf key1 {
             type string;
            }
            leaf key2 {
@@ -61,17 +69,23 @@ module testforms {
 	  }
         }
       }
+    } */
+    container still-in-top {
+      presence true;
+      leaf of-the-world {
+        type string;
+      }
     }
-  }
-
+  } // end container top level
+/*
   container other {
     presence true;
     leaf foreign {
       type string;
     }
-  }
+  } // end container other */
 
-  list mainlist {
+  /* list mainlist {
     key mainkey;
     leaf mainkey {
       type string;
@@ -83,5 +97,5 @@ module testforms {
 	type string;
       }
     }
-  }
+  } */
 }
