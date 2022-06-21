@@ -1,7 +1,8 @@
 <toplevel xmlns="http://testforms"><hello>world</hello>
-
-	<mylist>
+	<simplelist>
 		<simplekey>A</simplekey>
-		<nonkey>a</nonkey>
-	</mylist>
+	</simplelist>
+	<simplelist>
+		<simplekey>B</simplekey>
+	</simplelist>
 </toplevel>

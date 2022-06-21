@@ -20,6 +20,10 @@ module testforms {
       leaf simplekey {
         type string;
       }
+      leaf simplenonkey {
+        type string;
+        default "non key value goes here";
+      }
     } // end list simplelist
 /*
     list mylist {
@@ -74,6 +78,7 @@ module testforms {
       presence true;
       leaf of-the-world {
         type string;
+        default 'withdefault';
       }
     }
   } // end container top level
