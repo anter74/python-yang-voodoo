@@ -10,9 +10,9 @@ class UnableToRenderFormError:
     pass
 
 
-class UnableToFormNodeIdError(UnableToRenderFormError):
-    def __init__(self, schema, data):
-        super().__init__(f"Unable to form an identifier for the following path\nData: {data}\nSchema: {schema}")
+class UnableToDetermineQuotesError(UnableToRenderFormError):
+    def __init__(self, value):
+        super().__init__(f"Unable to find a quote style to use for the following value:\n{value}")
 
 
 class Generator:
@@ -30,13 +30,24 @@ class Generator:
         self.result = StringIO()
         self.indent = 0
 
+    def write_header(self):
+        self.result.write(
+            """
+        <head><link rel="stylesheet" href="mystyle.css"></head>
+
+                   """
+        )
+
     def dumps(self):
         self.result.seek(0)
         print(self.result.read())
 
-    def process(self, initial_data: str, additional_xpaths: List[str]):
+    def process(self, initial_data: str):
         self.log.info("Processing: %s", self.yang_module)
+        if initial_data:
+            self.data_ctx.loads(initial_data)
         self.result = StringIO()
+        self.write_header()
         self.data_path_trail = [""]
         for node in self.ctx.find_path(f"/{self.yang_module}:*"):
             self._process_nodes(node)
@@ -51,8 +62,8 @@ class Generator:
     def _handle_schema_containing_node(self, node):
         self.data_path_trail.append(self.get_data_path_component(node))
         self.result.write(f"\n{self.get_indent()}<a name={self.get_id(node)}></a> <!-- container type -->")
-        self.result.write(f"\n{self.open_indent()}<div id={self.get_id(node)}>\n")
-
+        self.result.write(f"\n{self.open_indent()}<div class='structure_container' id={self.get_id(node)}>\n")
+        self.result.write(f"{self.get_indent()}<label class='structure_containerlabel'>{node.name()}</label><br/>\n")
         for subnode in self.ctx.find_path(f"{node.schema_path()}/*"):
             self._process_nodes(subnode)
 
@@ -65,10 +76,17 @@ class Generator:
         i.e. boolean/empty leaves should be checkbox
         enumerations should be drop-down boxes
         we should extract description of the yang model as a tool tip
+
+        we should deal with default values too when the data isn't set - perhaps with a lighter colour in the input
+        than if it haves explicit values.
         """
         self.data_path_trail.append(self.get_data_path_component(node))
+        value = self.get_data()
         self.result.write(
-            f"{self.get_indent()}<input type='text' name={self.get_id(node)} id={self.get_id(node)} value=''>\n"
+            f"{self.get_indent()}<label class='structure_leaflabel' for={self.get_id(node)}>{node.name()}</label>\n"
+        )
+        self.result.write(
+            f"{self.get_indent()}<input type='text' name={self.get_id(node)} id={self.get_id(node)} value={value}>\n"
         )
         self.data_path_trail.pop()
 
@@ -84,14 +102,33 @@ class Generator:
         """
         self.data_path_trail.append(self.get_data_path_component(node))
         self.result.write(f"\n{self.get_indent()}<a name={self.get_id(node)}></a> <!-- list type -->")
-        self.result.write(f"\n{self.open_indent()}<div id={self.get_id(node)}>\n")
-
-        self.result.write(f"\n{self.get_indent()}Need some buttons here to trigger adding extra list element\n")
+        self.result.write(f"\n{self.open_indent()}<div class='structure_list' id={self.get_id(node)}>\n")
+        self.result.write(f"{self.get_indent()}<label class='structure_containerlabel'>{node.name()}</label><br/>\n")
+        self.result.write(
+            f"\n{self.get_indent()}<p align='right'>Need some buttons here to trigger adding extra list element</p>\n"
+        )
         # for node in self.ctx.find_path(f"{node.schema_path()}/*"):
         #     self._process_nodes(node)
 
         self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id(node)} list -->\n\n")
         self.data_path_trail.pop()
+
+    def get_data(self, quoted=True):
+        xpath = "/".join(self.data_path_trail)
+        value = list(self.data_ctx.get_xpath(xpath))
+        if value:
+            self.log.debug("GET XPATH: %s = %s", xpath, value[0].value)
+            quote = self.get_quote_style(value[0].value)
+            return f"{quote}{value[0].value}{quote}"
+
+        return ""
+
+    def get_quote_style(self, value):
+        if '"' in value and "'" in value:
+            raise UnableToDetermineQuotesError(value)
+        if "'" in value:
+            return '"'
+        return "'"
 
     def get_data_path_component(self, node):
         if node.module().name() != self.yang_module or len(self.data_path_trail) == 1:
@@ -102,11 +139,8 @@ class Generator:
         if len(self.data_path_trail) == 1:
             return "'__root__'"
         trail = "/".join(self.data_path_trail)
-        if '"' in trail and "'" in trail:
-            raise UnableToFormNodeIdError(node.schema_path(), trail)
-        if "'" in trail:
-            return f'"{trail}"'
-        return f'"{trail}"'
+        quote = self.get_quote_style(trail)
+        return f"{quote}{trail}{quote}"
 
     def get_indent(self):
         return " " * self.indent * 2
@@ -126,5 +160,6 @@ if __name__ == "__main__":
     log.setLevel(5)
 
     generator = Generator("testforms", log)
-    generator.process(None, None)
+    #    generator.process(None)
+    generator.process(open("resources/simpleleaf.xml").read())
     generator.dumps()
