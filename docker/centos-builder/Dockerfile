@@ -1,15 +1,24 @@
 FROM centos:7
 
 RUN yum install -y gcc python3 curl git cmake python3-devel \
-    pcre-devel make sudo wget openssl-devel bzip2-devel sqlite-devel \
-    libffi-devel glibc-static pcre-static
+    pcre-devel make sudo wget bzip2-devel sqlite-devel \
+    libffi-devel glibc-static pcre-static zlib-devel 
 
-RUN wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tar.xz && \
-    tar -xf Python-3.7.3.tar.xz
+RUN wget --no-check-certificate https://www.openssl.org/source/openssl-1.1.1q.tar.gz && tar -xf openssl-1.1.1q.tar.gz
 
-RUN cd Python-3.7.3 && \
-    ./configure && \
+
+RUN cd openssl-1.1.1q && \
+    ./config --prefix=/usr/local/openssl-1-1-1q --openssldir=/usr/local/openssl-1-1-1q && \
+    make && \
+    make install 
+
+RUN wget https://www.python.org/ftp/python/3.10.5/Python-3.10.5.tar.xz && \
+    tar -xf Python-3.10.5.tar.xz
+
+RUN cd Python-3.10.5 && \
+    ./configure -C --with-openssl=/usr/local/openssl-1-1-1q --with-openssl-rpath=auto --with-ensurepip=install && \
     make install
+
 
 
 WORKDIR /opt/dev
@@ -18,7 +27,7 @@ RUN \
       pip3 install wheel
 
 
-ENV GIT_BRANCH=libyang-dump-improvements
+ENV GIT_BRANCH=master
 
 RUN \
       # CHANGE VERSION HERE
@@ -46,17 +55,32 @@ RUN \
 
 
 RUN \
-      wget https://files.pythonhosted.org/packages/fa/aa/025a3ab62469b5167bc397837c9ffc486c42a97ef12ceaa6699d8f5a5416/bcrypt-3.1.7.tar.gz && \
-      tar xvfz bcrypt-3.1.7.tar.gz && \
-      cd bcrypt-3.1.7 && \
+      wget https://files.pythonhosted.org/packages/e8/36/edc85ab295ceff724506252b774155eff8a238f13730c8b13badd33ef866/bcrypt-3.2.2.tar.gz && \
+      tar xvfz bcrypt-3.2.2.tar.gz && \
+      cd bcrypt-3.2.2 && \
       python3 setup.py bdist_wheel && \
       python3 -m pip install dist/*.whl && \
       mv dist/*.whl /pkgs
 
+#RUN \
+#      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh && \
+#      pip3 install setuprools_rust
+
+
+#RUN \
+#      wget https://files.pythonhosted.org/packages/89/d9/5fcd312d5cce0b4d7ee8b551a0ea99e4ea9db0fdbf6dd455a19042e3370b/cryptography-37.0.4.tar.gz && \
+#	tar xvfz cryptography-37.0.4.tar.gz  && \
+#	cd cryptography-37.0.4 && \
+#	export LDFLAGS="-L/usr/local/openssl-1-1-1q/lib" && \
+#	export CFLAGS="-I/usr/local/openssl-1-1-1q/include" && \
+#	export PATH="$HOME/.cargo/bin:$PATH"
+
+
 RUN \
       mkdir /cleanpython && \
       rsync -avz /usr/local/bin /cleanpython/ && \
+      rsync -avz /usr/local/openssl-1-1-1q /cleanpython/ && \
       rsync -avz /usr/local/include /cleanpython/ && \
       rsync -avz  --exclude='test/' --exclude='__pycache__/' /usr/local/lib /cleanpython/ && \
       cd /cleanpython && \
-      tar cvpfz /pkgs/python-3.7-centos-7.tar.gz bin include lib
+      tar cvpfz /pkgs/python-3.10.5-openssl-1-1-1q-centos-7.tar.gz bin include lib openssl-1-1-1q
