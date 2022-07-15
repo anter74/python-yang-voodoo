@@ -1,7 +1,9 @@
-import libyang
 import logging
-from yangvoodoo import Types, Errors
+import os
 import re
+
+import libyang
+from yangvoodoo import Types, Errors
 
 
 class YangNode:
@@ -17,13 +19,17 @@ class YangNode:
     This object will be returned by get_schema_node_from_libyang()
     """
 
-    def __init__(self, libyang_node, real_schema_path, real_data_path):
+    def __init__(self, libyang_node, real_schema_path, real_data_path, module):
         self.libyang_node = libyang_node
         self.real_data_path = real_data_path
         self.real_schema_path = real_schema_path
+        self.module = module
+
+    def __repr__(self):
+        return f"<InternalVoodooNode: {self.real_data_path} - {id(self)}>"
 
     def __getattr__(self, attr):
-        if attr in ("real_schema_path", "real_data_path"):
+        if attr in ("real_schema_path", "real_data_path", "module"):
             return getattr(self, attr)
         return getattr(self.libyang_node, attr)
 
@@ -80,6 +86,8 @@ class Utils:
     PREDICATE_KEY_VALUES_SINGLE = re.compile(r"\[([A-z\.]+[A-z0-9_\-]*)='([^']*)'\]")
     PREDICATE_KEY_VALUES_DOUBLE = re.compile(r"\[([A-z\.]+[A-z0-9_\-]*)=\"([^\"]*)\"\]")
     FIND_KEYS = re.compile(r"\[([A-Za-z\.]+[A-Za-z0-9_-]*)=.*?\]")
+
+    # used by convert_path_to_nodelist to extract leaf names
     XPATH_DECODER_V4 = re.compile(
         r"(([A-Za-z0-9_-]*:)?([A-Za-z0-9_-]+))((\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])+)?"
     )
@@ -142,8 +150,11 @@ class Utils:
     @staticmethod
     def get_yang_type_from_path(context, schema_path, value, child_attr=None):
         if child_attr:
-            schema_path = schema_path + "/" + context.module + ":" + child_attr
-        node_schema = next(context.schemactx.find_path(schema_path))
+            _, schema_path, node_schema, _ = Utils._find_child_schema_node(
+                context, schema_path, child_attr
+            )
+        else:
+            node_schema = next(context.schemactx.find_path(schema_path))
         return Utils.get_yang_type(node_schema.type(), value, schema_path)
 
     def get_yang_type(node_schema, value=None, xpath=None, default_to_string=False):
@@ -345,6 +356,57 @@ class Utils:
         return node_schema
 
     @staticmethod
+    def recurse_all_available_yang_models(context):
+        yield context.top_module
+        for yang_model in context.other_yang_modules:
+            yield yang_model
+
+    @staticmethod
+    def _find_child_schema_node(context, the_real_schema_path: str, attr: str):
+        """
+        Find the yang module associated with the child node - including translating
+        from pythonic names. In a simple yang model the yang module will always be
+        the same. If we augment other yang models they will retain their own module
+        name for their component of the schema.
+
+        Args:
+            context: Voodoo Context
+            the_real_schema_path: the schema path without this attribute
+            attr: the pythonic version of the attribute
+
+        Returns:
+            real_attribute_name,
+            real_schema_path,
+            node_schema,
+            yang_module_name,
+        """
+        for yang_module_name in Utils.recurse_all_available_yang_models(context):
+            real_attribute_name = Utils.get_original_name(
+                the_real_schema_path, context, attr
+            )
+            real_schema_path = (
+                the_real_schema_path
+                + "/"
+                + yang_module_name
+                + ":"
+                + real_attribute_name
+            )
+            try:
+                node_schema = next(context.schemactx.find_path(real_schema_path))
+                return (
+                    real_attribute_name,
+                    real_schema_path,
+                    node_schema,
+                    yang_module_name,
+                )
+            except libyang.util.LibyangError:
+                pass
+        raise Errors.NonExistingNode(
+            f"{the_real_schema_path}/***********:{attr}",
+            "\n  - ".join(list(Utils.recurse_all_available_yang_models(context))),
+        )
+
+    @staticmethod
     def get_yangnode(node, context, attr="", keys=[], values=[], predicates=""):
         """
         Given a node, with a child attribute name, and list of key/values return a libyang schema object
@@ -380,31 +442,35 @@ class Utils:
         if context.schemacache.is_path_cached(cache_entry):
             return context.schemacache.get_item_from_cache(cache_entry)
 
+        module = node.module
         real_schema_path = node.real_schema_path
         if not attr == "":
-            real_attribute_name = Utils.get_original_name(
-                real_schema_path, context, attr
-            )
-            real_schema_path = (
-                real_schema_path + "/" + context.module + ":" + real_attribute_name
-            )
+            (
+                real_attribute_name,
+                real_schema_path,
+                node_schema,
+                module,
+            ) = Utils._find_child_schema_node(context, real_schema_path, attr)
 
-        try:
-            node_schema = next(context.schemactx.find_path(real_schema_path))
-        except libyang.util.LibyangError:
-            raise Errors.NonExistingNode(
-                node.real_schema_path + "/" + context.module + ":" + attr
-            )
+        if not attr:
+            try:
+                node_schema = next(context.schemactx.find_path(real_schema_path))
+            except libyang.util.LibyangError:
+                raise Errors.NonExistingNode(f"{node.real_schema_path}/{module}:{attr}")
 
-        if attr != "":
+        if attr:
             real_data_path = node.real_data_path
             if node_schema.nodetype() not in (
                 Types.LIBYANG_NODETYPE["CHOICE"],
                 Types.LIBYANG_NODETYPE["CASE"],
             ):
-                if node.real_data_path == "":
+                if not node.real_data_path:
                     real_data_path = (
-                        "/" + context.module + ":" + real_attribute_name + predicates
+                        "/" + module + ":" + real_attribute_name + predicates
+                    )
+                elif node.module != module:
+                    real_data_path = (
+                        f"{real_data_path}/{module}:{real_attribute_name}{predicates}"
                     )
                 else:
                     real_data_path = (
@@ -416,7 +482,7 @@ class Utils:
             real_schema_path = node.real_schema_path
             node_schema = node
 
-        item = YangNode(node_schema, real_schema_path, real_data_path)
+        item = YangNode(node_schema, real_schema_path, real_data_path, module)
 
         context.schemacache.add_entry(cache_entry, item)
 
@@ -431,7 +497,8 @@ class Utils:
             return attr
 
         if schema_path == "":
-            schema_path = "/" + context.module + ":*/*"
+            schema_path = f"/{context.module}:*/*"
+            # this is safe to use context.module as we are at the root
         else:
             schema_path = schema_path + "/*"
 

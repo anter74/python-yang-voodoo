@@ -73,11 +73,19 @@ class ListWrongNumberOfKeys(Exception):
 
 
 class NonExistingNode(Exception):
-    def __init__(self, xpath):
-        super().__init__(
-            "The path: %s does not point of a valid schema node in the yang module"
-            % (xpath)
-        )
+    def __init__(self, xpath, modules_tested=None):
+        if modules_tested:
+            super().__init__(
+                (
+                    f"The path does not point to a valid schema node in the yang module\n\nXPATH: {xpath}\n"
+                    f"Searched the following modules\n  - {modules_tested}"
+                )
+            )
+        else:
+            super().__init__(
+                "The path: %s does not point of a valid schema node in the yang module"
+                % (xpath)
+            )
 
 
 class NothingToCommit(Exception):

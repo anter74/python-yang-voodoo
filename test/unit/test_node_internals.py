@@ -34,6 +34,43 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(result, "the-magic-cached-marker")
 
     @patch("yangvoodoo.Common.Utils.get_original_name")
+    def test_get_yang_node_non_existing_node_with_other_module(
+        self, mockGetOriginalName
+    ):
+        # Build
+        mockGetOriginalName.return_value = "DSFDF"
+
+        node = Mock()
+        node.real_data_path = "/integrationtest:container/continer"
+        node.real_schema_path = "/integrationtest:list/integrationtest:container2"
+        context = Mock()
+        context.schemactx = Mock()
+
+        context.schemactx.find_path.return_value = IteratorToRaiseAnException(
+            [], error_at=0, error_type=libyang.util.LibyangError
+        )
+        context.schemacache = Cache()
+        context.top_module = "integrationtest"
+        context.other_yang_modules = ["othermodule"]
+
+        # Act
+        with self.assertRaises(yangvoodoo.Errors.NonExistingNode) as error_context:
+            Utils.get_yangnode(
+                node, context, "list", ["key1", "key2"], [("val1", 10), ("val2", 10)]
+            )
+
+        # Assert
+        expected_msg = (
+            "The path does not point to a valid schema node in the yang module\n\n"
+            "XPATH: /integrationtest:list/integrationtest:container2/***********:list\n"
+            "Searched the following modules\n"
+            "  - integrationtest\n"
+            "  - othermodule"
+        )
+
+        self.assertEqual(str(error_context.exception), expected_msg)
+
+    @patch("yangvoodoo.Common.Utils.get_original_name")
     def test_get_yang_node_non_existing_node(self, mockGetOriginalName):
         # Build
         mockGetOriginalName.return_value = "DSFDF"
@@ -48,7 +85,8 @@ class test_node_based_access(unittest.TestCase):
             [], error_at=0, error_type=libyang.util.LibyangError
         )
         context.schemacache = Cache()
-        context.module = "integrationtest"
+        context.top_module = "integrationtest"
+        context.other_yang_modules = []
 
         # Act
         with self.assertRaises(yangvoodoo.Errors.NonExistingNode) as error_context:
@@ -58,8 +96,10 @@ class test_node_based_access(unittest.TestCase):
 
         # Assert
         expected_msg = (
-            "The path: /integrationtest:list/integrationtest:container2/integrationtest:list"
-            " does not point of a valid schema node in the yang module"
+            "The path does not point to a valid schema node in the yang module\n\n"
+            "XPATH: /integrationtest:list/integrationtest:container2/***********:list\n"
+            "Searched the following modules\n"
+            "  - integrationtest"
         )
 
         self.assertEqual(str(error_context.exception), expected_msg)
@@ -72,6 +112,7 @@ class test_node_based_access(unittest.TestCase):
         node = Mock()
         node.real_data_path = "/integrationtest:container/continer"
         node.real_schema_path = "/integrationtest:list/integrationtest:container2"
+        node.module = "integrationtest"
         context = Mock()
         context.schemactx = Mock()
 
@@ -81,7 +122,7 @@ class test_node_based_access(unittest.TestCase):
             [node_schema], error_at=-1
         )
         context.schemacache = Cache()
-        context.module = "integrationtest"
+        context.top_module = "integrationtest"
 
         # Act
         result = Utils.get_yangnode(

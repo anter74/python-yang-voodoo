@@ -300,7 +300,7 @@ Children: %s"""
         self.node_returned = True
         super().setup_root()
 
-        yang_node = YangNode(PlainObject(), "", "")
+        yang_node = YangNode(PlainObject(), "", "", "")
         self._trace("VoodooNode.Root", yang_node, self.context)
         self.context.readonly = readonly
         return VoodooNode.Root(self.context, yang_node)
@@ -335,15 +335,15 @@ Children: %s"""
     def add_module(self, module):
         """
         Add an aditional yang module.
-
-        returns: True
         """
-        self.log.trace("ADD_MODULE")
+        self.log.trace("ADD_MODULE: %s", module)
         if not self.connected:
             raise Errors.NotConnect()
         if self.node_returned:
             raise Errors.NodeAlreadyProvidedCannotChangeSchemaError()
-
+        if module in self.context.other_yang_modules:
+            return
+        self.context.other_yang_modules.append(module)
         self.libyang_ctx.load_module(module)
 
     def disconnect(self):

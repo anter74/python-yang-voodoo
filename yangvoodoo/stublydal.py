@@ -71,6 +71,32 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         self.log.trace("CREATE_CONTAINER: %s", xpath)
         self.libyang_data.set_xpath(xpath, None)
 
+    def get_attribute(self, xpath: str, attribute_name: str) -> str:
+        """
+        Get attribute from the data at XPATH - if the data node or attribute
+        does not exist python None will be returned
+        """
+        if not self.connected:
+            raise NotConnect()
+        self.log.trace(
+            "Get ATRIBUTE: %s, %s",
+            xpath,
+            attribute_name,
+        )
+        return self.libyang_data.get_attribute(xpath, attribute_name)
+
+    def get_attributes(self, xpath: str) -> Tuple[str, str]:
+        """
+        Get list of attribute from the data at XPATH as tuple of name/value
+        """
+        if not self.connected:
+            raise NotConnect()
+        self.log.trace(
+            "Get ATRIBUTES: %s",
+            xpath,
+        )
+        return self.libyang_data.get_attributes(xpath)
+
     def insert_attribute(
         self, xpath: str, module: str, attribute_name: str, attribute_value
     ) -> bool:
