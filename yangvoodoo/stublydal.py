@@ -71,6 +71,45 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         self.log.trace("CREATE_CONTAINER: %s", xpath)
         self.libyang_data.set_xpath(xpath, None)
 
+    def insert_attribute(
+        self, xpath: str, module: str, attribute_name: str, attribute_value
+    ) -> bool:
+        """
+        Add an attribute to an existing libyang data node.
+        This function is a pass through to libyang.
+
+         returns: VoodooListElement()
+        """
+        if not self.connected:
+            raise NotConnect()
+        self.log.trace(
+            "ADD ATRIBUTE: %s, %s, %s, %s",
+            xpath,
+            module,
+            attribute_name,
+            attribute_value,
+        )
+        return self.libyang_data.insert_attribute(
+            xpath, module, attribute_name, attribute_value
+        )
+
+    def remove_attribute(
+        self, xpath: str, attribute_name: str, attribute_value: str = None
+    ) -> bool:
+        """
+        Remove an attribute from an existing libyang node
+
+         returns: VoodooListElement()
+        """
+        if not self.connected:
+            raise NotConnect()
+        self.log.trace(
+            "REMOVE ATRIBUTE: %s, %s, %s", xpath, attribute_name, attribute_value
+        )
+        return self.libyang_data.remove_attribute(
+            xpath, attribute_name, attribute_value
+        )
+
     def create(self, xpath, keys=None, values=None, module=None):
         """
         To create a list item in the list /simplelist
