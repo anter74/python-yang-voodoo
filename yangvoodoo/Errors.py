@@ -120,20 +120,14 @@ class BackendDatastoreError(Exception):
 
     def __init__(self, errors):
         if len(errors) > 10:
-            message = "%s Errors occurred - restricting to the first 10\n" % (
-                len(errors)
-            )
+            message = f"{len(errors)} Errors occurred - restricting to the first 10\n"
             cnt = 10
         else:
-            message = "%s Errors occured\n" % (len(errors))
+            message = f"{len(errors)} Errors occured\n"
             cnt = len(errors)
 
         for c in range(cnt):
-            message = message + "Error %s: %s (Path: %s)\n" % (
-                c,
-                errors[c][0],
-                errors[c][1],
-            )
+            message += f"Error {c}: {errors[c][0]} (Path: {errors[c][1]})\n"
 
         super().__init__(message)
 

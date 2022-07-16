@@ -84,7 +84,9 @@ class DataAccess(StubLyDataAbstractionLayer):
         """
         if not self.connected:
             raise Errors.NotConnect()
+
         if print_tree:
+            breakpoint()
             print(self.context.schema.dump_str())
         else:
             return self.context.schema.dump_str()
@@ -205,7 +207,7 @@ Children: %s"""
                     arg = True
                 elif arg == "false":
                     arg = False
-                yield (extension.module().name() + ":" + extension.name(), arg)
+                yield (f"{extension.module().name()}:{extension.name()}", arg)
 
     @classmethod
     def get_extension(self, node, name, attr="", module=None):
@@ -231,7 +233,7 @@ Children: %s"""
 
         extensions = DataAccess.get_extensions(node, attr, module)
         for (m, a) in extensions:
-            if module and m == module + ":" + name or not module and ":" + name in m:
+            if module and m == f"{module}:{name}" or not module and f":{name}" in m:
                 return a
         return None
 
@@ -311,10 +313,10 @@ Children: %s"""
 
         returns: True
         """
-        if yang_location and not os.path.exists(yang_location + "/" + module + ".yang"):
-            raise ValueError(
-                "YANG Module " + module + " not present in " + yang_location
-            )
+        if yang_location and not os.path.exists(
+            f"{yang_location}{os.sep}{module}.yang"
+        ):
+            raise ValueError(f"YANG Module {module} not present in {yang_location}")
         self.module = module
         self.yang_ctx = libyang.Context(yang_location) if not yang_ctx else yang_ctx
         self.yang_schema = self.yang_ctx.load_module(self.module)
@@ -323,7 +325,7 @@ Children: %s"""
         self.session = self
         self.connected = True
 
-        self.context = VoodooNode.Context(
+        self.context = VoodooNode.VoodooContext(
             self.module, self, self.yang_schema, self.yang_ctx, log=self.log
         )
 
@@ -373,197 +375,6 @@ Children: %s"""
         if not self.connected:
             raise Errors.NotConnect()
         return super().commit()
-
-    def validate(self, raise_exception=True):
-        """
-        Validate the pending changes against the data in the backend datatstore without actually
-        committing the data. The full set of rules within the YANG model/datatstore must be
-        checked such that a user calling validate(), commit() in short sucession should get a
-        failure to commit.
-
-        Depending on the datastore invalid data may return an exception.
-
-        returns: True or False
-        """
-        self.log.trace("VALIDATE")
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().validate(raise_exception)
-
-    def container(self, xpath):
-        """
-        Retrieve the status of the presence container. Returns True if it exists.
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().container(xpath)
-
-    def create_container(self, xpath):
-        """
-        Create a presence container - only suitable for use on presence containers.
-
-        returns: VoodoooPresenceContainer()
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().create_container(xpath)
-
-    def create(self, xpath, keys=None, values=None):
-        """
-        Create a list item by XPATH including keys
-         e.g. /path/to/list[key1='val1'][key2='val2'][key3='val3']
-
-         returns: VoodooListElement()
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().create(xpath, keys=keys, values=values)
-
-    def uncreate(self, xpath):
-        """
-        Remove a list item by XPATH including keys
-         e.g. /path/to/list[key1='val1'][key2='val2'][key3='val3']
-
-         returns: True
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().uncreate(xpath)
-
-    def set(self, xpath, value, valtype=10, nodetype=4):
-        """
-        Set an individual item by XPATH.
-          e.g. / path/to/item
-
-        valtype defaults to 18 (STRING), see Types.DATA_ABSTRACTION_MAPPING for the
-        full set of value types.
-
-        returns: value
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().set(xpath, value, valtype, nodetype)
-
-    def gets_len(self, xpath):
-        """
-        For the given XPATH of a list return the length
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().gets_len(xpath)
-
-    def gets_sorted(self, xpath, spath, ignore_empty_lists=False):
-        """
-        For the given XPATH (of a list) return an sorted list of XPATHS representing every
-        list element within the list.
-
-        returns: generator of sorted XPATHS
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().gets_sorted(xpath, spath, ignore_empty_lists)
-
-    def gets_unsorted(self, xpath, spath, ignore_empty_lists=False):
-        """
-        For the given XPATH (of a list) return an unsorted list of XPATHS representing every
-        list element within the list.
-        This method must maintain the order that entries were added by the user into the list.
-
-        returns: generator of XPATHS
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().gets_unsorted(xpath, spath, ignore_empty_lists)
-
-    def libyang_get_xpath(self, xpath):
-        """
-        Return a libyang-cffi DataNode directly - this must be called with a specific XPATH
-        as only the first result will be returned.
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().libyang_get_xpath(xpath)
-
-    def libyang_gets_xpath(self, xpath):
-        """
-        Return a generator of libyang-cffi DataNode's
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().libyang_gets_xpath(xpath)
-
-    def gets(self, xpath):
-        """
-        For the given XPATH (of a leaflist) return an list of values from the datastore in the
-        order they were entered.
-
-        returns: generator of Values
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().gets(xpath)
-
-    def add(self, xpath, value, valtype=18):
-        """
-        For the given XPATH of a leaflist add an item to the datastore.
-
-        returns: the value
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().add(xpath, value, valtype)
-
-    def remove(self, xpath, value):
-        """
-        For the given XPATH of a leaflist remove the item from the datastore.
-        Note: the xpath points to the leaf-list not the item.
-
-        returns: None.
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().remove(xpath, value)
-
-    def has_item(self, xpath):
-        """
-        Evaluate if the item is present in the datatsore, determines if a specific XPATH has been
-        set, may be called on leaves, presence containers or specific list elements.
-
-        returns: True or False
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().has_item(xpath)
-
-    def get(self, xpath, default_value=None):
-        """
-        Get a specific path (leaf nodes or presence containers), in the case of leaves a python
-        primitive is returned (i.e. strings, booleans, integers).
-        In the case of non-terminating nodes (i.e. Lists, Containers, PresenceContainers) this
-        method will return a Voodoo object of the relevant type.
-
-        If the caller of this method knows about a default_value that can be used to change
-        the behaviour if the key does not exist in the datastore.
-
-        FUTURE CHANGE: in future enumerations should be returned as a specific object type
-
-
-        returns: value or Vooodoo<X>
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-
-        return super().get(xpath, default_value)
-
-    def delete(self, xpath):
-        """
-        Delete the data, and all decendants for a particular XPATH.
-
-        returns: True
-        """
-        if not self.connected:
-            raise Errors.NotConnect()
-        return super().delete(xpath)
 
     def refresh(self):
         """
@@ -635,13 +446,6 @@ Children: %s"""
         """
         return super().has_datastore_changed()
 
-    def dump_xpaths(self, start_xpath=None):
-        """
-        dump the datastore in xpath format.
-        """
-        self.log.trace("DUMP_XPATHS")
-        return super().dump_xpaths(start_xpath=start_xpath)
-
     @staticmethod
     def _welcome():
         if (
@@ -657,107 +461,3 @@ Children: %s"""
         if os.path.exists(".buildinfo"):
             with open(".buildinfo") as fh:
                 print(fh.read())
-
-    def get_raw_xpath(self, xpath, with_val=False):
-        """
-        Return a generator of matching xpaths, optionall with the value.
-        """
-        self.log.trace("GET_RAW_XPATH: %s", xpath)
-        yield from super().get_raw_xpath(xpath, with_val)
-
-    def get_raw_xpath_single_val(self, xpath):
-        """
-        Return a single value from the XPATH provided, or return None.
-        If there are multiple values return the first result only.
-        This is intended only to be used with leaves.
-        """
-        self.log.trace("GET_RAW_XPATH_SINGLE_VAL: %s", xpath)
-        for result in self.get_raw_xpath(xpath, True):
-            return result[1]
-        return None
-
-    def set_data_by_xpath(self, context, data_path, value):
-        """
-        This method is a backdoor way to set data in the datastore.
-
-        Normally, we would use the python objects __setattr__ and that would do similair
-        lookups to what is below. However if we want we can take the data path from a
-        node (i.e. root.bronze.silver.gold._node.real_data_path) and then just append
-        a child node (i.e. /platinum/deep) and set the data on the dal without bothering
-        to instantiate the YangVoodoo Node for it.
-        """
-        self.log.trace("SET_DATA_BY_XPATH: %s %s %s", context, data_path, value)
-        node_schema = Utils.get_nodeschema_from_data_path(context, data_path)
-        if node_schema.nodetype() != Types.LIBYANG_NODETYPE["LEAF"]:
-            raise Errors.PathIsNotALeaf("set_raw_data only operates on leaves")
-        val_type = Utils.get_yang_type(
-            node_schema.type(), value, node_schema.real_schema_path
-        )
-        self.set(data_path, value, val_type)
-
-    def load(self, filename, format=1, trusted=False):
-        """
-        Load data from the filename in the format specified.
-
-        Types.FORMAT['XML'] or Types.FORMAT['JSON']
-
-        If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
-        """
-        return super().load(filename, format, trusted)
-
-    def dump(self, filename, format=1):
-        """
-        Save data to the filename in the format specified.
-
-        Types.FORMAT['XML'] or Types.FORMAT['JSON']
-        """
-        return super().dump(filename, format)
-
-    def loads(self, payload, format=1, trusted=False):
-        """
-        Load data from the payload in the format specified.
-
-        Types.FORMAT['XML'] or Types.FORMAT['JSON']
-
-        If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
-        """
-        return super().loads(payload, format, trusted)
-
-    def dumps(self, format=1):
-        """
-        Return data to the filename in the format specified.
-
-        Types.FORMAT['XML'] or Types.FORMAT['JSON']
-        """
-        return super().dumps(format)
-
-    def merge(self, filename, format=1, trusted=True):
-        """
-        Merge data from the filename in the format specified.
-
-        Types.FORMAT['XML'] or Types.FORMAT['JSON']
-
-        If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
-        """
-        return super().merge(filename, format, trusted)
-
-    def merges(self, payload, format=1, trusted=True):
-        """
-        Merge data from the payload in the format specified.
-
-        Types.FORMAT['XML'] or Types.FORMAT['JSON']
-
-        If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
-        """
-        return super().merges(payload, format, trusted)
-
-    def advanced_merges(self, payload, format=1, trusted=True):
-        """
-        Merge data from the payload in the format specified, implementing replace/delete netconf
-        tags in the process.
-
-        Types.FORMAT['XML'] or Types.FORMAT['JSON']
-
-        If the trusted flag is set to True libyang will not evaluate when/must/mandatory conditions
-        """
-        return super().advanced_merges(payload, format, trusted)

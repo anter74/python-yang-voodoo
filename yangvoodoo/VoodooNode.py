@@ -1,33 +1,6 @@
-import os
 from typing import List
-from yangvoodoo import Cache, Common, Errors, Types
-
-
-class Context:
-    def __init__(self, module, data_access_layer, yang_schema, yang_ctx, log=None):
-        self.module = module
-        self.top_module = module
-        self.schema = yang_schema
-        self.schemactx = yang_ctx
-        self.dal = data_access_layer
-        self.schemacache = Cache.Cache()
-        self.log = log
-        self.yang_module = module
-        self.other_yang_modules = []
-
-    def __repr__(self):
-        return f"<InternalVoodooContext: {self.yang_module} + {len(self.other_yang_modules)} other - {id(self)}>"
-
-    def _trace(self, vnt, yn, context, p):
-        self.log.trace(
-            "%s: %s %s\nschema: %s\ndata: %s\nparent of: %s",
-            vnt,
-            context,
-            yn.libyang_node,
-            yn.real_schema_path,
-            yn.real_data_path,
-            p,
-        )
+from yangvoodoo import Common, Errors, Types
+from yangvoodoo.Common import VoodooContext
 
 
 class Node:
@@ -53,7 +26,7 @@ class Node:
 
     Internal Notes:
 
-    Things held of a Context
+    Things held of a VoodooContext
     ------------------------
       - module    = the name of the yang module (e.g integrationtest)
       - dal       = An instantiated object of DataAccess() - one object used for all access.
@@ -244,15 +217,15 @@ class Node:
         context.log.trace("__dir__ %s", node.real_schema_path)
 
         if node.real_schema_path == "":
-            search_path = "/" + context.module + ":*"
+            search_path = f"/{context.module}:*"
         else:
-            search_path = node.real_schema_path + "/*"
+            search_path = f"{node.real_schema_path}/*"
 
         answer = []
         for child in context.schemactx.find_path(search_path):
             child_name = child.name()
             if child_name in Types.RESERVED_PYTHON_KEYWORDS:
-                child_name = child_name + "_"
+                child_name += f"{child_name}_"
             if "-" in child_name and not no_translations:
                 new_child_name = child_name.replace("-", "_")
                 child_name = new_child_name
@@ -531,7 +504,7 @@ class List(ContainingNode):
         translated_keys = []
         for k in keys:
             if k in Types.RESERVED_PYTHON_KEYWORDS:
-                translated_keys.append(k.replace("-", "_") + "_")
+                translated_keys.append(f"{k.replace('-', '_')}_")
             else:
                 translated_keys.append(k.replace("-", "_"))
         translated_keys.sort()
@@ -701,8 +674,8 @@ class ListIterator(Node):
     def __repr__(self):
         base_repr = self._base_repr()
         if self.__dict__["_xpath_sorted"]:
-            return base_repr + " Sorted By XPATH"
-        return base_repr + " Sorted By User (datastore)"
+            return f"{base_repr} Sorted By XPATH"
+        return f"{base_repr} Sorted By User (datastore)"
 
 
 class LeafListIterator(Node):
@@ -777,8 +750,8 @@ class PresenceContainer(Container):
     def __repr__(self):
         base_repr = self._base_repr()
         if self.exists():
-            return base_repr + " Exists"
-        return base_repr + " Does Not Exist"
+            return f"{base_repr} Exists"
+        return f"{base_repr} Does Not Exist"
 
 
 class Root(ContainingNode):

@@ -1,9 +1,38 @@
 import logging
-import os
 import re
+from typing import Generator, List, Tuple, Union
 
 import libyang
+from libyang import Node as LibyangSchemaNode
 from yangvoodoo import Types, Errors
+from yangvoodoo.Cache import Cache
+
+
+class VoodooContext:
+    def __init__(self, module, data_access_layer, yang_schema, yang_ctx, log=None):
+        self.module = module
+        self.top_module = module
+        self.schema = yang_schema
+        self.schemactx = yang_ctx
+        self.dal = data_access_layer
+        self.schemacache = Cache()
+        self.log = log
+        self.yang_module = module
+        self.other_yang_modules = []
+
+    def __repr__(self):
+        return f"<InternalVoodooVoodooContext: {self.yang_module} + {len(self.other_yang_modules)} other - {id(self)}>"
+
+    def _trace(self, vnt, yn, context, p):
+        self.log.trace(
+            "%s: %s %s\nschema: %s\ndata: %s\nparent of: %s",
+            vnt,
+            context,
+            yn.libyang_node,
+            yn.real_schema_path,
+            yn.real_data_path,
+            p,
+        )
 
 
 class YangNode:
@@ -35,6 +64,7 @@ class YangNode:
 
 
 class PlainObject:
+
     pass
 
 
@@ -86,8 +116,6 @@ class Utils:
     PREDICATE_KEY_VALUES_SINGLE = re.compile(r"\[([A-z\.]+[A-z0-9_\-]*)='([^']*)'\]")
     PREDICATE_KEY_VALUES_DOUBLE = re.compile(r"\[([A-z\.]+[A-z0-9_\-]*)=\"([^\"]*)\"\]")
     FIND_KEYS = re.compile(r"\[([A-Za-z\.]+[A-Za-z0-9_-]*)=.*?\]")
-
-    # used by convert_path_to_nodelist to extract leaf names
     XPATH_DECODER_V4 = re.compile(
         r"(([A-Za-z0-9_-]*:)?([A-Za-z0-9_-]+))((\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])+)?"
     )
@@ -111,17 +139,17 @@ class Utils:
             ('', '', 'sdf')
             ("[fdsf='fg']", '', 'zzz')
         """
-        if path[0 : len(module) + 2] == "/" + module + ":":
-            path = "/" + path[len(module) + 2 :]
+        if path[0 : len(module) + 2] == f"/{module}:":
+            path = f"/{path[len(module) + 2 :]}"
         if path[-1] == "/":
             raise ValueError(
-                "Path is not valid as it ends with a trailing slash. (%s)" % (path)
+                f"Path is not valid as it ends with a trailing slash. ({path})"
             )
         schema_path = ""
         parent_schema_path = ""
         for path in Utils.convert_path_to_nodelist(path):
             parent_schema_path = schema_path
-            schema_path += "/" + module + ":" + path
+            schema_path += f"/{module}:{path}"
         return schema_path, parent_schema_path
 
     @staticmethod
@@ -157,7 +185,12 @@ class Utils:
             node_schema = next(context.schemactx.find_path(schema_path))
         return Utils.get_yang_type(node_schema.type(), value, schema_path)
 
-    def get_yang_type(node_schema, value=None, xpath=None, default_to_string=False):
+    def get_yang_type(
+        node_schema: LibyangSchemaNode,
+        value: str = None,
+        xpath: str = None,
+        default_to_string: bool = False,
+    ) -> int:
         """
         Map a given yang-type (e.g. string, decimal64) to a type code for the backend.
 
@@ -176,6 +209,9 @@ class Utils:
 
 
         Unless we find a Union (11) or leafref (9) then we can just map directly.
+
+        raises:
+            ValueNotMappedToType
         """
 
         base_type = node_schema.base()
@@ -356,13 +392,22 @@ class Utils:
         return node_schema
 
     @staticmethod
-    def recurse_all_available_yang_models(context):
+    def recurse_all_available_yang_models(
+        context: VoodooContext,
+    ) -> Generator[str, None, None]:
+        """
+        Allow methods to implement searching across all loaded yang models to find augmented
+        nodes. In future a mapping could be implemented here to speed lookups if the number
+        of yang models augmenting nodes in grows to high.
+        """
         yield context.top_module
         for yang_model in context.other_yang_modules:
             yield yang_model
 
     @staticmethod
-    def _find_child_schema_node(context, the_real_schema_path: str, attr: str):
+    def _find_child_schema_node(
+        context: VoodooContext, the_real_schema_path: str, attr: str
+    ) -> Tuple[str, str, LibyangSchemaNode, str]:
         """
         Find the yang module associated with the child node - including translating
         from pythonic names. In a simple yang model the yang module will always be
@@ -370,7 +415,7 @@ class Utils:
         name for their component of the schema.
 
         Args:
-            context: Voodoo Context
+            context: Voodoo VoodooContext
             the_real_schema_path: the schema path without this attribute
             attr: the pythonic version of the attribute
 
@@ -385,11 +430,7 @@ class Utils:
                 the_real_schema_path, context, attr
             )
             real_schema_path = (
-                the_real_schema_path
-                + "/"
-                + yang_module_name
-                + ":"
-                + real_attribute_name
+                f"{the_real_schema_path}/{yang_module_name}:{real_attribute_name}"
             )
             try:
                 node_schema = next(context.schemactx.find_path(real_schema_path))
@@ -407,10 +448,17 @@ class Utils:
         )
 
     @staticmethod
-    def get_yangnode(node, context, attr="", keys=[], values=[], predicates=""):
+    def get_yangnode(
+        node: Union[PlainObject, YangNode],
+        context: VoodooContext,
+        attr: str = "",
+        keys: List[str] = [],
+        values: List[str] = [],
+        predicates: str = "",
+    ) -> YangNode:
         """
         Given a node, with a child attribute name, and list of key/values return a libyang schema object
-        and the value path.
+        and the value path. This method is a crucial method in the navigation of the yang schema.
 
         Each time we return a node we will store the following on the yang node to help with underscore
         translations. The input to this method will have hyphens converted to underscores.
@@ -422,21 +470,30 @@ class Utils:
         Remember:
          - schemapaths must have the yang module at every component
          - values paths only require the yang module prefix at the first component.
-        The cache entries are built deliberately not to be a valid path (designated by the %).
-        This is done so that we can lookup the cache without having to carry out processing.
-        """
+           (unless the schema was augments by another yang model)
 
+        The cache entries are built deliberately not to be a valid path (designated by the %).
+        This is done so that we can lookup the cache without having to carry out processing of predicates.
+
+        Attributes:
+            node: the parent node - for the root this will be a PlainObject
+            context: a voodoo context node
+            attr: the attribute name to append to the schema/data paths
+            keys: a list of key names
+            values: a list of key values- this list must be symmetrical with keys
+            predicates: a list of pre-computed predicates
+
+        Returns:
+            An Internal Voodoo Yang Node with a populate schema and data path.
+        """
+        # print(
+        # f"get_yangnode called: existing node for attr {attr} {node} {context} {keys} {values} {predicates}"
+        # )
         if len(keys) and len(values):
             predicates = Utils.encode_xpath_predicates("", keys, values)
 
         cache_entry = (
-            "!"
-            + node.real_data_path
-            + attr
-            + "!"
-            + predicates
-            + "!"
-            + node.real_schema_path
+            f"!{node.real_data_path}{attr}!{predicates}!{node.real_schema_path}"
         )
 
         if context.schemacache.is_path_cached(cache_entry):
@@ -465,17 +522,11 @@ class Utils:
                 Types.LIBYANG_NODETYPE["CASE"],
             ):
                 if not node.real_data_path:
-                    real_data_path = (
-                        "/" + module + ":" + real_attribute_name + predicates
-                    )
+                    real_data_path = f"/{module}:{real_attribute_name}{predicates}"
                 elif node.module != module:
-                    real_data_path = (
-                        f"{real_data_path}/{module}:{real_attribute_name}{predicates}"
-                    )
+                    real_data_path += f"/{module}:{real_attribute_name}{predicates}"
                 else:
-                    real_data_path = (
-                        real_data_path + "/" + real_attribute_name + predicates
-                    )
+                    real_data_path += f"/{real_attribute_name}{predicates}"
 
         if not attr:
             real_data_path = node.real_data_path + predicates
@@ -483,7 +534,6 @@ class Utils:
             node_schema = node
 
         item = YangNode(node_schema, real_schema_path, real_data_path, module)
-
         context.schemacache.add_entry(cache_entry, item)
 
         return item
@@ -500,7 +550,7 @@ class Utils:
             schema_path = f"/{context.module}:*/*"
             # this is safe to use context.module as we are at the root
         else:
-            schema_path = schema_path + "/*"
+            schema_path += "/*"
 
         if attr[-1] == "_":
             attr = attr[:-1]
@@ -539,32 +589,6 @@ class Utils:
         return keys, real_values
 
     @staticmethod
-    def convert_xpath_to_list_v4(xpath):
-        """
-        Return a list of tuples based upon the XPATH sent in.
-                (path, predicates, schema path, parent path)
-
-        """
-        module = "integrationtest"
-        working_schema_path = ""
-        working_path = ""
-        parent_path = ""
-
-        for (a, b, leaf_name, predicates, e, f) in Utils.XPATH_DECODER_V4.findall(
-            xpath
-        ):
-            parent_path = working_path
-            working_path = working_path + "/" + leaf_name + predicates
-            working_schema_path = working_schema_path + "/" + module + ":" + leaf_name
-            yield (
-                working_path,
-                leaf_name,
-                predicates,
-                working_schema_path,
-                parent_path,
-            )
-
-    @staticmethod
     def return_module_name_and_leaf(in_string):
         (module, node) = Utils.MODULE_AND_LEAF_REGEX.match(in_string).groups()
         if module:
@@ -585,8 +609,8 @@ class Utils:
 
     @staticmethod
     def drop_module_name_from_xpath(in_string, module):
-        if in_string[0 : len(module) + 2] == "/" + module + ":":
-            return "/" + in_string[len(module) + 2 :]
+        if in_string[0 : len(module) + 2] == f"/{module}:":
+            return f"/{in_string[len(module) + 2 :]}"
         return in_string
 
     @staticmethod

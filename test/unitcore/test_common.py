@@ -5,6 +5,34 @@ from mock import Mock
 import unittest
 
 
+def convert_xpath_to_list_v4(xpath):
+    """
+    Return a list of tuples based upon the XPATH sent in.
+            (path, predicates, schema path, parent path)
+
+    Note: this method is only used for testing of the regex.
+
+    The XPATH_DECODE_V4 regex is only used by the convert_path_to_nodelist to extract leaf names
+    TODO: move this into the test case.
+    """
+    module = "integrationtest"
+    working_schema_path = ""
+    working_path = ""
+    parent_path = ""
+
+    for (a, b, leaf_name, predicates, e, f) in Utils.XPATH_DECODER_V4.findall(xpath):
+        parent_path = working_path
+        working_path += f"/{leaf_name}{predicates}"
+        working_schema_path += f"/{module}:{leaf_name}"
+        yield (
+            working_path,
+            leaf_name,
+            predicates,
+            working_schema_path,
+            parent_path,
+        )
+
+
 class test_common(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
@@ -184,7 +212,7 @@ class test_common(unittest.TestCase):
 
         # Act
         xpath = "/bronze"
-        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+        result = list(convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [("/bronze", "bronze", "", "/integrationtest:bronze", "")]
@@ -195,7 +223,7 @@ class test_common(unittest.TestCase):
 
         # Act
         xpath = "/bronze/silver/gold/platinum"
-        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+        result = list(convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [
@@ -229,7 +257,7 @@ class test_common(unittest.TestCase):
 
         # Act
         xpath = """/integrationtest:simplelist[simplekey='/xpath/inside[dsf="sdf"]/dsfsdf']"""
-        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+        result = list(convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [
@@ -248,7 +276,7 @@ class test_common(unittest.TestCase):
 
         # Act
         xpath = """/integrationtest:simplelist[simplekey='/xpath/inside[dsf="sdf"]/dsfsdf']/sdfsdf"""
-        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+        result = list(convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [
@@ -273,7 +301,7 @@ class test_common(unittest.TestCase):
 
         # Act
         xpath = """/integrationtest:simplelist[simplekey="/xpath/inside[dsf='sdf']/dsfsdf"]/sdfsdf"""
-        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+        result = list(convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [
@@ -298,7 +326,7 @@ class test_common(unittest.TestCase):
 
         # Act
         xpath = """/integrationtest:simplelist[simplekey="/xpath/inside[dsf='sdf']/dsfsdf"][a="b"]/sdfsdf"""
-        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+        result = list(convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [
@@ -323,7 +351,7 @@ class test_common(unittest.TestCase):
 
         # Act
         xpath = "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']"
-        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+        result = list(convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [
@@ -349,7 +377,7 @@ class test_common(unittest.TestCase):
 
         # Act
         xpath = "/container-and-lists/multi-key-list[A='aaaa'][B='bbb']/inner/C"
-        result = list(self.subject.convert_xpath_to_list_v4(xpath))
+        result = list(convert_xpath_to_list_v4(xpath))
 
         # Assert
         expected_result = [
