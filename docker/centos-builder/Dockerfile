@@ -2,7 +2,7 @@ FROM centos:7
 
 RUN yum install -y gcc python3 curl git cmake python3-devel \
     pcre-devel make sudo wget bzip2-devel sqlite-devel \
-    libffi-devel glibc-static pcre-static zlib-devel 
+    libffi-devel glibc-static pcre-static zlib-devel
 
 RUN wget --no-check-certificate https://www.openssl.org/source/openssl-1.1.1q.tar.gz && tar -xf openssl-1.1.1q.tar.gz
 
@@ -10,7 +10,7 @@ RUN wget --no-check-certificate https://www.openssl.org/source/openssl-1.1.1q.ta
 RUN cd openssl-1.1.1q && \
     ./config --prefix=/usr/local/openssl-1-1-1q --openssldir=/usr/local/openssl-1-1-1q && \
     make && \
-    make install 
+    make install
 
 RUN wget https://www.python.org/ftp/python/3.10.5/Python-3.10.5.tar.xz && \
     tar -xf Python-3.10.5.tar.xz
@@ -31,7 +31,7 @@ ENV GIT_BRANCH=master
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.11" >/version && \
+      echo "0.0.12" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 

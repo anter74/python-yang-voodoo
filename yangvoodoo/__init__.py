@@ -18,12 +18,12 @@ class DataAccess(StubLyDataAbstractionLayer):
     and specific methods overwritten.
 
     Dependencies:
-     - libyang v1.0.240 - so version 1.10.32
+     - libyang v1.0.252 - so version 1.10.43 (commit 7b291d97011ddfa63b7441e582009f1b7deff4ea)
      - libyang-cffi   (https://github.com/allena29/libyang-cffi/tree/master)
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.11"
+    __version__ = "0.0.12"
 
     def __init__(
         self,

@@ -153,9 +153,17 @@
 
    - Upgrade libyang to v1.0.240
    - Utility function to `show_example_xpaths()`
- 
+
 # 0.0.11
-  
+
    - remove `data_abstraction_layer`- stublydal is the only option.
    - add `libyang_gets_xpath` to return generator of DataNode's
    - add `libyang_get_xpath` to return DataNode (first match or None)
+
+# 0.0.12
+
+   - support for `add_attribute` and `remove_attribute` by XPATH
+     (updated libyang-cffi project required)
+   - tested against python 3.10.5
+   - support for augments into our yang model
+   - Minimum Python version now 3.6
