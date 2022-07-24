@@ -1,6 +1,3 @@
-import os
-import sys
-
 import setuptools
 
 with open("README.md", "r") as fh:
@@ -9,14 +6,15 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="yangvoodoo",
     # CHANGE VERSION NUMBER HERE
-    version="0.0.11",
+    version="0.0.12",
     author="Adam Allen",
     author_email="allena29@users.noreply.github.com",
-    description="Python based access to YANG Datatstores",
+    description="Python based access to YANG Datatstores using libyang1 and a forked libyang-cffi",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="http://github.com/allena29/python-yang-voodoo",
     packages=["yangvoodoo"],
+    python_requires=">=3.6",
     install_requires=[
         "cffi>=1.14.4",
         "Jinja2>=2.11.1",

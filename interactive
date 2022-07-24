@@ -25,6 +25,7 @@ print()
 session = yangvoodoo.DataAccess()
 
 session.connect('integrationtest', yang_location='yang')
+session.add_module('foreign')
 root = session.get_node()
 yang = root._context.schema
 yangctx = root._context.schemactx

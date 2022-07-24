@@ -116,7 +116,9 @@ module integrationtest {
   }
 
   container augments {
-
+    container foreign-augments {
+      presence true;
+    }
   }
 
   augment /integrationtest:augments {

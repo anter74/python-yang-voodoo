@@ -1,26 +1,6 @@
-from yangvoodoo import Cache, Common, Errors, Types
-
-
-class Context:
-    def __init__(self, module, data_access_layer, yang_schema, yang_ctx, log=None):
-        self.module = module
-        self.schema = yang_schema
-        self.schemactx = yang_ctx
-        self.dal = data_access_layer
-        self.schemacache = Cache.Cache()
-        self.log = log
-        self.yang_module = module
-
-    def _trace(self, vnt, yn, context, p):
-        self.log.trace(
-            "%s: %s %s\nschema: %s\ndata: %s\nparent of: %s",
-            vnt,
-            context,
-            yn.libyang_node,
-            yn.real_schema_path,
-            yn.real_data_path,
-            p,
-        )
+from typing import List
+from yangvoodoo import Common, Errors, Types
+from yangvoodoo.Common import VoodooContext
 
 
 class Node:
@@ -46,7 +26,7 @@ class Node:
 
     Internal Notes:
 
-    Things held of a Context
+    Things held of a VoodooContext
     ------------------------
       - module    = the name of the yang module (e.g integrationtest)
       - dal       = An instantiated object of DataAccess() - one object used for all access.
@@ -77,7 +57,6 @@ class Node:
         self.__dict__["_node"] = node
         self.__dict__["_parent"] = parent_self
         self.__dict__["_path"] = node.real_data_path
-        self._specific_init()
 
     def __name__(self):
         return "VoodooNode"
@@ -90,10 +69,6 @@ class Node:
 
     def __del__(self):
         pass
-        # path = self.__dict__['_path']
-
-    def _specific_init(self):
-        pass
 
     def __setitem__(self, arg, val):
         if not isinstance(arg, str):
@@ -105,16 +80,18 @@ class Node:
             raise ValueError("node['child'] only supports a single argument.")
         return self.__getattr__(arg)
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str):
+        """
+        Return a node of the correct type based on the yang schema.
+
+        Args:
+            attr: The string name of the attribute.
+        """
         if attr in ("_ipython_canary_method_should_not_exist_", "_repr_mimebundle_"):
             raise AttributeError("Go Away!")
         context = self.__dict__["_context"]
         node = self.__dict__["_node"]
         context.log.trace("__getattr__ %s %s", attr, node.real_schema_path)
-
-        # path = self.__dict__['_path']
-        # spath = self.__dict__['_spath']
-
         node_schema = Common.Utils.get_yangnode(node, context, attr)
         node_type = node_schema.nodetype()
 
@@ -225,21 +202,30 @@ class Node:
     def _raise_ValueDoesMatchEnumeration(node_schema, val):
         raise Errors.ValueDoesMatchEnumeration(node_schema.real_data_path, val)
 
-    def __dir__(self, no_translations=False):
+    def __dir__(self, no_translations: bool = False) -> List[str]:
+        """
+        Provide a list of direct children and translate any python reserved keywords, hyphens
+
+        Args:
+            no_translations: do not translate to pythoon reservered keywords
+
+        Returns:
+            A sorted list of keywords.
+        """
         node = self._node
         context = self._context
         context.log.trace("__dir__ %s", node.real_schema_path)
 
         if node.real_schema_path == "":
-            search_path = "/" + context.module + ":*"
+            search_path = f"/{context.module}:*"
         else:
-            search_path = node.real_schema_path + "/*"
+            search_path = f"{node.real_schema_path}/*"
 
         answer = []
         for child in context.schemactx.find_path(search_path):
             child_name = child.name()
             if child_name in Types.RESERVED_PYTHON_KEYWORDS:
-                child_name = child_name + "_"
+                child_name += f"{child_name}_"
             if "-" in child_name and not no_translations:
                 new_child_name = child_name.replace("-", "_")
                 child_name = new_child_name
@@ -465,7 +451,7 @@ class List(ContainingNode):
         context.dal.create(node.real_data_path, keys=keys, values=values)
         # Return Object
         new_node = Common.YangNode(
-            node.libyang_node, node.real_schema_path, node.real_data_path
+            node.libyang_node, node.real_schema_path, node.real_data_path, node.module
         )
         return ListElement(context, new_node, self)
 
@@ -518,7 +504,7 @@ class List(ContainingNode):
         translated_keys = []
         for k in keys:
             if k in Types.RESERVED_PYTHON_KEYWORDS:
-                translated_keys.append(k.replace("-", "_") + "_")
+                translated_keys.append(f"{k.replace('-', '_')}_")
             else:
                 translated_keys.append(k.replace("-", "_"))
         translated_keys.sort()
@@ -547,7 +533,10 @@ class List(ContainingNode):
             raise Errors.ListDoesNotContainElement(node.real_data_path + predicates)
         # Return Object
         new_node = Common.YangNode(
-            node.libyang_node, node.real_schema_path, node.real_data_path + predicates
+            node.libyang_node,
+            node.real_schema_path,
+            node.real_data_path + predicates,
+            node.module,
         )
         return ListElement(context, new_node, self)
 
@@ -575,7 +564,9 @@ class List(ContainingNode):
             )
 
         # Return Object
-        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, result)
+        new_node = Common.YangNode(
+            node.libyang_node, node.real_schema_path, result, node.module
+        )
         return ListElement(context, new_node, self)
 
     def __iter__(self):
@@ -602,7 +593,10 @@ class List(ContainingNode):
 
         # Return Object
         new_node = Common.YangNode(
-            node.libyang_node, node.real_schema_path, node.real_data_path + predicates
+            node.libyang_node,
+            node.real_schema_path,
+            node.real_data_path + predicates,
+            node.module,
         )
         return ListElement(context, new_node, self)
 
@@ -672,14 +666,16 @@ class ListIterator(Node):
         parent = self._parent
         this_xpath = next(self._iterator)
         # Return Object
-        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, this_xpath)
+        new_node = Common.YangNode(
+            node.libyang_node, node.real_schema_path, this_xpath, node.module
+        )
         return ListElement(context, new_node, parent)
 
     def __repr__(self):
         base_repr = self._base_repr()
         if self.__dict__["_xpath_sorted"]:
-            return base_repr + " Sorted By XPATH"
-        return base_repr + " Sorted By User (datastore)"
+            return f"{base_repr} Sorted By XPATH"
+        return f"{base_repr} Sorted By User (datastore)"
 
 
 class LeafListIterator(Node):
@@ -754,8 +750,8 @@ class PresenceContainer(Container):
     def __repr__(self):
         base_repr = self._base_repr()
         if self.exists():
-            return base_repr + " Exists"
-        return base_repr + " Does Not Exist"
+            return f"{base_repr} Exists"
+        return f"{base_repr} Does Not Exist"
 
 
 class Root(ContainingNode):

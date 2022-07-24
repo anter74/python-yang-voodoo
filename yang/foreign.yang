@@ -1,0 +1,83 @@
+module foreign {
+  namespace "uri://foreign";
+  prefix "foreign";
+
+  import integrationtest {prefix target;}
+
+  typedef mytypedef {
+    type uint8;
+  }
+
+  augment /target:augments/target:foreign-augments {
+
+    leaf simpleleaf {
+      type string;
+    }
+    leaf hyphenated-leaf {
+      type string;
+    }
+    list simplelist {
+      key "key1 key2";
+      leaf key1 {
+        type string;
+      }
+      leaf key2 {
+        type string;
+      }
+      leaf nonkey {
+        type string;
+      }
+      container innercontainer {
+        presence true;
+        leaf-list simpleleaflist {
+          type string;
+        }
+        container innerinner {
+          presence true;
+        }
+        choice mutuallyexclusive {
+          case first {
+            leaf one {
+              type empty;
+            }
+          }
+          case second {
+            leaf two {
+              type empty;
+            }
+          }
+        }
+
+        list innerlist {
+          key key1;
+
+          leaf key1 {
+            type uint16;
+          }
+        }
+      }
+    }
+
+    container nonpresencecontainer {
+      leaf leaf {
+        type union {
+          type enumeration {
+            enum a;
+            enum b;
+          }
+          type mytypedef;
+        }
+      }
+    }
+
+    container simplecontainer {
+      presence true;
+      leaf innerleaf {
+        type string;
+      }
+      leaf except {
+        type string; // python reserved keyword
+      }
+    }
+  }
+}

@@ -16,6 +16,7 @@ class test_node_based_access(unittest.TestCase):
         self.stub = yangvoodoo.stublydal.StubLyDataAbstractionLayer()
         self.subject = yangvoodoo.DataAccess(data_abstraction_layer=self.stub)
         self.subject.connect("integrationtest", yang_location="yang")
+        self.subject.add_module("ietf-netconf")
         self.root = self.subject.get_node()
 
     def test_root(self):
@@ -555,3 +556,30 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
             self.subject.set_data_by_xpath(
                 self.root._context, "/integrationtest:morecomplex", "A"
             )
+
+    def test_setting_and_removing_attributes(self):
+        self.subject.set_data_by_xpath(
+            self.root._context, "/integrationtest:simpleleaf", "A"
+        )
+
+        self.subject.insert_attribute(
+            "/integrationtest:simpleleaf", "ietf-netconf", "operation", "remove"
+        )
+
+        self.assertEqual(
+            self.subject.dumps(),
+            (
+                '<simpleleaf xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest"'
+                ' xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0" '
+                'nc:operation="remove">A</simpleleaf>'
+            ),
+        )
+
+        self.subject.remove_attribute("/integrationtest:simpleleaf", "operation")
+
+        self.assertEqual(
+            self.subject.dumps(),
+            (
+                '<simpleleaf xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest">A</simpleleaf>'
+            ),
+        )
