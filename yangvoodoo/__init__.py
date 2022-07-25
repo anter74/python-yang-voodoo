@@ -86,7 +86,6 @@ class DataAccess(StubLyDataAbstractionLayer):
             raise Errors.NotConnect()
 
         if print_tree:
-            breakpoint()
             print(self.context.schema.dump_str())
         else:
             return self.context.schema.dump_str()
