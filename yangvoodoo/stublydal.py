@@ -536,4 +536,10 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         if not self.connected:
             raise NotConnect()
         # self.log.trace("ADVANCED-MERGES: (format: %s)", format)
-        self.libyang_data.advancedmerge(payload, format, trusted)
+        self.libyang_data.advanced_merges(payload, format, trusted)
+
+    def advanced_merge(self, filename, format=1, trusted=True):
+        if not self.connected:
+            raise NotConnect()
+        # self.log.trace("ADVANCED-MERGE: (format: %s)", format)
+        self.libyang_data.advanced_merge(filename, format, trusted)
