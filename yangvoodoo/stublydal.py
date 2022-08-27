@@ -344,7 +344,8 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         """
         result = list(self.gets_unsorted(xpath, spath, ignore_empty_lists))
         result.sort()
-        return result
+        for xpath in result:
+            yield xpath
 
     def gets_unsorted(self, xpath, schema_path, ignore_empty_lists=False):
         """
