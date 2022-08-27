@@ -27,11 +27,11 @@ RUN \
       pip3 install wheel
 
 
-ENV GIT_BRANCH=master
+ENV GIT_BRANCH=support-attrs
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.12" >/version && \
+      echo "0.0.13" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 

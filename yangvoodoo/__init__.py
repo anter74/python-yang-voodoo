@@ -23,7 +23,7 @@ class DataAccess(StubLyDataAbstractionLayer):
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.12"
+    __version__ = "0.0.13"
 
     def __init__(
         self,
