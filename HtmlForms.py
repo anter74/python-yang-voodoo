@@ -32,7 +32,7 @@ class HtmlFormExpander(Expander):
     def close_containing_node(self, node):
         self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id()} container-->\n\n")
 
-    def write_leaf(self, node, value):
+    def write_leaf(self, node, value, default=None):
         """
         Here we should return different data based on the leaf type
         i.e. boolean/empty leaves should be checkbox
