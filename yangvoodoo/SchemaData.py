@@ -20,11 +20,29 @@ class UnableToDetermineQuotesError(UnableToRenderFormError):
 
 class Expander:
 
+    """
+    Process the YANG model by reading through the schema of the yang model and expanding as necessary
+    using the input data tree.
+
+    It is not possible to transparently navigate through an empty list - as this would involve injecting
+    artifical data for the list keys.
+
+    This class is intended to be extended by 'presentation' classes in order to make use of the
+    expanded data. The presentation is given a file-like object to write to.
+
+    Examples:
+      Yang2Text: provide human readable summarised yang models.
+      HtmlForms: provide the given schema/data as an HTML form
+      PlantUML Diagrams: provide an example schema with example data.
+    """
+
     YANG_LOCATION = "yang"
     QUOTE_ESCAPE_STYLE = "select-single-vs-double"
     SCHEMA_NODE_TYPE_MAP = {
         1: "_handle_schema_containing_node",
+        2: "_handle_schema_choice",
         4: "_handle_schema_leaf",
+        8: "_handle_schema_leaflist",
         16: "_handle_schema_list",
     }
 
@@ -49,18 +67,11 @@ class Expander:
 
     def process(self, initial_data: str, format: int = 1):
         """
-        Process the YANG model by reading through the schema of the yang model and expanding as necessary
-        using the input data tree.
-
-        It is not possible to transparently navigate through an empty list - as this would involve injecting
-        artifical data for the list keys.
 
         In the process of navigating the schema we keep track of:
          - The schema path
          - The data path
          - And an artificial 'id' path
-
-
         """
         self.log.info("Processing: %s", self.yang_module)
         if initial_data:
@@ -68,6 +79,8 @@ class Expander:
         self.result = StringIO()
 
         self.write_header()
+
+        self.write_title(self.ctx.get_module(self.yang_module))
 
         self.data_path_trail = [""]
         self.id_path_trail = [""]
@@ -81,6 +94,15 @@ class Expander:
 
         return self.result
 
+    def write_header(self):
+        pass
+
+    def write_footer(self):
+        pass
+
+    def write_title(self):
+        pass
+
     def write_body(self):
         pass
 
@@ -93,7 +115,13 @@ class Expander:
 
     def _handle_schema_containing_node(self, node):
         self.grow_trail(node)
-        self.open_containing_node(node)
+        presence = None
+        if node.presence():
+            presence = False
+            value = self.get_data(raw=True)
+            if value is not None:
+                presence = True
+        self.open_containing_node(node, presence=presence)
 
         try:
             for subnode in self.ctx.find_path(f"{node.schema_path()}/*"):
@@ -148,20 +176,40 @@ class Expander:
 
         self.close_list_element()
 
-    def get_data(self, default=None, quoted=True):
+    def _handle_schema_leaflist(self, node):
+        self.grow_trail(node)
+
+        trail = "".join(self.data_path_trail)
+        self.open_leaflist(node, count=len(list(self.data_ctx.gets_xpath(trail))))
+
+        for list_node in self.data_ctx.gets_xpath(trail):
+            list_xpath = list_node[len(trail) :]
+            self.grow_trail(list_element_predicates=list_xpath, schema=False)
+            self.write_leaflist_item(self.get_data())
+            self.shrink_trail(schema=False)
+
+        self.close_leaflist(node)
+
+        self.shrink_trail()
+
+    def get_data(self, default=None, quoted=True, raw=False):
         xpath = "".join(self.data_path_trail)
         value = list(self.data_ctx.get_xpath(xpath))
+        if raw:
+            if value:
+                return value[0].value
+            return None
         if value:
             self.log.debug("GET XPATH: %s = %s", xpath, value[0].value)
-            quote = self.get_quote_style(value[0].value)
+            quote = self.get_quote_style(value[0].value, quoted)
             return f"{quote}{self.escape_value(value[0].value)}{quote}"
         if default:
-            quote = self.get_quote_style(default)
+            quote = self.get_quote_style(default, quoted)
             return f"{quote}{self.escape_value(default)}{quote}"
-        quote = self.get_quote_style(default)
+        quote = self.get_quote_style(default, quoted)
         return f"{quote}{quote}"
 
-    def get_quote_style(self, value):
+    def get_quote_style(self, value, quoted=True):
         if self.QUOTE_ESCAPE_STYLE == "escape":
             return ""
         if not isinstance(value, str):
@@ -232,3 +280,20 @@ class Expander:
     def close_indent(self):
         self.indent -= 1
         return " " * self.indent * 2
+
+    @staticmethod
+    def pluralise(listobj):
+        if isinstance(listobj, int):
+            if listobj != 1:
+                return "s"
+            return ""
+        if len(listobj) != 1:
+            return "s"
+        return ""
+
+    @staticmethod
+    def commaify(listobj):
+        comma = ""
+        for item in listobj:
+            yield comma, item
+            comma = ", "

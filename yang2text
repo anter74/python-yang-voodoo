@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+import argparse
+import logging
+import pydoc
+from yangvoodoo.SchemaData import Expander
+
+parser = argparse.ArgumentParser(
+    description="Combine a YANG schema with a supplied data payload."
+)
+parser.add_argument("--yang", help="YANG module (should be on YANGPATH)", required=True)
+parser.add_argument(
+    "--data",
+    help="A data tree (default XML) but can be set to JSON with --format",
+    type=argparse.FileType("r"),
+    required=True,
+)
+parser.add_argument("--plain", help="Plain Text", action="store_true")
+parser.add_argument(
+    "--format", help="Data Tree format", choices=["xml", "json"], default="xml"
+)
+parser.add_argument("--search", help="Initial arguments for less paging", default="")
+args = parser.parse_args()
+
+FORMATS = {"xml": 1, "json": 2}
+
+
+class DullDisplay:
+    DIM = ""
+    NORMAL = ""
+    BRIGHT = ""
+    MISSING = ""
+    LEAF = "l> "
+    CONTAINER = "C> "
+    LIST = "L+ "
+    LEAF_LIST = "l+ "
+    LIST_ELEMENT = "-> "
+    MANDATORY = "*"
+    WHEN = "!"
+    MUST = "%"
+
+    @staticmethod
+    def get_presence(presence):
+        if presence:
+            return "present"
+        return ""
+
+
+class Display:
+    DIM = "\033[2m"
+    NORMAL = "\033[22m"
+    BRIGHT = "\033[1m"
+    MISSING = " "
+    LEAF = "🍁 "
+    CONTAINER = "🥡 "
+    LIST = "📦 "
+    LIST_ELEMENT = "📥 "
+    LEAF_LIST = "📚 "
+    MANDATORY = "⚠ "
+    WHEN = "☣ "
+    MUST = "☢ "
+
+    @staticmethod
+    def get_presence(presence):
+        if presence:
+            return "✔ "
+        return ""
+
+
+if args.plain:
+    Display = DullDisplay
+
+
+class Yang2Text(Expander):
+    def write_title(self, module):
+
+        self.result.write(f"{self.yang_module}\n")
+        self.result.write(f"{'-'*len(self.yang_module)}\n")
+        self.result.write("\n")
+        self.result.write(f"{module.description()}")
+        self.result.write("\n")
+        self.result.write("\n")
+        revisions = list(module.revisions())
+        for rev in revisions[0:1]:
+            self.result.write(f"{rev.date()} {rev.description()}\n\n")
+
+    def _show_when(self, node):
+        if node.when_condition():
+            self.result.write(Display.BRIGHT)
+            for line in node.when_condition().split("\n"):
+                when = Display.MUST
+                self.result.write(f"{self.get_indent()}      {when}{line}\n")
+                when = ""
+            self.result.write("\n")
+            self.result.write(Display.NORMAL)
+
+    def _show_must(self, node):
+        for cond in node.must_conditions():
+            self.result.write(Display.BRIGHT)
+            for line in cond.split("\n"):
+                must = Display.MUST
+                self.result.write(f"{self.get_indent()}      {must}{line}\n")
+                must = ""
+            self.result.write("\n")
+            self.result.write(Display.NORMAL)
+
+    def _show_description(self, description):
+        if description():
+            self.result.write(Display.DIM)
+            for line in description().split("\n"):
+                self.result.write(f"{self.get_indent()}      {line}\n")
+            self.result.write("\n")
+            self.result.write(Display.NORMAL)
+
+    def open_list(self, node, count):
+        self.result.write(
+            f"{self.open_indent()}{Display.LIST} {node.name()} {Display.DIM} ({count} Item{self.pluralise(count)}) {Display.NORMAL}\n"
+        )
+        self._show_description(node.description)
+
+    def open_list_element(self, key_values):
+        self.result.write(f"{self.open_indent()}{Display.LIST_ELEMENT} \n")
+
+    def close_list_element(self):
+        self.close_indent()
+
+    def close_list(self, node):
+        self.close_indent()
+
+    def write_leaf(self, node, value, default, key):
+        self.result.write(f"{self.get_indent()} {Display.LEAF}")
+        if node.mandatory():
+            self.result.write(f"{Display.MANDATORY} ")
+        if default and value and value[1:-1] == default:
+            self.result.write(
+                f"{node.name()} = {Display.DIM}{value[1:-1]}{Display.NORMAL}\n"
+            )
+        elif value[1:-1]:
+            self.result.write(f"{node.name()} = {value[1:-1]}\n")
+        else:
+            self.result.write(
+                f"{node.name()} {Display.DIM} {Display.MISSING} {Display.NORMAL}\n"
+            )
+
+        # self._show_when(node)
+        self._show_description(node.description)
+
+    def open_containing_node(self, node, presence):
+        self.result.write(f"{self.open_indent()} {Display.CONTAINER} ")
+        if presence is not None:
+            self.result.write(f"{node.name()} {Display.get_presence(presence)}\n")
+        else:
+            self.result.write(f"{node.name()}\n")
+
+        self._show_must(node)
+        self._show_when(node)
+        self._show_description(node.description)
+
+    def close_containing_node(self, node):
+        self.close_indent()
+
+    def open_leaflist(self, node, count):
+        self.result.write(f"{self.open_indent()}{Display.LEAF_LIST} {node.name()} - ")
+        self.result.write(
+            f"- {Display.DIM}({count} item{self.pluralise(count)}){Display.NORMAL}"
+        )
+        self.result.write("\n")
+        self._show_description(node.description)
+
+    def close_leaflist(self, node):
+        self.close_indent()
+
+    def open_choice(self, node):
+        pass
+
+    def close_choice(self, node):
+        pass
+
+
+if __name__ == "__main__":
+    log = logging.getLogger("yang2text")
+    logging.basicConfig()
+    log.setLevel(5)
+
+    generator = Yang2Text(args.yang, log)
+    generator.process(args.data.read(), FORMATS[args.format])
+
+    generator.result.seek(0)
+    if args.search:
+        pydoc.pipepager(generator.result.read(), cmd=f"less -R -i -p {args.search}")
+    else:
+        pydoc.pipepager(generator.result.read(), cmd=f"less -R -i ")
