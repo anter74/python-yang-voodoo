@@ -48,6 +48,20 @@ class Expander:
             fh.write(self.result.read())
 
     def process(self, initial_data: str, format: int = 1):
+        """
+        Process the YANG model by reading through the schema of the yang model and expanding as necessary
+        using the input data tree.
+
+        It is not possible to transparently navigate through an empty list - as this would involve injecting
+        artifical data for the list keys.
+
+        In the process of navigating the schema we keep track of:
+         - The schema path
+         - The data path
+         - And an artificial 'id' path
+
+
+        """
         self.log.info("Processing: %s", self.yang_module)
         if initial_data:
             self.data_ctx.loads(initial_data, format)
@@ -56,6 +70,7 @@ class Expander:
         self.write_header()
 
         self.data_path_trail = [""]
+        self.id_path_trail = [""]
         self.schema_path_trail = [""]
         for node in self.ctx.find_path(f"/{self.yang_module}:*"):
             self._process_nodes(node)
@@ -105,18 +120,6 @@ class Expander:
         self.shrink_trail()
 
     def _handle_schema_list(self, node):
-        """
-        Some client side javascript to try capture list key values?
-        before submitting the form back to the server?
-
-        Can the javascript goes as far as checking existing list key/values (if not do that server side)
-
-        Assumption is rather than being *too* ajaxy going backwards and forwards to the client isn't the
-        end of the world.
-
-        When we are in a list we won't look at the schema but instead look to the data tree to find list elements
-        which exist - and then pass those to prcoess_nodes?
-        """
         self.grow_trail(node)
 
         trail = "".join(self.data_path_trail)
@@ -180,8 +183,10 @@ class Expander:
             self.data_path_trail.pop()
         if schema:
             self.schema_path_trail.pop()
+        self.id_path_trail.pop()
         self.log.debug("SHRINK: %s", self.data_path_trail)
         self.log.debug("SHRINK: %s", self.schema_path_trail)
+        self.log.debug("SHRINK: %s", self.id_path_trail)
 
     def grow_trail(
         self, node=None, list_element_predicates=None, schema=True, data=True
@@ -197,10 +202,14 @@ class Expander:
             else:
                 data_component = f"/{node.name()}"
             self.data_path_trail.append(f"{data_component}")
+            self.id_path_trail.append(f"{data_component}")
+        else:
+            self.id_path_trail.append(f"{node.name()}")
         if schema:
             self.schema_path_trail.append(f"/{node.module().name()}:{node.name()}")
         self.log.debug("GROW: %s", self.data_path_trail)
         self.log.debug("GROW: %s", self.schema_path_trail)
+        self.log.debug("GROW: %s", self.id_path_trail)
 
     def get_id(self):
         if len(self.data_path_trail) == 1:
@@ -210,9 +219,7 @@ class Expander:
         return f"{quote}{trail}{quote}"
 
     def get_uuid(self):
-        if len(self.data_path_trail) == 1:
-            return "'__root__'"
-        trail = "".join(self.data_path_trail)
+        trail = "".join(self.id_path_trail)
         return str(uuid.uuid5(uuid.uuid5(uuid.NAMESPACE_URL, "pyvwu"), trail))
 
     def get_indent(self):
