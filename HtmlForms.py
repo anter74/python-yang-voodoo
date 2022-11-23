@@ -31,7 +31,12 @@ class HtmlFormExpander(Expander):
         self.result.write(
             f"\n{self.open_indent()}<a class='btn' data-bs-toggle='collapse' role='button' href='#collapse-{self.get_uuid()}' aria-expanded='false' aria-controls='collapse-{self.get_uuid()}'><i class='fa fa-th-large' aria-hidden='true'></i></a>"
         )
-        self.result.write(f"{self.get_indent()}<label class='structure_containerlabel'>{node.name()}</label><br/>\n")
+        self.result.write(f"{self.get_indent()}<label class='structure_containerlabel' ")
+        if node.description():
+            self.result.write(
+                f'data-toggle="tooltip" data-placement="top" data-html="true" title="{self._get_tooltip(node.description())}"'
+            )
+        self.result.write(f">{node.name()}</label><br/>\n")
         self.result.write(f"{self.open_indent()}<div class='collapse show' id='collapse-{self.get_uuid()}'>\n")
 
     def close_containing_node(self, node):
@@ -129,7 +134,12 @@ class HtmlFormExpander(Expander):
         self.result.write(
             f"&nbsp;<a class='btn btn-success' href=javascript:add_list_element({self.get_id()})><i class='fa fa-plus'></i></a>&nbsp;"
         )
-        self.result.write(f"{self.get_indent()}<label class='structure_listlabel'>{node.name()}</label>  \n")
+        self.result.write(f"{self.get_indent()}<label class='structure_listlabel'")
+        if node.description():
+            self.result.write(
+                f'data-toggle="tooltip" data-placement="top" data-html="true" title="{self._get_tooltip(node.description())}"'
+            )
+        self.result.write(f">{node.name()}</label>  \n")
 
         self.result.write(
             f"&nbsp;&nbsp;<span class='not-important-info' id=count-{self.get_id()}>{count} item{self.pluralise(count)}:"
@@ -164,6 +174,47 @@ class HtmlFormExpander(Expander):
     def close_list_element(self):
         self.result.write(f"{self.close_indent()}</div>\n")
         self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id()} listelement -->\n\n")
+
+    def open_leaflist(self, node, count):
+        self.result.write(f"\n{self.get_indent()}<a name={self.get_id()}></a> <!-- leaf list type -->")
+        self.result.write(f"\n{self.open_indent()}<div class='structure_leaflist' id={self.get_id()}>\n")
+        self.result.write(
+            f"\n{self.open_indent()}&nbsp;&nbsp;<a class='btn' data-bs-toggle='collapse' role='button' href='#collapse-{self.get_uuid()}' aria-expanded='false' aria-controls='collapse-{self.get_uuid()}'><i class='fa fa-list-ul' aria-hidden='true'></i></a>"
+        )
+        self.result.write(
+            f"&nbsp;<a class='btn btn-success' href=javascript:add_leaflist_element({self.get_id()})><i class='fa fa-plus'></i></a>&nbsp;"
+        )
+        self.result.write(f"{self.get_indent()}<label class='structure_leaflistlabel' ")
+        if node.description():
+            self.result.write(
+                f'data-toggle="tooltip" data-placement="top" data-html="true" title="{self._get_tooltip(node.description())}"'
+            )
+        self.result.write(f">{node.name()}</label>  \n")
+
+        self.result.write(
+            f"&nbsp;&nbsp;<span class='not-important-info' id=count-{self.get_id()}>{count} item{self.pluralise(count)}:"
+        )
+        self.result.write("</span>")
+        self.result.write(f"{self.open_indent()}<div class='collapse show' id='collapse-{self.get_uuid()}'>\n")
+
+    def close_leaflist(self, node):
+        self.result.write(f"{self.close_indent()}</div>\n")
+        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id()} ;eaf list -->\n\n")
+
+    def write_leaflist_item(self, value):
+        self.result.write(f"\n{self.open_indent()}<div class='structure_listelement' id={self.get_id()}>\n")
+        self.result.write(
+            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-leaf yang_icon' aria-hidden='true'></i>&nbsp;"
+        )
+        self.result.write(
+            f"{self.get_indent()}<input type='text' name={self.get_id()} id={self.get_id()} value={value} onChange='leaf_change(this)' onBlur='leaf_blur(this)' disable>\n"
+        )
+        self.result.write(
+            f"{self.get_indent()}&nbsp;&nbsp;<a class='btn btn-warning' href=javascript:remove_leaflist_element({self.get_id()})><i class='fa fa-times warning'></i></a>&nbsp;\n"
+        )
+        #
+        # self.result.write(f"{self.open_indent()}<div class='collapse show' id='collapse-{self.get_uuid()}'>\n")
+        self.result.write(f"{self.close_indent()}</div>\n")
 
 
 if __name__ == "__main__":

@@ -8,13 +8,21 @@ module testforms {
   } */
   container toplevel {
     presence true;
+    description "Container Description";
 
     leaf hello {
+      description "leaf description";
       type string;
       default 'put something here';
     }
 
+    leaf-list multi {
+      description "leaf-list description";
+      type string;
+    }
+
     list simplelist {
+      description "list description ";
       key simplekey;
 
       leaf simplekey {
