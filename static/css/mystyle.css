@@ -1,0 +1,30 @@
+.structure_list {
+  border-style: dotted;
+  border-color: gray;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_leaflist {
+  border-style: dotted;
+  border-color: gray;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_container {
+  border-style: dotted;
+  border-color: gray;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_leaflabel{
+  min-width: 150px;
+}
+.structure_leaflabel{
+  min-width: 150px;
+}
+.yang_icon {
+  color: gray;
+}
+.not-important-info {
+  color: gray;
+}
