@@ -27,6 +27,7 @@ FORMATS = {"xml": 1, "json": 2}
 class DullDisplay:
     DIM = ""
     NORMAL = ""
+    NORMAL_ = ""
     BRIGHT = ""
     MISSING = ""
     LEAF = "l> "
@@ -35,19 +36,22 @@ class DullDisplay:
     LEAF_LIST = "l+ "
     LIST_ELEMENT = "-> "
     MANDATORY = "*"
-    WHEN = "!"
-    MUST = "%"
+    WHEN = "! "
+    MUST = "% "
+    CHOICE = "? "
+    CASE = "^ "
 
     @staticmethod
-    def get_presence(presence):
-        if presence:
-            return "present"
+    def get_active(active):
+        if active:
+            return "* "
         return ""
 
 
 class Display:
     DIM = "\033[2m"
     NORMAL = "\033[22m"
+    NORMAL_ = "\033[22m"
     BRIGHT = "\033[1m"
     MISSING = " "
     LEAF = "🍁 "
@@ -58,6 +62,14 @@ class Display:
     MANDATORY = "⚠ "
     WHEN = "☣ "
     MUST = "☢ "
+    CHOICE = "🔄 "
+    CASE = "📍 "
+
+    @staticmethod
+    def get_active(active):
+        if active:
+            return "✨ "
+        return ""
 
     @staticmethod
     def get_presence(presence):
@@ -105,9 +117,8 @@ class Yang2Text(Expander):
 
     def _show_description(self, description):
         if description():
-            self.result.write(Display.DIM)
             for line in description().split("\n"):
-                self.result.write(f"{self.get_indent()}      {line}\n")
+                self.result.write(f"{self.get_indent()}{Display.DIM}      {line}\n")
             self.result.write("\n")
             self.result.write(Display.NORMAL)
 
@@ -118,7 +129,9 @@ class Yang2Text(Expander):
         self._show_description(node.description)
 
     def open_list_element(self, key_values):
-        self.result.write(f"{self.open_indent()}{Display.LIST_ELEMENT} \n")
+        self.result.write(
+            f"{self.open_indent()} {Display.NORMAL}{Display.LIST_ELEMENT} \n"
+        )
 
     def close_list_element(self):
         self.close_indent()
@@ -127,7 +140,7 @@ class Yang2Text(Expander):
         self.close_indent()
 
     def write_leaf(self, node, value, default, key):
-        self.result.write(f"{self.get_indent()} {Display.LEAF}")
+        self.result.write(f"{self.get_indent()} {Display.NORMAL}{Display.LEAF}")
         if node.mandatory():
             self.result.write(f"{Display.MANDATORY} ")
         if default and value and value[1:-1] == default:
@@ -141,11 +154,11 @@ class Yang2Text(Expander):
                 f"{node.name()} {Display.DIM} {Display.MISSING} {Display.NORMAL}\n"
             )
 
-        # self._show_when(node)
+        self._show_when(node)
         self._show_description(node.description)
 
     def open_containing_node(self, node, presence):
-        self.result.write(f"{self.open_indent()} {Display.CONTAINER} ")
+        self.result.write(f"{self.open_indent()} {Display.NORMAL}{Display.CONTAINER} ")
         if presence is not None:
             self.result.write(f"{node.name()} {Display.get_presence(presence)}\n")
         else:
@@ -159,7 +172,9 @@ class Yang2Text(Expander):
         self.close_indent()
 
     def open_leaflist(self, node, count):
-        self.result.write(f"{self.open_indent()}{Display.LEAF_LIST} {node.name()} - ")
+        self.result.write(
+            f"{self.open_indent()} {Display.NORMAL}{Display.LEAF_LIST} {node.name()} - "
+        )
         self.result.write(
             f"- {Display.DIM}({count} item{self.pluralise(count)}){Display.NORMAL}"
         )
@@ -170,10 +185,28 @@ class Yang2Text(Expander):
         self.close_indent()
 
     def open_choice(self, node):
-        pass
+        self.result.write(
+            f"{self.open_indent()} {Display.NORMAL}{Display.CHOICE} {node.name()}\n"
+        )
+        self.open_indent()
 
     def close_choice(self, node):
-        pass
+        self.close_indent()
+        self.close_indent()
+
+    def open_case(self, node, active_case):
+        if not active_case:
+            self.result.write(Display.DIM)
+            Display.NORMAL = Display.DIM
+        self.result.write(
+            f"{self.get_indent()}{Display.CASE} {Display.get_active(active_case)} {node.name()}\n"
+        )
+        self.open_indent()
+
+    def close_case(self, node):
+        self.close_indent()
+        Display.NORMAL = Display.NORMAL_
+        self.result.write(Display.NORMAL)
 
 
 if __name__ == "__main__":

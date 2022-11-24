@@ -192,6 +192,45 @@ class Expander:
 
         self.shrink_trail()
 
+    def _handle_schema_choice(self, node):
+        self.grow_trail(node, data=False)
+
+        active_case = None
+        cases = []
+        for case in self.ctx.find_path(f"{node.schema_path()}/*"):
+            if case.nodetype() == 64:
+                cases.append(case)
+
+        choice_path = node.schema_path()
+
+        trail = "".join(self.data_path_trail)
+        for data_xpath in self.data_ctx.gets_xpath(f"{trail}/*"):
+            value = list(self.data_ctx.get_xpath(data_xpath))
+            if value:
+                for case in cases:
+                    if value[0].get_schema_path().startswith(case.schema_path()):
+                        active_case = case
+                        break
+
+        self.open_choice(node)
+
+        for case in cases:
+            self.grow_trail(case, data=False)
+            self.open_case(case, active_case == case)
+
+            try:
+                for subnode in self.ctx.find_path(f"{case.schema_path()}/*"):
+                    self._process_nodes(subnode)
+            except libyang.util.LibyangError:
+                pass
+
+            self.close_case(case)
+            self.shrink_trail(data=False)
+
+        self.close_choice(node)
+
+        self.shrink_trail(data=False)
+
     def get_data(self, default=None, quoted=True, raw=False):
         xpath = "".join(self.data_path_trail)
         value = list(self.data_ctx.get_xpath(xpath))
