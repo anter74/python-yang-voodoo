@@ -83,8 +83,11 @@ if args.plain:
 
 
 class Yang2Text(Expander):
-    def write_title(self, module):
 
+    INCLUDE_BLANK_LIST_ELEMENTS = True
+
+    def write_title(self, module):
+        breakpoint()
         self.result.write(f"{self.yang_module}\n")
         self.result.write(f"{'-'*len(self.yang_module)}\n")
         self.result.write("\n")
@@ -122,24 +125,24 @@ class Yang2Text(Expander):
             self.result.write("\n")
             self.result.write(Display.NORMAL)
 
-    def open_list(self, node, count):
+    def callback_open_list(self, node, count, node_id):
         self.result.write(
             f"{self.open_indent()}{Display.LIST} {node.name()} {Display.DIM} ({count} Item{self.pluralise(count)}) {Display.NORMAL}\n"
         )
         self._show_description(node.description)
 
-    def open_list_element(self, key_values):
+    def callback_open_list_element(self, node, key_values, empty_list_element, node_id):
         self.result.write(
             f"{self.open_indent()} {Display.NORMAL}{Display.LIST_ELEMENT} \n"
         )
 
-    def close_list_element(self):
+    def callback_close_list_element(self, node):
         self.close_indent()
 
-    def close_list(self, node):
+    def callback_close_list(self, node):
         self.close_indent()
 
-    def write_leaf(self, node, value, default, key):
+    def callback_write_leaf(self, node, value, default, key, node_id):
         self.result.write(f"{self.get_indent()} {Display.NORMAL}{Display.LEAF}")
         if node.mandatory():
             self.result.write(f"{Display.MANDATORY} ")
@@ -160,7 +163,7 @@ class Yang2Text(Expander):
         self._show_when(node)
         self._show_description(node.description)
 
-    def open_containing_node(self, node, presence):
+    def callback_open_containing_node(self, node, presence, node_id):
         self.result.write(f"{self.open_indent()} {Display.NORMAL}{Display.CONTAINER} ")
         if presence is not None:
             self.result.write(f"{node.name()} {Display.get_presence(presence)}\n")
@@ -171,10 +174,10 @@ class Yang2Text(Expander):
         self._show_when(node)
         self._show_description(node.description)
 
-    def close_containing_node(self, node):
+    def callback_close_containing_node(self, node):
         self.close_indent()
 
-    def open_leaflist(self, node, count):
+    def callback_open_leaflist(self, node, count, node_id):
         self.result.write(
             f"{self.open_indent()} {Display.NORMAL}{Display.LEAF_LIST} {node.name()} - "
         )
@@ -184,20 +187,20 @@ class Yang2Text(Expander):
         self.result.write("\n")
         self._show_description(node.description)
 
-    def close_leaflist(self, node):
+    def callback_close_leaflist(self, node):
         self.close_indent()
 
-    def open_choice(self, node):
+    def callback_open_choice(self, node, node_id):
         self.result.write(
             f"{self.open_indent()} {Display.NORMAL}{Display.CHOICE} {node.name()}\n"
         )
         self.open_indent()
 
-    def close_choice(self, node):
+    def callback_close_choice(self, node):
         self.close_indent()
         self.close_indent()
 
-    def open_case(self, node, active_case):
+    def callback_open_case(self, node, active_case, no_active_case, node_id):
         if not active_case:
             self.result.write(Display.DIM)
             Display.NORMAL = Display.DIM
@@ -206,7 +209,7 @@ class Yang2Text(Expander):
         )
         self.open_indent()
 
-    def close_case(self, node):
+    def callback_close_case(self, node):
         self.close_indent()
         Display.NORMAL = Display.NORMAL_
         self.result.write(Display.NORMAL)

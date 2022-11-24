@@ -5,7 +5,7 @@ import logging
 import uuid
 
 from io import StringIO
-from typing import List
+from typing import List, Tuple
 
 
 class UnableToRenderFormError:
@@ -32,13 +32,18 @@ class Expander:
     expanded data. The presentation is given a file-like object to write to.
 
     Examples:
-      Yang2Text: provide human readable summarised yang models.
-      HtmlForms: provide the given schema/data as an HTML form
-      PlantUML Diagrams: provide an example schema with example data.
+      Yang2Text: provide human readable summarised yang models (implemented in this project)
+
+      In order to build a HTML form the hooks for `open_list` could map to a `+` button to add list elements,
+      the `open_list_element` could map to a `-` button to remove a list element. The `open_xxx` and `close_xxx`
+      methods could be used to open and close `<div>`'s.
+
+      Output can be rendered for PlantUML (https://plantuml.com/json) in order to build diagrams.
     """
 
     YANG_LOCATION = "yang"
     QUOTE_ESCAPE_STYLE = "select-single-vs-double"
+    INDENT_SPACING = 2
     SCHEMA_NODE_TYPE_MAP = {
         1: "_handle_schema_containing_node",
         2: "_handle_schema_choice",
@@ -46,6 +51,7 @@ class Expander:
         8: "_handle_schema_leaflist",
         16: "_handle_schema_list",
     }
+    INCLUDE_BLANK_LIST_ELEMENTS = False
 
     def __init__(self, yang_module, log: logging.Logger):
         self.log = log
@@ -66,22 +72,31 @@ class Expander:
         with open(filename, "w") as fh:
             fh.write(self.result.read())
 
-    def process(self, initial_data: str, format: int = 1):
+    def process(self, initial_data: str, format: int = 1) -> StringIO:
         """
+        Process a starting data tree in a given format (XML=1, JSON=2) as recursing the schema expand
+        to include any data that exists against each part of the schema. During expansion of the schema/data tree
+        call a number of callbacks.
 
-        In the process of navigating the schema we keep track of:
-         - The schema path
-         - The data path
-         - And an artificial 'id' path
+        The callbacks are provided as a `open` set which are called when starting to process a node which holds
+        contents (i.e. a List, Leaf-List ListElement, Container, Choice, Case) and a `close` when processing of that
+        node has finished.
+
+        Terminating nodes (Leaves and items in a Leaf-List) are called with a `write` method.
+
+        There are structural methods to write headers, titles, bodies and footers.
+
+        In the process of navigating the schema we keep track of the hirearchy of the model in three 'trails', this
+        allows us to keep a consistent view of the schema path, data path and a hybrid path.
         """
         self.log.info("Processing: %s", self.yang_module)
         if initial_data:
             self.data_ctx.loads(initial_data, format)
         self.result = StringIO()
 
-        self.write_header()
+        self.callback_write_header(self.ctx.get_module(self.yang_module))
 
-        self.write_title(self.ctx.get_module(self.yang_module))
+        self.callback_write_title(self.ctx.get_module(self.yang_module))
 
         self.data_path_trail = [""]
         self.id_path_trail = [""]
@@ -89,23 +104,191 @@ class Expander:
         for node in self.ctx.find_path(f"/{self.yang_module}:*"):
             self._process_nodes(node)
 
-        self.write_body()
+        self.callback_write_body(self.ctx.get_module(self.yang_module))
 
-        self.write_footer()
+        self.callback_write_footer(self.ctx.get_module(self.yang_module))
 
         return self.result
 
-    def write_header(self):
-        pass
+    def callback_write_header(self, module: libyang.schema.Module):
+        """
+        Called in order to provide information in a body before starting to process the yang model.
 
-    def write_footer(self):
-        pass
+        Args:
+            module: The libyang schema module
+        """
 
-    def write_title(self):
-        pass
+    def callback_write_footer(self, module: libyang.schema.Module):
+        """
+        Called in order to provide information in a body before starting to process the yang model.
 
-    def write_body(self):
-        pass
+        Args:
+            module: The libyang schema module
+        """
+
+    def callback_write_title(self, module: libyang.schema.Module):
+        """
+        Called in order to provide information in a body before starting to process the yang model.
+
+        Args:
+            module: The libyang schema module
+        """
+
+    def callback_write_body(self, module: libyang.schema.Module):
+        """
+        Called in order to provide information in a body before starting to process the yang model.
+
+        Args:
+            module: The libyang schema module
+        """
+
+    def callback_open_list(self, node: libyang.Node, count: int, node_id: str):
+        """
+        Called when the a list has been encountered, a list contains list elements.
+
+        Args:
+            node: The libyang node of the list statement
+            count: The number of items in the list.
+            node_id: The node id using a hybrid schema/data path.
+        """
+        raise NotImplementedError("callback_open_list")
+
+    def callback_open_list_element(
+        self,
+        node: libyang.Node,
+        key_values: List[Tuple[str, str]],
+        empty_list_element: bool,
+        node_id: str,
+    ):
+        """
+        Called when the a list element has been encountered.
+
+        Args:
+            node: The libyang node of the list element statement
+            key_values: A list of key and value tuples.
+            empty_list_element: Indiciates this is not an item in the list rather based on the schema.
+            node_id: The node id using a hybrid schema/data path.
+        """
+        raise NotImplementedError("callback_open_list_element")
+
+    def callback_close_list_element(self, node: libyang.Node):
+        """
+        Called when the a list element has been processed.
+
+        Args:
+            node: The libyang node of the list element statement
+        """
+        raise NotImplementedError("callback_close_list_element")
+
+    def callback_close_list(self, node: libyang.Node):
+        """
+        Called when the a list has finished processing.
+
+        Args:
+            node: The libyang node of the list statement
+        """
+        raise NotImplementedError("callback_close_list")
+
+    def callback_write_leaf(
+        self, node: libyang.Node, value: str, default: str, key: bool, node_id: str
+    ):
+        """
+        Called when the a leaf has been encountered.
+
+        Args:
+            node: The libyang node of the leaf statement
+            value: The value of the leaf - which will be quoted/escaped
+            default: The default value for the leaf
+            key: Indicates this leaf is a key of a list
+            node_id: The node id using a hybrid schema/data path.
+        """
+        raise NotImplementedError("callback_write_leaf")
+
+    def callback_open_containing_node(
+        self, node: libyang.Node, presence: bool, node_id: str
+    ):
+        """
+        Called when the a container has been encountered.
+
+        Args:
+            node: The libyang node of the container statement
+            presence: True/False indicates the state of a presence code (non-presence container = None)
+            node_id: The node id using a hybrid schema/data path.
+        """
+        raise NotImplementedError("callback_open_containing_node")
+
+    def callback_close_containing_node(self, node: libyang.Node):
+        """
+        Called when the a container has finished processing
+
+        Args:
+            node: The libyang node of the container statement
+        """
+        raise NotImplementedError("callback_close_containing_node")
+
+    def callback_open_leaflist(self, node: libyang.Node, count: int, node_id: str):
+        """
+        Called when the a leaf-list has been encountered.
+
+        Args:
+            node: The libyang node of the leaf-list statement
+            count: The number of items in the leaf-list
+            node_id: The node id using a hybrid schema/data path.
+        """
+        raise NotImplementedError("callback_open_leaflist_node")
+
+    def callback_close_leaflist(self, node):
+        """
+        Called when the a leaf-list has finished processing.
+
+        Args:
+            node: The libyang node of the leaf-list statement
+        """
+        raise NotImplementedError("callback_close_leaflist_node")
+
+    def callback_open_choice(self, node: libyang.Node, node_id: str):
+        """
+        Called when the a choice statement has been encountered. The YANG standard supports a choice
+        without case statements - however yangvoodoo does not support statements other than case within
+        a choice.
+
+        Args:
+            node: The libyang node of the choice statement
+            node_id: The node id using a hybrid schema/data path.
+        """
+        raise NotImplementedError("callback_open_choice")
+
+    def callback_close_choice(self, node: libyang.Node):
+        """
+        Called when the a choice statement has finished processing.
+
+        Args:
+            node: The libyang node of the choice statement
+        """
+        raise NotImplementedError("callback_close_choice")
+
+    def callback_open_case(
+        self, node: libyang.Node, active_case: bool, no_active_case: bool, node_id: str
+    ):
+        """
+        Called when the a case statement (mutually exclusive) has been encountered.
+
+        Args:
+            node: The libyang node of the case statement
+            active_case: Indicates this is the active case
+            no_active_case: Indiciates data does not exist for any cases within the choice
+            node_id: The node id using a hybrid schema/data path.
+        """
+        raise NotImplementedError("callback_open_case")
+
+    def callback_close_case(self, node: libyang.Node):
+        """
+        Called when the contents of a specific case has finished processing.
+
+        Args:
+            node: The libyang node of the case statement
+        """
+        raise NotImplementedError("callback_close_case")
 
     def _process_nodes(self, node):
         if node.nodetype() not in self.SCHEMA_NODE_TYPE_MAP:
@@ -122,7 +305,10 @@ class Expander:
             value = self.get_data(raw=True)
             if value is not None:
                 presence = True
-        self.open_containing_node(node, presence=presence)
+
+        self.callback_open_containing_node(
+            node, presence=presence, node_id="".join(self.id_path_trail)
+        )
 
         try:
             for subnode in self.ctx.find_path(f"{node.schema_path()}/*"):
@@ -130,7 +316,7 @@ class Expander:
         except libyang.util.LibyangError:
             pass
 
-        self.close_containing_node(node)
+        self.callback_close_containing_node(node)
         self.shrink_trail()
 
     def _handle_schema_leaf(self, node):
@@ -145,51 +331,92 @@ class Expander:
         """
         self.grow_trail(node)
         value = self.get_data(default=node.default())
-        self.write_leaf(node, value, default=node.default(), key=node.is_key())
+        self.callback_write_leaf(
+            node,
+            value,
+            default=node.default(),
+            key=node.is_key(),
+            node_id="".join(self.id_path_trail),
+        )
         self.shrink_trail()
 
     def _handle_schema_list(self, node):
         self.grow_trail(node)
 
         trail = "".join(self.data_path_trail)
-        self.open_list(node, count=len(list(self.data_ctx.gets_xpath(trail))))
+        self.callback_open_list(
+            node,
+            count=len(list(self.data_ctx.gets_xpath(trail))),
+            node_id="".join(self.id_path_trail),
+        )
 
-        for list_node in self.data_ctx.gets_xpath(trail):
-            list_xpath = list_node[len(trail) :]
-            self.grow_trail(list_element_predicates=list_xpath, schema=False)
-            self._handle_list_element()
+        list_items = list(self.data_ctx.gets_xpath(trail))
+
+        if not list_items and self.INCLUDE_BLANK_LIST_ELEMENTS:
+            self.grow_trail(list_element_predicates="", schema=False)
+            self._handle_list_element(node, populate_key_value_tuple=False)
             self.shrink_trail(schema=False)
 
-        self.close_list(node)
+        for list_node in list_items:
+            list_xpath = list_node[len(trail) :]
+            self.grow_trail(list_element_predicates=list_xpath, schema=False)
+            self._handle_list_element(node)
+            self.shrink_trail(schema=False)
+
+        self.callback_close_list(node)
 
         self.shrink_trail()
 
-    def _handle_list_element(self):
-        keys = []
-        xpath = "".join(self.data_path_trail)
-        value = list(self.data_ctx.get_xpath(xpath))[0]
+    def _handle_list_element(
+        self, node: libyang.Node, populate_key_value_tuple: bool = True
+    ):
+        """
+        Args:
+            node: The node of the list containing this list element.
+            populate_key_value_tuple: flag indicating if we should populate a full_key_value tuple.
+        """
+        if populate_key_value_tuple:
+            keys = []
+            xpath = "".join(self.data_path_trail)
+            key_values = list(
+                list(self.data_ctx.get_xpath(xpath))[0].get_list_key_values()
+            )
+        else:
+            key_values = [(k.name(), None) for k in node.keys()]
 
-        self.open_list_element(key_values=list(value.get_list_key_values()))
+        self.callback_open_list_element(
+            node,
+            key_values=key_values,
+            empty_list_element=populate_key_value_tuple != True,
+            node_id="".join(self.id_path_trail),
+        )
 
         xpath = "".join(self.schema_path_trail)
         for subnode in self.ctx.find_path(f"{xpath}/*"):
             self._process_nodes(subnode)
 
-        self.close_list_element()
+        self.callback_close_list_element(node)
 
     def _handle_schema_leaflist(self, node):
         self.grow_trail(node)
 
         trail = "".join(self.data_path_trail)
-        self.open_leaflist(node, count=len(list(self.data_ctx.gets_xpath(trail))))
+        self.callback_open_leaflist(
+            node,
+            count=len(list(self.data_ctx.gets_xpath(trail))),
+            node_id="".join(self.id_path_trail),
+        )
 
         for list_node in self.data_ctx.gets_xpath(trail):
             list_xpath = list_node[len(trail) :]
             self.grow_trail(list_element_predicates=list_xpath, schema=False)
-            self.write_leaflist_item(self.get_data())
+            self.callback_write_leaflist_item(
+                self.get_data(),
+                node_id="".join(self.id_path_trail),
+            )
             self.shrink_trail(schema=False)
 
-        self.close_leaflist(node)
+        self.callback_close_leaflist(node)
 
         self.shrink_trail()
 
@@ -213,11 +440,16 @@ class Expander:
                         active_case = case
                         break
 
-        self.open_choice(node)
+        self.callback_open_choice(node, node_id="".join(self.id_path_trail))
 
         for case in cases:
             self.grow_trail(case, data=False)
-            self.open_case(case, active_case == case)
+            self.callback_open_case(
+                case,
+                active_case == case,
+                active_case == None,
+                node_id="".join(self.id_path_trail),
+            )
 
             try:
                 for subnode in self.ctx.find_path(f"{case.schema_path()}/*"):
@@ -225,10 +457,10 @@ class Expander:
             except libyang.util.LibyangError:
                 pass
 
-            self.close_case(case)
+            self.callback_close_case(case)
             self.shrink_trail(data=False)
 
-        self.close_choice(node)
+        self.callback_close_choice(node)
 
         self.shrink_trail(data=False)
 
@@ -280,7 +512,7 @@ class Expander:
         self, node=None, list_element_predicates=None, schema=True, data=True
     ):
         if data:
-            if list_element_predicates:
+            if list_element_predicates is not None:
                 data_component = list_element_predicates
             elif (
                 node.module().name() != self.yang_module
@@ -292,7 +524,7 @@ class Expander:
             self.data_path_trail.append(f"{data_component}")
             self.id_path_trail.append(f"{data_component}")
         else:
-            self.id_path_trail.append(f"{node.name()}")
+            self.id_path_trail.append(f"/{node.name()}")
         if schema:
             self.schema_path_trail.append(f"/{node.module().name()}:{node.name()}")
         self.log.debug("GROW: %s", self.data_path_trail)
@@ -311,15 +543,15 @@ class Expander:
         return str(uuid.uuid5(uuid.uuid5(uuid.NAMESPACE_URL, "pyvwu"), trail))
 
     def get_indent(self):
-        return " " * self.indent * 2
+        return " " * self.indent * self.INDENT_SPACING
 
     def open_indent(self):
         self.indent += 1
-        return " " * (self.indent - 1) * 2
+        return " " * (self.indent - 1) * self.INDENT_SPACING
 
     def close_indent(self):
         self.indent -= 1
-        return " " * self.indent * 2
+        return " " * self.indent * self.INDENT_SPACING
 
     @staticmethod
     def pluralise(listobj):
