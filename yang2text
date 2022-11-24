@@ -145,15 +145,18 @@ class Yang2Text(Expander):
             self.result.write(f"{Display.MANDATORY} ")
         if default and value and value[1:-1] == default:
             self.result.write(
-                f"{node.name()} = {Display.DIM}{value[1:-1]}{Display.NORMAL}\n"
+                f"{node.name()} = {Display.DIM}{value[1:-1]}{Display.NORMAL}"
             )
         elif value[1:-1]:
-            self.result.write(f"{node.name()} = {value[1:-1]}\n")
+            self.result.write(f"{node.name()} = {value[1:-1]}")
         else:
             self.result.write(
-                f"{node.name()} {Display.DIM} {Display.MISSING} {Display.NORMAL}\n"
+                f"{node.name()} {Display.DIM} {Display.MISSING} {Display.NORMAL}"
             )
 
+        self.result.write(
+            f"{Display.DIM} Type: {', '.join(self.get_human_types(node))} {Display.NORMAL}\n"
+        )
         self._show_when(node)
         self._show_description(node.description)
 

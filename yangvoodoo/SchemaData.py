@@ -1,5 +1,6 @@
 import json
 import libyang
+
 import logging
 import uuid
 
@@ -336,3 +337,15 @@ class Expander:
         for item in listobj:
             yield comma, item
             comma = ", "
+
+    def get_human_types(self, node):
+        if node.type().name() == "leafref":
+            leafref_path = libyang.c2str(node._leaf.type.info.lref.path)
+            yield f"leafref -> {leafref_path}"
+        else:
+            enums = [enum[0] for enum in node.type().all_enums()]
+            if enums:
+                yield f"enumeration [ {'; '.join(enums)} ]"
+            for base_name in node.type().basenames():
+                if str(base_name) not in ("enumeration",):
+                    yield str(base_name)
