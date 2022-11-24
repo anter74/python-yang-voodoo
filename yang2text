@@ -19,6 +19,10 @@ parser.add_argument(
     "--format", help="Data Tree format", choices=["xml", "json"], default="xml"
 )
 parser.add_argument("--search", help="Initial arguments for less paging", default="")
+parser.add_argument("--schema-xpath", help="Show schema xpath's", action="store_true")
+parser.add_argument(
+    "--data-xpath", help="Show data xpath's against leaves", action="store_true"
+)
 args = parser.parse_args()
 
 FORMATS = {"xml": 1, "json": 2}
@@ -142,6 +146,18 @@ class Yang2Text(Expander):
     def callback_close_list(self, node):
         self.close_indent()
 
+    def _show_paths(self, schema_path, data_path):
+        if args.data_xpath:
+            self.result.write(
+                f"{self.get_indent()}      {Display.DIM}D: {data_path}{Display.NORMAL}\n"
+            )
+        if args.schema_xpath:
+            self.result.write(
+                f"{self.get_indent()}      {Display.DIM}S: {schema_path}{Display.NORMAL}\n"
+            )
+        if args.schema_xpath or args.data_xpath:
+            self.result.write("\n")
+
     def callback_write_leaf(self, node, value, default, key, node_id):
         self.result.write(f"{self.get_indent()} {Display.NORMAL}{Display.LEAF}")
         if node.mandatory():
@@ -160,6 +176,8 @@ class Yang2Text(Expander):
         self.result.write(
             f"{Display.DIM} Type: {', '.join(self.get_human_types(node))} {Display.NORMAL}\n"
         )
+
+        self._show_paths(node.schema_path(), "".join(self.data_path_trail))
         self._show_when(node)
         self._show_description(node.description)
 

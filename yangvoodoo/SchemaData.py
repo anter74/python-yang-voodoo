@@ -570,14 +570,31 @@ class Expander:
             yield comma, item
             comma = ", "
 
+    def _humanise_type(self, type):
+        if type.base() == 9:
+            return f"leafref -> {libyang.c2str(type._type.info.lref.path)}"
+
+        if type.base() == 6:
+            enums = [enum[0] for enum in type.enums()]
+            return f"enumeration [ {'; '.join(enums)} ]"
+
+        derrived_type = type.derived_type().name()
+        this_type = type.name()
+        if this_type != derrived_type:
+            return f"{this_type} ({derrived_type})"
+        return type.name()
+
+    def _expand_types(self, type):
+        union_types = list(type.union_types())
+
+        for type in union_types:
+            if type.base() == 11:
+                yield from self._expand_types(type)
+            else:
+                yield self._humanise_type(type)
+
+        if not union_types:
+            yield self._humanise_type(type)
+
     def get_human_types(self, node):
-        if node.type().name() == "leafref":
-            leafref_path = libyang.c2str(node._leaf.type.info.lref.path)
-            yield f"leafref -> {leafref_path}"
-        else:
-            enums = [enum[0] for enum in node.type().all_enums()]
-            if enums:
-                yield f"enumeration [ {'; '.join(enums)} ]"
-            for base_name in node.type().basenames():
-                if str(base_name) not in ("enumeration",):
-                    yield str(base_name)
+        yield from self._expand_types(node.type())
