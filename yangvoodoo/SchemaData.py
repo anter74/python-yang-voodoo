@@ -598,3 +598,15 @@ class Expander:
 
     def get_human_types(self, node):
         yield from self._expand_types(node.type())
+
+    def get_human_constraints(self, node):
+        type = node.type()
+        for pattern in type.all_patterns():
+            if pattern[1]:
+                yield f"Pattern (Inverse): {pattern[0]}"
+            else:
+                yield f"Pattern: {pattern[0]}"
+        for length in type.all_lengths():
+            yield f"Length: {length}"
+        for range in type.all_ranges():
+            yield f"Range: {range}"

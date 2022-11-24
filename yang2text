@@ -44,6 +44,7 @@ class DullDisplay:
     MUST = "% "
     CHOICE = "? "
     CASE = "^ "
+    CONSTRAINT = ""
 
     @staticmethod
     def get_active(active):
@@ -68,6 +69,7 @@ class Display:
     MUST = "☢ "
     CHOICE = "🔄 "
     CASE = "📍 "
+    CONSTRAINT = "🔍 "
 
     @staticmethod
     def get_active(active):
@@ -120,6 +122,14 @@ class Yang2Text(Expander):
                 self.result.write(f"{self.get_indent()}      {must}{line}\n")
                 must = ""
             self.result.write("\n")
+            self.result.write(Display.NORMAL)
+
+    def _show_constraints(self, node):
+        for constraint in self.get_human_constraints(node):
+            self.result.write(Display.BRIGHT)
+            self.result.write(
+                f"{self.get_indent()}      {Display.CONSTRAINT}{constraint}\n"
+            )
             self.result.write(Display.NORMAL)
 
     def _show_description(self, description):
@@ -179,6 +189,7 @@ class Yang2Text(Expander):
 
         self._show_paths(node.schema_path(), "".join(self.data_path_trail))
         self._show_when(node)
+        self._show_constraints(node)
         self._show_description(node.description)
 
     def callback_open_containing_node(self, node, presence, node_id):

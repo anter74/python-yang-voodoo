@@ -43,7 +43,7 @@ def test_humanising_types(subject):
     ]
 
 
-def test_humanising_types_leafref(subject):
+def test_humanising_constraints_patterns_and_lengths(subject):
     node = list(
         subject.ctx.find_path(
             "/integrationtest:validator/integrationtest:strings/integrationtest:patternandlengtherror"
@@ -51,4 +51,18 @@ def test_humanising_types_leafref(subject):
     )[0]
 
     # Assert Leaf Ref's
-    assert list(subject.get_human_constraints(node)) == ["leafref -> ../leaf7"]
+    assert list(subject.get_human_constraints(node)) == [
+        "Pattern: A.+Z",
+        "Length: 2 | 3",
+    ]
+
+
+def test_humanising_constraints_ranges(subject):
+    node = list(
+        subject.ctx.find_path(
+            "/integrationtest:morecomplex/integrationtest:inner/integrationtest:uint8keylist/integrationtest:mykey"
+        )
+    )[0]
+
+    # Assert Leaf Ref's
+    assert list(subject.get_human_constraints(node)) == ["Range: 0..7"]
