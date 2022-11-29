@@ -61,9 +61,22 @@ class Expander:
         self.ctx = libyang.Context(self.YANG_LOCATION)
         self.ctx.load_module(yang_module)
         self.data_ctx = libyang.DataTree(self.ctx)
-
+        self.schema_filter_list = []
+        self._is_schema_node_filtered = lambda x: False
         self.result = StringIO()
         self.indent = 0
+
+    def set_schema_filter_list(self, filter_list: List[str]):
+        """
+        Take a list of nodes and filter it and it's decendants
+
+        Args:
+            filter_list: A list of yang schema xpaths
+        """
+        self._is_schema_node_filtered = (
+            self._is_schema_node_filtered_check_with_filter_list
+        )
+        self.schema_filter_list = filter_list
 
     def dumps(self):
         self.result.seek(0)
@@ -73,6 +86,26 @@ class Expander:
         self.result.seek(0)
         with open(filename, "w") as fh:
             fh.write(self.result.read())
+
+    def _is_schema_node_filtered_check_with_filter_list(
+        self, node: libyang.schema.Node
+    ) -> bool:
+        """
+        Check if a node's schema path is on a filter list - case should be taken constructing the
+        list to ensure the most likely parts are earlier in the list to avoid recursing the filter
+        list more than necessary.
+
+        Args:
+            node: A libyang schema node.
+
+        Returns:
+            if this node should be filtered.
+        """
+        for path in self.schema_filter_list:
+            schema_path = node.schema_path()
+            if schema_path.startswith(path):
+                return True
+        return False
 
     def process(self, initial_data: str = None, format: int = 1) -> StringIO:
         """
@@ -103,6 +136,7 @@ class Expander:
         self.data_path_trail = [""]
         self.id_path_trail = [""]
         self.schema_path_trail = [""]
+
         for node in self.ctx.find_path(f"/{self.yang_module}:*"):
             self._process_nodes(node)
 
@@ -298,7 +332,8 @@ class Expander:
             raise NotImplementedError(
                 f"{node.schema_path()} has unknown type {node.nodetype()}"
             )
-        getattr(self, self.SCHEMA_NODE_TYPE_MAP[node.nodetype()])(node)
+        if not self._is_schema_node_filtered(node):
+            getattr(self, self.SCHEMA_NODE_TYPE_MAP[node.nodetype()])(node)
 
     def _handle_schema_containing_node(self, node):
         self.grow_trail(node)

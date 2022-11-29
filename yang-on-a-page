@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 import argparse
 import hashlib
+import json
 import logging
 import pydoc
 import sys
 import time
 from yangvoodoo.SchemaData import Expander
+
+args = None
 
 parser = argparse.ArgumentParser(
     description="Combine a YANG schema with a supplied data payload."
@@ -73,15 +76,13 @@ parser.add_argument(
     default=False,
     action="store_true",
 )
+parser.add_argument(
+    "--enable-filter-list",
+    help="Use a JSON file providing a list of schema XPATHs to filter it (and it's child nodes)",
+    type=argparse.FileType("r"),
+)
 
-args = parser.parse_args()
 
-
-if args.brief:
-    args.hide_types = True
-    args.hide_descriptions = True
-    args.hide_title = True
-    args.hide_constraints = True
 FORMATS = {"xml": 1, "json": 2}
 
 
@@ -108,6 +109,12 @@ class DullDisplay:
     def get_active(active):
         if active:
             return "* "
+        return ""
+
+    @staticmethod
+    def get_presence(presence):
+        if presence:
+            return "+ "
         return ""
 
 
@@ -141,10 +148,6 @@ class Display:
         if presence:
             return "✔ "
         return ""
-
-
-if args.plain:
-    Display = DullDisplay
 
 
 class Yang2Text(Expander):
@@ -212,7 +215,7 @@ class Yang2Text(Expander):
             width = args.term_width - len(blank_indent)
             if width < args.min_block_width:
                 width = args.min_block_width
-            self.result.write(f"{Display.DIM}\n{blank_indent}")
+            self.result.write(f"\n{blank_indent}{Display.DIM}      ")
             for word in self.block_quotify(
                 description(),
                 width,
@@ -278,14 +281,12 @@ class Yang2Text(Expander):
     def _show_paths(self, schema_path, data_path):
         if args.data_xpath:
             self.result.write(
-                f"{self.get_indent()}      {Display.DIM}D: {data_path}{Display.NORMAL}\n"
+                f"{self.get_blank_indent(6)}{Display.DIM}D: {data_path}{Display.NORMAL}\n"
             )
         if args.schema_xpath:
             self.result.write(
-                f"{self.get_indent()}      {Display.DIM}S: {schema_path}{Display.NORMAL}\n"
+                f"{self.get_blank_indent(6)}{Display.DIM}S: {schema_path}{Display.NORMAL}\n"
             )
-        if args.schema_xpath or args.data_xpath:
-            self.result.write("\n")
 
     def callback_write_leaf(self, node, value, default, key, node_id):
         self.result.write(f"{self.get_indent()} {Display.NORMAL}{Display.LEAF}")
@@ -360,12 +361,10 @@ class Yang2Text(Expander):
         self.result.write(Display.NORMAL)
 
 
-if __name__ == "__main__":
-    log = logging.getLogger("yang2text")
-    logging.basicConfig()
-    log.setLevel(50)
-
+def do(args, log):
     generator = Yang2Text(args.yang, log)
+    if args.enable_filter_list:
+        generator.set_schema_filter_list(json.loads(args.enable_filter_list.read()))
     if args.data:
         generator.process(args.data.read(), FORMATS[args.format])
     else:
@@ -376,3 +375,22 @@ if __name__ == "__main__":
         pydoc.pipepager(generator.result.read(), cmd=f"less -R -i -p {args.search}")
     else:
         pydoc.pipepager(generator.result.read(), cmd=f"less -R -i ")
+
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+
+    if args.brief:
+        args.hide_types = True
+        args.hide_descriptions = True
+        args.hide_title = True
+        args.hide_constraints = True
+
+    if args.plain:
+        Display = DullDisplay
+
+    log = logging.getLogger("yang2text")
+    logging.basicConfig()
+    log.setLevel(50)
+
+    do(args, log)
