@@ -20,6 +20,7 @@ setuptools.setup(
         "Jinja2>=2.11.1",
         "dictdiffer>=0.8.1",
     ],
+    scripts=["yang-on-a-page"],
     zip_safe=False,
     include_package_data=True,
     classifiers=[

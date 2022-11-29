@@ -33,6 +33,7 @@ def test_lists(subject):
 
     # Assert Leafs
     assert subject.callback_write_leaf.mock_calls == [
+        call(ANY, '""', default=None, key=False, node_id="/testforms:topleaf"),
         call(
             ANY,
             "'world'",
@@ -44,22 +45,22 @@ def test_lists(subject):
             ANY,
             '""',
             default=None,
-            node_id="/testforms:toplevel/mychoice/mycase1/box/clown",
             key=False,
+            node_id="/testforms:toplevel/mychoice/mycase1/box/clown",
         ),
         call(
             ANY,
             '""',
             default=None,
-            node_id="/testforms:toplevel/mychoice/mycase3/empty",
             key=False,
+            node_id="/testforms:toplevel/mychoice/mycase3/empty",
         ),
         call(
             ANY,
             "'A'",
             default=None,
-            node_id="/testforms:toplevel/simplelist[simplekey='A']/simplekey",
             key=True,
+            node_id="/testforms:toplevel/simplelist[simplekey='A']/simplekey",
         ),
         call(
             ANY,
@@ -89,6 +90,34 @@ def test_lists(subject):
             node_id="/testforms:toplevel/still-in-top/of-the-world",
             key=False,
         ),
+        call(
+            ANY,
+            '""',
+            default=None,
+            key=False,
+            node_id="/testforms:toplevel/still-in-top/pointer",
+        ),
+        call(
+            ANY,
+            '""',
+            default=None,
+            key=False,
+            node_id="/testforms:toplevel/still-in-top/a",
+        ),
+        call(
+            ANY,
+            "'true'",
+            default="true",
+            key=False,
+            node_id="/testforms:toplevel/still-in-top/a-turned-on",
+        ),
+        call(
+            ANY,
+            "'false'",
+            default="false",
+            key=False,
+            node_id="/testforms:toplevel/still-in-top/b-turned-on",
+        ),
     ]
 
     # Assert Containers
@@ -101,6 +130,7 @@ def test_lists(subject):
             presence=False,
         ),
         call(ANY, node_id="/testforms:toplevel/still-in-top", presence=False),
+        call(ANY, presence=False, node_id="/testforms:toplevel/still-in-top/b"),
     ]
 
     # Assert List

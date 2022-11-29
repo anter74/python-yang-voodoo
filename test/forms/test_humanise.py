@@ -37,9 +37,9 @@ def test_humanising_types(subject):
 
     # Assert Union of Union's
     assert list(subject.get_human_types(node)) == [
-        "type2 (uint32)",
-        "enumeration [ A; B; C ]",
-        "type5 (string)",
+        ("type2 (uint32)", []),
+        ("enumeration [ A; B; C ]", []),
+        ("type5 (string)", []),
     ]
 
 
@@ -51,7 +51,7 @@ def test_humanising_constraints_patterns_and_lengths(subject):
     )[0]
 
     # Assert Leaf Ref's
-    assert list(subject.get_human_constraints(node)) == [
+    assert list(subject.get_human_constraints(node.type())) == [
         "Pattern: A.+Z",
         "Length: 2 | 3",
     ]
@@ -65,4 +65,4 @@ def test_humanising_constraints_ranges(subject):
     )[0]
 
     # Assert Leaf Ref's
-    assert list(subject.get_human_constraints(node)) == ["Range: 0..7"]
+    assert list(subject.get_human_constraints(node.type())) == ["Range: 0..7"]

@@ -43,6 +43,8 @@ class Expander:
 
     YANG_LOCATION = "yang"
     QUOTE_ESCAPE_STYLE = "select-single-vs-double"
+    INDENT_CHAR = " "
+    INDENT_MINIMUM = 0
     INDENT_SPACING = 2
     SCHEMA_NODE_TYPE_MAP = {
         1: "_handle_schema_containing_node",
@@ -72,7 +74,7 @@ class Expander:
         with open(filename, "w") as fh:
             fh.write(self.result.read())
 
-    def process(self, initial_data: str, format: int = 1) -> StringIO:
+    def process(self, initial_data: str = None, format: int = 1) -> StringIO:
         """
         Process a starting data tree in a given format (XML=1, JSON=2) as recursing the schema expand
         to include any data that exists against each part of the schema. During expansion of the schema/data tree
@@ -108,6 +110,7 @@ class Expander:
 
         self.callback_write_footer(self.ctx.get_module(self.yang_module))
 
+        self.result.seek(0)
         return self.result
 
     def callback_write_header(self, module: libyang.schema.Module):
@@ -543,15 +546,56 @@ class Expander:
         return str(uuid.uuid5(uuid.uuid5(uuid.NAMESPACE_URL, "pyvwu"), trail))
 
     def get_indent(self):
-        return " " * self.indent * self.INDENT_SPACING
+        return (
+            self.INDENT_CHAR * (self.indent + self.INDENT_MINIMUM) * self.INDENT_SPACING
+        )
+
+    def get_blank_indent(self, extra_indent=0):
+        return (
+            " "
+            * (
+                len(self.INDENT_CHAR)
+                + (self.indent - 1)
+                + self.INDENT_MINIMUM
+                + extra_indent
+            )
+            * self.INDENT_SPACING
+        )
+
+    def block_quotify(self, text, width, indent):
+        next_line_indent = None
+        lines = text.split("\n")
+        for line in lines:
+            if next_line_indent:
+                yield next_line_indent
+            if len(line) < width:
+                yield f"{line}"
+            else:
+                line_width = 0
+                for word in line.split(" "):
+                    line_width += len(word)
+                    if len(word) > width:
+                        yield f"\n{indent}{word}"
+                    elif line_width < width:
+                        yield f"{word} "
+                    else:
+                        yield f"\n{indent}{word} "
+                        line_width = 0
+            next_line_indent = f"\n{indent}"
 
     def open_indent(self):
         self.indent += 1
-        return " " * (self.indent - 1) * self.INDENT_SPACING
+        return (
+            self.INDENT_CHAR
+            * ((self.indent - 1) + self.INDENT_MINIMUM)
+            * self.INDENT_SPACING
+        )
 
     def close_indent(self):
         self.indent -= 1
-        return " " * self.indent * self.INDENT_SPACING
+        return (
+            self.INDENT_CHAR * (self.indent + self.INDENT_MINIMUM) * self.INDENT_SPACING
+        )
 
     @staticmethod
     def pluralise(listobj):
@@ -572,17 +616,21 @@ class Expander:
 
     def _humanise_type(self, type):
         if type.base() == 9:
-            return f"leafref -> {libyang.c2str(type._type.info.lref.path)}"
+            return f"leafref -> {libyang.c2str(type._type.info.lref.path)}", []
 
         if type.base() == 6:
             enums = [enum[0] for enum in type.enums()]
-            return f"enumeration [ {'; '.join(enums)} ]"
+            return f"enumeration [ {'; '.join(enums)} ]", list(
+                self.get_human_constraints(type)
+            )
 
         derrived_type = type.derived_type().name()
         this_type = type.name()
         if this_type != derrived_type:
-            return f"{this_type} ({derrived_type})"
-        return type.name()
+            return f"{this_type} ({derrived_type})", list(
+                self.get_human_constraints(type)
+            )
+        return type.name(), list(self.get_human_constraints(type))
 
     def _expand_types(self, type):
         union_types = list(type.union_types())
@@ -599,8 +647,7 @@ class Expander:
     def get_human_types(self, node):
         yield from self._expand_types(node.type())
 
-    def get_human_constraints(self, node):
-        type = node.type()
+    def get_human_constraints(self, type):
         for pattern in type.all_patterns():
             if pattern[1]:
                 yield f"Pattern (Inverse): {pattern[0]}"

@@ -33,6 +33,7 @@ def test_leafs(subject):
 
     # Assert Leafs
     assert subject.callback_write_leaf.mock_calls == [
+        call(ANY, '""', default=None, key=False, node_id="/testforms:topleaf"),
         call(
             ANY,
             "'world'",
@@ -61,6 +62,34 @@ def test_leafs(subject):
             node_id="/testforms:toplevel/still-in-top/of-the-world",
             key=False,
         ),
+        call(
+            ANY,
+            '""',
+            default=None,
+            key=False,
+            node_id="/testforms:toplevel/still-in-top/pointer",
+        ),
+        call(
+            ANY,
+            '""',
+            default=None,
+            key=False,
+            node_id="/testforms:toplevel/still-in-top/a",
+        ),
+        call(
+            ANY,
+            "'true'",
+            default="true",
+            key=False,
+            node_id="/testforms:toplevel/still-in-top/a-turned-on",
+        ),
+        call(
+            ANY,
+            "'false'",
+            default="false",
+            key=False,
+            node_id="/testforms:toplevel/still-in-top/b-turned-on",
+        ),
     ]
 
     # Assert Containers
@@ -73,6 +102,7 @@ def test_leafs(subject):
             presence=False,
         ),
         call(ANY, node_id="/testforms:toplevel/still-in-top", presence=False),
+        call(ANY, presence=False, node_id="/testforms:toplevel/still-in-top/b"),
     ]
     # Assert List
     assert subject.callback_open_list.mock_calls == [
