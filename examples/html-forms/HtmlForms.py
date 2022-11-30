@@ -98,14 +98,17 @@ class HtmlFormExpander(Expander):
             )
 
             self.result.write(
-                f'data-toggle="tooltip" data-placement="top" data-html="true" title="{", ".join(self.get_tooltip_types(node))}"'
+                f'data-toggle="tooltip" data-placement="top" data-html="true" title="{"".join(self.get_tooltip_types(node))}"'
             )
 
             self.result.write("><br/>\n")
 
     def get_tooltip_types(self, node):
         for type, constraint in self.get_human_types(node):
-            yield f"{type} {{{', '.join(constraint)}}}"
+            if constraint:
+                yield f"{type} {{{', '.join(constraint)}}}" + "\n"
+            else:
+                yield f"{type}" + "\n"
 
     def callback_open_list(self, node, count, node_id):
         """
@@ -172,7 +175,7 @@ class HtmlFormExpander(Expander):
             f"\n{self.open_indent()}&nbsp;&nbsp;<a class='btn' data-bs-toggle='collapse' role='button' href='#collapse-{self.get_uuid()}' aria-expanded='false' aria-controls='collapse-{self.get_uuid()}'><i class='fa fa-map-pin' aria-hidden='true'></i></a>"
         )
         self.result.write(
-            f"&nbsp;<a class='btn btn-warning' {self.get_html_attr('href', 'javascript:remove_case', schema=True)}><i class='fa fa-times'></i></a>&nbsp;"
+            f"&nbsp;<a class='btn btn-warning' href=javascript:remove_case({self.get_id()})><i class='fa fa-times'></i></a>&nbsp;"
         )
         self.result.write(f"{self.get_indent()}<label class='structure_choicelabel'")
         if node.description():
@@ -235,14 +238,19 @@ class HtmlFormExpander(Expander):
         self.result.write(f"{self.close_indent()}</div>\n")
         self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id()} ;eaf list -->\n\n")
 
-    def callback_write_leaflist_item(self, value, node_id):
+    def callback_write_leaflist_item(self, node, value, node_id):
         self.result.write(f"\n{self.open_indent()}<div class='structure_listelement' id={self.get_id()}>\n")
         self.result.write(
             "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-leaf yang_icon' aria-hidden='true'></i>&nbsp;"
         )
         self.result.write(
-            f"{self.get_indent()}<input type='text' name={self.get_id()} id={self.get_id()} value={value} {self.get_html_attr('onBlur', 'leaf_blur', this=True, data=True)} disable>\n"
+            f"{self.get_indent()}<input type='text' name={self.get_id()} id={self.get_id()} value={value} {self.get_html_attr('onBlur', 'leaf_blur', this=True, data=True)} disable "
         )
+        self.result.write(
+            f'data-toggle="tooltip" data-placement="top" data-html="true" title="{"".join(self.get_tooltip_types(node))}"'
+        )
+
+        self.result.write(">\n")
         self.result.write(
             f"{self.get_indent()}&nbsp;&nbsp;<a class='btn btn-warning' {self.get_html_attr('href', 'javascript:remove_leaflist_element', data=True)}><i class='fa fa-times warning'></i></a>&nbsp;\n"
         )

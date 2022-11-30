@@ -13,6 +13,7 @@ class TestExpander(Expander):
         self.callback_write_leaf = Mock()
         self.callback_open_leaflist = Mock()
         self.callback_close_leaflist = Mock()
+        self.callback_write_leaflist_item = Mock()
         self.callback_open_choice = Mock()
         self.callback_close_choice = Mock()
         self.callback_open_case = Mock()
@@ -120,6 +121,9 @@ def test_lists(subject):
         ),
     ]
 
+    # Assert Leaf-Lists
+    assert subject.callback_write_leaflist_item.mock_calls == []
+
     # Assert Containers
     assert subject.callback_open_containing_node.mock_calls == [
         call(ANY, node_id="/testforms:toplevel", presence=True),
@@ -134,9 +138,7 @@ def test_lists(subject):
     ]
 
     # Assert List
-    assert subject.callback_open_list.mock_calls == [
-        call(ANY, count=2, node_id="/testforms:toplevel/simplelist")
-    ]
+    assert subject.callback_open_list.mock_calls == [call(ANY, count=2, node_id="/testforms:toplevel/simplelist")]
 
     # Assert List Element
     assert subject.callback_open_list_element.mock_calls == [
@@ -155,10 +157,6 @@ def test_lists(subject):
     ]
 
     # Assert Choice
-    assert subject.callback_open_choice.mock_calls == [
-        call(ANY, node_id="/testforms:toplevel/mychoice")
-    ]
+    assert subject.callback_open_choice.mock_calls == [call(ANY, node_id="/testforms:toplevel/mychoice")]
     # Assert Case
-    assert subject.callback_open_choice.mock_calls == [
-        call(ANY, node_id="/testforms:toplevel/mychoice")
-    ]
+    assert subject.callback_open_choice.mock_calls == [call(ANY, node_id="/testforms:toplevel/mychoice")]

@@ -15,9 +15,7 @@ class UnableToRenderFormError:
 
 class UnableToDetermineQuotesError(UnableToRenderFormError):
     def __init__(self, value):
-        super().__init__(
-            f"Unable to find a quote style to use for the following value:\n{value}"
-        )
+        super().__init__(f"Unable to find a quote style to use for the following value:\n{value}")
 
 
 class Expander:
@@ -74,9 +72,7 @@ class Expander:
         Args:
             filter_list: A list of yang schema xpaths
         """
-        self._is_schema_node_filtered = (
-            self._is_schema_node_filtered_check_with_filter_list
-        )
+        self._is_schema_node_filtered = self._is_schema_node_filtered_check_with_filter_list
         self.schema_filter_list = filter_list
 
     def dumps(self) -> str:
@@ -88,9 +84,7 @@ class Expander:
         with open(filename, "w") as fh:
             fh.write(self.result.read())
 
-    def _is_schema_node_filtered_check_with_filter_list(
-        self, node: libyang.schema.Node
-    ) -> bool:
+    def _is_schema_node_filtered_check_with_filter_list(self, node: libyang.schema.Node) -> bool:
         """
         Check if a node's schema path is on a filter list - case should be taken constructing the
         list to ensure the most likely parts are earlier in the list to avoid recursing the filter
@@ -166,9 +160,7 @@ class Expander:
         self.result.seek(0)
         return self.result
 
-    def data_tree_add_list_element(
-        self, list_xpath: str, key_values: List[Tuple[str, str]]
-    ):
+    def data_tree_add_list_element(self, list_xpath: str, key_values: List[Tuple[str, str]]):
         for k, v in key_values:
             list_xpath += Utils.encode_xpath_predicate(k, v)
         self.data_ctx.set_xpath(list_xpath, "")
@@ -201,19 +193,13 @@ class Expander:
                 )
             break
         else:
-            self.log.error(
-                "Cannot subprocess non-existing data path: %s", list_element_data_xpath
-            )
+            self.log.error("Cannot subprocess non-existing data path: %s", list_element_data_xpath)
             return
 
-        for (_, _, _, predicates, _, _) in Utils.XPATH_DECODER_V4.findall(
-            list_element_data_xpath
-        ):
+        for (_, _, _, predicates, _, _) in Utils.XPATH_DECODER_V4.findall(list_element_data_xpath):
             continue
 
-        list_xpath = list_element_data_xpath[
-            : list_element_data_xpath.rfind(predicates)
-        ]
+        list_xpath = list_element_data_xpath[: list_element_data_xpath.rfind(predicates)]
         node = result.get_schema()
         self.id_path_trail.append(list_xpath)
         self.data_path_trail.append(list_xpath)
@@ -303,9 +289,7 @@ class Expander:
         """
         raise NotImplementedError("callback_close_list")
 
-    def callback_write_leaf(
-        self, node: libyang.Node, value: str, default: str, key: bool, node_id: str
-    ):
+    def callback_write_leaf(self, node: libyang.Node, value: str, default: str, key: bool, node_id: str):
         """
         Called when the a leaf has been encountered.
 
@@ -318,9 +302,7 @@ class Expander:
         """
         raise NotImplementedError("callback_write_leaf")
 
-    def callback_open_containing_node(
-        self, node: libyang.Node, presence: bool, node_id: str
-    ):
+    def callback_open_containing_node(self, node: libyang.Node, presence: bool, node_id: str):
         """
         Called when the a container has been encountered.
 
@@ -350,6 +332,17 @@ class Expander:
             node_id: The node id using a hybrid schema/data path.
         """
         raise NotImplementedError("callback_open_leaflist_node")
+
+    def callback_write_leaflist_item(self, node: libyang.Node, value: str, node_id: str):
+        """
+        Called when the a leaf-list has been encountered.
+
+        Args:
+            node: The libyang node of the leaf-list statement
+            value: The value of the leaf-list node
+            node_id: The node id using a hybrid schema/data path.
+        """
+        raise NotImplementedError("callback_write_leaflist_item")
 
     def callback_close_leaflist(self, node):
         """
@@ -381,9 +374,7 @@ class Expander:
         """
         raise NotImplementedError("callback_close_choice")
 
-    def callback_open_case(
-        self, node: libyang.Node, active_case: bool, no_active_case: bool, node_id: str
-    ):
+    def callback_open_case(self, node: libyang.Node, active_case: bool, no_active_case: bool, node_id: str):
         """
         Called when the a case statement (mutually exclusive) has been encountered.
 
@@ -406,9 +397,7 @@ class Expander:
 
     def _process_nodes(self, node):
         if node.nodetype() not in self.SCHEMA_NODE_TYPE_MAP:
-            raise NotImplementedError(
-                f"{node.schema_path()} has unknown type {node.nodetype()}"
-            )
+            raise NotImplementedError(f"{node.schema_path()} has unknown type {node.nodetype()}")
         if not self._is_schema_node_filtered(node):
             getattr(self, self.SCHEMA_NODE_TYPE_MAP[node.nodetype()])(node)
 
@@ -421,9 +410,7 @@ class Expander:
             if value is not None:
                 presence = True
 
-        self.callback_open_containing_node(
-            node, presence=presence, node_id="".join(self.id_path_trail)
-        )
+        self.callback_open_containing_node(node, presence=presence, node_id="".join(self.id_path_trail))
 
         try:
             for subnode in self.ctx.find_path(f"{node.schema_path()}/*"):
@@ -499,9 +486,7 @@ class Expander:
 
         self.shrink_trail()
 
-    def _handle_list_element(
-        self, node: libyang.Node, populate_key_value_tuple: bool = True
-    ):
+    def _handle_list_element(self, node: libyang.Node, populate_key_value_tuple: bool = True):
         """
         Args:
             node: The node of the list containing this list element.
@@ -510,9 +495,7 @@ class Expander:
         if populate_key_value_tuple:
             keys = []
             xpath = "".join(self.data_path_trail)
-            key_values = list(
-                list(self.data_ctx.get_xpath(xpath))[0].get_list_key_values()
-            )
+            key_values = list(list(self.data_ctx.get_xpath(xpath))[0].get_list_key_values())
         else:
             key_values = [(k.name(), None) for k in node.keys()]
 
@@ -543,6 +526,7 @@ class Expander:
             list_xpath = list_node[len(trail) :]
             self.grow_trail(list_element_predicates=list_xpath, schema=False)
             self.callback_write_leaflist_item(
+                node,
                 self.get_data(),
                 node_id="".join(self.id_path_trail),
             )
@@ -560,8 +544,6 @@ class Expander:
         for case in self.ctx.find_path(f"{node.schema_path()}/*"):
             if case.nodetype() == 64:
                 cases.append(case)
-
-        choice_path = node.schema_path()
 
         trail = "".join(self.data_path_trail)
         for data_xpath in self.data_ctx.gets_xpath(f"{trail}/*"):
@@ -640,16 +622,11 @@ class Expander:
         self.log.debug("SHRINK: %s", self.schema_path_trail)
         self.log.debug("SHRINK: %s", self.id_path_trail)
 
-    def grow_trail(
-        self, node=None, list_element_predicates=None, schema=True, data=True
-    ):
+    def grow_trail(self, node=None, list_element_predicates=None, schema=True, data=True):
         if data:
             if list_element_predicates is not None:
                 data_component = list_element_predicates
-            elif (
-                node.module().name() != self.yang_module
-                or len(self.data_path_trail) == 1
-            ):
+            elif node.module().name() != self.yang_module or len(self.data_path_trail) == 1:
                 data_component = f"/{node.module().name()}:{node.name()}"
             else:
                 data_component = f"/{node.name()}"
@@ -682,20 +659,11 @@ class Expander:
         return str(uuid.uuid5(uuid.uuid5(uuid.NAMESPACE_URL, "pyvwu"), trail))
 
     def get_indent(self):
-        return (
-            self.INDENT_CHAR * (self.indent + self.INDENT_MINIMUM) * self.INDENT_SPACING
-        )
+        return self.INDENT_CHAR * (self.indent + self.INDENT_MINIMUM) * self.INDENT_SPACING
 
     def get_blank_indent(self, extra_indent=0):
         return (
-            " "
-            * (
-                len(self.INDENT_CHAR)
-                + (self.indent - 1)
-                + self.INDENT_MINIMUM
-                + extra_indent
-            )
-            * self.INDENT_SPACING
+            " " * (len(self.INDENT_CHAR) + (self.indent - 1) + self.INDENT_MINIMUM + extra_indent) * self.INDENT_SPACING
         )
 
     def block_quotify(self, text, width, indent):
@@ -721,17 +689,11 @@ class Expander:
 
     def open_indent(self):
         self.indent += 1
-        return (
-            self.INDENT_CHAR
-            * ((self.indent - 1) + self.INDENT_MINIMUM)
-            * self.INDENT_SPACING
-        )
+        return self.INDENT_CHAR * ((self.indent - 1) + self.INDENT_MINIMUM) * self.INDENT_SPACING
 
     def close_indent(self):
         self.indent -= 1
-        return (
-            self.INDENT_CHAR * (self.indent + self.INDENT_MINIMUM) * self.INDENT_SPACING
-        )
+        return self.INDENT_CHAR * (self.indent + self.INDENT_MINIMUM) * self.INDENT_SPACING
 
     @staticmethod
     def pluralise(listobj):
@@ -756,16 +718,12 @@ class Expander:
 
         if type.base() == 6:
             enums = [enum[0] for enum in type.enums()]
-            return f"enumeration [ {'; '.join(enums)} ]", list(
-                self.get_human_constraints(type)
-            )
+            return f"enumeration [ {'; '.join(enums)} ]", list(self.get_human_constraints(type))
 
         derrived_type = type.derived_type().name()
         this_type = type.name()
         if this_type != derrived_type:
-            return f"{this_type} ({derrived_type})", list(
-                self.get_human_constraints(type)
-            )
+            return f"{this_type} ({derrived_type})", list(self.get_human_constraints(type))
         return type.name(), list(self.get_human_constraints(type))
 
     def _expand_types(self, type):

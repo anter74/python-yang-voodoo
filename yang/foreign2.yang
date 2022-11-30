@@ -1,0 +1,19 @@
+module foreign2 {
+  namespace "uri://foreign2";
+  prefix "foreign2";
+
+  import integrationtest {prefix target;}
+
+  typedef mytypedef {
+    type uint8;
+  }
+
+  augment /target:augments/target:foreign-augments {
+
+    leaf simpleleaf {
+      type uint8;
+    }
+
+
+  }
+}
