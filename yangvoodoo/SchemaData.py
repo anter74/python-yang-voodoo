@@ -7,6 +7,8 @@ import uuid
 from io import StringIO
 from typing import List, Tuple
 
+from yangvoodoo.Common import Utils
+
 
 class UnableToRenderFormError:
     pass
@@ -78,9 +80,9 @@ class Expander:
         )
         self.schema_filter_list = filter_list
 
-    def dumps(self):
+    def dumps(self) -> str:
         self.result.seek(0)
-        print(self.result.read())
+        return self.result.read()
 
     def dump(self, filename):
         self.result.seek(0)
@@ -107,6 +109,21 @@ class Expander:
                 return True
         return False
 
+    def load(self, initial_data: str = None, format: int = 1):
+        """
+        Load an initial data tree but do not trigger processing based on the root of the data/scheam tree.
+
+        Args:
+            initial_data: An IETF JSON or XML data payload conforming to a yang model.
+            format: payload format (1=XML, 2=IETF JSON)
+        """
+        self.log.info("Loading: %s", self.yang_module)
+        if initial_data:
+            self.data_ctx.loads(initial_data, format)
+        self.data_path_trail = [""]
+        self.id_path_trail = [""]
+        self.schema_path_trail = [""]
+
     def process(self, initial_data: str = None, format: int = 1) -> StringIO:
         """
         Process a starting data tree in a given format (XML=1, JSON=2) as recursing the schema expand
@@ -123,14 +140,17 @@ class Expander:
 
         In the process of navigating the schema we keep track of the hirearchy of the model in three 'trails', this
         allows us to keep a consistent view of the schema path, data path and a hybrid path.
+
+        Args:
+            initial_data: An IETF JSON or XML data payload conforming to a yang model.
+            format: payload format (1=XML, 2=IETF JSON)
         """
+        self.load(initial_data, format)
         self.log.info("Processing: %s", self.yang_module)
-        if initial_data:
-            self.data_ctx.loads(initial_data, format)
+
         self.result = StringIO()
 
         self.callback_write_header(self.ctx.get_module(self.yang_module))
-
         self.callback_write_title(self.ctx.get_module(self.yang_module))
 
         self.data_path_trail = [""]
@@ -146,6 +166,64 @@ class Expander:
 
         self.result.seek(0)
         return self.result
+
+    def data_tree_add_list_element(
+        self, list_xpath: str, key_values: List[Tuple[str, str]]
+    ):
+        for k, v in key_values:
+            list_xpath += Utils.encode_xpath_predicate(k, v)
+        self.data_ctx.set_xpath(list_xpath, "")
+
+    def data_tree_set_leaf(self, xpath: str, value: str):
+        if not value:
+            self.data_ctx.delete_xpath(xpath)
+        else:
+            self.data_ctx.set_xpath(xpath, value)
+
+    def subprocess(self, list_element_data_xpath: str):
+        """
+        Mimic the call from `handle_schema_list` -> `_handle_list_element`, which may mimic a user
+        action of adding a list element.
+
+        The trails are not perfectly formed therefore we may not shrink the trails up the data tree
+        - however assuming this is about creating additions of list elements to ane existing data
+        tree this should be ok.
+        """
+        self.result.seek(0)
+        self.result.truncate()
+        self.data_path_trail = [""]
+        self.id_path_trail = [""]
+        self.schema_path_trail = [""]
+
+        for result in self.data_ctx.get_xpath(list_element_data_xpath):
+            if result.get_schema().nodetype() != 16:
+                raise NotImplementedError(
+                    f"subprocess only supports processing of a list element: {list_element_data_xpath}"
+                )
+            break
+        else:
+            self.log.error(
+                "Cannot subprocess non-existing data path: %s", list_element_data_xpath
+            )
+            return
+
+        for (_, _, _, predicates, _, _) in Utils.XPATH_DECODER_V4.findall(
+            list_element_data_xpath
+        ):
+            continue
+
+        list_xpath = list_element_data_xpath[
+            : list_element_data_xpath.rfind(predicates)
+        ]
+        node = result.get_schema()
+        self.id_path_trail.append(list_xpath)
+        self.data_path_trail.append(list_xpath)
+        self.schema_path_trail.append(result.get_schema_path())
+
+        for list_node in [list_element_data_xpath]:
+            self.grow_trail(list_element_predicates=predicates, schema=False)
+            self._handle_list_element(node)
+            self.shrink_trail(schema=False)
 
     def callback_write_header(self, module: libyang.schema.Module):
         """
@@ -379,6 +457,23 @@ class Expander:
         self.shrink_trail()
 
     def _handle_schema_list(self, node):
+        """
+        Expanding the schema list to either
+        a) include a templated list element (if there are not items in the list)
+        b) include list elements that do exist in the data tree)
+
+        Example:
+          trail: /testforms:toplevel/simplelist   (built from the data path to the list)
+          list_items: ["/testforms:toplevel/simplelist[simplekey='A']",
+                       "/testforms:toplevel/simplelist[simplekey='B']"]
+                                                  (built from a query of trail to the list
+          node: <libyang.schema.List: simplelist [simplekey]>    the schema node of the list
+          list_xpath: "[simplekey='A']"   the predicates of the list
+          schema_path_trail: ['', '/testforms:toplevel', '/testforms:simplelist']
+          data_path_trail: ['', '/testforms:toplevel', '/simplelist']
+          id_path_trail: ['', '/testforms:toplevel', '/simplelist']
+        """
+
         self.grow_trail(node)
 
         trail = "".join(self.data_path_trail)
@@ -573,6 +668,13 @@ class Expander:
         if len(self.data_path_trail) == 1:
             return "'__root__'"
         trail = "".join(self.data_path_trail)
+        quote = self.get_quote_style(trail)
+        return f"{quote}{trail}{quote}"
+
+    def get_schema_id(self):
+        if len(self.schema_path_trail) == 1:
+            return "'__root__'"
+        trail = "".join(self.schema_path_trail)
         quote = self.get_quote_style(trail)
         return f"{quote}{trail}{quote}"
 
