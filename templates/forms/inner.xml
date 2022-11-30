@@ -1,0 +1,30 @@
+<toplevel xmlns="http://testforms"><hello>world</hello>
+  <mylist>
+    <simplekey>A</simplekey>
+    <nonkey>a</nonkey>
+    <inner>
+      <innerlist>
+        <key1>ONE</key1>
+        <key2>TWO</key2>
+      </innerlist>
+      <innerlist>
+	<key1>UNE</key1>
+        <key2>DUEX</key2>
+        <number>6</number>
+      </innerlist>
+    </inner>
+  </mylist>
+  <mylist>
+    <simplekey>B</simplekey>
+    <nonkey>b</nonkey>
+    <inner>
+      <innerlist>
+        <key1>UNO</key1>
+        <key2>DUE</key2>
+        <number>7</number>
+      </innerlist>
+    </inner>
+  </mylist>
+</toplevel>
+
+

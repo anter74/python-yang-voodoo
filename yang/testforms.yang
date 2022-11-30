@@ -2,13 +2,53 @@ module testforms {
   prefix "testforms";
   namespace "http://testforms";
 
+  description "This is a yang model";
 
-  /* leaf topleaf {
-    type string;
-  } */
+  revision 2022-11-29 {
+    description "This is a test revision";
+  }
+
+  revision 2022-11-28 {
+    description "This is a description with a very long single revision history that could have easily been broken down into a much better format within the yang model itself but it is okay because we are going to format it into a block quote section of text which is more readable in our display tool";
+  }
+
+  typedef mysubtype {
+    type enumeration {
+      enum a;
+    }
+  }
+
+  typedef mytype {
+    type mysubtype;
+  }
+  typedef myothersubsubtype {
+    type string {
+      pattern "ax{4,}";
+    }
+  }
+
+  typedef myothersubtype {
+    type myothersubsubtype;
+  }
+
+  typedef myothertype {
+    type myothersubtype;
+  }
+
+  leaf topleaf {
+    type union {
+      type mytype;
+      type uint8 {
+        range 1..5;
+      }
+      type myothertype;
+    }
+  }
   container toplevel {
     presence true;
-    description "Container Description";
+     description "Container Description using a block of text which includes a very long line which should be wrapped during the output to ensure that it fits within a sensible width to try get a sensible width which becomes much more important as the description appear in nested deeper leaves of the yang model. If we don't do something to wrap the description then it becomes harder to see the structure of the yang model.\nIt is of course possible to use
+     new lines with a yang model either with a \\n or an explicit\n
+     carriage return. We also have to handle super long words without spaces in them sdlkfhsdlfkhsdlkfhsdklfhsdofhiowdhfdwihfiuwdhfuidwhfuwdgfudwigfiuggggggggggggggggggggggggggggggggggguuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuhhhhhhhhhhhhhhhhhhhhhh.";
 
     leaf hello {
       description "leaf description";
@@ -21,6 +61,28 @@ module testforms {
       type string;
     }
 
+    choice mychoice {
+      case mycase1 {
+        container box {
+          leaf clown {
+            type string;
+          }
+        }
+      }
+
+      case mycase2 {
+        container tupperware {
+          presence true;
+        }
+      }
+
+      case mycase3 {
+        leaf empty {
+          type empty;
+        }
+      }
+    }
+
     list simplelist {
       description "list description ";
       key simplekey;
@@ -29,9 +91,38 @@ module testforms {
         type string;
       }
       leaf simplenonkey {
-        type string;
+        type union{
+          type uint32;
+          type enumeration {
+            enum a-place-to-bury-strangers;
+            enum brian-jonestown-massacre;
+            enum cult-of-dom-keller;
+            enum dead-meadow;
+            enum elephant-stone;
+            enum flamingods;
+            enum gluts;
+            enum helicon;
+            enum juju;
+            enum kurt-vile;
+            enum lumerians;
+            enum medicine-boy;
+            enum night-beats;
+            enum oscilliation;
+            enum psychic-ills;
+            enum radar-men-from-the-moon;
+            enum slowdive;
+            enum tess-parks;
+            enum underground-youth;
+            enum vacant-lots;
+            enum you-said-strange;
+          }
+          type string {
+            pattern "non key value goes here";
+          }
+        }
         default "non key value goes here";
       }
+
     } // end list simplelist
 /*
     list mylist {
@@ -87,6 +178,29 @@ module testforms {
       leaf of-the-world {
         type string;
         default 'withdefault';
+      }
+      leaf pointer {
+        type leafref {
+          path "/testforms:toplevel/testforms:simplelist/testforms:simplekey";
+        }
+        description "This is a leaf-ref it must contain a value matching something in the list";
+      }
+      leaf a {
+        type string;
+        when "../a-turned-on=true";
+      }
+      leaf a-turned-on {
+        type boolean;
+        default true;
+      }
+      container b {
+        presence true;
+        must "../b-turned-on=true";
+        must "../a-turned-of=false";
+      }
+      leaf b-turned-on {
+        type boolean;
+        default false;
       }
     }
   } // end container top level
