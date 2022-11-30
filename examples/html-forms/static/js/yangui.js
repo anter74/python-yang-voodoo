@@ -30,6 +30,10 @@ function remove_list_element(d){
   alert("NotImplemented - remove list element from list\n\nData XPATH: " + d);
 }
 
+function remove_case(s){
+  alert("NotImplemented - remove case\n\Schema XPATH: " + s);
+}
+
 function add_leaflist_element(d, s){
   alert("NotImplemented - add list element to leaf-list\n\nData XPATH: " +d+"\nSchema XPATH: "+s);
 }

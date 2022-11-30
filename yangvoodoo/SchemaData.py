@@ -1,4 +1,3 @@
-import json
 import libyang
 
 import logging
@@ -520,7 +519,7 @@ class Expander:
         self.callback_open_list_element(
             node,
             key_values=key_values,
-            empty_list_element=populate_key_value_tuple != True,
+            empty_list_element=populate_key_value_tuple is not True,
             node_id="".join(self.id_path_trail),
         )
 
@@ -580,7 +579,7 @@ class Expander:
             self.callback_open_case(
                 case,
                 active_case == case,
-                active_case == None,
+                active_case is None,
                 node_id="".join(self.id_path_trail),
             )
 

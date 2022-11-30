@@ -172,7 +172,7 @@ class HtmlFormExpander(Expander):
             f"\n{self.open_indent()}&nbsp;&nbsp;<a class='btn' data-bs-toggle='collapse' role='button' href='#collapse-{self.get_uuid()}' aria-expanded='false' aria-controls='collapse-{self.get_uuid()}'><i class='fa fa-map-pin' aria-hidden='true'></i></a>"
         )
         self.result.write(
-            f"&nbsp;<a class='btn btn-warning' href=javascript:remove_case({self.get_id()})><i class='fa fa-times'></i></a>&nbsp;"
+            f"&nbsp;<a class='btn btn-warning' {self.get_html_attr('href', 'javascript:remove_case', schema=True)}><i class='fa fa-times'></i></a>&nbsp;"
         )
         self.result.write(f"{self.get_indent()}<label class='structure_choicelabel'")
         if node.description():
@@ -294,4 +294,4 @@ if __name__ == "__main__":
     generator = HtmlFormExpander("testforms", log)
     generator.process(open("templates/forms/simplelist4.xml").read())
     generator.dumps()
-    generator.dump("examples/htmlforms/test.html")
+    generator.dump("examples/html-forms/test.html")
