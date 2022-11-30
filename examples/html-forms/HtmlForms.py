@@ -1,10 +1,4 @@
-import json
-import libyang
 import logging
-
-from io import StringIO
-from typing import List
-
 from yangvoodoo.SchemaData import Expander
 
 collapse_or_show = "collapse show"
@@ -27,8 +21,9 @@ class HtmlFormExpander(Expander):
         )
 
     def callback_open_containing_node(self, node, presence, node_id):
-        self.result.write(f"\n{self.get_indent()}<a name={self.get_id()}></a> <!-- container type -->")
-        self.result.write(f"\n{self.open_indent()}<div class='structure_container' id={self.get_id()}>\n")
+        this_container_collapse_or_show = collapse_or_show
+        self.result.write(f"\n{self.get_indent()}<a name={self.get_id(quote=True)}></a> <!-- container type -->")
+        self.result.write(f"\n{self.open_indent()}<div class='structure_container' id={self.get_id(quote=True)}>\n")
         self.result.write(
             f"\n{self.open_indent()}<a class='btn' data-bs-toggle='collapse' role='button' href='#collapse-{self.get_uuid()}' aria-expanded='false' aria-controls='collapse-{self.get_uuid()}'><i class='fa fa-th-large' aria-hidden='true'></i></a>"
         )
@@ -38,17 +33,19 @@ class HtmlFormExpander(Expander):
                 f'data-toggle="tooltip" data-placement="top" data-html="true" title="{self._get_tooltip(node.description())}"'
             )
         self.result.write(f">{node.name()}</label><br/>\n")
-        self.result.write(f"{self.open_indent()}<div class='{collapse_or_show}' id='collapse-{self.get_uuid()}'>\n")
+        self.result.write(
+            f"{self.open_indent()}<div class='{this_container_collapse_or_show}' id='collapse-{self.get_uuid()}'>\n"
+        )
 
     def callback_close_containing_node(self, node):
         self.result.write(f"{self.close_indent()}</div>\n")
-        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id()} container-->\n\n")
+        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id(quote=True)} container-->\n\n")
 
     @staticmethod
     def _get_tooltip(description):
         return description.replace('"', "&quote;")
 
-    def callback_write_leaf(self, node, value, default, key, node_id):
+    def callback_write_leaf(self, node, value, quote, explicit, default, key, node_id):
         """
         Here we should return different data based on the leaf type
         i.e. boolean/empty leaves should be checkbox
@@ -65,7 +62,7 @@ class HtmlFormExpander(Expander):
             "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-leaf yang_icon' aria-hidden='true'></i>&nbsp;"
         )
 
-        self.result.write(f"{self.get_indent()}<label class='structure_leaflabel' for={self.get_id()}")
+        self.result.write(f"{self.get_indent()}<label class='structure_leaflabel' for={self.get_id(quote=True)}")
         if node.description():
             self.result.write(
                 f'data-toggle="tooltip" data-placement="top" data-html="true" title="{self._get_tooltip(node.description())}"'
@@ -80,11 +77,11 @@ class HtmlFormExpander(Expander):
                 checked = ""
 
             self.result.write(
-                f"{self.get_indent()}&nbsp;<input class='form-check-input' type='checkbox' name={self.get_id()} id={self.get_id()} {self.get_html_attr('onChange', 'check_change', this=True, data=True)} {self.get_html_attr('onBlur', 'check_blur', this=True, data=True)} {checked}><br/>\n"
+                f"{self.get_indent()}&nbsp;<input class='form-check-input' type='checkbox' name={self.get_id(quote=True)} id={self.get_id(quote=True)} {self.get_html_attr('onChange', 'check_change', this=True, data=True)} {self.get_html_attr('onBlur', 'check_blur', this=True, data=True)} {checked} {disabled}><br/>\n"
             )
         elif basetype == 6:
             self.result.write(
-                f"{self.get_indent()}<select class='form' name={self.get_id()} id={self.get_id()} {self.get_html_attr('onChange', 'select_change', this=True, data=True)} {self.get_html_attr('onBlur', 'select_blur', this=True, data=True)}>\n"
+                f"{self.get_indent()}<select class='form' name={self.get_id(quote=True)} id={self.get_id(quote=True)} {self.get_html_attr('onChange', 'select_change', this=True, data=True)} {self.get_html_attr('onBlur', 'select_blur', this=True, data=True)} {disabled}>\n"
             )
             for enum, _ in node.type().enums():
                 selected = ""
@@ -94,7 +91,7 @@ class HtmlFormExpander(Expander):
             self.result.write(f"{self.get_indent()}</select><br/>\n")
         else:
             self.result.write(
-                f"{self.get_indent()}<input type='text' name={self.get_id()} id={self.get_id()} value={value} {self.get_html_attr('onChange', 'leaf_change', this=True, data=True)} {self.get_html_attr('onBlur', 'leaf_blur', this=True, data=True)} {disabled}"
+                f"{self.get_indent()}<input type='text' name={self.get_id(quote=True)} id={self.get_id(quote=True)} value={quote}{value}{quote} {self.get_html_attr('onChange', 'leaf_change', this=True, data=True)} {self.get_html_attr('onBlur', 'leaf_blur', this=True, data=True)} {disabled} "
             )
 
             self.result.write(
@@ -123,8 +120,8 @@ class HtmlFormExpander(Expander):
         When we are in a list we won't look at the schema but instead look to the data tree to find list elements
         which exist - and then pass those to prcoess_nodes?
         """
-        self.result.write(f"\n{self.get_indent()}<a name={self.get_id()}></a> <!-- list type -->")
-        self.result.write(f"\n{self.open_indent()}<div class='structure_list' id={self.get_id()}>\n")
+        self.result.write(f"\n{self.get_indent()}<a name={self.get_id(quote=True)}></a> <!-- list type -->")
+        self.result.write(f"\n{self.open_indent()}<div class='structure_list' id={self.get_id(quote=True)}>\n")
         self.result.write(
             f"\n{self.open_indent()}&nbsp;&nbsp;<a class='btn' data-bs-toggle='collapse' role='button' href='#collapse-{self.get_uuid()}' aria-expanded='false' aria-controls='collapse-{self.get_uuid()}'><i class='fa fa-list' aria-hidden='true'></i></a>"
         )
@@ -139,7 +136,7 @@ class HtmlFormExpander(Expander):
         self.result.write(f">{node.name()}</label>  \n")
 
         self.result.write(
-            f"&nbsp;&nbsp;<span class='not-important-info' id=count-{self.get_id()}>{count} item{self.pluralise(count)}:"
+            f"&nbsp;&nbsp;<span class='not-important-info' id=count-{self.get_id(quote=True)}>{count} item{self.pluralise(count)}:"
         )
         self.result.write("</span>")
         keys = [n.name() for n in node.keys()]
@@ -151,11 +148,11 @@ class HtmlFormExpander(Expander):
 
     def callback_close_list(self, node):
         self.result.write(f"{self.close_indent()}</div>\n")
-        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id()} list -->\n\n")
+        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id(quote=True)} list -->\n\n")
 
     def callback_open_choice(self, node, node_id):
-        self.result.write(f"\n{self.get_indent()}<a name={self.get_id()}></a> <!-- choice type -->")
-        self.result.write(f"\n{self.open_indent()}<div class='structure_choice' id={self.get_id()}>\n")
+        self.result.write(f"\n{self.get_indent()}<a name={self.get_id(quote=True)}></a> <!-- choice type -->")
+        self.result.write(f"\n{self.open_indent()}<div class='structure_choice' id={self.get_id(quote=True)}>\n")
         self.result.write(
             f"\n{self.open_indent()}&nbsp;&nbsp;<a class='btn' data-bs-toggle='collapse' role='button' href='#collapse-{self.get_uuid()}' aria-expanded='false' aria-controls='collapse-{self.get_uuid()}'><i class='fa fa-object-group' aria-hidden='true'></i></a>"
         )
@@ -168,35 +165,42 @@ class HtmlFormExpander(Expander):
         self.result.write(f"{self.open_indent()}<div class='{collapse_or_show}' id='collapse-{self.get_uuid()}'>\n")
 
     def callback_open_case(self, node, active_case, no_active_case, node_id):
+        this_case_collapse_or_show = collapse_or_show
+        div_disable = ""
         self.log.warning("Need to set case on the UI to disabled based on no active cases")
-        self.result.write(f"\n{self.get_indent()}<a name={self.get_id()}></a> <!-- case type -->")
-        self.result.write(f"\n{self.open_indent()}<div class='structure_choice' id={self.get_id()}>\n")
+        self.result.write(f"\n{self.get_indent()}<a name={self.get_id(quote=True)}></a> <!-- case type -->")
+        self.result.write(
+            f"\n{self.open_indent()}<div class='structure_choice {div_disable}' id={self.get_id(quote=True)}>\n"
+        )
         self.result.write(
             f"\n{self.open_indent()}&nbsp;&nbsp;<a class='btn' data-bs-toggle='collapse' role='button' href='#collapse-{self.get_uuid()}' aria-expanded='false' aria-controls='collapse-{self.get_uuid()}'><i class='fa fa-map-pin' aria-hidden='true'></i></a>"
         )
-        self.result.write(
-            f"&nbsp;<a class='btn btn-warning' href=javascript:remove_case({self.get_id()})><i class='fa fa-times'></i></a>&nbsp;"
-        )
+        if active_case:
+            self.result.write(
+                f"&nbsp;<a class='btn btn-warning' href=javascript:remove_case({self.get_id(quote=True)})><i class='fa fa-times'></i></a>&nbsp;"
+            )
         self.result.write(f"{self.get_indent()}<label class='structure_choicelabel'")
         if node.description():
             self.result.write(
                 f'data-toggle="tooltip" data-placement="top" data-html="true" title="{self._get_tooltip(node.description())}"'
             )
         self.result.write(f">{node.name()}</label>  \n")
-        self.result.write(f"{self.open_indent()}<div class='{collapse_or_show}' id='collapse-{self.get_uuid()}'>\n")
+        self.result.write(
+            f"{self.open_indent()}<div class='{this_case_collapse_or_show}' id='collapse-{self.get_uuid()}'>\n"
+        )
 
     def callback_close_case(self, node):
         self.result.write(f"{self.close_indent()}</div>\n")
-        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id()} -case -->\n\n")
+        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id(quote=True)} -case -->\n\n")
 
     def callback_close_choice(self, node):
         self.result.write(f"{self.close_indent()}</div>\n")
-        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id()} choice -->\n\n")
+        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id(quote=True)} choice -->\n\n")
 
     def callback_open_list_element(self, node, key_values, empty_list_element, node_id):
         self.result.write(f"{self.get_indent()}<hr/>")
-        self.result.write(f"\n{self.get_indent()}<a name={self.get_id()}></a> <!-- listelement type -->")
-        self.result.write(f"\n{self.open_indent()}<div class='structure_listelement' id={self.get_id()}>\n")
+        self.result.write(f"\n{self.get_indent()}<a name={self.get_id(quote=True)}></a> <!-- listelement type -->")
+        self.result.write(f"\n{self.open_indent()}<div class='structure_listelement' id={self.get_id(quote=True)}>\n")
         self.result.write(
             f"\n{self.open_indent()}&nbsp;&nbsp;<a class='btn' data-bs-toggle='collapse' role='button' href='#collapse-{self.get_uuid()}' aria-expanded='false' aria-controls='collapse-{self.get_uuid()}'><i class='fa fa-angle-right' aria-hidden='true'></i></a>"
         )
@@ -210,11 +214,11 @@ class HtmlFormExpander(Expander):
 
     def callback_close_list_element(self, node):
         self.result.write(f"{self.close_indent()}</div>\n")
-        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id()} listelement -->\n\n")
+        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id(quote=True)} listelement -->\n\n")
 
     def callback_open_leaflist(self, node, count, node_id):
-        self.result.write(f"\n{self.get_indent()}<a name={self.get_id()}></a> <!-- leaf list type -->")
-        self.result.write(f"\n{self.open_indent()}<div class='structure_leaflist' id={self.get_id()}>\n")
+        self.result.write(f"\n{self.get_indent()}<a name={self.get_id(quote=True)}></a> <!-- leaf list type -->")
+        self.result.write(f"\n{self.open_indent()}<div class='structure_leaflist' id={self.get_id(quote=True)}>\n")
         self.result.write(
             f"\n{self.open_indent()}&nbsp;&nbsp;<a class='btn' data-bs-toggle='collapse' role='button' href='#collapse-{self.get_uuid()}' aria-expanded='false' aria-controls='collapse-{self.get_uuid()}'><i class='fa fa-list-ul' aria-hidden='true'></i></a>"
         )
@@ -229,22 +233,22 @@ class HtmlFormExpander(Expander):
         self.result.write(f">{node.name()}</label>  \n")
 
         self.result.write(
-            f"&nbsp;&nbsp;<span class='not-important-info' id=count-{self.get_id()}>{count} item{self.pluralise(count)}:"
+            f"&nbsp;&nbsp;<span class='not-important-info' id=count-{self.get_id(quote=True)}>{count} item{self.pluralise(count)}:"
         )
         self.result.write("</span>")
         self.result.write(f"{self.open_indent()}<div class='{collapse_or_show}' id='collapse-{self.get_uuid()}'>\n")
 
     def callback_close_leaflist(self, node):
         self.result.write(f"{self.close_indent()}</div>\n")
-        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id()} ;eaf list -->\n\n")
+        self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id(quote=True)} ;eaf list -->\n\n")
 
-    def callback_write_leaflist_item(self, node, value, node_id):
-        self.result.write(f"\n{self.open_indent()}<div class='structure_listelement' id={self.get_id()}>\n")
+    def callback_write_leaflist_item(self, node, value, quote, explicit, node_id):
+        self.result.write(f"\n{self.open_indent()}<div class='structure_listelement' id={self.get_id(quote=True)}>\n")
         self.result.write(
             "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-leaf yang_icon' aria-hidden='true'></i>&nbsp;"
         )
         self.result.write(
-            f"{self.get_indent()}<input type='text' name={self.get_id()} id={self.get_id()} value={value} {self.get_html_attr('onBlur', 'leaf_blur', this=True, data=True)} disable "
+            f"{self.get_indent()}<input type='text' name={self.get_id(quote=True)} id={self.get_id(quote=True)} value={value} {self.get_html_attr('onBlur', 'leaf_blur', this=True, data=True)} disable "
         )
         self.result.write(
             f'data-toggle="tooltip" data-placement="top" data-html="true" title="{"".join(self.get_tooltip_types(node))}"'
@@ -262,7 +266,7 @@ class HtmlFormExpander(Expander):
         For a HTML attribute for href's onBlur, onChange etc and ensure we use the correct quoting/encoding
         of quotes.
         """
-        d = self.get_id()
+        d = self.get_id(quote=True)
         if d[0] == '"':
             outer_quote = "'"
             replace_quote = "&apos;"
@@ -281,18 +285,6 @@ class HtmlFormExpander(Expander):
             args.append("this")
         return f"{attribute}={outer_quote}{method}({', '.join(args)}){outer_quote}"
 
-    def get_html_id(self):
-        result = self.get_id()
-        if result[0] == "'":
-            return result.replace('"', "&quot;")
-        return result.replace("'", "&apos;")
-
-    def get_html_schema_id(self):
-        result = self.get_schema_id()
-        if result[0] == "'":
-            return result.replace('"', "&quot;")
-        return result.replace("'", "&apos;")
-
 
 if __name__ == "__main__":
     log = logging.getLogger("test")
@@ -303,3 +295,7 @@ if __name__ == "__main__":
     generator.process(open("templates/forms/simplelist4.xml").read())
     generator.dumps()
     generator.dump("examples/html-forms/test.html")
+
+print("We need to represent presence containers and empty leaves somehow")
+print("If we delete a case we should replace the choice with blank data after having remove all the data of that case")
+print("We should have a representation to explicit enable a case")

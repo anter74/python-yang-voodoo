@@ -120,9 +120,7 @@ class Utils:
         r"(([A-Za-z0-9_-]*:)?([A-Za-z0-9_-]+))((\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])+)?"
     )
     MODULE_AND_LEAF_REGEX = re.compile(r"/([A-Za-z0-9_-]+:)?([A-Za-z0-9_-]+)")
-    EXTRACT_ALL_KEYS = re.compile(
-        r"(\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])"
-    )
+    EXTRACT_ALL_KEYS = re.compile(r"(\[[\.A-Z0-9a-z_-]+\s*=\s*(?P<quote>['\"]).*?(?P=quote)\s*\])")
 
     @staticmethod
     def convert_path_to_schema_path(path, module):
@@ -142,9 +140,7 @@ class Utils:
         if path[0 : len(module) + 2] == f"/{module}:":
             path = f"/{path[len(module) + 2 :]}"
         if path[-1] == "/":
-            raise ValueError(
-                f"Path is not valid as it ends with a trailing slash. ({path})"
-            )
+            raise ValueError(f"Path is not valid as it ends with a trailing slash. ({path})")
         schema_path = ""
         parent_schema_path = ""
         for path in Utils.convert_path_to_nodelist(path):
@@ -154,10 +150,7 @@ class Utils:
 
     @staticmethod
     def convert_path_to_nodelist(xpath):
-        return [
-            leaf_name
-            for (_, _, leaf_name, _, _, _) in Utils.XPATH_DECODER_V4.findall(xpath)
-        ]
+        return [leaf_name for (_, _, leaf_name, _, _, _) in Utils.XPATH_DECODER_V4.findall(xpath)]
 
     @staticmethod
     def get_logger(name, level=logging.DEBUG):
@@ -178,9 +171,7 @@ class Utils:
     @staticmethod
     def get_yang_type_from_path(context, schema_path, value, child_attr=None):
         if child_attr:
-            _, schema_path, node_schema, _ = Utils._find_child_schema_node(
-                context, schema_path, child_attr
-            )
+            _, schema_path, node_schema, _ = Utils._find_child_schema_node(context, schema_path, child_attr)
         else:
             node_schema = next(context.schemactx.find_path(schema_path))
         return Utils.get_yang_type(node_schema.type(), value, schema_path)
@@ -234,13 +225,9 @@ class Utils:
             u_types = []
             for union_type in node_schema.union_types():
                 if union_type.base() == 11:
-                    raise NotImplementedError(
-                        "Union containing unions not supported (see README.md)"
-                    )
+                    raise NotImplementedError("Union containing unions not supported (see README.md)")
                 elif union_type.base() == 9:
-                    raise NotImplementedError(
-                        "Union containing leafrefs not supported (see README.md)"
-                    )
+                    raise NotImplementedError("Union containing leafrefs not supported (see README.md)")
                 elif union_type.base() == 6:
                     # TODO: we need to lookup enumerations
                     for (val, validx) in union_type.enums():
@@ -305,13 +292,11 @@ class Utils:
         """
         if not isinstance(keys, list):
             raise NotImplementedError(
-                "encode_attribute_with_xpath_predicates does not work with non-list input - %s"
-                % (keys)
+                "encode_attribute_with_xpath_predicates does not work with non-list input - %s" % (keys)
             )
         if not isinstance(values, list):
             raise NotImplementedError(
-                "encode_attribute_with_xpath_predicates does not work with non-list input - %s"
-                % (values)
+                "encode_attribute_with_xpath_predicates does not work with non-list input - %s" % (values)
             )
         answer = attr
 
@@ -343,9 +328,7 @@ class Utils:
 
         (list_element_path_a, list_element_path_b, last_set_of_predicates) = results[0]
 
-        predicates = {
-            key: val for (key, val) in self.PREDICATE_KEY_VALUES_SINGLE.findall(path)
-        }
+        predicates = {key: val for (key, val) in self.PREDICATE_KEY_VALUES_SINGLE.findall(path)}
 
         for (key, val) in self.PREDICATE_KEY_VALUES_DOUBLE.findall(path):
             predicates[key] = val
@@ -426,12 +409,8 @@ class Utils:
             yang_module_name,
         """
         for yang_module_name in Utils.recurse_all_available_yang_models(context):
-            real_attribute_name = Utils.get_original_name(
-                the_real_schema_path, context, attr
-            )
-            real_schema_path = (
-                f"{the_real_schema_path}/{yang_module_name}:{real_attribute_name}"
-            )
+            real_attribute_name = Utils.get_original_name(the_real_schema_path, context, attr)
+            real_schema_path = f"{the_real_schema_path}/{yang_module_name}:{real_attribute_name}"
             try:
                 node_schema = next(context.schemactx.find_path(real_schema_path))
                 return (
@@ -492,9 +471,7 @@ class Utils:
         if len(keys) and len(values):
             predicates = Utils.encode_xpath_predicates("", keys, values)
 
-        cache_entry = (
-            f"!{node.real_data_path}{attr}!{predicates}!{node.real_schema_path}"
-        )
+        cache_entry = f"!{node.real_data_path}{attr}!{predicates}!{node.real_schema_path}"
 
         if context.schemacache.is_path_cached(cache_entry):
             return context.schemacache.get_item_from_cache(cache_entry)
@@ -559,9 +536,7 @@ class Utils:
             if child.name().replace("-", "_") == attr:
                 return child.name()
 
-        raise NotImplementedError(
-            "get_original_name could not find a matching node name for %s" % (attr)
-        )
+        raise NotImplementedError("get_original_name could not find a matching node name for %s" % (attr))
 
     @staticmethod
     def get_keys_from_a_node(node_schema):
@@ -577,13 +552,9 @@ class Utils:
             values = values[0]
 
         if len(keys) != len(values):
-            raise Errors.ListWrongNumberOfKeys(
-                node.real_data_path, len(keys), len(values)
-            )
+            raise Errors.ListWrongNumberOfKeys(node.real_data_path, len(keys), len(values))
         for value in values:
-            key_yang_type = Utils.get_yang_type_from_path(
-                context, node.real_schema_path, value, keys[i]
-            )
+            key_yang_type = Utils.get_yang_type_from_path(context, node.real_schema_path, value, keys[i])
             real_values.append((value, key_yang_type))
 
         return keys, real_values
@@ -629,3 +600,20 @@ class Utils:
                 ) = Utils.PREDICATE_KEY_VALUES_DOUBLE.match(match).groups()
             response.append((predicate_key, predicate_value))
         return response
+
+    @staticmethod
+    def convert_to_libyang_value_to_pythonic(node: libyang.schema.Node, value_str: str):
+        leaf_type = node.type().base()
+        if leaf_type in libyang.DataNode.INT_TYPES:
+            if not value_str:
+                return 0
+            return int(value_str)
+        elif leaf_type in libyang.DataNode.BOOL_TYPES:
+            if value_str == "true":
+                return True
+            return False
+        elif leaf_type in libyang.DataNode.DECIMAL_TYPES:
+            return float(value_str)
+        elif leaf_type in libyang.DataNode.EMPTY_TYPES:
+            return None
+        return value_str

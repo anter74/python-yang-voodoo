@@ -55,23 +55,13 @@ class PlantUMLExpander(Expander):
         self.result.write("\n@endjson\n")
 
     def callback_open_containing_node(self, node, presence, node_id):
-        # self.result.write(self.get_indent())
-        # self.result.write(f'"{node.name()}":')
-        # self.result.write(" {\n")
-        # self.open_indent()
         self.obj_pointer[-1][node.name()] = {}
         self.obj_pointer.append(self.obj_pointer[-1][node.name()])
-        # self.obj = self.obj[node.name()]
-        print(self.obj)
 
     def callback_close_containing_node(self, node):
-        # self.close_indent()
-        # self.result.write(self.get_indent())
-        # self.result.write("}\n")
         self.obj_pointer.pop()
-        pass
 
-    def callback_write_leaf(self, node, value, default, key, node_id):
+    def callback_write_leaf(self, node, value, quote, explicit, default, key, node_id):
         if key:
             return
         if not default:
@@ -83,32 +73,48 @@ class PlantUMLExpander(Expander):
         if default and value != default:
             self.obj_pointer[-1][node.name()] = f"{value} <color:red> default={default}"
 
-    def callback_open_list(self, node, count, node_id):
+    def callback_open_leaflist(self, node, count, node_id):
         self.obj_pointer[-1][node.name()] = []
         self.obj_pointer.append(self.obj_pointer[-1][node.name()])
+
+    def callback_close_leaflist(self, node):
+        self.obj_pointer.pop()
+
+    def callback_open_choice(self, node, node_id):
+        label = f"choice... {node.name()}"
+        self.obj_pointer[-1][label] = {}
+        self.obj_pointer.append(self.obj_pointer[-1][label])
+
+    def callback_close_choice(self, node):
+        self.obj_pointer.pop()
+
+    def callback_open_case(self, node, active_case, no_active_case, node_id):
+        label = f"case... {node.name()}"
+        self.obj_pointer[-1][label] = {}
+        self.obj_pointer.append(self.obj_pointer[-1][label])
+
+    def callback_close_case(self, node):
+        self.obj_pointer.pop()
+
+    def callback_open_list(self, node, count, node_id):
+        label = f"list... {node.name()}"
+        self.obj_pointer[-1][label] = {}
+        self.obj_pointer.append(self.obj_pointer[-1][label])
 
     def callback_close_list(self, node):
         self.obj_pointer.pop()
 
     def callback_open_list_element(self, node, key_values, empty_list_element, node_id):
-        x = {}
-        self.obj_pointer[-1].append(x)
-        self.obj_pointer.append(x)
-
         for key, val in key_values:
             if empty_list_element:
                 val = "<color:gray>unset"
             self.obj_pointer[-1][f"{key} <key>"] = val
 
-        # self.result.write(f"\n{self.get_indent()}<a name={self.get_id()}></a> <!-- listelement type -->")
-        # self.result.write(f"\n{self.open_indent()}<div class='structure_listelement' id={self.get_id()}>\n")
-        # self.result.write(
-        #     f"\n{self.get_indent()}<p align='right'>Need some buttons here to trigger removing this list element</p>\n"
-        # )
-        pass
+        label = "list-element.."
+        self.obj_pointer[-1][label] = {}
+        self.obj_pointer.append(self.obj_pointer[-1][label])
 
     def callback_close_list_element(self, node):
-        # self.result.write(f"{self.close_indent()}</div> <!-- closes {self.get_id()} listelement -->\n\n")
         self.obj_pointer.pop()
 
 

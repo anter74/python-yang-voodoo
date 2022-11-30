@@ -48,14 +48,18 @@ def test_retrieve_a_list_element(subject):
     assert subject.callback_write_leaf.mock_calls == [
         call(
             ANY,
-            "'B'",
+            "B",
+            "'",
+            True,
             default=None,
             key=True,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplekey",
         ),
         call(
             ANY,
-            "'non key value goes here'",
+            "non key value goes here",
+            "'",
+            True,  # to check - libyang implicit creation scope of data - did this return data
             default="non key value goes here",
             key=False,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplenonkey",
@@ -70,9 +74,7 @@ def test_add_a_list_element(subject):
     subject.load(open("templates/forms/simplelist2.xml").read())
 
     # Act
-    subject.data_tree_add_list_element(
-        "/testforms:toplevel/simplelist", (("simplekey", "C"),)
-    )
+    subject.data_tree_add_list_element("/testforms:toplevel/simplelist", (("simplekey", "C"),))
     subject.data_tree_set_leaf(
         "/testforms:toplevel/simplelist[simplekey='C']/simplenonkey",
         "cult-of-dom-keller",
@@ -93,14 +95,18 @@ def test_add_a_list_element(subject):
     assert subject.callback_write_leaf.mock_calls == [
         call(
             ANY,
-            "'C'",
+            "C",
+            "'",
+            True,
             default=None,
             key=True,
             node_id="/testforms:toplevel/simplelist[simplekey='C']/simplekey",
         ),
         call(
             ANY,
-            "'cult-of-dom-keller'",
+            "cult-of-dom-keller",
+            "'",
+            True,
             default="non key value goes here",
             key=False,
             node_id="/testforms:toplevel/simplelist[simplekey='C']/simplenonkey",
@@ -128,14 +134,18 @@ def test_remove_a_leaf_of_a_list_element(subject):
     assert subject.callback_write_leaf.mock_calls == [
         call(
             ANY,
-            "'B'",
+            "B",
+            "'",
+            True,
             default=None,
             key=True,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplekey",
         ),
         call(
             ANY,
-            "'brian-jonestown-massacre'",
+            "brian-jonestown-massacre",
+            "'",
+            True,
             default="non key value goes here",
             key=False,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplenonkey",
@@ -148,9 +158,7 @@ def test_remove_a_leaf_of_a_list_element(subject):
     subject.callback_write_leaf = Mock()
 
     # Act
-    subject.data_tree_set_leaf(
-        "/testforms:toplevel/simplelist[simplekey='B']/simplenonkey", None
-    )
+    subject.data_tree_set_leaf("/testforms:toplevel/simplelist[simplekey='B']/simplenonkey", None)
 
     subject.subprocess("/testforms:toplevel/simplelist[simplekey='B']")
 
@@ -158,14 +166,18 @@ def test_remove_a_leaf_of_a_list_element(subject):
     assert subject.callback_write_leaf.mock_calls == [
         call(
             ANY,
-            "'B'",
+            "B",
+            "'",
+            True,
             default=None,
             key=True,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplekey",
         ),
         call(
             ANY,
-            "'non key value goes here'",
+            "non key value goes here",
+            "'",
+            False,
             default="non key value goes here",
             key=False,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplenonkey",
@@ -180,7 +192,4 @@ def test_trying_to_subprocess_a_non_list_element(subject):
     with pytest.raises(NotImplementedError) as err:
         subject.subprocess("/testforms:toplevel")
 
-    assert (
-        str(err.value)
-        == "subprocess only supports processing of a list element: /testforms:toplevel"
-    )
+    assert str(err.value) == "subprocess only supports processing of a list element: /testforms:toplevel"

@@ -270,14 +270,14 @@ class Yang2Text(Expander):
         if args.schema_xpath:
             self.result.write(f"{self.get_blank_indent(6)}{Display.DIM}S: {schema_path}{Display.NORMAL}\n")
 
-    def callback_write_leaf(self, node, value, default, key, node_id):
+    def callback_write_leaf(self, node, value, quote, explicit, default, key, node_id):
         self.result.write(f"{self.get_indent()} {Display.NORMAL}{Display.LEAF}")
         if node.mandatory():
             self.result.write(f"{Display.MANDATORY} ")
-        if default and value and value[1:-1] == default:
-            self.result.write(f"{node.name()} = {Display.DIM}{value[1:-1]}{Display.NORMAL}")
-        elif value[1:-1]:
-            self.result.write(f"{node.name()} = {value[1:-1]}")
+        if default and value and value == default:
+            self.result.write(f"{node.name()} = {Display.DIM}{value}{Display.NORMAL}")
+        elif value:
+            self.result.write(f"{node.name()} = {value}")
         else:
             self.result.write(f"{node.name()} {Display.DIM} {Display.MISSING} {Display.NORMAL}")
         if not args.hide_types:
@@ -309,7 +309,7 @@ class Yang2Text(Expander):
         self.open_indent()
         self.leaf_list_count = 0
 
-    def callback_write_leaflist_item(self, node, value, node_id):
+    def callback_write_leaflist_item(self, node, quote, explicit, value, node_id):
         self.result.write(
             f"{self.get_blank_indent(6)}{Display.DIM}index {self.leaf_list_count}:{Display.NORMAL} {value}\n"
         )
@@ -320,11 +320,9 @@ class Yang2Text(Expander):
         self.close_indent()
 
     def callback_open_choice(self, node, node_id):
-        self.open_indent()
         self.result.write(f"{self.open_indent()} {Display.NORMAL}{Display.CHOICE} {node.name()}\n")
 
     def callback_close_choice(self, node):
-        self.close_indent()
         self.close_indent()
 
     def callback_open_case(self, node, active_case, no_active_case, node_id):

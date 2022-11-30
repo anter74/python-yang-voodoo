@@ -9,6 +9,13 @@ from typing import List, Tuple
 from yangvoodoo.Common import Utils
 
 
+class EscapeOptions:
+
+    SELECT_SINGLE_VS_DOUBE = "select-single-vs-double"
+    ESCAPE_INVERSE_OF_QUOTE = "escape-inverse-of-quoting"
+    ESCAPE_ONLY = "escape"
+
+
 class UnableToRenderFormError:
     pass
 
@@ -41,7 +48,9 @@ class Expander:
     """
 
     YANG_LOCATION = "yang"
-    QUOTE_ESCAPE_STYLE = "select-single-vs-double"
+    QUOTE_ESCAPE_STYLE = EscapeOptions.SELECT_SINGLE_VS_DOUBE
+    ESCAPE_FOR_DOUBLE_QUOTES = '\\"'
+    ESCAPE_FOR_SINGLE_QUOTES = "\\'"
     INDENT_CHAR = " "
     INDENT_MINIMUM = 0
     INDENT_SPACING = 2
@@ -289,13 +298,17 @@ class Expander:
         """
         raise NotImplementedError("callback_close_list")
 
-    def callback_write_leaf(self, node: libyang.Node, value: str, default: str, key: bool, node_id: str):
+    def callback_write_leaf(
+        self, node: libyang.Node, value: str, quote: str, explicit: bool, default: str, key: bool, node_id: str
+    ):
         """
         Called when the a leaf has been encountered.
 
         Args:
             node: The libyang node of the leaf statement
             value: The value of the leaf - which will be quoted/escaped
+            quote: Preferred quotation marks for quoting
+            explicit: Data exists in the data tree
             default: The default value for the leaf
             key: Indicates this leaf is a key of a list
             node_id: The node id using a hybrid schema/data path.
@@ -333,13 +346,15 @@ class Expander:
         """
         raise NotImplementedError("callback_open_leaflist_node")
 
-    def callback_write_leaflist_item(self, node: libyang.Node, value: str, node_id: str):
+    def callback_write_leaflist_item(self, node: libyang.Node, value: str, quote: str, _, node_id: str):
         """
         Called when the a leaf-list has been encountered.
 
         Args:
             node: The libyang node of the leaf-list statement
             value: The value of the leaf-list node
+            quote: The preferred quote style.
+            explicit: If the value is explicitly set in the data tree (N/A for a leaf-list)
             node_id: The node id using a hybrid schema/data path.
         """
         raise NotImplementedError("callback_write_leaflist_item")
@@ -404,10 +419,9 @@ class Expander:
     def _handle_schema_containing_node(self, node):
         self.grow_trail(node)
         presence = None
-        if node.presence():
+        if node.presence() is not None:
             presence = False
-            value = self.get_data(raw=True)
-            if value is not None:
+            if self.get_raw_data() is not None:
                 presence = True
 
         self.callback_open_containing_node(node, presence=presence, node_id="".join(self.id_path_trail))
@@ -432,11 +446,10 @@ class Expander:
         than if it haves explicit values. (WOULD HAVE TO BE HANDLED IN Javascript so not worth the effort)
         """
         self.grow_trail(node)
-        value = self.get_data(default=node.default())
         self.callback_write_leaf(
             node,
-            value,
-            default=node.default(),
+            *self.get_data(node),
+            default=Utils.convert_to_libyang_value_to_pythonic(node, node.default()),
             key=node.is_key(),
             node_id="".join(self.id_path_trail),
         )
@@ -493,7 +506,6 @@ class Expander:
             populate_key_value_tuple: flag indicating if we should populate a full_key_value tuple.
         """
         if populate_key_value_tuple:
-            keys = []
             xpath = "".join(self.data_path_trail)
             key_values = list(list(self.data_ctx.get_xpath(xpath))[0].get_list_key_values())
         else:
@@ -527,7 +539,7 @@ class Expander:
             self.grow_trail(list_element_predicates=list_xpath, schema=False)
             self.callback_write_leaflist_item(
                 node,
-                self.get_data(),
+                *self.get_data(node),
                 node_id="".join(self.id_path_trail),
             )
             self.shrink_trail(schema=False)
@@ -578,25 +590,53 @@ class Expander:
 
         self.shrink_trail(data=False)
 
-    def get_data(self, default=None, quoted=True, raw=False):
+    def get_raw_data(self) -> str:
+        """
+        Return raw data
+
+        Returns:
+            The raw libyang data (str)
+        """
         xpath = "".join(self.data_path_trail)
         value = list(self.data_ctx.get_xpath(xpath))
-        if raw:
-            if value:
-                return value[0].value
-            return None
+        if value:
+            return value[0].value
+        return None
+
+    def get_data(self, node: libyang.schema.Node) -> Tuple[str, str]:
+        """
+        Return data for the current data item at the head of the trail.
+
+        Args:
+            node: the libyang schema node used to derive defaults.
+
+        Returns:
+            Tuple of escaped (if required) data and a preferred quoting style
+        """
+        xpath = "".join(self.data_path_trail)
+        value = list(self.data_ctx.get_xpath(xpath))
         if value:
             self.log.debug("GET XPATH: %s = %s", xpath, value[0].value)
-            quote = self.get_quote_style(value[0].value, quoted)
-            return f"{quote}{self.escape_value(value[0].value)}{quote}"
-        if default:
-            quote = self.get_quote_style(default, quoted)
-            return f"{quote}{self.escape_value(default)}{quote}"
-        quote = self.get_quote_style(default, quoted)
-        return f"{quote}{quote}"
+            quote = self.get_quote_style(value[0].value)
+            return self.escape_value(value[0].value, quote), quote, True
+        if node.default():
+            default = Utils.convert_to_libyang_value_to_pythonic(node, node.default())
+            quote = self.get_quote_style(default)
+            return self.escape_value(default, quote), quote, False
+        return "", self.get_quote_style(""), False
 
-    def get_quote_style(self, value, quoted=True):
-        if self.QUOTE_ESCAPE_STYLE == "escape":
+    def get_quote_style(self, value: str) -> str:
+        """
+        Return a set of preferred quote to use if quoting the data, this depends on the configuration
+        of the class variables.
+
+        Args:
+            value: to asses
+
+        Returns:
+            A preference of single vs double quotes.
+        """
+        if self.QUOTE_ESCAPE_STYLE == EscapeOptions.ESCAPE_ONLY:
             return ""
         if not isinstance(value, str):
             return '"'
@@ -606,10 +646,24 @@ class Expander:
             return '"'
         return "'"
 
-    def escape_value(self, value):
-        if self.QUOTE_ESCAPE_STYLE == "escape":
-            if isinstance(value, str):
-                value.replace('"', '\\"')
+    def escape_value(self, value: str, quote: str) -> str:
+        """
+        Return and escaped (if necessary) string, this depends on the configuration of the class variables.
+
+        Args:
+            value: the string to assess
+            quote: the preferred quote character.
+
+        Returns:
+            A string which may have been escpaed.
+        """
+        if isinstance(value, str):
+            if self.QUOTE_ESCAPE_STYLE == EscapeOptions.ESCAPE_ONLY:
+                value.replace('"', self.ESCAPE_FOR_DOUBLE_QUOTES)
+            elif self.QUOTE_ESCAPE_STYLE == EscapeOptions.ESCAPE_INVERSE_OF_QUOTE and quote == '"':
+                value.replace('"', self.ESCAPE_FOR_DOUBLE_QUOTES)
+            elif self.QUOTE_ESCAPE_STYLE == EscapeOptions.ESCAPE_INVERSE_OF_QUOTE and quote == "'":
+                value.replace("'", self.ESCAPE_FOR_SINGLE_QUOTES)
         return value
 
     def shrink_trail(self, schema=True, data=True):
@@ -640,11 +694,20 @@ class Expander:
         self.log.debug("GROW: %s", self.schema_path_trail)
         self.log.debug("GROW: %s", self.id_path_trail)
 
-    def get_id(self):
+    def get_id(self, quote="", escape=False):
+        """
+        Get an identifier based on the data tree.
+
+        Args:
+            quote: if set to `True` a suitable quote will be used to surround an un-escaped value.
+        """
         if len(self.data_path_trail) == 1:
             return "'__root__'"
         trail = "".join(self.data_path_trail)
-        quote = self.get_quote_style(trail)
+        if quote:
+            quote = self.get_quote_style(trail)
+        if escape:
+            trail = self.escape_value(trail, quote)
         return f"{quote}{trail}{quote}"
 
     def get_schema_id(self):
