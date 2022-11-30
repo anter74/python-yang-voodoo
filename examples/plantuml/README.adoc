@@ -1,0 +1,27 @@
+= Plant UML
+
+This shows an example of taking a given yang schema, expanding with a given data tree
+to provide a JSON which could be processed by PlantUML.
+
+[IMPORTANT]
+====
+There appears to be constraints with PlantUML processing JSON which is too large, but this
+works for small outputs. This may be simple memory constraints that can be tuned with extending
+the Heap size.
+====
+
+The basic plantuml json processor takes in a file that `Diagram.py` would produce.
+
+----
+@startjson
+{
+"bob":1
+}
+@endjson
+----
+
+This then can be processed via plantuml to provide an output PNG `examples/plantuml/uml.png`
+
+----
+java -jar ~/Downloads/plantuml-1.2022.8.jar -v examples/plantuml/uml.txt
+----

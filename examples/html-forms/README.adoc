@@ -1,0 +1,11 @@
+= HTML Forms
+
+This is merely a proof of concept which shows the challenge of providing a UI which 
+requires the ability to show the user the data that is real, but also the possibilities
+of data that may be created.
+
+i.e. the schema must be expanded with a given data tree.
+
+This is not a functioning web-page as there is no back-end server holding a session for
+a user, no interaction to implement the `+` button or `-` button of a list - but this does
+show the heavy lifting that is needed.
