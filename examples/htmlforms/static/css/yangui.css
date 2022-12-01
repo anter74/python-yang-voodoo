@@ -1,0 +1,112 @@
+.structure_indent {
+  margin-left: 35px;
+}
+
+.structure_null {
+}
+
+.structure_choice {
+  border-style: dotted;
+  border-color: gray;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_case {
+  border-style: dotted;
+  border-color: gray;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_list {
+  border-style: dotted;
+  border-color: gray;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_listelements {
+
+}
+
+.structure_leaflist {
+  border-style: dotted;
+  border-color: gray;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_container {
+  border-style: dotted;
+  border-color: gray;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_leaflabel{
+  min-width: 150px;
+}
+.yang_icon {
+  color: gray;
+}
+.not-important-info {
+  color: gray;
+}
+.yangui-disable {
+  opacity: 0.4;
+}
+
+.no-margin-left {
+    margin-left: 2em !important;
+}
+
+.yangui-hidden {
+  display: none;
+}
+
+.yangui-popup {
+  z-index: 90;
+  position: absolute;
+  overflow: automatic;
+  left: 20%;
+  top: 30%;
+  width: 60%;
+  height: 50%;
+  background: white;
+  opacity: 0.8;
+  border: solid;
+  border-size: 1px
+  border-color: black;
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+}
+
+.yangui-spinner {
+  z-index: 99;
+  position: fixed;
+  overflow: automatic;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  background: white;
+  opacity: 0.8;
+  padding-top: 25%;
+  padding-left: 45%;
+}
+
+.yangui-alerts {
+  z-index: 98;
+  position: fixed;
+  overflow: automatic;
+  top: 0px;
+  right: 1px;
+  width: 400px;
+  min-height: 200px;
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+}
+
+.yangui-dbg {
+  background-color: red;
+}

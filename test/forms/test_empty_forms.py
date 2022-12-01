@@ -115,6 +115,24 @@ def test_leafs(subject):
             key=False,
             node_id="/testforms:toplevel/still-in-top/b-turned-on",
         ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            node_id="/testforms:other/foreign",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            node_id="/testforms:other/vacant",
+        ),
     ]
 
     # Assert Leaf-Lists
@@ -122,27 +140,83 @@ def test_leafs(subject):
 
     # Assert Containers
     assert subject.callback_open_containing_node.mock_calls == [
-        call(ANY, node_id="/testforms:toplevel", presence=True),
-        call(ANY, node_id="/testforms:toplevel/mychoice/mycase1/box", presence=None),
+        call(
+            ANY,
+            presence=True,
+            node_id="/testforms:toplevel",
+        ),
+        call(
+            ANY,
+            presence=None,
+            node_id="/testforms:toplevel/mychoice/mycase1/box",
+        ),
         call(
             ANY,
             node_id="/testforms:toplevel/mychoice/mycase2/tupperware",
             presence=False,
         ),
-        call(ANY, node_id="/testforms:toplevel/still-in-top", presence=False),
-        call(ANY, presence=False, node_id="/testforms:toplevel/still-in-top/b"),
+        call(
+            ANY,
+            presence=False,
+            node_id="/testforms:toplevel/still-in-top",
+        ),
+        call(
+            ANY,
+            presence=False,
+            node_id="/testforms:toplevel/still-in-top/b",
+        ),
+        call(
+            ANY,
+            presence=False,
+            node_id="/testforms:other",
+        ),
     ]
     # Assert List
-    assert subject.callback_open_list.mock_calls == [call(ANY, count=0, node_id="/testforms:toplevel/simplelist")]
+    assert subject.callback_open_list.mock_calls == [
+        call(
+            ANY,
+            count=0,
+            node_id="/testforms:toplevel/simplelist",
+        ),
+        call(
+            ANY,
+            count=0,
+            node_id="/testforms:mainlist",
+        ),
+    ]
 
     # Assert List Element
     assert subject.callback_open_list_element.mock_calls == []
 
     # Assert Choice
-    assert subject.callback_open_choice.mock_calls == [call(ANY, node_id="/testforms:toplevel/mychoice")]
+    assert subject.callback_open_choice.mock_calls == [
+        call(
+            ANY,
+            node_id="/testforms:toplevel/mychoice",
+        ),
+    ]
 
     # Assert Case
-    assert subject.callback_open_choice.mock_calls == [call(ANY, node_id="/testforms:toplevel/mychoice")]
+    assert subject.callback_open_case.mock_calls == [
+        call(
+            ANY,
+            False,
+            True,
+            node_id="/testforms:toplevel/mychoice/mycase1",
+        ),
+        call(
+            ANY,
+            False,
+            True,
+            node_id="/testforms:toplevel/mychoice/mycase2",
+        ),
+        call(
+            ANY,
+            False,
+            True,
+            node_id="/testforms:toplevel/mychoice/mycase3",
+        ),
+    ]
 
 
 def test_leaf_lists(subject):
@@ -267,10 +341,34 @@ def test_leaf_lists(subject):
             key=False,
             node_id="/testforms:toplevel/still-in-top/b-turned-on",
         ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            node_id="/testforms:other/foreign",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            node_id="/testforms:other/vacant",
+        ),
     ]
 
     # Assert Leaf-Lists
-    assert subject.callback_open_leaflist.mock_calls == [call(ANY, count=2, node_id="/testforms:toplevel/multi")]
+    assert subject.callback_open_leaflist.mock_calls == [
+        call(
+            ANY,
+            count=2,
+            node_id="/testforms:toplevel/multi",
+        )
+    ]
     assert subject.callback_write_leaflist_item.mock_calls == [
         call(ANY, "m", "'", True, node_id="/testforms:toplevel/multi[.='m']"),
         call(ANY, "M", "'", True, node_id="/testforms:toplevel/multi[.='M']"),
@@ -283,10 +381,14 @@ def test_leaf_lists(subject):
         call(ANY, presence=True, node_id="/testforms:toplevel/mychoice/mycase2/tupperware"),
         call(ANY, presence=False, node_id="/testforms:toplevel/still-in-top"),
         call(ANY, presence=False, node_id="/testforms:toplevel/still-in-top/b"),
+        call(ANY, presence=False, node_id="/testforms:other"),
     ]
 
     # Assert List
-    assert subject.callback_open_list.mock_calls == [call(ANY, count=2, node_id="/testforms:toplevel/simplelist")]
+    assert subject.callback_open_list.mock_calls == [
+        call(ANY, count=2, node_id="/testforms:toplevel/simplelist"),
+        call(ANY, count=0, node_id="/testforms:mainlist"),
+    ]
 
     # Assert List Element
     assert subject.callback_open_list_element.mock_calls == [
@@ -305,7 +407,31 @@ def test_leaf_lists(subject):
     ]
 
     # Assert Choice
-    assert subject.callback_open_choice.mock_calls == [call(ANY, node_id="/testforms:toplevel/mychoice")]
+    assert subject.callback_open_choice.mock_calls == [
+        call(
+            ANY,
+            node_id="/testforms:toplevel/mychoice",
+        ),
+    ]
 
     # Assert Case
-    assert subject.callback_open_choice.mock_calls == [call(ANY, node_id="/testforms:toplevel/mychoice")]
+    assert subject.callback_open_case.mock_calls == [
+        call(
+            ANY,
+            False,
+            False,
+            node_id="/testforms:toplevel/mychoice/mycase1",
+        ),
+        call(
+            ANY,
+            True,
+            False,
+            node_id="/testforms:toplevel/mychoice/mycase2",
+        ),
+        call(
+            ANY,
+            False,
+            False,
+            node_id="/testforms:toplevel/mychoice/mycase3",
+        ),
+    ]

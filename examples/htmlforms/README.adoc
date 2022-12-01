@@ -1,0 +1,60 @@
+= HTML Forms
+
+This is merely a proof of concept which shows the challenge of providing a UI which
+requires the ability to show the user the data that is real, but also the possibilities
+of data that may be created.
+
+i.e. the schema must be expanded with a given data tree.
+
+This is not a functioning web-page as there is no back-end server holding a session for
+a user, no interaction to implement the `+` button or `-` button of a list - but this does
+show the heavy lifting that is needed.
+
+This will produce a HTML output in `examples/htmlforms/test.html`
+
+----
+PYTHONPATH=./ python examples/htmlforms/HtmlForms.py
+----
+
+
+A stub http server can be spun up - although it doesn't do anything more than prove a basic
+AJAX hook for adding list elements.
+
+- The `user_instance` in the MainHandler isn't persistent - every page request will load
+  the same `simplelist4.xml` data tree.
+- The AJAX call is not implemented it simply reflects the contents back to the caller.
+
+----
+PYTHONPATH=./ python examples/htmlforms/stub-http-server.py
+----
+
+
+[WARNING]
+====
+Torando is designed to be stateless - is it worse to try sessions server side....
+
+i.e. if torando means serialising in the entire data tree on every call coudl we do something like:
+
+- HOLD the data tree in a JSON object in the browser (memory foot print?, network bandwidth).
+
+- Track the XPATH's that the user wants to do in a JSON list client site?
+
+  - changing a leaf
+  - deleteing a list element
+  - deleteing a list elemetn item
+  - expanding a presence container
+
+  - If any of the above happen then mark the data tree as dirty.
+
+- Implement a 'save' button which processes the XPATH's in turn (which may fail validation)... whens, musts etc
+
+- If the save is successful then we update the JSON object client side
+
+- If the save is unsuccesful we show the user which step succeeded and let them revert
+
+- We always have a DOWNLOAD option which downloads the last know good data tree.
+
+This is probably the best trade-off of as much as possible client side only needing to do server-side things if
+strictly necessary.
+
+====

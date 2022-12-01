@@ -1,11 +1,11 @@
-import libyang
-
+import base64
 import logging
 import uuid
 
 from io import StringIO
 from typing import List, Tuple
 
+import libyang
 from yangvoodoo.Common import Utils
 
 
@@ -62,6 +62,7 @@ class Expander:
         16: "_handle_schema_list",
     }
     INCLUDE_BLANK_LIST_ELEMENTS = False
+    BASE64_ENCODE_PATHS = False
 
     def __init__(self, yang_module, log: logging.Logger):
         self.log = log
@@ -155,6 +156,8 @@ class Expander:
         self.callback_write_header(self.ctx.get_module(self.yang_module))
         self.callback_write_title(self.ctx.get_module(self.yang_module))
 
+        self.callback_write_open_body(self.ctx.get_module(self.yang_module))
+
         self.data_path_trail = [""]
         self.id_path_trail = [""]
         self.schema_path_trail = [""]
@@ -162,12 +165,15 @@ class Expander:
         for node in self.ctx.find_path(f"/{self.yang_module}:*"):
             self._process_nodes(node)
 
-        self.callback_write_body(self.ctx.get_module(self.yang_module))
+        self.callback_write_close_body(self.ctx.get_module(self.yang_module))
 
         self.callback_write_footer(self.ctx.get_module(self.yang_module))
 
         self.result.seek(0)
         return self.result
+
+    def data_tree_delete_list_element(self, list_element_xpath: str):
+        self.data_ctx.delete_xpath(list_element_xpath)
 
     def data_tree_add_list_element(self, list_xpath: str, key_values: List[Tuple[str, str]]):
         for k, v in key_values:
@@ -243,9 +249,17 @@ class Expander:
             module: The libyang schema module
         """
 
-    def callback_write_body(self, module: libyang.schema.Module):
+    def callback_write_open_body(self, module: libyang.schema.Module):
         """
         Called in order to provide information in a body before starting to process the yang model.
+
+        Args:
+            module: The libyang schema module
+        """
+
+    def callback_write_close_body(self, module: libyang.schema.Module):
+        """
+        Called in order to provide information at the end of processing the yang model.
 
         Args:
             module: The libyang schema module
@@ -700,26 +714,43 @@ class Expander:
 
         Args:
             quote: if set to `True` a suitable quote will be used to surround an un-escaped value.
+            escape: escape the id
+            prefix: add a prefix to the id
         """
         if len(self.data_path_trail) == 1:
             return "'__root__'"
         trail = "".join(self.data_path_trail)
+        if self.BASE64_ENCODE_PATHS:
+            return base64.urlsafe_b64encode(trail.encode("utf-8")).decode("utf-8")
         if quote:
             quote = self.get_quote_style(trail)
         if escape:
             trail = self.escape_value(trail, quote)
-        return f"{quote}{trail}{quote}"
+        return f"{trail}"
 
     def get_schema_id(self):
         if len(self.schema_path_trail) == 1:
             return "'__root__'"
         trail = "".join(self.schema_path_trail)
+        if self.BASE64_ENCODE_PATHS:
+            return base64.urlsafe_b64encode(trail.encode("utf-8")).decode("utf-8")
         quote = self.get_quote_style(trail)
         return f"{quote}{trail}{quote}"
 
-    def get_uuid(self):
+    def get_hybrid_id(self, as_uuid=False):
+        """
+        Return a hybrid trail id, which is the data path with additional nodes to denote and
+        choice/case statement.
+        """
+        if len(self.id_path_trail) == 1:
+            return "'__root__'"
         trail = "".join(self.id_path_trail)
-        return str(uuid.uuid5(uuid.uuid5(uuid.NAMESPACE_URL, "pyvwu"), trail))
+        if as_uuid:
+            return str(uuid.uuid5(uuid.uuid5(uuid.NAMESPACE_URL, "pyvwu"), trail))
+        if self.BASE64_ENCODE_PATHS:
+            return base64.urlsafe_b64encode(trail.encode("utf-8")).decode("utf-8")
+        quote = self.get_quote_style(trail)
+        return f"{quote}{trail}{quote}"
 
     def get_indent(self):
         return self.INDENT_CHAR * (self.indent + self.INDENT_MINIMUM) * self.INDENT_SPACING

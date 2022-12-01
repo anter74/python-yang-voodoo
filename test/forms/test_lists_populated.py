@@ -49,8 +49,8 @@ def test_lists(subject):
             "'",
             True,
             default="put something here",
-            node_id="/testforms:toplevel/hello",
             key=False,
+            node_id="/testforms:toplevel/hello",
         ),
         call(
             ANY,
@@ -85,8 +85,8 @@ def test_lists(subject):
             "'",
             True,
             default="non key value goes here",
-            node_id="/testforms:toplevel/simplelist[simplekey='A']/simplenonkey",
             key=False,
+            node_id="/testforms:toplevel/simplelist[simplekey='A']/simplenonkey",
         ),
         call(
             ANY,
@@ -94,8 +94,8 @@ def test_lists(subject):
             "'",
             True,
             default=None,
-            node_id="/testforms:toplevel/simplelist[simplekey='B']/simplekey",
             key=True,
+            node_id="/testforms:toplevel/simplelist[simplekey='B']/simplekey",
         ),
         call(
             ANY,
@@ -103,8 +103,8 @@ def test_lists(subject):
             "'",
             True,
             default="non key value goes here",
-            node_id="/testforms:toplevel/simplelist[simplekey='B']/simplenonkey",
             key=False,
+            node_id="/testforms:toplevel/simplelist[simplekey='B']/simplenonkey",
         ),
         call(
             ANY,
@@ -112,8 +112,8 @@ def test_lists(subject):
             "'",
             False,
             default="withdefault",
-            node_id="/testforms:toplevel/still-in-top/of-the-world",
             key=False,
+            node_id="/testforms:toplevel/still-in-top/of-the-world",
         ),
         call(
             ANY,
@@ -151,6 +151,24 @@ def test_lists(subject):
             key=False,
             node_id="/testforms:toplevel/still-in-top/b-turned-on",
         ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            node_id="/testforms:other/foreign",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            node_id="/testforms:other/vacant",
+        ),
     ]
 
     # Assert Leaf-Lists
@@ -158,19 +176,47 @@ def test_lists(subject):
 
     # Assert Containers
     assert subject.callback_open_containing_node.mock_calls == [
-        call(ANY, node_id="/testforms:toplevel", presence=True),
-        call(ANY, node_id="/testforms:toplevel/mychoice/mycase1/box", presence=None),
+        call(
+            ANY,
+            node_id="/testforms:toplevel",
+            presence=True,
+        ),
+        call(
+            ANY,
+            node_id="/testforms:toplevel/mychoice/mycase1/box",
+            presence=None,
+        ),
         call(
             ANY,
             node_id="/testforms:toplevel/mychoice/mycase2/tupperware",
             presence=False,
         ),
-        call(ANY, node_id="/testforms:toplevel/still-in-top", presence=False),
+        call(
+            ANY,
+            node_id="/testforms:toplevel/still-in-top",
+            presence=False,
+        ),
         call(ANY, presence=False, node_id="/testforms:toplevel/still-in-top/b"),
+        call(
+            ANY,
+            presence=False,
+            node_id="/testforms:other",
+        ),
     ]
 
     # Assert List
-    assert subject.callback_open_list.mock_calls == [call(ANY, count=2, node_id="/testforms:toplevel/simplelist")]
+    assert subject.callback_open_list.mock_calls == [
+        call(
+            ANY,
+            count=2,
+            node_id="/testforms:toplevel/simplelist",
+        ),
+        call(
+            ANY,
+            count=0,
+            node_id="/testforms:mainlist",
+        ),
+    ]
 
     # Assert List Element
     assert subject.callback_open_list_element.mock_calls == [

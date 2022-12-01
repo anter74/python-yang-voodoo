@@ -1,0 +1,28 @@
+<toplevel xmlns="http://testforms"><hello>world</hello>
+	<box>
+  	<clown>bozo</clown>
+	</box>
+	<simplelist>
+		<simplekey>A</simplekey>
+	</simplelist>
+	<simplelist>
+		<simplekey>B</simplekey>
+		<simplenonkey>brian-jonestown-massacre</simplenonkey>
+	</simplelist>
+	<multi>m</multi>
+	<multi>M</multi>
+</toplevel>
+<mainlist xmlns="http://testforms">
+	<mainkey>this-key</mainkey>
+	<subkey>this-subkey</subkey>
+	<this>this has been set</this>
+</mainlist>
+<mainlist xmlns="http://testforms">
+	<mainkey>that-key</mainkey>
+	<subkey>that-subkey</subkey>
+	<that>that has been set</that>
+</mainlist>
+<mainlist xmlns="http://testforms">
+	<mainkey>neither-this-or-that-key</mainkey>
+	<subkey>neither-this-or-that-subkey</subkey>
+</mainlist>

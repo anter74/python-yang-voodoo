@@ -35,6 +35,17 @@ module testforms {
     type myothersubtype;
   }
 
+  typedef leaflistenum {
+    type enumeration {
+      enum m;
+      enum M;
+      enum em;
+      enum emmm;
+      enum MMMMM;
+      enum MOO;
+    }
+  }
+
   leaf topleaf {
     type union {
       type mytype;
@@ -58,7 +69,7 @@ module testforms {
 
     leaf-list multi {
       description "leaf-list description";
-      type string;
+      type leaflistenum;
     }
 
     choice mychoice {
@@ -204,25 +215,56 @@ module testforms {
       }
     }
   } // end container top level
-/*
+
   container other {
     presence true;
     leaf foreign {
       type string;
     }
-  } // end container other */
+    leaf vacant {
+      description "An empty leaf";
+      type empty;
+    }
+  } // end container other
 
-  /* list mainlist {
-    key mainkey;
+  list mainlist {
+    key "mainkey subkey";
     leaf mainkey {
       type string;
     }
+    leaf subkey {
+      type string;
+    }
 
+    choice another-choice {
+      case this {
+        leaf this {
+          type string;
+        }
+        list this-second-list {
+          key key;
+          leaf key {
+            type string;
+          }
+        }
+      }
+      case that {
+        leaf that {
+          type string;
+        }
+        list that-second-list {
+          key key;
+          leaf key {
+            type string;
+          }
+        }
+      }
+    }
     container maincontainer {
       presence true;
       leaf mainleaf {
-	type string;
+	       type string;
       }
     }
-  } */
+  }
 }

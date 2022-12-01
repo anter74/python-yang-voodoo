@@ -135,6 +135,87 @@ def test_leafs(subject):
             key=False,
             node_id="/testforms:toplevel/still-in-top/b-turned-on",
         ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            node_id="/testforms:other/foreign",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            node_id="/testforms:other/vacant",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=True,
+            node_id="/testforms:mainlist/mainkey",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=True,
+            node_id="/testforms:mainlist/subkey",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            node_id="/testforms:mainlist/another-choice/this/this",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=True,
+            node_id="/testforms:mainlist/another-choice/this/this-second-list/key",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            node_id="/testforms:mainlist/another-choice/that/that",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=True,
+            node_id="/testforms:mainlist/another-choice/that/that-second-list/key",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            node_id="/testforms:mainlist/maincontainer/mainleaf",
+        ),
     ]
 
     # Assert Leaf-Lists
@@ -142,19 +223,66 @@ def test_leafs(subject):
 
     # Assert Containers
     assert subject.callback_open_containing_node.mock_calls == [
-        call(ANY, node_id="/testforms:toplevel", presence=True),
-        call(ANY, node_id="/testforms:toplevel/mychoice/mycase1/box", presence=None),
         call(
             ANY,
-            node_id="/testforms:toplevel/mychoice/mycase2/tupperware",
-            presence=False,
+            presence=True,
+            node_id="/testforms:toplevel",
         ),
-        call(ANY, node_id="/testforms:toplevel/still-in-top", presence=False),
-        call(ANY, presence=False, node_id="/testforms:toplevel/still-in-top/b"),
+        call(
+            ANY,
+            presence=None,
+            node_id="/testforms:toplevel/mychoice/mycase1/box",
+        ),
+        call(
+            ANY,
+            presence=False,
+            node_id="/testforms:toplevel/mychoice/mycase2/tupperware",
+        ),
+        call(
+            ANY,
+            presence=False,
+            node_id="/testforms:toplevel/still-in-top",
+        ),
+        call(
+            ANY,
+            presence=False,
+            node_id="/testforms:toplevel/still-in-top/b",
+        ),
+        call(
+            ANY,
+            presence=False,
+            node_id="/testforms:other",
+        ),
+        call(
+            ANY,
+            presence=False,
+            node_id="/testforms:mainlist/maincontainer",
+        ),
     ]
 
     # Assert List
-    assert subject.callback_open_list.mock_calls == [call(ANY, count=0, node_id="/testforms:toplevel/simplelist")]
+    assert subject.callback_open_list.mock_calls == [
+        call(
+            ANY,
+            count=0,
+            node_id="/testforms:toplevel/simplelist",
+        ),
+        call(
+            ANY,
+            count=0,
+            node_id="/testforms:mainlist",
+        ),
+        call(
+            ANY,
+            count=0,
+            node_id="/testforms:mainlist/another-choice/this/this-second-list",
+        ),
+        call(
+            ANY,
+            count=0,
+            node_id="/testforms:mainlist/another-choice/that/that-second-list",
+        ),
+    ]
 
     # Assert List Element
     assert subject.callback_open_list_element.mock_calls == [
@@ -163,11 +291,69 @@ def test_leafs(subject):
             key_values=[("simplekey", None)],
             node_id="/testforms:toplevel/simplelist",
             empty_list_element=True,
-        )
+        ),
+        call(
+            ANY,
+            key_values=[("mainkey", None), ("subkey", None)],
+            empty_list_element=True,
+            node_id="/testforms:mainlist",
+        ),
+        call(
+            ANY,
+            key_values=[("key", None)],
+            empty_list_element=True,
+            node_id="/testforms:mainlist/another-choice/this/this-second-list",
+        ),
+        call(
+            ANY,
+            key_values=[("key", None)],
+            empty_list_element=True,
+            node_id="/testforms:mainlist/another-choice/that/that-second-list",
+        ),
     ]
 
     # Assert Choice
-    assert subject.callback_open_choice.mock_calls == [call(ANY, node_id="/testforms:toplevel/mychoice")]
+    assert subject.callback_open_choice.mock_calls == [
+        call(
+            ANY,
+            node_id="/testforms:toplevel/mychoice",
+        ),
+        call(
+            ANY,
+            node_id="/testforms:mainlist/another-choice",
+        ),
+    ]
 
     # Assert Case
-    assert subject.callback_open_choice.mock_calls == [call(ANY, node_id="/testforms:toplevel/mychoice")]
+    assert subject.callback_open_case.mock_calls == [
+        call(
+            ANY,
+            False,
+            True,
+            node_id="/testforms:toplevel/mychoice/mycase1",
+        ),
+        call(
+            ANY,
+            False,
+            True,
+            node_id="/testforms:toplevel/mychoice/mycase2",
+        ),
+        call(
+            ANY,
+            False,
+            True,
+            node_id="/testforms:toplevel/mychoice/mycase3",
+        ),
+        call(
+            ANY,
+            False,
+            True,
+            node_id="/testforms:mainlist/another-choice/this",
+        ),
+        call(
+            ANY,
+            False,
+            True,
+            node_id="/testforms:mainlist/another-choice/that",
+        ),
+    ]
