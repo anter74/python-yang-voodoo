@@ -1,11 +1,27 @@
 #!/usr/bin/env python3
-import yangvoodoo
-from yangvoodoo.Common import Utils
+import sys
+
+try:
+    import libyang
+    import yangvoodoo
+    from yangvoodoo.Common import Utils
+
+    libyang.util.InvalidSchemaOrValueError
+except ImportError:
+    print("")
+    print("WARNING")
+    print("=======")
+    print("")
+    print("Unable to import the forked libyang-cffi library.")
+    print(" see https://github.com/allena29/python-yang-voodoo/blob/master/INSTALL.md.")
+    print("")
+    print("")
+    raise
 
 try:
     import jinja2
     import dictdiffer
-except ImportError as err:
+except ImportError:
     print("")
     print("WARNING")
     print("=======")
@@ -16,16 +32,14 @@ except ImportError as err:
     print("")
     raise
 
-print("Using stub (libyang) data abstraction layer")
-print(" - YANG operations on data (when's, must's and leafref paths not implemented)")
-print("   SCHEMA based validation will still occur.")
-print()
 
 # Using Stub backend
 session = yangvoodoo.DataAccess()
-
-session.connect('integrationtest', yang_location='yang')
-session.add_module('foreign')
+yangmodel = "integrationtest"
+if len(sys.argv) == 2:
+    yangmodel = sys.argv[1]
+session.connect(yangmodel, yang_location="yang")
+session.add_module("foreign")
 root = session.get_node()
 yang = root._context.schema
 yangctx = root._context.schemactx
@@ -35,6 +49,6 @@ backend = root._context.dal
 import IPython
 
 yangvoodoo.DataAccess._welcome()
-print('YANGVOOODOO Version %s' % (session.__version__))
-print('')
+print("YANGVOOODOO Version %s" % (session.__version__))
+print("")
 IPython.embed(display_banner=False)
