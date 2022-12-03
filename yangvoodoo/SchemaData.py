@@ -64,6 +64,7 @@ class Expander:
     }
     INCLUDE_BLANK_LIST_ELEMENTS = False
     BASE64_ENCODE_PATHS = False
+    YANGUI_HIDDEN_KEY = "yangui-hidden"
 
     def __init__(self, yang_module, log: logging.Logger):
         self.log = log
@@ -206,6 +207,8 @@ class Expander:
 
         self.grow_trail(list_element_predicates="", schema=False)
         for subnode in self.ctx.find_path(f"{schema_xpath}/*"):
+            if node.get_extension(self.YANGUI_HIDDEN_KEY):
+                continue
             if subnode.nodetype() == Types.LIBYANG_NODETYPE["LEAF"] and subnode.is_key():
                 self.grow_trail(subnode)
                 self.callback_write_leaf(
@@ -489,6 +492,8 @@ class Expander:
         raise NotImplementedError("callback_close_case")
 
     def _process_nodes(self, node):
+        if node.get_extension(self.YANGUI_HIDDEN_KEY):
+            return
         if node.nodetype() not in self.SCHEMA_NODE_TYPE_MAP:
             raise NotImplementedError(f"{node.schema_path()} has unknown type {node.nodetype()}")
         if not self._is_schema_node_filtered(node):

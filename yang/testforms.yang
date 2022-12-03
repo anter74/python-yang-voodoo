@@ -12,6 +12,10 @@ module testforms {
     description "This is a description with a very long single revision history that could have easily been broken down into a much better format within the yang model itself but it is okay because we are going to format it into a block quote section of text which is more readable in our display tool";
   }
 
+  extension yangui-hidden {
+    argument string;
+  }
+
   typedef mysubtype {
     type enumeration {
       enum a;
@@ -51,6 +55,13 @@ module testforms {
       pattern "a";
     }
   }
+
+  leaf hiddenleaf {
+    type string;
+    default "hidden-with-default";
+    testforms:yangui-hidden "";
+  }
+
   leaf topleaf {
     type union {
       type mytype;
