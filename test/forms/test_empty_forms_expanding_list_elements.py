@@ -43,6 +43,17 @@ def test_leafs(subject):
             False,
             default=None,
             key=False,
+            template=False,
+            node_id="/testforms:simpleleaf",
+        ),
+        call(
+            ANY,
+            "",
+            "'",
+            False,
+            default=None,
+            key=False,
+            template=False,
             node_id="/testforms:topleaf",
         ),
         call(
@@ -52,6 +63,7 @@ def test_leafs(subject):
             True,
             default="put something here",
             key=False,
+            template=False,
             node_id="/testforms:toplevel/hello",
         ),
         call(
@@ -61,6 +73,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=False,
+            template=False,
             node_id="/testforms:toplevel/mychoice/mycase1/box/clown",
         ),
         call(
@@ -70,6 +83,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=False,
+            template=False,
             node_id="/testforms:toplevel/mychoice/mycase3/empty",
         ),
         call(
@@ -79,6 +93,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=True,
+            template=False,
             node_id="/testforms:toplevel/simplelist/simplekey",
         ),
         call(
@@ -88,6 +103,7 @@ def test_leafs(subject):
             False,
             default="non key value goes here",
             key=False,
+            template=False,
             node_id="/testforms:toplevel/simplelist/simplenonkey",
         ),
         call(
@@ -97,6 +113,7 @@ def test_leafs(subject):
             False,
             default="withdefault",
             key=False,
+            template=False,
             node_id="/testforms:toplevel/still-in-top/of-the-world",
         ),
         call(
@@ -106,6 +123,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=False,
+            template=False,
             node_id="/testforms:toplevel/still-in-top/pointer",
         ),
         call(
@@ -115,6 +133,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=False,
+            template=False,
             node_id="/testforms:toplevel/still-in-top/a",
         ),
         call(
@@ -124,6 +143,7 @@ def test_leafs(subject):
             False,
             default=True,
             key=False,
+            template=False,
             node_id="/testforms:toplevel/still-in-top/a-turned-on",
         ),
         call(
@@ -133,6 +153,7 @@ def test_leafs(subject):
             False,
             default=False,
             key=False,
+            template=False,
             node_id="/testforms:toplevel/still-in-top/b-turned-on",
         ),
         call(
@@ -142,6 +163,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=False,
+            template=False,
             node_id="/testforms:other/foreign",
         ),
         call(
@@ -151,6 +173,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=False,
+            template=False,
             node_id="/testforms:other/vacant",
         ),
         call(
@@ -160,6 +183,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=True,
+            template=False,
             node_id="/testforms:mainlist/mainkey",
         ),
         call(
@@ -169,6 +193,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=True,
+            template=False,
             node_id="/testforms:mainlist/subkey",
         ),
         call(
@@ -178,6 +203,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=False,
+            template=False,
             node_id="/testforms:mainlist/another-choice/this/this",
         ),
         call(
@@ -187,6 +213,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=True,
+            template=False,
             node_id="/testforms:mainlist/another-choice/this/this-second-list/key",
         ),
         call(
@@ -196,6 +223,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=False,
+            template=False,
             node_id="/testforms:mainlist/another-choice/that/that",
         ),
         call(
@@ -205,6 +233,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=True,
+            template=False,
             node_id="/testforms:mainlist/another-choice/that/that-second-list/key",
         ),
         call(
@@ -214,6 +243,7 @@ def test_leafs(subject):
             False,
             default=None,
             key=False,
+            template=False,
             node_id="/testforms:mainlist/maincontainer/mainleaf",
         ),
     ]

@@ -270,7 +270,7 @@ class Yang2Text(Expander):
         if args.schema_xpath:
             self.result.write(f"{self.get_blank_indent(6)}{Display.DIM}S: {schema_path}{Display.NORMAL}\n")
 
-    def callback_write_leaf(self, node, value, quote, explicit, default, key, node_id):
+    def callback_write_leaf(self, node, value, quote, explicit, default, key, template, node_id):
         self.result.write(f"{self.get_indent()} {Display.NORMAL}{Display.LEAF}")
         if node.mandatory():
             self.result.write(f"{Display.MANDATORY} ")
@@ -309,7 +309,7 @@ class Yang2Text(Expander):
         self.open_indent()
         self.leaf_list_count = 0
 
-    def callback_write_leaflist_item(self, node, quote, explicit, value, node_id):
+    def callback_write_leaflist_item(self, node, quote, explicit, value, template, node_id):
         self.result.write(
             f"{self.get_blank_indent(6)}{Display.DIM}index {self.leaf_list_count}:{Display.NORMAL} {value}\n"
         )

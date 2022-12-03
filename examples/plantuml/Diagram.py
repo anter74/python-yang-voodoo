@@ -61,7 +61,7 @@ class PlantUMLExpander(Expander):
     def callback_close_containing_node(self, node):
         self.obj_pointer.pop()
 
-    def callback_write_leaf(self, node, value, quote, explicit, default, key, node_id):
+    def callback_write_leaf(self, node, value, quote, explicit, default, key, template, node_id):
         if key:
             return
         if not default:

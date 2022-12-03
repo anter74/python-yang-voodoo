@@ -55,6 +55,9 @@
   opacity: 0.1;
 }
 
+.alertwider { 
+  min-width: 400px;
+}
 .no-margin-left {
     margin-left: 2em !important;
 }
@@ -91,6 +94,20 @@
   background: white;
   padding-left: 5px;
   padding-top: 5px;
+}
+
+.yangui-debug {
+  z-index: 92;
+  position: fixed;
+  bottom: 20px;
+  left: 20%;
+  height: 30px;
+  background: white;
+  opacity: 0.9;
+  font-weight:bold;
+  padding-left: 5px;
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
 .yangui-spinner {

@@ -6,6 +6,7 @@ from io import StringIO
 from typing import List, Tuple
 
 import libyang
+from yangvoodoo import Types
 from yangvoodoo.Common import Utils
 
 
@@ -186,6 +187,63 @@ class Expander:
         else:
             self.data_ctx.set_xpath(xpath, value)
 
+    def _clear(self):
+        self.result.seek(0)
+        self.result.truncate()
+        self.data_path_trail = [""]
+        self.id_path_trail = [""]
+        self.schema_path_trail = [""]
+
+    def subprocess_create_list(self, data_xpath: str, schema_xpath: str):
+        """
+        Form a basic page with *just* enough eleemnts to
+        """
+        self._clear()
+
+        self.id_path_trail.append(data_xpath)
+        self.data_path_trail.append(data_xpath)
+        self.schema_path_trail.append(schema_xpath)
+
+        self.grow_trail(list_element_predicates="", schema=False)
+        for subnode in self.ctx.find_path(f"{schema_xpath}/*"):
+            if subnode.nodetype() == Types.LIBYANG_NODETYPE["LEAF"] and subnode.is_key():
+                self.grow_trail(subnode)
+                self.callback_write_leaf(
+                    subnode,
+                    "",
+                    '"',
+                    False,
+                    default="",
+                    key=False,  # override because callbacks may use this to skip processing.c
+                    template=True,
+                    node_id="".join(self.id_path_trail),
+                )
+                self.shrink_trail()
+
+        self.shrink_trail(schema=False)
+
+    def subprocess_create_leaf_list(self, data_xpath: str, schema_xpath: str):
+        self._clear()
+
+        self.id_path_trail.append(data_xpath)
+        self.data_path_trail.append(data_xpath)
+        self.schema_path_trail.append(schema_xpath)
+
+        node = next(self.ctx.find_path("".join(self.schema_path_trail)))
+        self.grow_trail(list_element_predicates="", schema=False)
+
+        xpath = "".join(self.schema_path_trail)
+        self.callback_write_leaflist_item(
+            node,
+            "",
+            '"',
+            False,
+            template=True,
+            node_id="".join(self.id_path_trail),
+        )
+
+        self.shrink_trail(schema=False)
+
     def subprocess(self, list_element_data_xpath: str):
         """
         Mimic the call from `handle_schema_list` -> `_handle_list_element`, which may mimic a user
@@ -195,14 +253,10 @@ class Expander:
         - however assuming this is about creating additions of list elements to ane existing data
         tree this should be ok.
         """
-        self.result.seek(0)
-        self.result.truncate()
-        self.data_path_trail = [""]
-        self.id_path_trail = [""]
-        self.schema_path_trail = [""]
+        self._clear()
 
         for result in self.data_ctx.get_xpath(list_element_data_xpath):
-            if result.get_schema().nodetype() != 16:
+            if result.get_schema().nodetype() != Types.LIBYANG_NODETYPE["LIST"]:
                 raise NotImplementedError(
                     f"subprocess only supports processing of a list element: {list_element_data_xpath}"
                 )
@@ -313,7 +367,15 @@ class Expander:
         raise NotImplementedError("callback_close_list")
 
     def callback_write_leaf(
-        self, node: libyang.Node, value: str, quote: str, explicit: bool, default: str, key: bool, node_id: str
+        self,
+        node: libyang.Node,
+        value: str,
+        quote: str,
+        explicit: bool,
+        default: str,
+        key: bool,
+        template: bool,
+        node_id: str,
     ):
         """
         Called when the a leaf has been encountered.
@@ -325,6 +387,7 @@ class Expander:
             explicit: Data exists in the data tree
             default: The default value for the leaf
             key: Indicates this leaf is a key of a list
+            template: Indicates this is a templated representation of the leaf
             node_id: The node id using a hybrid schema/data path.
         """
         raise NotImplementedError("callback_write_leaf")
@@ -360,7 +423,7 @@ class Expander:
         """
         raise NotImplementedError("callback_open_leaflist_node")
 
-    def callback_write_leaflist_item(self, node: libyang.Node, value: str, quote: str, _, node_id: str):
+    def callback_write_leaflist_item(self, node: libyang.Node, value: str, quote: str, _, template, node_id: str):
         """
         Called when the a leaf-list has been encountered.
 
@@ -369,6 +432,7 @@ class Expander:
             value: The value of the leaf-list node
             quote: The preferred quote style.
             explicit: If the value is explicitly set in the data tree (N/A for a leaf-list)
+            template: If the item is a template rather (i.e. used when offering creation of this type of leaf-list)
             node_id: The node id using a hybrid schema/data path.
         """
         raise NotImplementedError("callback_write_leaflist_item")
@@ -449,7 +513,7 @@ class Expander:
         self.callback_close_containing_node(node)
         self.shrink_trail()
 
-    def _handle_schema_leaf(self, node):
+    def _handle_schema_leaf(self, node: libyang.schema.Node):
         """
         Here we should return different data based on the leaf type
         i.e. boolean/empty leaves should be checkbox
@@ -458,6 +522,10 @@ class Expander:
 
         we should deal with default values too when the data isn't set - perhaps with a lighter colour in the input
         than if it haves explicit values. (WOULD HAVE TO BE HANDLED IN Javascript so not worth the effort)
+
+        Args:
+            node: A libyang schema node
+            key: if None (default) lookup if the node is a key (otherwise use this argument as an override)
         """
         self.grow_trail(node)
         self.callback_write_leaf(
@@ -465,6 +533,7 @@ class Expander:
             *self.get_data(node),
             default=Utils.convert_to_libyang_value_to_pythonic(node, node.default()),
             key=node.is_key(),
+            template=False,
             node_id="".join(self.id_path_trail),
         )
         self.shrink_trail()
@@ -554,6 +623,7 @@ class Expander:
             self.callback_write_leaflist_item(
                 node,
                 *self.get_data(node),
+                template=False,
                 node_id="".join(self.id_path_trail),
             )
             self.shrink_trail(schema=False)
@@ -617,7 +687,7 @@ class Expander:
             return value[0].value
         return None
 
-    def get_data(self, node: libyang.schema.Node) -> Tuple[str, str]:
+    def get_data(self, node: libyang.schema.Node) -> Tuple[str, str, bool]:
         """
         Return data for the current data item at the head of the trail.
 
@@ -625,7 +695,7 @@ class Expander:
             node: the libyang schema node used to derive defaults.
 
         Returns:
-            Tuple of escaped (if required) data and a preferred quoting style
+            Tuple of escaped (if required) data, a preferred quoting style, and if the data is explicit in the data tree
         """
         xpath = "".join(self.data_path_trail)
         value = list(self.data_ctx.get_xpath(xpath))

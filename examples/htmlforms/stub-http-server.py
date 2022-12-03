@@ -1,46 +1,135 @@
-import base64
 import json
-import logging
+import time
+
+
 import tornado.ioloop
 import tornado.web
+import logging
+
 from examples.htmlforms.HtmlForms import HtmlFormExpander
+from yangvoodoo.Merger import DataTree, DataTreeChanges, base64_tostring
 
 PORT = 8099
 
-
-log = logging.getLogger("tornado.application")
-
-
-def base64_tostring(input_string):
-    return base64.b64decode(input_string.encode("utf-8")).decode("utf-8")
+FORMAT = "%(asctime)-15s - %(name)-20s %(levelname)-12s  %(message)s"
+logging.basicConfig(level=logging.INFO, format=FORMAT)
+log = logging.getLogger("app")
 
 
 class AjaxHandler(tornado.web.RequestHandler):
+
+    """
+    The AJAX handler works on the basis of separate actions part of the URI
+    (i.e. /ajax/remove-leaf-list-item) - this translates to methods in this
+    class.
+
+    The payload
+        {'payload':
+            # This is the full payload stored by the client in their browser
+            # LIBYANG_USER_PAYLOAD. This is a pure libyang JSON payload.
+            {'testforms:toplevel':
+                {'hello': 'world', 'simplelist': [{'simplekey': 'A'},
+                {'simplekey': 'B', 'simplenonkey': 'brian-jonestown-massacre'}],
+                 'multi': ['m', 'M'], 'tupperware': {}}
+             },
+         'changes':
+            # This is a list of changes to the data-tree - the paths are based64
+            # encoded to ensure safety in the HTML DOM.
+            [{'action':
+                 'set', 'base64_path': 'L3Rlc3Rmb3Jtczp0b3BsZWFm', 'value': 'b',
+                  'update_field': 'L3Rlc3Rmb3Jtczp0b3BsZWFm', 'update_value': 'sdf'}
+            ]
+         }
+
+
+    Args:
+        input: the payload from the user
+
+
+    """
+
+    AJAX_METHODS = {
+        "/ajax/validate": "_validate",
+        "/ajax/download": "_download",
+        "/ajax/get-list-create-page": "_get_list_create_page",
+        "/ajax/get-leaf-list-create-page": "_get_leaf_list_create_page",
+    }
+
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
         self.set_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 
+    def _get_list_create_page(self, input):
+        """ """
+        instance = HtmlFormExpander(input["yang_model"], log)
+        instance.subprocess_create_list(base64_tostring(input["data_xpath"]), base64_tostring(input["schema_xpath"]))
+        self.write(instance.dumps())
+        self.finish()
+
+    def _get_leaf_list_create_page(self, input):
+        """ """
+        instance = HtmlFormExpander(input["yang_model"], log)
+        instance.subprocess_create_leaf_list(
+            base64_tostring(input["data_xpath"]), base64_tostring(input["schema_xpath"])
+        )
+        self.write(instance.dumps())
+        self.finish()
+
+    def _validate(self, input):
+        """
+        Args:
+            input: A JSON payload
+        """
+        result = {"status": True}
+
+        session, _, _ = DataTree.process_data_tree_against_libyang(
+            input["payload"], DataTreeChanges.convert(input["changes"]), log=log
+        )
+        session.validate()
+
+        self.write(json.dumps(result))
+        self.finish()
+
+    def _download(self, input):
+        """
+        Args:
+            input: A JSON payload
+        """
+        result = {"status": True}
+
+        session, new_payload, _ = DataTree.process_data_tree_against_libyang(
+            input["payload"], DataTreeChanges.convert(input["changes"]), log=log
+        )
+        session.validate()
+        result["new_payload"] = new_payload
+
+        self.write(json.dumps(result, indent=4))
+        self.finish()
+
     def post(self):
         self.set_header("Content-Type", "text/html")
-        import time
 
         time.sleep(0.2)
         input = json.loads(self.request.body.decode("utf-8"))
-        print(f"AjaxHandler POST: {input}")
-        if not hasattr(self, "user_instance"):
-            self.set_status(500)
-            self.finish("No data instance")
-            return
+        print(f"AjaxHandler POST: {self.request.uri} {input}")
 
-        if self.request.uri == "/ajax/add-leaf-list-element-form":
-            self.user_instance._get_keys_for_list_element(base64_tostring(input["schema_xpath_b64"]))
-
-            self.write("<p>fs</p>")
-            return
+        if self.request.uri in self.AJAX_METHODS:
+            try:
+                getattr(self, self.AJAX_METHODS[self.request.uri])(input)
+                return
+            except Exception as err:
+                log.exception("Error processing %s", self.request.uri)
+                self.set_status(500)
+                self.finish(str(err))
+                return
+        # if self.request.uri == "/ajax/add-leaf-list-element-form":
+        #     instance._get_keys_for_list_element(base64_tostring(input["schema_xpath_b64"]))
+        #     self.write("<p>fs</p>")
+        #     return
 
         self.set_status(500)
-        self.finish(f"Not Implemented - {self.request.uri} - {base64_tostring(input['data_xpath_b64'])}")
+        self.finish(f"Not Implemented - {self.request.uri}")
 
 
 class StaticHandler(tornado.web.RequestHandler):
@@ -61,10 +150,19 @@ class MainHandler(tornado.web.RequestHandler):
         self.set_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 
     def get(self):
-        self.user_instance = HtmlFormExpander("testforms", log)
+        instance = HtmlFormExpander("testforms", log)
         with open("templates/forms/simplelist4.xml") as start_data_payload_fh:
-            self.user_instance.process(start_data_payload_fh.read())
-        self.write(self.user_instance.dumps())
+            instance.process(start_data_payload_fh.read())
+        self.write(instance.dumps())
+
+    def post(self):
+        input = json.loads(str(self.request.files["payload"][0]["body"].decode("utf-8")))
+
+        yang_model = DataTree.get_root_yang_model(input)
+        instance = HtmlFormExpander(yang_model, log)
+        instance.process(json.dumps(input), 2)
+        self.write(instance.dumps())
+        self.finish()
 
 
 def make_app():

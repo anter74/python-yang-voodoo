@@ -53,6 +53,7 @@ def test_retrieve_a_list_element(subject):
             True,
             default=None,
             key=True,
+            template=False,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplekey",
         ),
         call(
@@ -62,6 +63,7 @@ def test_retrieve_a_list_element(subject):
             True,  # to check - libyang implicit creation scope of data - did this return data
             default="non key value goes here",
             key=False,
+            template=False,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplenonkey",
         ),
     ]
@@ -100,6 +102,7 @@ def test_add_a_list_element(subject):
             True,
             default=None,
             key=True,
+            template=False,
             node_id="/testforms:toplevel/simplelist[simplekey='C']/simplekey",
         ),
         call(
@@ -109,6 +112,7 @@ def test_add_a_list_element(subject):
             True,
             default="non key value goes here",
             key=False,
+            template=False,
             node_id="/testforms:toplevel/simplelist[simplekey='C']/simplenonkey",
         ),
     ]
@@ -139,6 +143,7 @@ def test_remove_a_leaf_of_a_list_element(subject):
             True,
             default=None,
             key=True,
+            template=False,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplekey",
         ),
         call(
@@ -148,6 +153,7 @@ def test_remove_a_leaf_of_a_list_element(subject):
             True,
             default="non key value goes here",
             key=False,
+            template=False,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplenonkey",
         ),
     ]
@@ -171,6 +177,7 @@ def test_remove_a_leaf_of_a_list_element(subject):
             True,
             default=None,
             key=True,
+            template=False,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplekey",
         ),
         call(
@@ -180,6 +187,7 @@ def test_remove_a_leaf_of_a_list_element(subject):
             False,
             default="non key value goes here",
             key=False,
+            template=False,
             node_id="/testforms:toplevel/simplelist[simplekey='B']/simplenonkey",
         ),
     ]

@@ -24,6 +24,8 @@ class HtmlFormExpander(Expander):
         instance = HtmlFormExpander('my-yang-model', log)
         instance.process('initial-instance-data')
 
+    Approach 1:
+
     The server could then provide an AJAX interface to match the hooks in yangui.js
 
         - `leaf_blur`, `check_blur`, `select_blur` could call `instance.data_tree_set_leaf(data_xpath, value)`
@@ -35,13 +37,24 @@ class HtmlFormExpander(Expander):
         - `presence_container_expand` could call `data_tree_set_leaf(xpath, '')`
            Note: libyang represents a presence container as existing as a blank string.
 
+    Approach 2:
 
+    Or an an alternative is to keep as much as possible client side, by (in Javascript) starting with a JSON
+    encoded payload. The UI decisions the user makes can the build a list of changes that may then be processed.
+    (This pattern may work well for a CLI interface with 'candidate' transactions).
+
+    The first approach has a downside of managing server side sessions and memory- the second has more processing
+    doen client side with more dependency on the browser not crashing. This may be the least performant option
+    of the browser.
+
+    This could be refactored to provide templates to build the page.
     """
 
     def __init__(self, yang_module, log):
         super().__init__(yang_module, log)
         self.default_collapse_state = "collapse show"
         self._disable_input_fields = False
+        self.USER_UI_STATE_CHANGES = {}
 
     def callback_write_header(self, module):
         self.result.write(
@@ -57,7 +70,9 @@ class HtmlFormExpander(Expander):
 <script language="Javascript">
     AJAX_BASE_SERVER_URL="{self.AJAX_BASE_SERVER_URL}";
     LIBYANG_USER_PAYLOAD = {{}};  // this will be populated in the footer
-    LIBYANG_CHANGES = [];
+    LIBYANG_CHANGES = []; // a list of changes we need to make (supports the ability to do a simple UNDO mechnism)
+    ELEMENTS_EXPANDED_BY_USER = {{}};
+    LIBYANG_MODEL = "{self.yang_module}";
 </script>
 </head>\n"""
         )
@@ -79,64 +94,86 @@ class HtmlFormExpander(Expander):
             </p>
         </div>
 
-        <div id="mymodal" class="modal" tabindex="-1" role="dialog">
+
+
+        <div id="yanguiUploadModal" class="modal" tabindex="-1" role="dialog">
           <div class="modal-dialog" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title">Are you sure?</h5>
+                <h5 class="modal-title">Upload a saved file</h5>
               </div>
               <div class="modal-body">
-                <p>If you continue to delete this list element all the data will be removed</p>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-primary">Save changes</button>
-                <button type="button" onClick="modal_visibility('mymodal', 'hide')" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              </div>
+                <form action="/" method="post" enctype="multipart/form-data">
+                    <div class="custom-file">
+                      <input type="file" name='payload' class="custom-file-input" accept='application/json'>
+                      <label class="custom-file-label" for="customFileLang">JSON instance data (RFC7159)</label>
+                    </div><hr/>
+                    <p class='text-danger'>If you upload any unsaved data on this page will be lost</p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                    <button type="button" onClick="modal_visibility('yanguiUploadModal', 'hide')" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  </div>
+                </form>
             </div>
           </div>
         </div>
 
         <div class='yangui-floating-left-buttons'>
           <div id='yangui-validate-button' class='yangui-disable'>
-            <a class="btn btn-primary" href="javascript:validate_payload()" role="button">
-              <i class="fa fa-stethoscope" aria-hidden="false"></i>
+            <a class="btn btn-primary" href="javascript:validate_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Validate data (ctrl+h)">
+              <i class="fa fa-stethoscope" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
           <div id='yangui-save-button' class='yangui-disable'>
-            <a class="btn btn-primary" href="javascript:download_payload()" role="button">
-                <i class="fa fa-download" aria-hidden="false"></i>
+            <a class="btn btn-primary" href="javascript:download_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Upload a saved payload (ctrl+s)">
+                <i class="fa fa-download" aria-hidden="true"></i>
+            </a>
+          </div>
+          <hr/>
+          <div id='yangui-upload-button'>
+            <a class="btn btn-primary" href="javascript:upload_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Upload a saved payload (ctrl+o)">
+                <i class="fa fa-upload" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
           <div id='yangui-undo-button' class='yangui-disable'>
-            <a class="btn btn-primary" href="javascript:yangui_undo()" role="button">
-                <i class="fa fa-undo" aria-hidden="false"></i>
+            <a class="btn btn-primary" href="javascript:yangui_undo()" role="button" data-toggle="tooltip" data-placement="top" data-html="true" title="Undo the last change (ctrl+z)" tabindex="-1">
+                <i class="fa fa-undo" aria-hidden="true"></i>
             </a>
           </div>
         </div>
 
-        <div id='capture-new-item' class='yangui-popup yangui-hidden'>
-            <h2>Add a new item <span id='capture-new-item-list-name'>...listname....</span><h2>
+        <div class='yangui-debug'><span id='yangui-debug'></span></div>
 
-            <div id='capture-new-item-list-contents'></div>
+        <div id="yanguiNewItemModal" class="modal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Add a new item <span id='yanguiNewItem-item'></span></h5>
+              </div>
+              <div class="modal-body">
 
-            <hr/>
-            <div align='right'>
-            """
-        )
-        self._write_generic_button("href='javascript:close_new_item()' ", "cross", "danger")
-        self._write_generic_button("href='javascript:save_new_item()' ", "check")
-        self.result.write(
-            """
+                <div id='yanguiNewItemContents'>
+                </div>
+
+                <hr/>
+              </div>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Create</button>
+                <button type="button" onClick="modal_visibility('yanguiNewItemModal', 'hide')" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              </div>
             </div>
+          </div>
         </div>
+
 
 
         """
         )
 
-        self.result.write(f"{self.open_indent()}<div class='container mt-5'>\n")
+        self.result.write(f"{self.open_indent()}<div class='container mt-9'>\n")
         self.result.write(
             """
         <div id="adams-debug-div"></div>
@@ -170,19 +207,28 @@ class HtmlFormExpander(Expander):
         if presence is False:
             this_container_collapse_or_show = "collapse"
             this_container_disable = "yangui-disable"
-            this_container_expand_javascript = self._get_html_attr("onClick", "presence_container_expand", data=True)
+            this_container_expand_javascript = self._get_html_attr(
+                "onClick", "presence_container_expand", data=True, uuid=True
+            )
+
+        i = self.get_id()
+        if i in self.USER_UI_STATE_CHANGES:
+            if self.USER_UI_STATE_CHANGES[i]:
+                this_container_collapse_or_show = ""  # if the user expanded this keep it expanded
+            else:
+                this_container_collapse_or_show = "collapse"  # if the user collapsed this keep it collapsed
 
         self._write_anchor("Container")
         self._write_open_first_div("structure_container", extra_class=this_container_disable)
         self._write_button("th-large", on_click=this_container_expand_javascript)
         self._write_label(node, "structure_containerlabel", linebreak=True)
-        self._write_open_second_div("structure_indent", extra_class=this_container_collapse_or_show)
+        self._write_open_second_div("structure_indent", collapse=this_container_collapse_or_show)
 
     def callback_close_containing_node(self, node):
         self._write_close_second_div()
         self._write_close_first_div()
 
-    def callback_write_leaf(self, node, value, quote, explicit, default, key, node_id):
+    def callback_write_leaf(self, node, value, quote, explicit, default, key, template, node_id):
         """
         Write an input box to capture input from a leaf.
 
@@ -192,14 +238,14 @@ class HtmlFormExpander(Expander):
         if key:
             return
         disabled = ""
-        if self._disable_input_fields:
-            disabled = "disabled"
+        # if self._disable_input_fields:
+        #     disabled = "disabled"
 
         basetype = node.type().base()
         if basetype in self.LEAF_MAPPING:
             getattr(self, self.LEAF_MAPPING[basetype])(node, value, disabled)
         else:
-            self._write_textbox(node, value, quote, disabled)
+            self._write_textbox(node, value, quote, disabled, template=template)
 
     def _write_checkbox(self, node, value, disabled, extra_button=""):
         """
@@ -210,7 +256,7 @@ class HtmlFormExpander(Expander):
         else:
             checked = ""
 
-        self.result.write(f'{self.get_indent()}<div class="form-switch">\n')
+        self.result.write(f"{self.get_indent()}<div class='form-switch'>\n")
         self._write_label(node, "structure_leaflabel", linebreak=False, label_icon="fa-leaf")
 
         self.result.write(
@@ -218,9 +264,9 @@ class HtmlFormExpander(Expander):
         )
         self.result.write(f"name={self.get_id(quote=True)} id={self.get_id(quote=True)} ")
         self.result.write(f"{self._get_html_attr('onChange', 'check_change', this=True, data=True)} ")
-        self.result.write(f"{self._get_html_attr('onBlur', 'check_blur', this=True, data=True)} ")
+        # self.result.write(f"{self._get_html_attr('onBlur', 'check_blur', this=True, data=True)} ")
         self.result.write(f"{checked} {disabled}><br/>\n")
-        self.result.write(f"{self.get_indent()} {extra_button}\n")
+        self.result.write(f"{self.get_indent()} {extra_button}</div>\n")
 
     def _write_checkbox_empty(self, node, value, disabled, extra_button=""):
         """
@@ -231,16 +277,16 @@ class HtmlFormExpander(Expander):
             checked = "checked"
         else:
             checked = ""
-
+        self.result.write(f'{self.get_indent()}<div class="form-switch">\n')
+        self._write_label(node, "structure_leaflabel", linebreak=False, label_icon="fa-leaf")
         self.result.write(
             f"{self.open_indent()}<input class='no-margin-left form-check-input' role='switch' type='checkbox'"
         )
         self.result.write(f"name={self.get_id(quote=True)} id={self.get_id(quote=True)} ")
         self.result.write(f"{self._get_html_attr('onChange', 'empty_change', this=True, data=True)} ")
-        self.result.write(f"{self._get_html_attr('onBlur', 'empty_blur', this=True, data=True)} ")
+        # self.result.write(f"{self._get_html_attr('onlur', 'empty_blur', this=True, data=True)} ")
         self.result.write(f"{checked} {disabled}><br/>\n")
-        self.result.write(f"{self.get_indent()} {extra_button}\n")
-        self.close_indent()
+        self.result.write(f"{self.get_indent()} {extra_button}</div>\n")
 
     def _write_dropdown(self, node, value, disabled, extra_button=""):
         """
@@ -248,11 +294,11 @@ class HtmlFormExpander(Expander):
         and a numeric value (either explicitly assigned in the yang model, or auto-assigned).
         YANGVOODOO did not implement values for enumerations.
         """
-        self.result.write(f'{self.get_indent()}<div class="form-check form-switch">\n')
+        self.result.write(f'{self.get_indent()}<div class="form-input ">\n')
         self._write_label(node, "structure_leaflabel", linebreak=False, label_icon="fa-leaf")
 
         self.result.write(
-            f"{self.get_indent()}<select class='form-input' name={self.get_id(quote=True)} id={self.get_id(quote=True)} "
+            f"{self.get_indent()}<select class='form-input' name={self.get_id(quote=True)} id={self.get_id(quote=True)} data-live-search='true' "
         )
         self.result.write(f"{self._get_html_attr('onChange', 'select_change', this=True, data=True)} ")
         self.result.write(f"{self._get_html_attr('onBlur', 'select_blur', this=True, data=True)} {disabled}>\n")
@@ -262,22 +308,26 @@ class HtmlFormExpander(Expander):
                 selected = "selected"
             self.result.write(f"{self.get_indent()}  <option {selected}>{enum}</option>\n")
         self.result.write(f"{self.get_indent()}</select>\n")
-
         self.result.write(f"{self.get_indent()} {extra_button}</div>\n")
 
-    def _write_textbox(self, node, value, quote, disabled, extra_button=""):
+    def _write_textbox(self, node, value, quote, disabled, extra_button="", template=False):
         """
         Write a text box - this is used for strings and integers.
         """
-        self.result.write(f"{self.get_indent()}<div>\n")
+        self.result.write(f"{self.get_indent()}<div class='form-input'      >\n")
         self._write_label(node, "structure_leaflabel", linebreak=False, label_icon="fa-leaf")
 
         self.result.write(
             f"{self.get_indent()}<input type='text' name={self.get_id(quote=True)} id={self.get_id(quote=True)} "
         )
         self.result.write(f"value={quote}{value}{quote} ")
-        self.result.write(f"{self._get_html_attr('onChange', 'leaf_change', this=True, data=True)} ")
-        self.result.write(f"{self._get_html_attr('onBlur', 'leaf_blur', this=True, data=True)} {disabled} ")
+        self.result.write(f"data-yangui-start-val={quote}{value}{quote} ")
+
+        if not template:
+            self.result.write(f"{self._get_html_attr('onChange', 'leaf_change', this=True, data=True)} ")
+            self.result.write(f"{self._get_html_attr('onKeyUp', 'leaf_change', this=True, data=True)} ")
+            self.result.write(f"{self._get_html_attr('onFocus', 'leaf_focus', this=True, data=True)} ")
+            self.result.write(f"{self._get_html_attr('onBlur', 'leaf_blur', this=True, data=True)} {disabled} ")
 
         self.result.write(
             f'data-toggle="tooltip" data-placement="top" data-html="true" title="{"".join(self._get_tooltip_types(node))}"'
@@ -320,7 +370,9 @@ class HtmlFormExpander(Expander):
         self.result.write(f"{self.get_indent()}<hr/>")
         self._write_anchor("ListElements")
         self._write_open_first_div("structure_listelement")
-        self._write_button("angle-right")
+        self._write_button(
+            "angle-right", on_click=self._get_html_attr("onClick", "list_element_expand", data=True, uuid=True)
+        )
 
         for comma, val in self.commaify([v for _, v in key_values]):
             self.result.write(f"{comma}<b>{val}</b>")
@@ -332,7 +384,16 @@ class HtmlFormExpander(Expander):
             "Delete this list element all the descendant data",
         )
 
-        self._write_open_second_div("structure_null", self.default_collapse_state)
+        this_list_element_collapse_or_show = "collapse"
+
+        i = self.get_id()
+        if i in self.USER_UI_STATE_CHANGES:
+            if self.USER_UI_STATE_CHANGES[i]:
+                this_list_element_collapse_or_show = ""  # if the user expanded this keep it expanded
+            else:
+                this_list_element_collapse_or_show = "collapse"  # if the user collapsed this keep it collapsed
+
+        self._write_open_second_div("structure_indent", collapse=this_list_element_collapse_or_show)
 
     def callback_close_list_element(self, node):
         self._write_close_second_div()
@@ -449,15 +510,17 @@ class HtmlFormExpander(Expander):
         self._write_close_second_div()
         self._write_close_first_div()
 
-    def callback_write_leaflist_item(self, node, value, quote, explicit, node_id):
+    def callback_write_leaflist_item(self, node, value, quote, explicit, template, node_id):
         self.result.write(f"{self.open_indent()}<div id='leaflist-item-{self.get_hybrid_id()}'>\n")
-        extra_button = f"{self.get_indent()}&nbsp;&nbsp;<a class='btn btn-danger' {self._get_html_attr('href', 'javascript:remove_leaflist_item', data=True)}><i class='fa fa-times warning'></i></a>&nbsp;\n"
+        extra_button = ""
+        if not template:
+            extra_button = f"{self.get_indent()}&nbsp;&nbsp;<a class='btn btn-danger' {self._get_html_attr('href', 'javascript:remove_leaflist_item', data=True)}><i class='fa fa-times warning'></i></a>&nbsp;\n"
 
         basetype = node.type().base()
         if basetype in self.LEAF_MAPPING:
             getattr(self, self.LEAF_MAPPING[basetype])(node, value, False, extra_button)
         else:
-            self._write_textbox(node, value, quote, False, extra_button)
+            self._write_textbox(node, value, quote, False, extra_button, template=template)
         self.result.write(f"{self.close_indent()}</div>\n")
 
     @staticmethod
@@ -524,10 +587,10 @@ class HtmlFormExpander(Expander):
             f"\n{self.open_indent()}<div class='{structure_class} {extra_class}' id={self.get_hybrid_id()}>\n"
         )
 
-    def _write_open_second_div(self, structure_class, extra_class=""):
-        self.result.write(
-            f"{self.open_indent()}<div class='{structure_class} {extra_class}' id='collapse-{self.get_hybrid_id(as_uuid=True)}'>\n"
-        )
+    def _write_open_second_div(self, structure_class, extra_class="", collapse=""):
+
+        self.result.write(f"{self.open_indent()}<div class='{structure_class} {extra_class} {collapse}' ")
+        self.result.write(f"data-yangui-collapse='{collapse}' id='collapse-{self.get_hybrid_id(as_uuid=True)}'>\n")
         self.open_indent()
 
     def _write_label(self, node, css_class, linebreak=True, label_icon=None):
@@ -552,7 +615,7 @@ class HtmlFormExpander(Expander):
     def _write_close_first_div(self):
         self.result.write(f"{self.close_indent()}</div>\n")
 
-    def _get_html_attr(self, attribute, method, data=False, schema=False, parent=False, this=False):
+    def _get_html_attr(self, attribute, method, data=False, schema=False, parent=False, this=False, uuid=False):
         """
         For a HTML attribute for href's onBlur, onChange etc and ensure we use the correct quoting/encoding
         of quotes - this needs to ensure we use.
@@ -593,12 +656,16 @@ class HtmlFormExpander(Expander):
             args.append(f"{inner_quote}{self._parent_id}{inner_quote}")
         if this:
             args.append("this")
+        if uuid:
+            args.append(f"{inner_quote}{self.get_hybrid_id(as_uuid=True)}{inner_quote}")
         return f"{attribute}={attr_quote}{method}({', '.join(args)}){attr_quote}"
 
     def callback_write_footer(self, module):
         self.result.write("<script language=Javascript>\n")
         self.result.write(f"LIBYANG_USER_PAYLOAD = {self.data_ctx.dumps(2)};\n")
         self.result.write("stop_yangui_spinner();\n")
+        self.result.write("yangui_default_mousetrap();\n")
+        self.result.write("adam_debug();\n")
         self.result.write("</script>")
 
 

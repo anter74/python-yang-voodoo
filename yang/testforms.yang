@@ -46,6 +46,11 @@ module testforms {
     }
   }
 
+  leaf simpleleaf {
+    type string {
+      pattern "a";
+    }
+  }
   leaf topleaf {
     type union {
       type mytype;

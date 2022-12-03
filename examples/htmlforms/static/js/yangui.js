@@ -11,6 +11,15 @@ The UI components are controlled in part client side.
 
 */
 
+
+function yangui_default_mousetrap(){
+  Mousetrap.reset();
+  Mousetrap.bind(['command+z', 'ctrl+z'], function() { yangui_undo(); });
+  Mousetrap.bind(['command+o', 'ctrl+o'], function() { yangui_upload(); });
+  Mousetrap.bind(['command+s', 'ctrl+s'], function() { save_payload(); });
+  Mousetrap.bind('y c', function() { validate_payload(); });
+}
+
 function enable_validate_save_buttons(){
   $(document.getElementById("yangui-validate-button")).removeClass("yangui-disable");
   $(document.getElementById("yangui-save-button")).removeClass("yangui-disable");
@@ -26,15 +35,24 @@ function yangui_undo(){
     $(document.getElementById(undo.undelete_css)).removeClass('yangui-deleted');
   }
 
+  if(undo.disable_css){
+    $(document.getElementById(undo.disable_css)).addClass('yangui-disable');
+  }
+
+  if(undo.update_field){
+    if(!undo.update_value){
+      undo.update_value='';
+    }
+    document.getElementById(undo.update_field).value = undo.update_value;
+  }
+
   if(LIBYANG_CHANGES.length==0){
     $(document.getElementById("yangui-undo-button")).addClass("yangui-disable");
   }
+
+  yangui_debug(null, "Undone change... "+JSON.stringify(undo));
 }
 
-
-function modal_visibility(id, hide_or_show){
-  $('#'+id).modal(hide_or_show)
-}
 
 function start_yangui_spinner(text){
   $(document.getElementById("yangui-spinner")).removeClass("yangui-hidden");
@@ -46,25 +64,61 @@ function start_yangui_spinner(text){
   document.getElementById("yangui-spinnertext").innerHTML="";
 }
 
-function addAlert(title, message, theme) {
+function addAlert(title, message, theme, id, timeout) {
     $('#alerts').append(
-      '<div class="alert alert-' + theme + ' alert-dismissible fade show" role="alert">' +
-      '<strong>'+title+'</strong> &nbsp;' + message +
+      '<div id="' + id + '" class="alert alert-' + theme + ' alert-dismissible fade show alertwider" role="alert">' +
+      '<div class="alertwider">' +
+      '<strong>'+title+'</strong><br/>' + message +
       '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+      '</div>' +
       '</div>');
 
+    if(timeout){
+      setTimeout(function() {
+        this_alert = $(document.getElementById("success_validate_alert"));
+        if(this_alert){
+          this_alert.remove();
+          }
+        }, 1750);
+    }
 }
 
-// function onError() {
+function adam_debug(){
 
-// }
+}
+
+function yangui_debug(path, message){
+  if(path){
+    document.getElementById("yangui-debug").innerHTML=atob(path)+ " " + message + " ("+LIBYANG_CHANGES.length+")";
+  }else{
+    document.getElementById("yangui-debug").innerHTML=message;
+  }
+}
+
 function leaf_change(d, h){
   enable_validate_save_buttons();
-  console.log("Leaf has changed\n\nData XPATH:" + d + "\nHTMLNode: "+h);
 }
 
-function leaf_blur(d, h){
-  console.log("Leaf has blurred\n\nData XPATH:" + d + "\nHTMLNode: "+h);
+function leaf_blur(b_path, h){
+  new_val=$(h).val();
+  old_val=$(h).data('yangui-start-val');
+  if(old_val!=new_val){
+    if(!new_val){
+      if(old_val){ // make sure the text box isn't empty
+        LIBYANG_CHANGES.push({"action": "delete", "base64_path": b_path, "value":"", "update_field": b_path, "update_value": old_val});
+        yangui_debug(b_path, "delete from "+ old_val );
+        $(h).data('yangui-start-val', undefined)
+      }
+    }else{
+     LIBYANG_CHANGES.push({"action": "set", "base64_path": b_path, "value":h.value, "update_field": b_path, "update_value": old_val});
+     yangui_debug(b_path, "changed from "+ old_val +" to "+new_val);
+     $(h).data('yangui-start-val', new_val)
+    }
+    $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
+  }
+}
+
+function leaf_focus(b_path, h){
 }
 
 function select_change(d, h){
@@ -96,31 +150,30 @@ function empty_blur(d, h){
 
 function add_list_element(d, s){
   Mousetrap.bind('escape', function() { close_new_item(); });
-
-  $("#capture-new-item").removeClass("#yangui-hidden");
-  $("#capture-new-item-list-contents").innerHTML="Not Implemented - fetch contents from a server specific to list";
-
-  payload={ "action": "add_list_element", "data_xpath": d, "schema_xpath":s}
-  alert("NotImplemented - add list element to list\n\nData XPATH: " +d+"\nSchema XPATH: "+s+"\nPayload to send:" +JSON.stringify(payload));
+  // $("#capture-new-item").removeClass("#yangui-hidden");
+  start_yangui_spinner('');
+  payload={ "type":"list", "data_xpath": d, "schema_xpath":s, "yang_model":LIBYANG_MODEL}
 
   $.ajax({
       type: "POST",
-      url: AJAX_BASE_SERVER_URL,
+      url: AJAX_BASE_SERVER_URL+"/get-list-create-page",
       crossDomain: true,
       data: JSON.stringify(payload),
       cache: false,
       success: function(response) {
-          $("#capture-new-item-list-contents").html(response);
+          stop_yangui_spinner();
+          $("#yanguiNewItemModal").modal('show');
+          $("#yanguiNewItemContents").html(response);
       },
       error: function(xhr, options, err) {
-
-        alert("TODO: error on add list_element: "+xhr.status);
+        addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
+        stop_yangui_spinner();
       }
   });
 }
 
 function close_new_item(){
-  Mousetrap.reset();
+  yangui_default_mousetrap();
   $("#capture-new-item").addClass("yangui-hidden");
   $("#capture-new-item-list-contents").innerHTML="Not Implemented - fetch contents from a server specific to list";
 }
@@ -132,7 +185,6 @@ function remove_list_element(b_path){
   enable_validate_save_buttons();
   //
   // start_yangui_spinner("Removing list item");
-  // // modal_visibility('mymodal', 'show');
   //
   // payload = {'data_xpath_b64': b_path}
   // $.ajax({
@@ -194,22 +246,22 @@ function disable_case(b_parent_path){
   });
 }
 
-function add_leaflist_item(b_d_path, b_s_path){
-  start_yangui_spinner("");
+function add_leaflist_item(d,s ){
+  Mousetrap.bind('escape', function() { close_new_item(); });
+  // $("#capture-new-item").removeClass("#yangui-hidden");
+  start_yangui_spinner('');
+  payload={ "type":"list", "data_xpath": d, "schema_xpath":s, "yang_model":LIBYANG_MODEL}
 
-  payload = {'data_xpath_b64': b_d_path, 'schema_xpath_b64':b_s_path}
   $.ajax({
       type: "POST",
-      url: AJAX_BASE_SERVER_URL+"/add-leaf-list-element-form",
+      url: AJAX_BASE_SERVER_URL+"/get-leaf-list-create-page",
       crossDomain: true,
       data: JSON.stringify(payload),
       cache: false,
       success: function(response) {
-        $(document.getElementById("capture-new-item-list-contents")).innerHTML=response;
-        stop_yangui_spinner();
-
-        $(document.getElementById("capture-new-item")).removeClass('yangui-hidden');
-
+          stop_yangui_spinner();
+          $("#yanguiNewItemModal").modal('show');
+          $("#yanguiNewItemContents").html(response);
       },
       error: function(xhr, options, err) {
         addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
@@ -256,10 +308,103 @@ function handle_ajax_error(xhr){
   return xhr.responseText + " ("+xhr.status+")"
 }
 
-function presence_container_expand(d){
-  containerDiv = $(document.getElementById(d));
-  if(containerDiv.hasClass("yangui-disable")){
-    containerDiv.removeClass("yangui-disable");
-    alert("NotImplemented - expand a presence container that was previously empty\n\nData XPATH: "+d + "\nTODO: create data at XPATH with a value of ''");
+function list_element_expand(b_path,uuid){
+  console.log(b_path);
+  if($(document.getElementById("collapse-"+uuid)).data('yangui-collapse')=='collapse'){
+    ELEMENTS_EXPANDED_BY_USER[uuid] = true;
+  }else{
+    ELEMENTS_EXPANDED_BY_USER[uuid] = false;
   }
 }
+
+function presence_container_expand(b_path, uuid){
+  containerDiv = $(document.getElementById(b_path));
+  if(containerDiv.hasClass("yangui-disable")){
+    containerDiv.removeClass("yangui-disable");
+    LIBYANG_CHANGES.push({"action": "set", "base64_path": b_path, "value":"", "disable_css": b_path});
+    $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
+    enable_validate_save_buttons();
+  }
+
+  if($(document.getElementById("collapse-"+uuid)).data('yangui-collapse')=='collapse'){
+    ELEMENTS_EXPANDED_BY_USER[uuid] = true;
+  }else{
+    ELEMENTS_EXPANDED_BY_USER[uuid] = false;
+  }
+}
+
+function modal_visibility(modal, visibility){
+  $("#"+modal).modal(visibility);
+}
+function upload_payload (){
+  modal_visibility("yanguiUploadModal", "show");
+}
+
+function validate_payload(){
+  $(document.getElementById("alerts")).empty();
+  for(index in LIBYANG_CHANGES){
+    console.log("Change: "+ JSON.stringify(LIBYANG_CHANGES[index]));
+  }
+  if($(document.getElementById("yangui-validate-button")).hasClass("yangui-disable")){
+    return;
+  }
+  start_yangui_spinner("Validating.....");
+
+  payload = {"payload": LIBYANG_USER_PAYLOAD, "changes": LIBYANG_CHANGES}
+  $.ajax({
+      type: "POST",
+      url: AJAX_BASE_SERVER_URL+"/validate",
+      crossDomain: true,
+      data: JSON.stringify(payload),
+      cache: false,
+      success: function(response) {
+        // $(document.getElementById("capture-new-item-list-contents")).innerHTML=response;
+        stop_yangui_spinner();
+        addAlert('<i class="fa fa-2x fa-smile-o" aria-hidden="true"></i>',"payload succesfully validated","success","success_validate_alert",200);
+      },
+      error: function(xhr, options, err) {
+        addAlert("Validation Error", handle_ajax_error(xhr), 'danger', "validation_error_alert");
+        stop_yangui_spinner();
+      }
+  });
+}
+
+function download_payload(){
+  $(document.getElementById("alerts")).empty();
+  if($(document.getElementById("yangui-save-button")).hasClass("yangui-disable")){
+    return;
+  }
+  start_yangui_spinner("Downloading.....");
+
+  payload = {"payload": LIBYANG_USER_PAYLOAD, "changes": LIBYANG_CHANGES}
+  $.ajax({
+      type: "POST",
+      url: AJAX_BASE_SERVER_URL+"/download",
+      crossDomain: true,
+      data: JSON.stringify(payload),
+      cache: false,
+      success: function(response) {
+        stop_yangui_spinner();
+        download(JSON.parse(response).new_payload , 'keep-me-safe.json', 'application/json');
+      },
+      error: function(xhr, options, err) {
+        addAlert("Validation Error", handle_ajax_error(xhr), 'danger', "validation_error_alert");
+        stop_yangui_spinner();
+      }
+  });
+}
+
+function download(content, fileName, contentType) {
+    var a = document.createElement("a");
+    var file = new Blob([JSON.stringify(content)], {type: contentType});
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+}
+
+window.addEventListener('beforeunload', function (e) {
+  if(LIBYANG_CHANGES.length > 0){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
