@@ -11,17 +11,38 @@ The UI components are controlled in part client side.
 
 */
 
+function enable_validate_save_buttons(){
+  $(document.getElementById("yangui-validate-button")).removeClass("yangui-disable");
+  $(document.getElementById("yangui-save-button")).removeClass("yangui-disable");
+}
+
+function yangui_undo(){
+  undo = LIBYANG_CHANGES.pop();
+  if(!undo){
+    return;
+  }
+
+  if(undo.undelete_css){
+    $(document.getElementById(undo.undelete_css)).removeClass('yangui-deleted');
+  }
+
+  if(LIBYANG_CHANGES.length==0){
+    $(document.getElementById("yangui-undo-button")).addClass("yangui-disable");
+  }
+}
+
+
 function modal_visibility(id, hide_or_show){
   $('#'+id).modal(hide_or_show)
 }
 
-function start_yangui-spinner(text){
-  $("#yangui-spinner").removeClass("yangui-hidden");
+function start_yangui_spinner(text){
+  $(document.getElementById("yangui-spinner")).removeClass("yangui-hidden");
   document.getElementById("yangui-spinnertext").innerHTML=text;
 }
 
-function stop_yangui-spinner(text){
-  $("#yangui-spinner").addClass("yangui-hidden");
+  function stop_yangui_spinner(){
+  $(document.getElementById("yangui-spinner")).addClass("yangui-hidden");
   document.getElementById("yangui-spinnertext").innerHTML="";
 }
 
@@ -38,6 +59,7 @@ function addAlert(title, message, theme) {
 
 // }
 function leaf_change(d, h){
+  enable_validate_save_buttons();
   console.log("Leaf has changed\n\nData XPATH:" + d + "\nHTMLNode: "+h);
 }
 
@@ -51,6 +73,7 @@ function select_change(d, h){
 
 function select_blur(d, h){
   console.log("Dropdown has blurred\n\nData XPATH:" + d + "\nHTMLNode: "+h);
+  enable_validate_save_buttons();
 }
 
 function check_change(d, h){
@@ -59,6 +82,7 @@ function check_change(d, h){
 
 function check_blur(d, h){
   console.log("Checkbox has blurred\n\nData XPATH:" + d + "\nHTMLNode: "+h);
+  enable_validate_save_buttons();
 }
 
 function empty_change(d, h){
@@ -67,6 +91,7 @@ function empty_change(d, h){
 
 function empty_blur(d, h){
   console.log("Empty leaf has blurred\n\nData XPATH:" + d + "\nHTMLNode: "+h);
+  enable_validate_save_buttons();
 }
 
 function add_list_element(d, s){
@@ -80,7 +105,7 @@ function add_list_element(d, s){
 
   $.ajax({
       type: "POST",
-      url: AJAX_SERVER_URL,
+      url: AJAX_BASE_SERVER_URL,
       crossDomain: true,
       data: JSON.stringify(payload),
       cache: false,
@@ -101,26 +126,30 @@ function close_new_item(){
 }
 
 function remove_list_element(b_path){
-  start_yangui-spinner("Removing list item");
-  // modal_visibility('mymodal', 'show');
-
-  payload = {'data_xpath_b64': b_path}
-  $.ajax({
-      type: "POST",
-      url: AJAX_SERVER_URL+"/remove-list-element",
-      crossDomain: true,
-      data: JSON.stringify(payload),
-      cache: false,
-      success: function(response) {
-        $(document.getElementById("list-item-"+b_path)).remove();
-        stop_yangui-spinner();
-      },
-      error: function(xhr, options, err) {
-        addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
-        stop_yangui-spinner();
-      }
-
-  });
+  LIBYANG_CHANGES.push({"action": "delete", "base64_path": b_path, "undelete_css": "list-item-"+b_path});
+  $(document.getElementById("list-item-"+b_path)).addClass('yangui-deleted');
+  $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
+  enable_validate_save_buttons();
+  //
+  // start_yangui_spinner("Removing list item");
+  // // modal_visibility('mymodal', 'show');
+  //
+  // payload = {'data_xpath_b64': b_path}
+  // $.ajax({
+  //     type: "POST",
+  //     url: AJAX_BASE_SERVER_URL+"/remove-list-element",
+  //     crossDomain: true,
+  //     data: JSON.stringify(payload),
+  //     cache: false,
+  //     success: function(response) {
+  //       $(document.getElementById("list-item-"+b_path)).remove();
+  //       stop_yangui_spinner();
+  //     },
+  //     error: function(xhr, options, err) {
+  //       addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
+  //       stop_yangui_spinner();
+  //     }
+  // });
 }
 
 function enable_case(b_path, b_parent_path){
@@ -165,50 +194,59 @@ function disable_case(b_parent_path){
   });
 }
 
-function add_leaflist_element(b_d_path, b_s_path){
-  start_yangui-spinner("");
+function add_leaflist_item(b_d_path, b_s_path){
+  start_yangui_spinner("");
 
   payload = {'data_xpath_b64': b_d_path, 'schema_xpath_b64':b_s_path}
   $.ajax({
       type: "POST",
-      url: AJAX_SERVER_URL+"/add-leaf-list-element-form",
+      url: AJAX_BASE_SERVER_URL+"/add-leaf-list-element-form",
       crossDomain: true,
       data: JSON.stringify(payload),
       cache: false,
       success: function(response) {
         $(document.getElementById("capture-new-item-list-contents")).innerHTML=response;
-        stop_yangui-spinner();
-        
+        stop_yangui_spinner();
+
         $(document.getElementById("capture-new-item")).removeClass('yangui-hidden');
 
       },
       error: function(xhr, options, err) {
         addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
-        stop_yangui-spinner();
+        stop_yangui_spinner();
       }
   });
 }
 
-function remove_leaflist_element(b_path){
-  start_yangui-spinner("Removing leaf-list item");
+function remove_leaflist_item(b_path){
+  // Deleting items is handled in the UI building a list of XPATH's to remove
+  // potentially we could give an undo button on the UI by simply removing the CSS
+  // and making sure the item is removed from the changes list.
+  LIBYANG_CHANGES.push({"action": "delete", "base64_path": b_path, "undelete_css": "leaflist-item-"+b_path});
+  $(document.getElementById("leaflist-item-"+b_path)).addClass('yangui-deleted');
+  $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
+  enable_validate_save_buttons();
+  //alert(JSON.stringify(LIBYANG_CHANGES));
 
-  payload = {'data_xpath_b64': b_path}
-  $.ajax({
-      type: "POST",
-      url: AJAX_SERVER_URL+"/remove-leaf-list-element",
-      crossDomain: true,
-      data: JSON.stringify(payload),
-      cache: false,
-      success: function(response) {
-        $(document.getElementById("leaflist-item-"+b_path)).remove();
-        stop_yangui-spinner();
-      },
-      error: function(xhr, options, err) {
-        addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
-        stop_yangui-spinner();
-      }
-
-  });
+  // start_yangui_spinner("Removing leaf-list item");
+  //
+  // payload = {'data_xpath_b64': b_path, 'payload': LIBYANG_USER_PAYLOAD}
+  // $.ajax({
+  //     type: "POST",
+  //     url: AJAX_BASE_SERVER_URL+"/remove-leaf-list-item",
+  //     crossDomain: true,
+  //     data: JSON.stringify(payload),
+  //     cache: false,
+  //     success: function(response) {
+  //       $(document.getElementById("leaflist-item-"+b_path)).remove();
+  //       stop_yangui_spinner();
+  //     },
+  //     error: function(xhr, options, err) {
+  //       addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
+  //       stop_yangui_spinner();
+  //     }
+  //
+  // });
 }
 
 function handle_ajax_error(xhr){

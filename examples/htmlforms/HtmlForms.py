@@ -11,7 +11,7 @@ class HtmlFormExpander(Expander):
         Types.DATA_ABSTRACTION_MAPPING["EMPTY"]: "_write_checkbox_empty",
         Types.DATA_ABSTRACTION_MAPPING["ENUM"]: "_write_dropdown",
     }
-    AJAX_SERVER_URL = "http://127.0.0.1:8099/ajax"
+    AJAX_BASE_SERVER_URL = "http://127.0.0.1:8099/ajax"
     BASE64_ENCODE_PATHS = True
 
     """
@@ -27,10 +27,10 @@ class HtmlFormExpander(Expander):
     The server could then provide an AJAX interface to match the hooks in yangui.js
 
         - `leaf_blur`, `check_blur`, `select_blur` could call `instance.data_tree_set_leaf(data_xpath, value)`
-        - `add_leaflist_element`, `add_list_element` could call
+        - `add_leaflist_item`, `add_list_element` could call
            `instance.data_tree_add_list_element(list_data_xpath, [[key1,val1,key2,val2]])
            Note: a leaf-list is simply a list with a key of `.`
-        - `remove_leaflist_element` `remove_list_element` could call
+        - `remove_leaflist_item` `remove_list_element` could call
            `instance.data_tree_remove_list_element(list_element_xpath)`
         - `presence_container_expand` could call `data_tree_set_leaf(xpath, '')`
            Note: libyang represents a presence container as existing as a blank string.
@@ -54,7 +54,11 @@ class HtmlFormExpander(Expander):
 <script src="https://cdn.jsdelivr.net/npm/mousetrap@1.6.5/mousetrap.min.js" integrity="sha256-2saPjkUr3g4fEnQtPpdCpBLSnYd9L+qC5SXQUGQQv8E=" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="static/css/yangui.css"></head>
 <script src="static/js/yangui.js"></script>
-<script language="Javascript">AJAX_SERVER_URL="{self.AJAX_SERVER_URL}";</script>
+<script language="Javascript">
+    AJAX_BASE_SERVER_URL="{self.AJAX_BASE_SERVER_URL}";
+    LIBYANG_USER_PAYLOAD = {{}};  // this will be populated in the footer
+    LIBYANG_CHANGES = [];
+</script>
 </head>\n"""
         )
         self.close_indent()
@@ -65,13 +69,13 @@ class HtmlFormExpander(Expander):
         self.result.write(f'{self.get_indent()}<div id="alerts" class="yangui-alerts"></div>')
 
         self.result.write(
-            """
-        <div id="yangui-spinner" class='yangui-spinner yangui-hidden'>
+            f"""
+        <div id="yangui-spinner" class='yangui-spinner'>
             <div class="spinner-border text-info" style="width: 10rem; height: 10rem;" role="status">
                 <span class="sr-only">Please Wait...</span>
             </div>
             <p>
-                <span id='yangui-spinnertext'></span>
+                <span id='yangui-spinnertext'>loading...</span>
             </p>
         </div>
 
@@ -92,6 +96,25 @@ class HtmlFormExpander(Expander):
           </div>
         </div>
 
+        <div class='yangui-floating-left-buttons'>
+          <div id='yangui-validate-button' class='yangui-disable'>
+            <a class="btn btn-primary" href="javascript:validate_payload()" role="button">
+              <i class="fa fa-stethoscope" aria-hidden="false"></i>
+            </a>
+          </div>
+          <hr/>
+          <div id='yangui-save-button' class='yangui-disable'>
+            <a class="btn btn-primary" href="javascript:download_payload()" role="button">
+                <i class="fa fa-download" aria-hidden="false"></i>
+            </a>
+          </div>
+          <hr/>
+          <div id='yangui-undo-button' class='yangui-disable'>
+            <a class="btn btn-primary" href="javascript:yangui_undo()" role="button">
+                <i class="fa fa-undo" aria-hidden="false"></i>
+            </a>
+          </div>
+        </div>
 
         <div id='capture-new-item' class='yangui-popup yangui-hidden'>
             <h2>Add a new item <span id='capture-new-item-list-name'>...listname....</span><h2>
@@ -411,7 +434,7 @@ class HtmlFormExpander(Expander):
         self._write_open_first_div("structure_leaflist")
         self._write_button("list-ul")
         self._write_extra_button(
-            self._get_html_attr("href", "javascript:add_leaflist_element", data=True, schema=True), "plus"
+            self._get_html_attr("href", "javascript:add_leaflist_item", data=True, schema=True), "plus"
         )
         self._write_label(node, "structure_leaflistlabel", linebreak=False)
 
@@ -428,7 +451,7 @@ class HtmlFormExpander(Expander):
 
     def callback_write_leaflist_item(self, node, value, quote, explicit, node_id):
         self.result.write(f"{self.open_indent()}<div id='leaflist-item-{self.get_hybrid_id()}'>\n")
-        extra_button = f"{self.get_indent()}&nbsp;&nbsp;<a class='btn btn-danger' {self._get_html_attr('href', 'javascript:remove_leaflist_element', data=True)}><i class='fa fa-times warning'></i></a>&nbsp;\n"
+        extra_button = f"{self.get_indent()}&nbsp;&nbsp;<a class='btn btn-danger' {self._get_html_attr('href', 'javascript:remove_leaflist_item', data=True)}><i class='fa fa-times warning'></i></a>&nbsp;\n"
 
         basetype = node.type().base()
         if basetype in self.LEAF_MAPPING:
@@ -571,6 +594,12 @@ class HtmlFormExpander(Expander):
         if this:
             args.append("this")
         return f"{attribute}={attr_quote}{method}({', '.join(args)}){attr_quote}"
+
+    def callback_write_footer(self, module):
+        self.result.write("<script language=Javascript>\n")
+        self.result.write(f"LIBYANG_USER_PAYLOAD = {self.data_ctx.dumps(2)};\n")
+        self.result.write("stop_yangui_spinner();\n")
+        self.result.write("</script>")
 
 
 if __name__ == "__main__":
