@@ -53,12 +53,34 @@ class AjaxHandler(tornado.web.RequestHandler):
         "/ajax/download": "_download",
         "/ajax/get-list-create-page": "_get_list_create_page",
         "/ajax/get-leaf-list-create-page": "_get_leaf_list_create_page",
+        "/ajax/create-leaf-list": "_create_leaflist_item",
+        "/ajax/create-list": "_create_list_element",
     }
 
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
         self.set_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+
+    def _create_list_element(self, input):
+        instance = HtmlFormExpander(input["yang_model"], log)
+        list_element_predicates = instance.data_tree_add_list_element(
+            base64_tostring(input["base64_data_path"]), input["key_values"]
+        )
+        instance.subprocess_list(
+            list_data_xpath=base64_tostring(input["base64_data_path"]), predicates=list_element_predicates
+        )
+        self.write(instance.dumps())
+        self.finish()
+
+    def _create_leaflist_item(self, input):
+        instance = HtmlFormExpander(input["yang_model"], log)
+        instance.data_tree_add_list_element(base64_tostring(input["base64_data_path"]), input["key_values"])
+        instance.subprocess_leaflist(
+            leaflist_xpath=base64_tostring(input["base64_schema_path"]), value=input["key_values"][0][1]
+        )
+        self.write(instance.dumps())
+        self.finish()
 
     def _get_list_create_page(self, input):
         """ """
@@ -78,14 +100,35 @@ class AjaxHandler(tornado.web.RequestHandler):
 
     def _validate(self, input):
         """
+        Validate a YANG payload, it can be provided either as a direct yang payload *or*
+        wrapped with a list of changes.
+
+            {
+                "payload": A JSON encoded payload ( starting with {"testforms:topleaf": ....}
+                "xml": Treat payload as XML instead of JSON
+                "changes": [ {"action": "...", "path":"...", "value": "..."}]
+            }
+
+        Example:
+            `curl -d @keep-me-safe\ \(4\).json -X POST http://127.0.0.1:8099/ajax/validate`
+
         Args:
             input: A JSON payload
         """
         result = {"status": True}
 
-        session, _, _ = DataTree.process_data_tree_against_libyang(
-            input["payload"], DataTreeChanges.convert(input["changes"]), log=log
-        )
+        if "payload" in input:
+            changes = []
+            format = "json"
+            if "format" in input:
+                format = input["format"]
+            if "changes" in input:
+                changes = DataTreeChanges.convert(input["changes"])
+            session, _, _ = DataTree.process_data_tree_against_libyang(
+                input["payload"], changes=changes, format=format, log=log
+            )
+        else:
+            session, _, _ = DataTree.process_data_tree_against_libyang(input, changes=[], format="json", log=log)
         session.validate()
 
         self.write(json.dumps(result))

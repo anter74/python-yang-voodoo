@@ -55,11 +55,14 @@
   opacity: 0.1;
 }
 
-.alertwider { 
+.alertwider {
   min-width: 400px;
 }
-.no-margin-left {
+.fix-margin-left-switch-2 {
     margin-left: 2em !important;
+}
+.fix-margin-left-switch-1 {
+    margin-left: -2.5em !important;
 }
 
 .yangui-hidden {

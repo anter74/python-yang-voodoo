@@ -17,12 +17,22 @@ function yangui_default_mousetrap(){
   Mousetrap.bind(['command+z', 'ctrl+z'], function() { yangui_undo(); });
   Mousetrap.bind(['command+o', 'ctrl+o'], function() { yangui_upload(); });
   Mousetrap.bind(['command+s', 'ctrl+s'], function() { save_payload(); });
-  Mousetrap.bind('y c', function() { validate_payload(); });
+  Mousetrap.bind('y s', function() { submit_payload(); });
+  Mousetrap.bind('y n', function() { new_payload(); });
+  Mousetrap.bind('y v', function() { validate_payload(); });
+}
+
+function new_payload(){
+  window.location.replace("/web/"+LIBYANG_MODEL);
 }
 
 function enable_validate_save_buttons(){
   $(document.getElementById("yangui-validate-button")).removeClass("yangui-disable");
   $(document.getElementById("yangui-save-button")).removeClass("yangui-disable");
+}
+
+function submit_payload(){
+  alert("Do something here to merge the payload+changes and then do something interesting.....");
 }
 
 function yangui_undo(){
@@ -44,6 +54,19 @@ function yangui_undo(){
       undo.update_value='';
     }
     document.getElementById(undo.update_field).value = undo.update_value;
+  }
+
+  if(undo.update_select){
+    $(document.getElementById(undo.update_select)).selectpicker('val', undo.update_value);
+  }
+
+  if(undo.update_checkbox){
+    if(undo.update_checkbox == "on"){
+      val=true;
+    }else{
+      val=false;
+    }
+    $(document.getElementById(undo.update_checkbox)).prop('checked', val);
   }
 
   if(LIBYANG_CHANGES.length==0){
@@ -121,26 +144,43 @@ function leaf_blur(b_path, h){
 function leaf_focus(b_path, h){
 }
 
-function select_change(d, h){
-  console.log("Dropdown has changed\n\nData XPATH:" + d + "\nHTMLNode: "+h);
-}
-
-function select_blur(d, h){
-  console.log("Dropdown has blurred\n\nData XPATH:" + d + "\nHTMLNode: "+h);
+function select_change(b_path, h){
   enable_validate_save_buttons();
+  old_val=$(h).data('yangui-start-val');
+  new_val=h.value;
+  LIBYANG_CHANGES.push({"action": "set", "base64_path": b_path, "value":h.value, "update_select": b_path, "update_value": old_val});
+  yangui_debug(b_path, "changed "+ old_val +" to "+new_val);
+  $(h).data('yangui-start-val', new_val)
+  $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
 }
 
-function check_change(d, h){
-  console.log("Checkbox has changed\n\nData XPATH:" + d + "\nHTMLNode: "+h);
-}
-
-function check_blur(d, h){
-  console.log("Checkbox has blurred\n\nData XPATH:" + d + "\nHTMLNode: "+h);
+function check_change(b_path, h){
   enable_validate_save_buttons();
+  old_val=$(h).data('yangui-start-val');
+  if($(document.getElementById(b_path)).is(":checked")){
+    new_val='on';
+  }else{
+    new_val='off';
+  }
+  LIBYANG_CHANGES.push({"action": "set_boolean", "base64_path": b_path, "value":new_val, "update_checkbox": b_path, "update_value": old_val});
+  yangui_debug(b_path, "changed "+ old_val +" to "+new_val);
+  $(h).data('yangui-start-val', new_val)
+  $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
 }
 
-function empty_change(d, h){
-  console.log("Empty leaf has changed\n\nData XPATH:" + d + "\nHTMLNode: "+h);
+
+function empty_change(b_path, h){
+  enable_validate_save_buttons();
+  old_val=$(h).data('yangui-start-val');
+  if($(document.getElementById(b_path)).is(":checked")){
+    new_val='on';
+  }else{
+    new_val='off';
+  }
+  LIBYANG_CHANGES.push({"action": "set_empty", "base64_path": b_path, "value":new_val, "update_checkbox": b_path, "update_value": old_val});
+  yangui_debug(b_path, "changed "+ old_val +" to "+new_val);
+  $(h).data('yangui-start-val', new_val)
+  $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
 }
 
 function empty_blur(d, h){
@@ -148,9 +188,12 @@ function empty_blur(d, h){
   enable_validate_save_buttons();
 }
 
-function add_list_element(d, s){
+function add_list_element(d, s, u){
   Mousetrap.bind('escape', function() { close_new_item(); });
-  // $("#capture-new-item").removeClass("#yangui-hidden");
+  $(document.getElementById("yangui-create-list-button")).data("yangui-for-datapath", d);
+  $(document.getElementById("yangui-create-list-button")).data("yangui-for-schemapath", s);
+  $(document.getElementById("yangui-create-list-button")).data("yangui-for-type", "list");
+  $(document.getElementById("yangui-create-list-button")).data("yangui-containing-div", u );
   start_yangui_spinner('');
   payload={ "type":"list", "data_xpath": d, "schema_xpath":s, "yang_model":LIBYANG_MODEL}
 
@@ -178,30 +221,61 @@ function close_new_item(){
   $("#capture-new-item-list-contents").innerHTML="Not Implemented - fetch contents from a server specific to list";
 }
 
+function create_new_item(){
+  // Create anew item in a list.
+  yangui_default_mousetrap();
+  list_type=$(document.getElementById("yangui-create-list-button")).data('yangui-for-type');
+  div_to_append = $(document.getElementById("yangui-create-list-button")).data('yangui-containing-div');
+  payload = {
+    "base64_data_path": $(document.getElementById("yangui-create-list-button")).data('yangui-for-datapath'),
+    "base64_schema_path": $(document.getElementById("yangui-create-list-button")).data('yangui-for-schemapath'),
+    key_values:[],
+    "yang_model":LIBYANG_MODEL
+  }
+
+  $("#yanguiNewItemContents").find("input,select").each(function(index){
+    // Note: drop-down boxes using the bootstrap-select don't behave thee same as regular drop-down boxes
+    // searching for select and input returns internal components of the bootstrap-select so we have to filter
+    // for only elements that contain yangui-field-type
+    if($(this).data("yangui-field-type")){
+      if(list_type == "leaf-list"){
+        payload.key_values.push([".", this.value]);
+      }
+      if(list_type == "list"){
+        payload.key_values.push([$(this).data("yangui-keyname"), this.value]);
+      }
+    }
+  });
+
+  $.ajax({
+      type: "POST",
+      url: AJAX_BASE_SERVER_URL+"/create-"+list_type,
+      crossDomain: true,
+      data: JSON.stringify(payload),
+      cache: false,
+      success: function(response) {
+          stop_yangui_spinner();
+
+          $(document.getElementById("collapse-"+div_to_append)).append(response);
+          LIBYANG_CHANGES.push({"action": "create_list_xpath", "base64_path": payload.base64_data_path, "value":payload.key_values ,"undo_to_do":"todo - need more info like list elemetn html id"});
+          $("#yanguiNewItemModal").modal('hide');
+          enable_validate_save_buttons();
+
+
+      },
+      error: function(xhr, options, err) {
+        addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
+        stop_yangui_spinner();
+      }
+  });
+
+}
+
 function remove_list_element(b_path){
-  LIBYANG_CHANGES.push({"action": "delete", "base64_path": b_path, "undelete_css": "list-item-"+b_path});
+  LIBYANG_CHANGES.push({"action": "delete_list_xpath", "base64_path": b_path, "undelete_css": "list-item-"+b_path, "value":null});
   $(document.getElementById("list-item-"+b_path)).addClass('yangui-deleted');
   $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
   enable_validate_save_buttons();
-  //
-  // start_yangui_spinner("Removing list item");
-  //
-  // payload = {'data_xpath_b64': b_path}
-  // $.ajax({
-  //     type: "POST",
-  //     url: AJAX_BASE_SERVER_URL+"/remove-list-element",
-  //     crossDomain: true,
-  //     data: JSON.stringify(payload),
-  //     cache: false,
-  //     success: function(response) {
-  //       $(document.getElementById("list-item-"+b_path)).remove();
-  //       stop_yangui_spinner();
-  //     },
-  //     error: function(xhr, options, err) {
-  //       addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
-  //       stop_yangui_spinner();
-  //     }
-  // });
 }
 
 function enable_case(b_path, b_parent_path){
@@ -246,12 +320,15 @@ function disable_case(b_parent_path){
   });
 }
 
-function add_leaflist_item(d,s ){
+function add_leaflist_item(d, s, u){
   Mousetrap.bind('escape', function() { close_new_item(); });
   // $("#capture-new-item").removeClass("#yangui-hidden");
   start_yangui_spinner('');
   payload={ "type":"list", "data_xpath": d, "schema_xpath":s, "yang_model":LIBYANG_MODEL}
-
+  $(document.getElementById("yangui-create-list-button")).data("yangui-for-type", "leaf-list");
+  $(document.getElementById("yangui-create-list-button")).data("yangui-for-datapath", d);
+  $(document.getElementById("yangui-create-list-button")).data("yangui-for-schemapath", s);
+  $(document.getElementById("yangui-create-list-button")).data("yangui-containing-div", u );
   $.ajax({
       type: "POST",
       url: AJAX_BASE_SERVER_URL+"/get-leaf-list-create-page",
@@ -262,6 +339,7 @@ function add_leaflist_item(d,s ){
           stop_yangui_spinner();
           $("#yanguiNewItemModal").modal('show');
           $("#yanguiNewItemContents").html(response);
+          $(document.getElementById(d)).selectpicker('show');
       },
       error: function(xhr, options, err) {
         addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
@@ -274,31 +352,10 @@ function remove_leaflist_item(b_path){
   // Deleting items is handled in the UI building a list of XPATH's to remove
   // potentially we could give an undo button on the UI by simply removing the CSS
   // and making sure the item is removed from the changes list.
-  LIBYANG_CHANGES.push({"action": "delete", "base64_path": b_path, "undelete_css": "leaflist-item-"+b_path});
+  LIBYANG_CHANGES.push({"action": "delete_list_xpath", "base64_path": b_path, "undelete_css": "leaflist-item-"+b_path, "value":null});
   $(document.getElementById("leaflist-item-"+b_path)).addClass('yangui-deleted');
   $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
   enable_validate_save_buttons();
-  //alert(JSON.stringify(LIBYANG_CHANGES));
-
-  // start_yangui_spinner("Removing leaf-list item");
-  //
-  // payload = {'data_xpath_b64': b_path, 'payload': LIBYANG_USER_PAYLOAD}
-  // $.ajax({
-  //     type: "POST",
-  //     url: AJAX_BASE_SERVER_URL+"/remove-leaf-list-item",
-  //     crossDomain: true,
-  //     data: JSON.stringify(payload),
-  //     cache: false,
-  //     success: function(response) {
-  //       $(document.getElementById("leaflist-item-"+b_path)).remove();
-  //       stop_yangui_spinner();
-  //     },
-  //     error: function(xhr, options, err) {
-  //       addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
-  //       stop_yangui_spinner();
-  //     }
-  //
-  // });
 }
 
 function handle_ajax_error(xhr){

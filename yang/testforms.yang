@@ -16,6 +16,14 @@ module testforms {
     argument string;
   }
 
+  typedef animals {
+    type enumeration {
+      enum advark;
+      enum bear;
+      enum camel;
+    }
+  }
+
   typedef mysubtype {
     type enumeration {
       enum a;
@@ -81,6 +89,25 @@ module testforms {
       description "leaf description";
       type string;
       default 'put something here';
+    }
+
+    leaf animal {
+      type animals;
+      default "bear";
+    }
+
+    leaf otheranimal {
+      type animals;
+      default "bear";
+    }
+
+    leaf tickbox {
+      type boolean;
+      default true;
+    }
+
+    leaf thing-that-means-something {
+      type empty;
     }
 
     leaf-list multi {

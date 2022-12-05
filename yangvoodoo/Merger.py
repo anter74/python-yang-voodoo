@@ -4,6 +4,8 @@ import logging
 from typing import Generator, List, Tuple
 import libyang
 from yangvoodoo import DataAccess
+from yangvoodoo import Types
+from yangvoodoo.Common import Utils
 
 
 def base64_tostring(input_string):
@@ -13,7 +15,11 @@ def base64_tostring(input_string):
 class DataTreeChange:
 
     ACTION_SET = "set"
+    ACTION_SET_EMPTY = "set_empty"
+    ACTION_SET_BOOLEAN = "set_boolean"
     ACTION_DELETE = "delete"
+    ACTION_CREATE_LIST = "create_list_xpath"
+    ACTION_DELETE_LIST = "delete_list_xpath"
 
     def __init__(self, action: str, xpath: str, value: str, base64_path: bool = False):
         """
@@ -39,7 +45,11 @@ class DataTreeChanges:
 
     ACTIONS = (
         DataTreeChange.ACTION_SET,
+        DataTreeChange.ACTION_SET_EMPTY,
+        DataTreeChange.ACTION_SET_BOOLEAN,
         DataTreeChange.ACTION_DELETE,
+        DataTreeChange.ACTION_CREATE_LIST,
+        DataTreeChange.ACTION_DELETE_LIST,
     )
 
     @staticmethod
@@ -95,7 +105,11 @@ class DataTree:
 
     @staticmethod
     def process_data_tree_against_libyang(
-        json_dict: dict, changes: List[DataTreeChange], yang_location: str = None, log=logging.Logger
+        json_dict: dict,
+        changes: List[DataTreeChange],
+        yang_location: str = None,
+        format: str = "json",
+        log=logging.Logger,
     ) -> Tuple[DataAccess, dict, List[DataTreeChange]]:
         """
         Load a yang model from a given payload Merge the changes to the base data tree. In this case if we are asked
@@ -103,28 +117,54 @@ class DataTree:
         the XPATH is marked a failed. If a later change for that XPATH subsequently sets valid data the failure is
         forgotten about. If the the failure has not been corrected the first such instance will be raised.
 
+        Creation/Deletion of List Elements is supressed to the end - this is done so that if a user adds a list element,
+        removes it and then adds it again the final add/remove it will happen. This works well if a UI simply hides the
+        list element until this processing (submit) step - but this means that if the user adds a list element, sets a
+        non-key value/child of that list elements, deletes it and adds it back - it won't be empty but include the
+        old contents. The assumption is a UI would allow a user to delete the list element and then 'commit' or 'submit'
+        the data. to force a full removal of the children of the list element.
 
         Args:
             json_dict: A dcitionary matching the JSON encoded data for a YANG model.
             changes: A list of changes
             yang_location: A location to look for yang modles
+            fomrat: the libyang format to use (json or xml)
             log: A python logger
         """
 
         session = DataTree.connect_yang_model(json_dict, yang_location)
         log.info("Loading initial JSON payload for %s...", session.module)
-        session.loads(json.dumps(json_dict), 2)
+        session.loads(json.dumps(json_dict), Types.FORMAT[format.upper()])
 
         failed_xpaths = {}
+        list_elements = {}
 
         for change in changes:
-            if change.action in (DataTreeChange.ACTION_SET, DataTreeChange.ACTION_DELETE):
+            if change.action in DataTreeChanges.ACTIONS:
                 try:
+                    log.info("processing change: %s", change)
                     if change.action == DataTreeChange.ACTION_SET:
                         session.set(change.xpath, change.value)
+                    if change.action == DataTreeChange.ACTION_SET_EMPTY:
+                        if change.value == "on":
+                            session.set(change.xpath, "")
+                        else:
+                            session.uncreate(change.xpath)
+                    if change.action == DataTreeChange.ACTION_SET_BOOLEAN:
+                        if change.value == "on":
+                            session.set(change.xpath, "true")
+                        else:
+                            session.set(change.xpath, "false")
                     elif change.action == DataTreeChange.ACTION_DELETE:
                         session.uncreate(change.xpath)
-                    log.info("%s", change)
+                    elif change.action == DataTreeChange.ACTION_CREATE_LIST:
+                        predicates = ""
+                        for k, v in change.value:
+                            predicates += Utils.encode_xpath_predicate(k, v)
+
+                        list_elements[f"{change.xpath}{predicates}"] = True
+                    elif change.action == DataTreeChange.ACTION_DELETE_LIST:
+                        list_elements[f"{change.xpath}"] = False
                     if change.xpath in failed_xpaths:
                         del failed_xpaths[change.xpath]
                 except libyang.util.LibyangError as err:
@@ -136,6 +176,13 @@ class DataTree:
         log.info("FAILED PATHS: %s", failed_xpaths)
         for xpath in failed_xpaths:
             raise failed_xpaths[xpath]
+
+        log.info("Create or Uncreate List elements; %s", list_elements)
+        for xpath in list_elements:
+            if list_elements[xpath] is True:
+                session.create(xpath)
+            elif list_elements[xpath] is False:
+                session.uncreate(xpath)
 
         log.info("Final Data tree: %s", session.dumps(2))
         return session, json.loads(session.dumps(2)), []

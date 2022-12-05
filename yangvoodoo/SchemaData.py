@@ -177,10 +177,20 @@ class Expander:
     def data_tree_delete_list_element(self, list_element_xpath: str):
         self.data_ctx.delete_xpath(list_element_xpath)
 
-    def data_tree_add_list_element(self, list_xpath: str, key_values: List[Tuple[str, str]]):
+    def data_tree_add_list_element(self, list_xpath: str, key_values: List[Tuple[str, str]]) -> str:
+        """
+        Args:
+            list_xpath: XPATH to a leaf-list of list
+            key_value: A list of key_value tuples - not the libyang convention of `.` as a key-name for leaf-lists.
+
+        Return:
+            The predicates of the listelement.
+        """
+        predicates = ""
         for k, v in key_values:
-            list_xpath += Utils.encode_xpath_predicate(k, v)
-        self.data_ctx.set_xpath(list_xpath, "")
+            predicates += Utils.encode_xpath_predicate(k, v)
+        self.data_ctx.set_xpath(list_xpath + predicates, "")
+        return predicates
 
     def data_tree_set_leaf(self, xpath: str, value: str):
         if not value:
@@ -207,7 +217,7 @@ class Expander:
 
         self.grow_trail(list_element_predicates="", schema=False)
         for subnode in self.ctx.find_path(f"{schema_xpath}/*"):
-            if node.get_extension(self.YANGUI_HIDDEN_KEY):
+            if subnode.get_extension(self.YANGUI_HIDDEN_KEY):
                 continue
             if subnode.nodetype() == Types.LIBYANG_NODETYPE["LEAF"] and subnode.is_key():
                 self.grow_trail(subnode)
@@ -217,7 +227,7 @@ class Expander:
                     '"',
                     False,
                     default="",
-                    key=False,  # override because callbacks may use this to skip processing.c
+                    key=True,
                     template=True,
                     node_id="".join(self.id_path_trail),
                 )
@@ -240,14 +250,14 @@ class Expander:
             node,
             "",
             '"',
-            False,
+            True,
             template=True,
             node_id="".join(self.id_path_trail),
         )
 
         self.shrink_trail(schema=False)
 
-    def subprocess(self, list_element_data_xpath: str):
+    def subprocess_list(self, list_data_xpath: str, predicates: str):
         """
         Mimic the call from `handle_schema_list` -> `_handle_list_element`, which may mimic a user
         action of adding a list element.
@@ -258,7 +268,7 @@ class Expander:
         """
         self._clear()
 
-        for result in self.data_ctx.get_xpath(list_element_data_xpath):
+        for result in self.data_ctx.get_xpath(list_data_xpath):
             if result.get_schema().nodetype() != Types.LIBYANG_NODETYPE["LIST"]:
                 raise NotImplementedError(
                     f"subprocess only supports processing of a list element: {list_element_data_xpath}"
@@ -268,19 +278,41 @@ class Expander:
             self.log.error("Cannot subprocess non-existing data path: %s", list_element_data_xpath)
             return
 
-        for (_, _, _, predicates, _, _) in Utils.XPATH_DECODER_V4.findall(list_element_data_xpath):
-            continue
-
-        list_xpath = list_element_data_xpath[: list_element_data_xpath.rfind(predicates)]
         node = result.get_schema()
-        self.id_path_trail.append(list_xpath)
-        self.data_path_trail.append(list_xpath)
+        self.id_path_trail.append(list_data_xpath)
+        self.data_path_trail.append(list_data_xpath)
         self.schema_path_trail.append(result.get_schema_path())
 
-        for list_node in [list_element_data_xpath]:
+        for list_node in [f"{list_data_xpath}{predicates}"]:
             self.grow_trail(list_element_predicates=predicates, schema=False)
             self._handle_list_element(node)
-            self.shrink_trail(schema=False)
+            self.shrink_trail(result.get_schema_path())
+
+    def subprocess_leaflist(self, leaflist_xpath: str, value: str):
+        self._clear()
+
+        for result in self.data_ctx.get_xpath(leaflist_xpath):
+            if result.get_schema().nodetype() != Types.LIBYANG_NODETYPE["LEAFLIST"]:
+                raise NotImplementedError(f"subprocess only supports processing of a list element: {leaflist_xpath}")
+            break
+        else:
+            self.log.error("Cannot subprocess non-existing data path: %s", leaflist_xpath)
+            return
+
+        node = result.get_schema()
+        self.id_path_trail.append(leaflist_xpath)
+        self.data_path_trail.append(leaflist_xpath)
+        self.schema_path_trail.append(result.get_schema_path())
+        predicates = Utils.encode_xpath_predicate(".", value)
+
+        self.grow_trail(list_element_predicates=predicates, schema=False)
+        self.callback_write_leaflist_item(
+            node,
+            *self.get_data(node),
+            template=False,
+            node_id="".join(self.id_path_trail),
+        )
+        self.shrink_trail(schema=False)
 
     def callback_write_header(self, module: libyang.schema.Module):
         """
@@ -704,6 +736,10 @@ class Expander:
         """
         xpath = "".join(self.data_path_trail)
         value = list(self.data_ctx.get_xpath(xpath))
+        if node.type() == Types.DATA_ABSTRACTION_MAPPING["EMPTY"]:
+            if value is not None:
+                return True
+            return False
         if value:
             self.log.debug("GET XPATH: %s = %s", xpath, value[0].value)
             quote = self.get_quote_style(value[0].value)
@@ -783,7 +819,7 @@ class Expander:
         self.log.debug("GROW: %s", self.schema_path_trail)
         self.log.debug("GROW: %s", self.id_path_trail)
 
-    def get_id(self, quote="", escape=False):
+    def get_id(self, escape=False, prefix=""):
         """
         Get an identifier based on the data tree.
 
@@ -797,9 +833,8 @@ class Expander:
         trail = "".join(self.data_path_trail)
         if self.BASE64_ENCODE_PATHS:
             return base64.urlsafe_b64encode(trail.encode("utf-8")).decode("utf-8")
-        if quote:
-            quote = self.get_quote_style(trail)
         if escape:
+            quote = self.get_quote_style(trail)
             trail = self.escape_value(trail, quote)
         return f"{trail}"
 
