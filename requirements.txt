@@ -81,3 +81,4 @@ urwid-readline==0.13
 wcwidth==0.2.5
 wrapt==1.14.1
 yapf==0.32.0
+wheel==0.38.4
