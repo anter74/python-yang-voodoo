@@ -1,4 +1,5 @@
 import logging
+import os
 from yangvoodoo.SchemaData import Expander
 from yangvoodoo import Types
 
@@ -11,7 +12,7 @@ class HtmlFormExpander(Expander):
         Types.DATA_ABSTRACTION_MAPPING["EMPTY"]: "_write_checkbox_empty",
         Types.DATA_ABSTRACTION_MAPPING["ENUM"]: "_write_dropdown",
     }
-    AJAX_BASE_SERVER_URL = "http://127.0.0.1:8099/ajax"
+    AJAX_BASE_SERVER_URL = os.getenv("YANGUI_BASE_API", "http://127.0.0.1:8099/api")
     BASE64_ENCODE_PATHS = True
 
     """
@@ -68,10 +69,10 @@ class HtmlFormExpander(Expander):
 <script src="https://cdn.jsdelivr.net/npm/mousetrap@1.6.5/mousetrap.min.js" integrity="sha256-2saPjkUr3g4fEnQtPpdCpBLSnYd9L+qC5SXQUGQQv8E=" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
-<link rel="stylesheet" href="static/css/yangui.css"></head>
-<script src="static/js/yangui.js"></script>
+<link rel="stylesheet" href="/static/css/yangui.css"></head>
+<script src="/static/js/yangui.js"></script>
 <script language="Javascript">
-    AJAX_BASE_SERVER_URL="{self.AJAX_BASE_SERVER_URL}";
+    AJAX_BASE_SERVER_URL="{self.AJAX_BASE_SERVER_URL}/{self.yang_module}";
     LIBYANG_USER_PAYLOAD = {{}};  // this will be populated in the footer
     LIBYANG_CHANGES = []; // a list of changes we need to make (supports the ability to do a simple UNDO mechnism)
     ELEMENTS_EXPANDED_BY_USER = {{}};
@@ -106,7 +107,7 @@ class HtmlFormExpander(Expander):
                 <h5 class="modal-title">Upload a saved file</h5>
               </div>
               <div class="modal-body">
-                <form action="/" method="post" enctype="multipart/form-data">
+                <form action="{self.AJAX_BASE_SERVER_URL}/{self.yang_module}/upload" method="post" enctype="multipart/form-data">
                     <div class="custom-file">
                       <input type="file" name='payload' class="custom-file-input" accept='application/json'>
                       <label class="custom-file-label" for="customFileLang">JSON instance data (RFC7159)</label>
@@ -714,7 +715,8 @@ class HtmlFormExpander(Expander):
 
     def callback_write_footer(self, module):
         self.result.write("<script language=Javascript>\n")
-        self.result.write(f"LIBYANG_USER_PAYLOAD = {self.data_ctx.dumps(2)};\n")
+        if self.data_loaded:
+            self.result.write(f"LIBYANG_USER_PAYLOAD = {self.data_ctx.dumps(2)};\n")
         self.result.write("stop_yangui_spinner();\n")
         self.result.write("yangui_default_mousetrap();\n")
         self.result.write("adam_debug();\n")
@@ -726,7 +728,9 @@ if __name__ == "__main__":
     logging.basicConfig()
     log.setLevel(55)
 
+    format = "xml"
     generator = HtmlFormExpander("testforms", log)
-    generator.process(open("templates/forms/choicecase.xml").read())
+    filename = "templates/forms/default.json"
+    generator.process(open(filename).read(), format=format)
     generator.dumps()
     generator.dump("examples/htmlforms/test.html")

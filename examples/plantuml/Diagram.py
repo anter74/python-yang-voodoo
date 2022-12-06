@@ -48,10 +48,8 @@ class PlantUMLExpander(Expander):
     def callback_write_header(self, module):
         self.result.write("@startjson\n")
 
-    def callback_write_body(self, module):
-        self.result.write(json.dumps(self.obj, indent=4))
-
     def callback_write_footer(self, module):
+        self.result.write(json.dumps(self.obj, indent=4))
         self.result.write("\n@endjson\n")
 
     def callback_open_containing_node(self, node, presence, node_id):

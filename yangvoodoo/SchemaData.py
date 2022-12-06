@@ -76,6 +76,7 @@ class Expander:
         self._is_schema_node_filtered = lambda x: False
         self.result = StringIO()
         self.indent = 0
+        self.data_loaded = False
 
     def set_schema_filter_list(self, filter_list: List[str]):
         """
@@ -150,9 +151,11 @@ class Expander:
             initial_data: An IETF JSON or XML data payload conforming to a yang model.
             format: payload format (1=XML, 2=IETF JSON)
         """
-        self.load(initial_data, format)
-        self.log.info("Processing: %s", self.yang_module)
-
+        self.log.info("Schema Data Expander: %s", self.__class__.__name__)
+        if initial_data:
+            self.log.info("Loading: %s: %s bytes", self.yang_module, len(initial_data))
+            self.load(initial_data, format)
+            self.data_loaded = True
         self.result = StringIO()
 
         self.callback_write_header(self.ctx.get_module(self.yang_module))
@@ -164,8 +167,10 @@ class Expander:
         self.id_path_trail = [""]
         self.schema_path_trail = [""]
 
+        self.log.info("Schema Data Expander: starting recursion")
         for node in self.ctx.find_path(f"/{self.yang_module}:*"):
             self._process_nodes(node)
+        self.log.info("Schema Data Expander: completed recursion")
 
         self.callback_write_close_body(self.ctx.get_module(self.yang_module))
 
@@ -283,10 +288,12 @@ class Expander:
         self.data_path_trail.append(list_data_xpath)
         self.schema_path_trail.append(result.get_schema_path())
 
+        self.log.info("Schema Data Expander: starting recursion for a list element: %s", list_data_xpath)
         for list_node in [f"{list_data_xpath}{predicates}"]:
             self.grow_trail(list_element_predicates=predicates, schema=False)
             self._handle_list_element(node)
             self.shrink_trail(result.get_schema_path())
+        self.log.info("Schema Data Expander: completed recursion of a list element: %s", list_data_xpath)
 
     def subprocess_leaflist(self, leaflist_xpath: str, value: str):
         self._clear()

@@ -53,7 +53,7 @@ class DataTreeChanges:
     )
 
     @staticmethod
-    def convert(input_change_list: List[dict]) -> Generator[DataTreeChange, None, None]:
+    def convert(input_change_list: List[dict], log) -> Generator[DataTreeChange, None, None]:
         """
         Convert a JSON representation of a change (potentially with path's encoded as base64 strings) to
         a DataTreeChange.
@@ -64,12 +64,15 @@ class DataTreeChanges:
         Yields:
             A corresponding set of DataTreeChange instances.
         """
+        log.info("Converting change set....")
         for change in input_change_list:
             try:
                 if "base64_path" in change:
-                    yield DataTreeChange(change["action"], change["base64_path"], change["value"], base64_path=True)
+                    change = DataTreeChange(change["action"], change["base64_path"], change["value"], base64_path=True)
                 else:
-                    yield DataTreeChange(change["action"], change["path"], change["value"])
+                    change = DataTreeChange(change["action"], change["path"], change["value"])
+                log.info("Change: %s", change)
+                yield change
             except KeyError as err:
                 raise ValueError(f"Cannot create a DataTreeChange from %s\n%s", change, str(err))
 
@@ -85,7 +88,7 @@ class DataTree:
         raise ValueError("Unable to determine yang model from payload")
 
     @classmethod
-    def connect_yang_model(cls, json_dict: dict, yang_location: str) -> DataAccess:
+    def connect_yang_model(cls, json_dict: dict, yang_model: str = None, yang_location: str = None) -> DataAccess:
         """
         From a given JSON object conforming to a yang model determine the name of the yang model
         to load.
@@ -95,7 +98,8 @@ class DataTree:
             yang_location: load yang from a given yang directory
         """
         session = DataAccess()
-        yang_model = cls.get_root_yang_model(json_dict)
+        if not yang_model:
+            yang_model = cls.get_root_yang_model(json_dict)
         session.connect(yang_model, yang_location)
         if yang_model in cls.ADDITIONAL_YANG_MODELS:
             for yang_model in cls.ADDITIONAL_YANG_MODELS[yang_model]:
@@ -107,6 +111,7 @@ class DataTree:
     def process_data_tree_against_libyang(
         json_dict: dict,
         changes: List[DataTreeChange],
+        yang_model: str = None,
         yang_location: str = None,
         format: str = "json",
         log=logging.Logger,
@@ -132,9 +137,12 @@ class DataTree:
             log: A python logger
         """
 
-        session = DataTree.connect_yang_model(json_dict, yang_location)
-        log.info("Loading initial JSON payload for %s...", session.module)
-        session.loads(json.dumps(json_dict), Types.FORMAT[format.upper()])
+        session = DataTree.connect_yang_model(json_dict, yang_model, yang_location)
+        if json_dict:
+            log.info("Loading initial JSON payload for %s...", session.module)
+            session.loads(json.dumps(json_dict), Types.FORMAT[format.upper()])
+        else:
+            log.info("Initial JSON payload is empty for %s...", session.module)
 
         failed_xpaths = {}
         list_elements = {}
@@ -177,7 +185,7 @@ class DataTree:
         for xpath in failed_xpaths:
             raise failed_xpaths[xpath]
 
-        log.info("Create or Uncreate List elements; %s", list_elements)
+        log.info("LIST ELEMENTS: %s", list_elements)
         for xpath in list_elements:
             if list_elements[xpath] is True:
                 session.create(xpath)

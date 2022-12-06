@@ -8,6 +8,9 @@ to provide a JSON which could be processed by PlantUML.
 There appears to be constraints with PlantUML processing JSON which is too large, but this
 works for small outputs. This may be simple memory constraints that can be tuned with extending
 the Heap size.
+
+Further analysis may suggest it's not the size but the use of the intermediate nodes representing
+list-> list elements.
 ====
 
 The basic plantuml json processor takes in a file that `Diagram.py` would produce.

@@ -6,9 +6,8 @@ import logging
 import pydoc
 import sys
 import time
-from yangvoodoo.SchemaData import Expander
+from yangvoodoo.Describer import Yang2Text
 
-args = None
 
 parser = argparse.ArgumentParser(description="Combine a YANG schema with a supplied data payload.")
 parser.add_argument("--yang", help="YANG module (should be on YANGPATH)", required=True)
@@ -73,285 +72,26 @@ parser.add_argument(
 )
 
 
-FORMATS = {"xml": 1, "json": 2}
+def do(args, log=None):
+    if not log:
+        log = logging.getLogger("yang2text")
+        logging.basicConfig()
+        log.setLevel(50)
 
-
-class DullDisplay:
-    DIM = ""
-    NORMAL = ""
-    NORMAL_ = ""
-    BRIGHT = ""
-    MISSING = ""
-    LEAF = "l> "
-    CONTAINER = "C> "
-    LIST = "L+ "
-    LEAF_LIST = "l+ "
-    LIST_ELEMENT = "-> "
-    MANDATORY = "*"
-    WHEN = "! "
-    MUST = "% "
-    CHOICE = "? "
-    CASE = "^ "
-    CONSTRAINT = ""
-    LINE = "-"
-
-    @staticmethod
-    def get_active(active):
-        if active:
-            return "* "
-        return ""
-
-    @staticmethod
-    def get_presence(presence):
-        if presence:
-            return "+ "
-        return ""
-
-
-class Display:
-    DIM = "\033[2m"
-    NORMAL = "\033[22m"
-    NORMAL_ = "\033[22m"
-    BRIGHT = "\033[1m"
-    MISSING = " "
-    LEAF = "🍁 "
-    CONTAINER = "🥡 "
-    LIST = "📦 "
-    LIST_ELEMENT = "📥 "
-    LEAF_LIST = "📚 "
-    MANDATORY = "⚠ "
-    WHEN = "☣ "
-    MUST = "☢ "
-    CHOICE = "🔄 "
-    CASE = "📍 "
-    CONSTRAINT = "🔍 "
-    LINE = "-"
-
-    @staticmethod
-    def get_active(active):
-        if active:
-            return "✨ "
-        return ""
-
-    @staticmethod
-    def get_presence(presence):
-        if presence:
-            return "✔ "
-        return ""
-
-
-class Yang2Text(Expander):
-
-    INCLUDE_BLANK_LIST_ELEMENTS = True
-    INDENT_CHAR = "-"
-    INDENT_MINIMUM = 1
-    INDENT_SPACING = 1
-
-    def callback_write_title(self, module):
-        if args.hide_title:
-            return
-        self.result.write(f"{self.yang_module}\n")
-        self.result.write(f"{Display.LINE*len(self.yang_module)}\n\n")
-        width = args.term_width
-        if width < args.min_block_width:
-            width = args.min_block_width
-        for word in self.block_quotify(module.description(), width, ""):
-            self.result.write(f"{word}")
-        self.result.write("\n")
-        self.result.write("\n")
-        self.result.write(f"Checksum: {hashlib.sha1(str(module).encode('utf-8')).hexdigest()} ")
-        self.result.write(f"Generated: {time.ctime()}\n")
-        self.result.write("\n")
-        self.result.write("\n")
-        revisions = list(module.revisions())
-        for rev in revisions[0 : args.limit_revisions]:
-            width = args.term_width - 12
-            if width < args.min_block_width:
-                width = args.min_block_width
-            self.result.write(f"{rev.date():12}")
-            for word in self.block_quotify(rev.description(), width, " " * 12):
-                self.result.write(f"{word}")
-            self.result.write("\n")
-        if args.legacy_pyang:
-            print(str(module))
-            sys.exit(0)
-
-    def _show_when(self, node):
-        if node.when_condition() and not args.hide_constraints:
-            self.result.write(Display.NORMAL)
-            for line in node.when_condition().split("\n"):
-                when = Display.MUST
-                self.result.write(f"{self.get_blank_indent()}      {when}{line}\n")
-                when = ""
-            self.result.write("\n")
-            self.result.write(Display.NORMAL)
-
-    def _show_must(self, node):
-        if args.hide_constraints:
-            return
-        for cond in node.must_conditions():
-            self.result.write(Display.NORMAL)
-            for line in cond.split("\n"):
-                must = Display.WHEN
-                self.result.write(f"{self.get_blank_indent()}      {must}{line}\n")
-                must = ""
-            self.result.write(Display.NORMAL)
-
-    def _show_description(self, description):
-        if description() and not args.hide_descriptions:
-            blank_indent = self.get_blank_indent()
-            width = args.term_width - len(blank_indent)
-            if width < args.min_block_width:
-                width = args.min_block_width
-            self.result.write(f"\n{blank_indent}{Display.DIM}      ")
-            for word in self.block_quotify(
-                description(),
-                width,
-                indent=f"{Display.DIM}{self.get_blank_indent(6)}",
-            ):
-                self.result.write(f"{word}")
-            self.result.write("\n")
-            self.result.write("\n")
-            self.result.write(Display.NORMAL)
-
-    def _show_types(self, node):
-        types = []
-        for type, constraints in self.get_human_types(node):
-            if constraints:
-                types.append(f"{type} {{{':'.join(constraints)}}} ")
-            else:
-                types.append(type)
-
-        type_string = ", ".join(types)
-        if len(type_string) > args.term_width - len(self.get_blank_indent()):
-            self.result.write("\n")
-            for type in types:
-                self.result.write(f"{self.get_blank_indent(4)}{Display.DIM}type: ")
-                for word in self.block_quotify(
-                    type,
-                    args.term_width,
-                    f"{Display.DIM}{self.get_blank_indent(10)}",
-                ):
-                    self.result.write(f"{word}")
-                self.result.write("\n")
-
-        else:
-            self.result.write(f"\n{self.get_blank_indent(4)}{Display.DIM}type:")
-            self.result.write(f"{type_string}{Display.NORMAL}\n")
-
-    def callback_open_list(self, node, count, node_id):
-        self.result.write(
-            f"{self.open_indent()}{Display.LIST} {node.name()} {Display.DIM} ({count} Item{self.pluralise(count)}) {Display.NORMAL}\n"
-        )
-        self._show_description(node.description)
-
-    def callback_open_list_element(self, node, key_values, empty_list_element, node_id):
-        if empty_list_element:
-            self.result.write(
-                f"{self.open_indent()} {Display.NORMAL}{Display.LIST_ELEMENT}{Display.DIM}keys: {','.join([k[0] for k in key_values])}{Display.NORMAL}\n"
-            )
-        else:
-            self.result.write(f"{self.open_indent()} {Display.NORMAL}{Display.LIST_ELEMENT}")
-            comma = ""
-            for key, value in key_values:
-                self.result.write(f"{Display.DIM}{comma}{key}={Display.NORMAL}{value}")
-                comma = ", "
-            self.result.write("\n")
-
-    def callback_close_list_element(self, node):
-        self.close_indent()
-
-    def callback_close_list(self, node):
-        self.close_indent()
-
-    def _show_paths(self, schema_path, data_path):
-        if args.data_xpath:
-            self.result.write(f"{self.get_blank_indent(6)}{Display.DIM}D: {data_path}{Display.NORMAL}\n")
-        if args.schema_xpath:
-            self.result.write(f"{self.get_blank_indent(6)}{Display.DIM}S: {schema_path}{Display.NORMAL}\n")
-
-    def callback_write_leaf(self, node, value, quote, explicit, default, key, template, node_id):
-        self.result.write(f"{self.get_indent()} {Display.NORMAL}{Display.LEAF}")
-        if node.mandatory():
-            self.result.write(f"{Display.MANDATORY} ")
-        if default and value and value == default:
-            self.result.write(f"{node.name()} = {Display.DIM}{value}{Display.NORMAL}")
-        elif value:
-            self.result.write(f"{node.name()} = {value}")
-        else:
-            self.result.write(f"{node.name()} {Display.DIM} {Display.MISSING} {Display.NORMAL}")
-        if not args.hide_types:
-            self._show_types(node)
-        self._show_paths(node.schema_path(), "".join(self.data_path_trail))
-        self._show_when(node)
-        self._show_description(node.description)
-
-    def callback_open_containing_node(self, node, presence, node_id):
-        self.result.write(f"{self.open_indent()} {Display.NORMAL}{Display.CONTAINER} ")
-        if presence is not None:
-            self.result.write(f"{node.name()} {Display.get_presence(presence)}\n")
-        else:
-            self.result.write(f"{node.name()}\n")
-
-        self._show_must(node)
-        self._show_when(node)
-        self._show_description(node.description)
-
-    def callback_close_containing_node(self, node):
-        self.close_indent()
-
-    def callback_open_leaflist(self, node, count, node_id):
-        self.result.write(f"{self.open_indent()} {Display.NORMAL}{Display.LEAF_LIST} {node.name()} - ")
-        self.result.write(f"- {Display.DIM}({count} item{self.pluralise(count)}){Display.NORMAL}")
-        if not args.hide_types:
-            self._show_types(node)
-        self._show_description(node.description)
-        self.open_indent()
-        self.leaf_list_count = 0
-
-    def callback_write_leaflist_item(self, node, quote, explicit, value, template, node_id):
-        self.result.write(
-            f"{self.get_blank_indent(6)}{Display.DIM}index {self.leaf_list_count}:{Display.NORMAL} {value}\n"
-        )
-        self.leaf_list_count += 1
-
-    def callback_close_leaflist(self, node):
-        self.close_indent()
-        self.close_indent()
-
-    def callback_open_choice(self, node, node_id):
-        self.result.write(f"{self.open_indent()} {Display.NORMAL}{Display.CHOICE} {node.name()}\n")
-
-    def callback_close_choice(self, node):
-        self.close_indent()
-
-    def callback_open_case(self, node, active_case, no_active_case, node_id):
-        if not active_case:
-            self.result.write(Display.DIM)
-            Display.NORMAL = Display.DIM
-        self.result.write(f"{self.get_indent()}{Display.CASE} {Display.get_active(active_case)} {node.name()}\n")
-        self.open_indent()
-
-    def callback_close_case(self, node):
-        self.close_indent()
-        Display.NORMAL = Display.NORMAL_
-        self.result.write(Display.NORMAL)
-
-
-def do(args, log):
     generator = Yang2Text(args.yang, log)
+    if args.plain:
+        generator.display = Yang2Text.DullDisplay
+
+    generator.options = args
     if args.enable_filter_list:
         generator.set_schema_filter_list(json.loads(args.enable_filter_list.read()))
     if args.data:
-        generator.process(args.data.read(), FORMATS[args.format])
+        generator.process(self.options.data.read(), Yang2Text.FORMATS[args.format])
     else:
         generator.process()
 
     generator.result.seek(0)
-    if args.search:
-        pydoc.pipepager(generator.result.read(), cmd=f"less -R -i -p {args.search}")
-    else:
-        pydoc.pipepager(generator.result.read(), cmd=f"less -R -i ")
+    return generator.result
 
 
 if __name__ == "__main__":
@@ -363,11 +103,9 @@ if __name__ == "__main__":
         args.hide_title = True
         args.hide_constraints = True
 
-    if args.plain:
-        Display = DullDisplay
+    result = do(args)
 
-    log = logging.getLogger("yang2text")
-    logging.basicConfig()
-    log.setLevel(50)
-
-    do(args, log)
+    if args.search:
+        pydoc.pipepager(result.read(), cmd=f"less -R -i -p {args.search}")
+    else:
+        pydoc.pipepager(result.read(), cmd=f"less -R -i ")

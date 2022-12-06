@@ -604,16 +604,18 @@ class Utils:
     @staticmethod
     def convert_to_libyang_value_to_pythonic(node: libyang.schema.Node, value_str: str):
         leaf_type = node.type().base()
-        if leaf_type in libyang.DataNode.INT_TYPES:
+        if leaf_type == libyang.DataNode.INT_TYPES:
             if not value_str:
                 return 0
             return int(value_str)
-        elif leaf_type in libyang.DataNode.BOOL_TYPES:
+        elif leaf_type == libyang.DataNode.BOOL_TYPES:
             if value_str == "true":
                 return True
             return False
-        elif leaf_type in libyang.DataNode.DECIMAL_TYPES:
+        elif leaf_type == libyang.DataNode.DECIMAL_TYPES:
+            if not value_str:
+                return float(0)
             return float(value_str)
-        elif leaf_type in libyang.DataNode.EMPTY_TYPES:
+        elif leaf_type == libyang.DataNode.EMPTY_TYPES:
             return None
         return value_str

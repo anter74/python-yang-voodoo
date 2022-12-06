@@ -1,6 +1,6 @@
 FROM centos:7
 
-ENV YANGPATH=/yang
+ENV YANGPATH=/yang:yang/submodels
 
 RUN curl http://192.168.3.1:8080/docker-tools/python-3.10.8-openssl-1-1-1q-centos-7.tar.gz | tar xvfz - -C /usr/local
 

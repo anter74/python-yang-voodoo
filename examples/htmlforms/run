@@ -1,6 +1,0 @@
-#!/bin/sh
-
-export PYTHONPATH="$PYTHONPATH:/examples/htmlforms"
-export YANGPATH="$YANGPATH:/yang"
-
-python3 examples/htmlforms/stub-http-server.py
