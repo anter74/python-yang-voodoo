@@ -6,6 +6,7 @@ from yangvoodoo import Types
 
 class HtmlFormExpander(Expander):
 
+    TITLE = "YANG Unicorn Interface ✨ 🦄 ✨ - 💣 Prototype 💣 "
     INCLUDE_BLANK_LIST_ELEMENTS = False
     LEAF_MAPPING = {
         Types.DATA_ABSTRACTION_MAPPING["BOOLEAN"]: "_write_checkbox",
@@ -60,7 +61,7 @@ class HtmlFormExpander(Expander):
         self.result.write(
             f"""<html lang="en">
 {self.open_indent()}<head>
-<title>YANG Unicorn Interface - Prototype YANG Web Forms - {self.yang_module}</title>
+<title>{self.TITLE} - {self.yang_module}</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
@@ -77,7 +78,26 @@ class HtmlFormExpander(Expander):
     LIBYANG_CHANGES = []; // a list of changes we need to make (supports the ability to do a simple UNDO mechnism)
     ELEMENTS_EXPANDED_BY_USER = {{}};
     LIBYANG_MODEL = "{self.yang_module}";
+    YANGUI_TITLE = "{self.TITLE}";
 </script>
+<style>
+.yangui-spinner {{
+  z-index: 99;
+  position: fixed;
+  overflow: automatic;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  background: white;
+  opacity: 0.8;
+  padding-top: 25%;
+  padding-left: 45%;
+}}
+// this is here so we don't fail to show the spinner while waiting for the CSS to be downloaded
+// we don't yet send any instructions from torando to ask for caching of elements.
+// This is a symptom of Torando not being multi-threaded?
+</style>
 </head>\n"""
         )
         self.close_indent()
@@ -199,14 +219,17 @@ class HtmlFormExpander(Expander):
 """
         )
 
-        self.result.write(f"{self.open_indent()}<div class='container mt-9'>\n")
         self.result.write(
-            """
-        <div id="adams-debug-div"></div>
+            f"""{self.open_indent()}<div class='container mt-12 yangui-main-wrapper'>\n
 
+            <div class="yangui-messages fixed-bottom">
+                <div class="yangui-messages-danger" id="yangui-msg-danger" data-yangui-hide-at="0"></div>
+                <div class="yangui-messages-success" id="yangui-msg-success" data-yangui-hide-at="0"></div>
+                <div class="yangui-messages-normal" id="yangui-msg-normal"></div>
 
+            </div>
 
-"""
+                          """
         )
 
     def callback_write_close_body(self, module):
@@ -714,12 +737,12 @@ class HtmlFormExpander(Expander):
         return f"{attribute}={attr_quote}{method}({', '.join(args)}){attr_quote}"
 
     def callback_write_footer(self, module):
-        self.result.write("<script language=Javascript>\n")
+        self.result.write("<hr/><script language=Javascript>\n")
         if self.data_loaded:
             self.result.write(f"LIBYANG_USER_PAYLOAD = {self.data_ctx.dumps(2)};\n")
         self.result.write("stop_yangui_spinner();\n")
         self.result.write("yangui_default_mousetrap();\n")
-        self.result.write("adam_debug();\n")
+        self.result.write("yangui_welcome();\n")
         self.result.write("</script>")
 
 

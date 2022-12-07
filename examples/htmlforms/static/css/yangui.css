@@ -1,3 +1,6 @@
+.yangui-main-wrapper {
+}
+
 .structure_indent {
   margin-left: 35px;
 }
@@ -55,9 +58,6 @@
   opacity: 0.1;
 }
 
-.alertwider {
-  min-width: 400px;
-}
 .fix-margin-left-switch-2 {
     margin-left: 2em !important;
 }
@@ -113,18 +113,20 @@
   padding-bottom: 5px;
 }
 
-.yangui-spinner {
-  z-index: 99;
-  position: fixed;
-  overflow: automatic;
-  left: 0px;
-  top: 0px;
-  width: 100%;
-  height: 100%;
-  background: white;
-  opacity: 0.8;
-  padding-top: 25%;
-  padding-left: 45%;
+.yangui-messages-normal {
+  text-align: right;
+  background: black;
+  color: white;
+}
+.yangui-messages-danger {
+  background: red;
+  color: white;
+  display: none;
+}
+.yangui-messages-success {
+  background: green;
+  color: white;
+  display: none;
 }
 
 .yangui-alerts {

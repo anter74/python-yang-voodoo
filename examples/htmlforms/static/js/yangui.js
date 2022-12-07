@@ -8,6 +8,16 @@ The UI components are controlled in part client side.
 - Nodes can be collapsed - without the `show` class or shown with the `show` class
 - Some nodes have actions (disable/enable a case) which are entirely client side.
 
+There are performance impacts with big data models - however this could easily
+be refactored to avoid loading the entire contents of presence containers if there
+is no data underneath.
+
+However for data models with data spread across a large model this may not be
+enough - splitting the model into a number of tabs - and forcing a 'save' (i.e.
+download a new LIBYANG_USER_PAYLOAD before changing tabs. This will allow the
+DOM to flush the div's of the tabs which are no longer in focus. There is an
+advantage of this that the user cannot create too much data in one place.
+The other advantage is less interesting containers can be less clear on the UI.
 
 */
 
@@ -20,6 +30,7 @@ function yangui_default_mousetrap(){
   Mousetrap.bind('y s', function() { submit_payload(); });
   Mousetrap.bind('y n', function() { new_payload(); });
   Mousetrap.bind('y v', function() { validate_payload(); });
+  Mousetrap.bind('esc esc', function() { cancelMessages(); });
 }
 
 function new_payload(){
@@ -36,6 +47,17 @@ function submit_payload(){
 }
 
 function yangui_undo(){
+  /*
+  The UI holds a copy of the data tree as LIBYANG_USER_PAYLOAD.
+
+  Each action the user takes on the UI causes a change to be added to the LIBYANG_CHANGES list.
+  The actions contain not just the action, path, values needed by yangvoodoo's Merger - but
+  also enough information to be able to undo the changes on the UI.
+
+  Since the server always process the LIBYANG_USER_PAYLOAD + LIBYANG_CAHNGES every time (i.e.
+  there is no server state) then simply cleaning up the UI and popping the change from the list
+  is sufficient to implement the undo.
+  */
   undo = LIBYANG_CHANGES.pop();
   if(!undo){
     return;
@@ -73,7 +95,7 @@ function yangui_undo(){
     $(document.getElementById("yangui-undo-button")).addClass("yangui-disable");
   }
 
-  yangui_debug(null, "Undone change... "+JSON.stringify(undo));
+  yangui_debug(null, "Undo change... "+atob(undo.base64_path) + "  " +undo.value);
 }
 
 
@@ -87,36 +109,38 @@ function start_yangui_spinner(text){
   document.getElementById("yangui-spinnertext").innerHTML="";
 }
 
-function addAlert(title, message, theme, id, timeout) {
-    $('#alerts').append(
-      '<div id="' + id + '" class="alert alert-' + theme + ' alert-dismissible fade show alertwider" role="alert">' +
-      '<div class="alertwider">' +
-      '<strong>'+title+'</strong><br/>' + message +
-      '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-      '</div>' +
-      '</div>');
-
-    if(timeout){
-      setTimeout(function() {
-        this_alert = $(document.getElementById("success_validate_alert"));
-        if(this_alert){
-          this_alert.remove();
-          }
-        }, 1750);
-    }
+function cancelMessage(theme){
+  if(parseInt($(document.getElementById('yangui-msg-'+theme)).data('yangui-hide-at')) < Date.now()){
+    $(document.getElementById('yangui-msg-'+theme)).hide();
+  }
 }
 
-function adam_debug(){
+function cancelMessages(){
+  /* Bootstrap alerts are not used because they are too small */
+  $(document.getElementById('yangui-msg-danger')).hide();
+  $(document.getElementById('yangui-msg-success')).hide();
+}
 
+function showMessage(title, message, theme, timeout) {
+  $(document.getElementById('yangui-msg-'+theme)).data('yangui-hide-at', Date.now());
+  $(document.getElementById('yangui-msg-'+theme)).html('<strong>'+title+'</strong><br/>' + message);
+  $(document.getElementById('yangui-msg-'+theme)).data('yangui-hide-at', Date.now()+timeout);
+  $(document.getElementById('yangui-msg-'+theme)).show();
+  if(timeout){
+    setTimeout(function() {
+      cancelMessage(theme);
+    }, timeout+1000);
+  }
 }
 
 function yangui_debug(path, message){
   if(path){
-    document.getElementById("yangui-debug").innerHTML=atob(path)+ " " + message + " ("+LIBYANG_CHANGES.length+")";
+    $(document.getElementById('yangui-msg-normal')).html("Path:" + atob(path)+ " " + message + " ("+LIBYANG_CHANGES.length+")");
   }else{
-    document.getElementById("yangui-debug").innerHTML=message;
+    $(document.getElementById('yangui-msg-normal')).html(message);
   }
 }
+
 
 function leaf_change(d, h){
   enable_validate_save_buttons();
@@ -209,7 +233,7 @@ function add_list_element(d, s, u){
           $("#yanguiNewItemContents").html(response);
       },
       error: function(xhr, options, err) {
-        addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
+        showMessage("Connectivity Error", handle_ajax_error(xhr), 'danger');
         stop_yangui_spinner();
       }
   });
@@ -264,7 +288,7 @@ function create_new_item(){
 
       },
       error: function(xhr, options, err) {
-        addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
+        showMessage("Connectivity Error", handle_ajax_error(xhr), 'danger');
         stop_yangui_spinner();
       }
   });
@@ -279,12 +303,13 @@ function remove_list_element(b_path){
 }
 
 function enable_case(b_path, b_parent_path){
-  // Give the base64 path of the choice container (i.e. our case's parent)
-  // loop around all span's
-  // - hide any enable case buttons
-  // - show our remove-case path
-  // - remove the opactity disabling of our case
-  // - expand the our case (add show)
+  /* Give the base64 path of the choice container (i.e. our case's parent)
+     loop around all span's
+     - hide any enable case buttons
+     - show our remove-case path
+     - remove the opactity disabling of our case
+     - expand the our case (add show)
+  */
   choiceDiv = $(document.getElementById(b_parent_path));
   choiceDiv.find("span").each(function(index){
       if(this.id == "remove-case-" + b_path){
@@ -342,7 +367,7 @@ function add_leaflist_item(d, s, u){
           $(document.getElementById(d)).selectpicker('show');
       },
       error: function(xhr, options, err) {
-        addAlert("Connectivity Error", handle_ajax_error(xhr), 'danger');
+        showMessage("Connectivity Error", handle_ajax_error(xhr), 'danger',5000);
         stop_yangui_spinner();
       }
   });
@@ -398,7 +423,7 @@ function upload_payload (){
 }
 
 function validate_payload(){
-  $(document.getElementById("alerts")).empty();
+  cancelMessages();
   for(index in LIBYANG_CHANGES){
     console.log("Change: "+ JSON.stringify(LIBYANG_CHANGES[index]));
   }
@@ -417,17 +442,17 @@ function validate_payload(){
       success: function(response) {
         // $(document.getElementById("capture-new-item-list-contents")).innerHTML=response;
         stop_yangui_spinner();
-        addAlert('<i class="fa fa-2x fa-smile-o" aria-hidden="true"></i>',"payload succesfully validated","success","success_validate_alert",200);
+        showMessage('<i class="fa fa-2x fa-smile-o" aria-hidden="true"></i>',"payload succesfully validated","success", 2500);
       },
       error: function(xhr, options, err) {
-        addAlert("Validation Error", handle_ajax_error(xhr), 'danger', "validation_error_alert");
+        showMessage("Validation Error", handle_ajax_error(xhr), 'danger');
         stop_yangui_spinner();
       }
   });
 }
 
 function download_payload(){
-  $(document.getElementById("alerts")).empty();
+  cancelMessages();
   if($(document.getElementById("yangui-save-button")).hasClass("yangui-disable")){
     return;
   }
@@ -445,7 +470,7 @@ function download_payload(){
         download(JSON.parse(response).new_payload , 'keep-me-safe.json', 'application/json');
       },
       error: function(xhr, options, err) {
-        addAlert("Validation Error", handle_ajax_error(xhr), 'danger', "validation_error_alert");
+        showMessage("Validation Error", handle_ajax_error(xhr), 'danger',  5000);
         stop_yangui_spinner();
       }
   });
@@ -465,3 +490,7 @@ window.addEventListener('beforeunload', function (e) {
     e.returnValue = '';
   }
 });
+
+function yangui_welcome(){
+  yangui_debug(null, '<strong>'+YANGUI_TITLE+'</strong> - loaded '+LIBYANG_MODEL);
+}
