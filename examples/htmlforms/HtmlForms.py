@@ -72,6 +72,7 @@ class HtmlFormExpander(Expander):
 <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
 <link rel="stylesheet" href="/static/css/yangui.css"></head>
 <script src="/static/js/yangui.js"></script>
+<script src="/static/js/your-actions.js"></script>
 <script language="Javascript">
     AJAX_BASE_SERVER_URL="{self.AJAX_BASE_SERVER_URL}/{self.yang_module}";
     LIBYANG_USER_PAYLOAD = {{}};  // this will be populated in the footer
@@ -105,8 +106,6 @@ class HtmlFormExpander(Expander):
     def callback_write_open_body(self, module):
         self.result.write(f"{self.open_indent()}<body>\n")
 
-        self.result.write(f'{self.get_indent()}<div id="alerts" class="yangui-alerts"></div>')
-
         self.result.write(
             f"""
         <div id="yangui-spinner" class='yangui-spinner'>
@@ -119,6 +118,21 @@ class HtmlFormExpander(Expander):
         </div>
 
 
+        <div id="yanguiDebugModal" class="modal" tabindex="-1" role="dialog" >
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Debug Modal</h5>
+              </div>
+              <div class="modal-body">
+                <textarea id='yangui-content-debug' rows=20 cols=40 style='font-style: monospace;'></textarea>
+              </div>
+              <div class="modal-footer">
+                <button type="button" onClick="debug_close()" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div id="yanguiUploadModal" class="modal" tabindex="-1" role="dialog">
           <div class="modal-dialog" role="document">
@@ -143,7 +157,6 @@ class HtmlFormExpander(Expander):
           </div>
         </div>
 
-        <div class='yangui-debug'><span id='yangui-debug'></span></div>
 
         <div id="yanguiNewItemModal" class="modal" tabindex="-1" role="dialog">
           <div class="modal-dialog" role="document">
@@ -179,37 +192,37 @@ class HtmlFormExpander(Expander):
             f"""
         <nav id="sidebar">
         <div class='yangui-floating-left-buttons'>
-          <div id='yangui-new-button'>
+          <div id='yangui-new'>
             <a class="btn btn-primary" href="javascript:new_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Start new payload (y n)">
                 <i class="fa fa-file" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
-          <div id='yangui-undo-button' class='yangui-disable'>
+          <div id='yangui-undo' class='yangui-disable'>
             <a class="btn btn-primary" href="javascript:yangui_undo()" role="button" data-toggle="tooltip" data-placement="top" data-html="true" title="Undo the last change (ctrl+z)" tabindex="-1">
                 <i class="fa fa-undo" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
-          <div id='yangui-validate-button' class='yangui-disable'>
-            <a class="btn btn-primary" href="javascript:validate_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Validate data (y s)">
+          <div id='yangui-validate' class='yangui-disable'>
+            <a class="btn btn-primary" id="yangui-validate-button" href="javascript:validate_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Validate data (y s)">
               <i class="fa fa-microscope" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
-          <div id='yangui-save-button' class='yangui-disable'>
+          <div id='yangui-save' class='yangui-disable'>
             <a class="btn btn-primary" href="javascript:download_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Download a saved payload (ctrl+s)">
                 <i class="fa fa-download" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
-          <div id='yangui-submit-button'>
+          <div id='yangui-submit'>
             <a class="btn btn-primary" href="javascript:upload_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Upload a saved payload (ctrl+o)">
                 <i class="fa fa-upload" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
-          <div id='yangui-upload-button'>
+          <div id='yangui-upload'>
             <a class="btn btn-primary" href="javascript:submit_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Submit a payload (y c)">
                 <i class="fa fa-sun" aria-hidden="true"></i>
             </a>
@@ -313,7 +326,7 @@ class HtmlFormExpander(Expander):
         self.result.write(
             f"{self.get_indent()}<input class='fix-margin-left-switch-2 form-check-input' role='switch' type='checkbox'"
         )
-        self.result.write(f"name={self.get_id()} id={self.get_id()} ")
+        self.result.write(f" id={self.get_id()} ")
         self.result.write(f' data-yangui-keyname="{node.name()}" ')
         if value:
             self.result.write(f" data-yangui-start-val='on' ")
@@ -338,7 +351,7 @@ class HtmlFormExpander(Expander):
         self.result.write(
             f"{self.open_indent()}<input class='fix-margin-left-switch-2 form-check-input' role='switch' type='checkbox'"
         )
-        self.result.write(f"name={self.get_id()} id={self.get_id()} ")
+        self.result.write(f" id={self.get_id()} ")
         self.result.write(f' data-yangui-keyname="{node.name()}" ')
         self.result.write(f"{self._get_html_attr('onChange', 'empty_change', this=True, data=True)} ")
         if value:
@@ -387,7 +400,7 @@ class HtmlFormExpander(Expander):
         self.result.write(f"{self.get_indent()}<div class='form-input'      >\n")
         self._write_label(node, "structure_leaflabel", linebreak=False, label_icon="fa-leaf")
 
-        self.result.write(f"{self.get_indent()}<input type='text' name={self.get_id()} id={self.get_id()} ")
+        self.result.write(f"{self.get_indent()}<input type='text' id={self.get_id()} ")
         self.result.write(f"value={quote}{value}{quote} ")
         self.result.write(f"data-yangui-start-val={quote}{value}{quote} ")
         self.result.write(" data-yangui-field-type='text' ")

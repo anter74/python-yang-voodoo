@@ -4,6 +4,10 @@ module testforms {
 
   description "This is a yang model";
 
+  revision 2022-12-07 {
+    description "An update which provides monsters and people eating monsters and people";
+  }
+
   revision 2022-11-29 {
     description "This is a test revision";
   }
@@ -14,6 +18,17 @@ module testforms {
 
   extension yangui-hidden {
     argument string;
+  }
+
+  extension yangui-tab {
+    argument string;
+  }
+
+  typedef frankie {
+    type enumeration {
+      enum people;
+      enum monsters;
+    }
   }
 
   typedef animals {
@@ -289,6 +304,17 @@ module testforms {
           leaf key {
             type string;
           }
+          container monsters {
+            container eating {
+              container people {
+                leaf eating {
+                  description "Frankie and the witchfingers album";
+                  type frankie;
+                }
+              }
+            }
+          }
+
         }
       }
       case that {
@@ -307,6 +333,83 @@ module testforms {
       presence true;
       leaf mainleaf {
 	       type string;
+      }
+    }
+  }
+
+  container tab1 {
+    presence true;
+    testforms:yangui-tab "one";
+    uses tab-contents;
+  }
+  container tab2 {
+    presence true;
+    testforms:yangui-tab "two";
+    uses tab-contents;
+  }
+  container tab3 {
+    presence true;
+    testforms:yangui-tab "three";
+    uses tab-contents;
+  }
+  container tab4 {
+    presence true;
+    testforms:yangui-tab "four";
+    uses tab-contents;
+  }
+  container tab5 {
+    presence true;
+    testforms:yangui-tab "five";
+    uses tab-contents;
+  }
+  container tab6 {
+    presence true;
+    testforms:yangui-tab "six";
+    uses tab-contents;
+  }
+  container tab7 {
+    presence true;
+    testforms:yangui-tab "seven";
+    uses tab-contents;
+  }
+  container tab8 {
+    presence true;
+    testforms:yangui-tab "eight";
+    uses tab-contents;
+  }
+  container tab9 {
+    presence true;
+    testforms:yangui-tab "nine";
+    uses tab-contents;
+  }
+
+  grouping tab-contents {
+    leaf t1 {
+      type string;
+      mandatory true;
+    }
+    leaf t2 {
+      type boolean;
+    }
+    leaf t3 {
+      type empty;
+    }
+    leaf t4 {
+      type uint32 {
+        range 1..30000;
+      }
+    }
+    leaf t5 {
+      type string {
+        pattern "tab.*";
+      }
+    }
+    leaf t6 {
+      type enumeration {
+        enum a;
+        enum b;
+        enum bb;
+        enum c;
       }
     }
   }

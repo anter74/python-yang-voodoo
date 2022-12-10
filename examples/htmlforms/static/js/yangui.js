@@ -30,6 +30,7 @@ function yangui_default_mousetrap(){
   Mousetrap.bind('y s', function() { submit_payload(); });
   Mousetrap.bind('y n', function() { new_payload(); });
   Mousetrap.bind('y v', function() { validate_payload(); });
+  Mousetrap.bind('y d', function() { debug_payload(); });
   Mousetrap.bind('esc esc', function() { cancelMessages(); });
 }
 
@@ -38,12 +39,8 @@ function new_payload(){
 }
 
 function enable_validate_save_buttons(){
-  $(document.getElementById("yangui-validate-button")).removeClass("yangui-disable");
-  $(document.getElementById("yangui-save-button")).removeClass("yangui-disable");
-}
-
-function submit_payload(){
-  alert("Do something here to merge the payload+changes and then do something interesting.....");
+  $(document.getElementById("yangui-validate")).removeClass("yangui-disable");
+  $(document.getElementById("yangui-save")).removeClass("yangui-disable");
 }
 
 function yangui_undo(){
@@ -92,7 +89,7 @@ function yangui_undo(){
   }
 
   if(LIBYANG_CHANGES.length==0){
-    $(document.getElementById("yangui-undo-button")).addClass("yangui-disable");
+    $(document.getElementById("yangui-undo")).addClass("yangui-disable");
   }
 
   yangui_debug(null, "Undo change... "+atob(undo.base64_path) + "  " +undo.value);
@@ -112,11 +109,14 @@ function start_yangui_spinner(text){
 function cancelMessage(theme){
   if(parseInt($(document.getElementById('yangui-msg-'+theme)).data('yangui-hide-at')) < Date.now()){
     $(document.getElementById('yangui-msg-'+theme)).hide();
+    $(document.getElementById('yangui-msg-'+theme)).html("");
   }
 }
 
 function cancelMessages(){
   /* Bootstrap alerts are not used because they are too small */
+  $(document.getElementById('yangui-msg-danger')).html("");
+  $(document.getElementById('yangui-msg-success')).hide("");
   $(document.getElementById('yangui-msg-danger')).hide();
   $(document.getElementById('yangui-msg-success')).hide();
 }
@@ -146,6 +146,10 @@ function leaf_change(d, h){
   enable_validate_save_buttons();
 }
 
+function get_start_value(i){
+  return "a";
+}
+
 function leaf_blur(b_path, h){
   new_val=$(h).val();
   old_val=$(h).data('yangui-start-val');
@@ -161,7 +165,7 @@ function leaf_blur(b_path, h){
      yangui_debug(b_path, "changed from "+ old_val +" to "+new_val);
      $(h).data('yangui-start-val', new_val)
     }
-    $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
+    $(document.getElementById("yangui-undo")).removeClass("yangui-disable");
   }
 }
 
@@ -175,7 +179,7 @@ function select_change(b_path, h){
   LIBYANG_CHANGES.push({"action": "set", "base64_path": b_path, "value":h.value, "update_select": b_path, "update_value": old_val});
   yangui_debug(b_path, "changed "+ old_val +" to "+new_val);
   $(h).data('yangui-start-val', new_val)
-  $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
+  $(document.getElementById("yangui-undo")).removeClass("yangui-disable");
 }
 
 function check_change(b_path, h){
@@ -189,7 +193,7 @@ function check_change(b_path, h){
   LIBYANG_CHANGES.push({"action": "set_boolean", "base64_path": b_path, "value":new_val, "update_checkbox": b_path, "update_value": old_val});
   yangui_debug(b_path, "changed "+ old_val +" to "+new_val);
   $(h).data('yangui-start-val', new_val)
-  $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
+  $(document.getElementById("yangui-undo")).removeClass("yangui-disable");
 }
 
 
@@ -204,7 +208,7 @@ function empty_change(b_path, h){
   LIBYANG_CHANGES.push({"action": "set_empty", "base64_path": b_path, "value":new_val, "update_checkbox": b_path, "update_value": old_val});
   yangui_debug(b_path, "changed "+ old_val +" to "+new_val);
   $(h).data('yangui-start-val', new_val)
-  $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
+  $(document.getElementById("yangui-undo")).removeClass("yangui-disable");
 }
 
 function empty_blur(d, h){
@@ -298,7 +302,7 @@ function create_new_item(){
 function remove_list_element(b_path){
   LIBYANG_CHANGES.push({"action": "delete_list_xpath", "base64_path": b_path, "undelete_css": "list-item-"+b_path, "value":null});
   $(document.getElementById("list-item-"+b_path)).addClass('yangui-deleted');
-  $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
+  $(document.getElementById("yangui-undo")).removeClass("yangui-disable");
   enable_validate_save_buttons();
 }
 
@@ -379,7 +383,7 @@ function remove_leaflist_item(b_path){
   // and making sure the item is removed from the changes list.
   LIBYANG_CHANGES.push({"action": "delete_list_xpath", "base64_path": b_path, "undelete_css": "leaflist-item-"+b_path, "value":null});
   $(document.getElementById("leaflist-item-"+b_path)).addClass('yangui-deleted');
-  $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
+  $(document.getElementById("yangui-undo")).removeClass("yangui-disable");
   enable_validate_save_buttons();
 }
 
@@ -404,7 +408,7 @@ function presence_container_expand(b_path, uuid){
   if(containerDiv.hasClass("yangui-disable")){
     containerDiv.removeClass("yangui-disable");
     LIBYANG_CHANGES.push({"action": "set", "base64_path": b_path, "value":"", "disable_css": b_path});
-    $(document.getElementById("yangui-undo-button")).removeClass("yangui-disable");
+    $(document.getElementById("yangui-undo")).removeClass("yangui-disable");
     enable_validate_save_buttons();
   }
 
@@ -427,7 +431,7 @@ function validate_payload(){
   for(index in LIBYANG_CHANGES){
     console.log("Change: "+ JSON.stringify(LIBYANG_CHANGES[index]));
   }
-  if($(document.getElementById("yangui-validate-button")).hasClass("yangui-disable")){
+  if($(document.getElementById("yangui-validate")).hasClass("yangui-disable")){
     return;
   }
   start_yangui_spinner("Validating.....");
@@ -442,7 +446,7 @@ function validate_payload(){
       success: function(response) {
         // $(document.getElementById("capture-new-item-list-contents")).innerHTML=response;
         stop_yangui_spinner();
-        showMessage('<i class="fa fa-2x fa-smile-o" aria-hidden="true"></i>',"payload succesfully validated","success", 2500);
+        showMessage('<i class="fa fa-2x fa-smile-o" aria-hidden="true"></i>',"payload successfully validated","success", 2500);
       },
       error: function(xhr, options, err) {
         showMessage("Validation Error", handle_ajax_error(xhr), 'danger');
@@ -451,9 +455,40 @@ function validate_payload(){
   });
 }
 
+function debug_close(){
+  $(document.getElementById("yangui-content-debug")).val("");
+  modal_visibility('yanguiDebugModal', 'hide');
+}
+
+function debug_payload(){
+  start_yangui_spinner("Merging....");
+  $(document.getElementById("yangui-content-debug")).val("");
+  payload = {"payload": LIBYANG_USER_PAYLOAD, "changes": LIBYANG_CHANGES}
+  $.ajax({
+      type: "POST",
+      url: AJAX_BASE_SERVER_URL+"/download",
+      crossDomain: true,
+      data: JSON.stringify(payload),
+      cache: false,
+      success: function(response) {
+        $(document.getElementById("yangui-content-debug")).val(JSON.stringify( JSON.parse(response).new_payload,null,4));
+
+
+        $("#yanguiDebugModal").modal('show');
+        stop_yangui_spinner();
+      },
+      error: function(xhr, options, err) {
+        showMessage("Debug Error", handle_ajax_error(xhr), 'danger',  5000);
+        stop_yangui_spinner();
+        $("#yanguiDebugModal").modal('hide');
+      }
+  });
+
+}
+
 function download_payload(){
   cancelMessages();
-  if($(document.getElementById("yangui-save-button")).hasClass("yangui-disable")){
+  if($(document.getElementById("yangui-save")).hasClass("yangui-disable")){
     return;
   }
   start_yangui_spinner("Downloading.....");

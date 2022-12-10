@@ -353,8 +353,12 @@ def make_app():
     )
 
 
-if __name__ == "__main__":
+def do():
     app = make_app()
     app.listen(PORT)
     log.info("Starting example server: %s", PORT)
     tornado.ioloop.IOLoop.current().start()
+
+
+if __name__ == "__main__":
+    do()

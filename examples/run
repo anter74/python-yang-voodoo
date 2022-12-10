@@ -3,4 +3,4 @@
 export PYTHONPATH="$PYTHONPATH:/examples/htmlforms:/examples/plantuml"
 export YANGPATH="$YANGPATH:/yang:/yang/other"
 
-python3 examples/htmlforms/stub-http-server.py $*
+python3 examples/htmlforms/stubserver.py $*
