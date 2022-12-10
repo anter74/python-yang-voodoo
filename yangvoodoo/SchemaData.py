@@ -65,6 +65,7 @@ class Expander:
     INCLUDE_BLANK_LIST_ELEMENTS = False
     BASE64_ENCODE_PATHS = False
     YANGUI_HIDDEN_KEY = "yangui-hidden"
+    AUTO_EXPAND_BLANK_PRESENCE_CONTAINERS = True
 
     def __init__(self, yang_module, log: logging.Logger):
         self.log = log
@@ -197,6 +198,12 @@ class Expander:
         self.data_ctx.set_xpath(list_xpath + predicates, "")
         return predicates
 
+    def data_tree_create_container(self, xpath: str):
+        self.data_ctx.set_xpath(xpath, "")
+
+    def data_tree_delete_container(self, xpath: str):
+        self.data_ctx.delete_xpath(xpath)
+
     def data_tree_set_leaf(self, xpath: str, value: str):
         if not value:
             self.data_ctx.delete_xpath(xpath)
@@ -261,6 +268,26 @@ class Expander:
         )
 
         self.shrink_trail(schema=False)
+
+    def subprocess_container(self, container_xpath: str):
+        self._clear()
+
+        for result in self.data_ctx.get_xpath(container_xpath):
+            if result.get_schema().nodetype() != Types.LIBYANG_NODETYPE["CONTAINER"]:
+                raise NotImplementedError(f"subprocess only supports processing of a container: {container_xpath}")
+            break
+        else:
+            self.log.error("Cannot subprocess non-existing data path: %s", container_xpath)
+            return
+
+        node = result.get_schema()
+        self.id_path_trail.append(container_xpath)
+        self.data_path_trail.append(container_xpath)
+        self.schema_path_trail.append(result.get_schema_path())
+
+        self.log.info("Schema Data Expander: starting recursion for a container: %s", container_xpath)
+        self._handle_container_contents(node)
+        self.log.info("Schema Data Expander: completed recursion of a container: %s", container_xpath)
 
     def subprocess_list(self, list_data_xpath: str, predicates: str):
         """
@@ -547,15 +574,19 @@ class Expander:
                 presence = True
 
         self.callback_open_containing_node(node, presence=presence, node_id="".join(self.id_path_trail))
+        if presence is None or presence is True or (presence is False and self.AUTO_EXPAND_BLANK_PRESENCE_CONTAINERS):
+            self._handle_container_contents(node)
 
+        self.callback_close_containing_node(node)
+
+        self.shrink_trail()
+
+    def _handle_container_contents(self, node):
         try:
             for subnode in self.ctx.find_path(f"{node.schema_path()}/*"):
                 self._process_nodes(subnode)
         except libyang.util.LibyangError:
             pass
-
-        self.callback_close_containing_node(node)
-        self.shrink_trail()
 
     def _handle_schema_leaf(self, node: libyang.schema.Node):
         """

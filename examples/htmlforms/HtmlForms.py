@@ -15,6 +15,7 @@ class HtmlFormExpander(Expander):
     }
     AJAX_BASE_SERVER_URL = os.getenv("YANGUI_BASE_API", "http://127.0.0.1:8099/api")
     BASE64_ENCODE_PATHS = True
+    AUTO_EXPAND_BLANK_PRESENCE_CONTAINERS = False
 
     """
     This provides an example implementation of forming a HTML from a given YANG based data tree
@@ -242,10 +243,14 @@ class HtmlFormExpander(Expander):
 
             </div>
 
+
+            <div class="tab-content" id="nav-tabContent">
+
                           """
         )
 
     def callback_write_close_body(self, module):
+        self.result.write(f"{self.close_indent()}</div> <!-- close nav tab content -->\n")
         self.result.write(f"{self.close_indent()}</div> <!-- close container -->\n")
         self.result.write(f"{self.close_indent()}</div> <!-- close wrapper -->\n")
         self.result.write(f"{self.close_indent()}</body>\n")
@@ -266,7 +271,7 @@ class HtmlFormExpander(Expander):
         """
         this_container_collapse_or_show = self.default_collapse_state
         this_container_disable = ""
-        if presence not in (True, False):
+        if presence in (True, False):
             this_container_expand_javascript = " yangui-field-type='presence-container' "
         else:
             this_container_expand_javascript = " yangui-field-type='container' "

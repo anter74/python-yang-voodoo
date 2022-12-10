@@ -410,6 +410,29 @@ function presence_container_expand(b_path, uuid){
     LIBYANG_CHANGES.push({"action": "set", "base64_path": b_path, "value":"", "disable_css": b_path});
     $(document.getElementById("yangui-undo")).removeClass("yangui-disable");
     enable_validate_save_buttons();
+
+    payload = {
+      "base64_data_path": b_path,
+      "yang_model":LIBYANG_MODEL
+    }
+
+    $.ajax({
+        type: "POST",
+        url: AJAX_BASE_SERVER_URL+"/create-container",
+        crossDomain: true,
+        data: JSON.stringify(payload),
+        cache: false,
+        success: function(response) {
+            stop_yangui_spinner();
+            $(document.getElementById("collapse-"+uuid)).append(response);
+        },
+        error: function(xhr, options, err) {
+          showMessage("Connectivity Error", handle_ajax_error(xhr), 'danger');
+          stop_yangui_spinner();
+        }
+    });
+
+
   }
 
   if($(document.getElementById("collapse-"+uuid)).data('yangui-collapse')=='collapse'){

@@ -10,35 +10,45 @@
 
 .structure_choice {
   border-style: dotted;
-  border-color: gray;
+  border-radius: 15px;
+  border-color: silver;
   padding-left: 10px;
   padding-top: 10px;
 }
 .structure_case {
   border-style: dotted;
-  border-color: gray;
+  border-radius: 15px;
+  border-color: silver;
   padding-left: 10px;
   padding-top: 10px;
 }
 .structure_list {
   border-style: dotted;
-  border-color: gray;
+  border-radius: 15px;
+  border-color: silver;
   padding-left: 10px;
   padding-top: 10px;
 }
-.structure_listelements {
+.structure_listelement {
+  border-style: dotted;
+  border-radius: 15px;
+  border-color: silver;
+  padding-left: 10px;
+  padding-top: 10px;
 
 }
 
 .structure_leaflist {
   border-style: dotted;
-  border-color: gray;
+  border-radius: 15px;
+  border-color: silver;
   padding-left: 10px;
   padding-top: 10px;
 }
 .structure_container {
   border-style: dotted;
-  border-color: gray;
+  border-radius: 15px;
+  border-color: silver;
   padding-left: 10px;
   padding-top: 10px;
 }

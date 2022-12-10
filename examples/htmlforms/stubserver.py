@@ -69,6 +69,7 @@ class AjaxHandler(tornado.web.RequestHandler):
         "get-leaf-list-create-page": "_get_leaf_list_create_page",
         "create-leaf-list": "_create_leaflist_item",
         "create-list": "_create_list_element",
+        "create-container": "_create_container",
     }
 
     def set_default_headers(self):
@@ -93,6 +94,13 @@ class AjaxHandler(tornado.web.RequestHandler):
         instance.subprocess_leaflist(
             leaflist_xpath=base64_tostring(input["base64_schema_path"]), value=input["key_values"][0][1]
         )
+        self.write(instance.dumps())
+        self.finish()
+
+    def _create_container(self, yang_model, input):
+        instance = HtmlFormExpander(input["yang_model"], log)
+        instance.data_tree_create_container(base64_tostring(input["base64_data_path"]))
+        instance.subprocess_container(container_xpath=base64_tostring(input["base64_data_path"]))
         self.write(instance.dumps())
         self.finish()
 
