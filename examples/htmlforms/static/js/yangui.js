@@ -235,6 +235,9 @@ function add_list_element(d, s, u){
           stop_yangui_spinner();
           $("#yanguiNewItemModal").modal('show');
           $("#yanguiNewItemContents").html(response);
+          $("#yanguiNewItemContents").find("select").each(function(index){
+            $(this).selectpicker('show');
+          });
       },
       error: function(xhr, options, err) {
         showMessage("Connectivity Error", handle_ajax_error(xhr), 'danger');
