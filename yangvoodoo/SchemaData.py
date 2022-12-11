@@ -575,7 +575,8 @@ class Expander:
 
         self.callback_open_containing_node(node, presence=presence, node_id="".join(self.id_path_trail))
         if presence is None or presence is True or (presence is False and self.AUTO_EXPAND_BLANK_PRESENCE_CONTAINERS):
-            self._handle_container_contents(node)
+            if not node.get_extension("yangui-force-minimised"):
+                self._handle_container_contents(node)
 
         self.callback_close_containing_node(node)
 

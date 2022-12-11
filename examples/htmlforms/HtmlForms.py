@@ -275,7 +275,7 @@ class HtmlFormExpander(Expander):
             this_container_expand_javascript = " yangui-field-type='presence-container' "
         else:
             this_container_expand_javascript = " yangui-field-type='container' "
-        if presence is False:
+        if presence is False or node.get_extension("yangui-force-minimised"):
             this_container_collapse_or_show = "collapse"
             this_container_disable = "yangui-disable"
             this_container_expand_javascript += self._get_html_attr(

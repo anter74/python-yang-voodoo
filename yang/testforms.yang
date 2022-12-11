@@ -20,7 +20,14 @@ module testforms {
     argument string;
   }
 
+  extension yangui-force-minimised {
+    description "Even if a presence container has no data do not expand it.
+    See also: the class variable AUTO_EXPAND_BLANK_PRESENCE_CONTAINERS decided if to expand blank presence containers";
+    argument boolean;
+  }
+
   extension yangui-tab {
+    // not implemented
     argument string;
   }
 
@@ -383,10 +390,17 @@ module testforms {
     uses tab-contents;
   }
 
+  container tab10 {
+    testforms:yangui-force-minimised true;
+    uses tab-contents;
+  }
+  container tab11 {
+    uses tab-contents;
+  }
+
   grouping tab-contents {
     leaf t1 {
       type string;
-      mandatory true;
     }
     leaf t2 {
       type boolean;
