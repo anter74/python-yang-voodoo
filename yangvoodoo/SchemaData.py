@@ -65,7 +65,8 @@ class Expander:
     INCLUDE_BLANK_LIST_ELEMENTS = False
     BASE64_ENCODE_PATHS = False
     YANGUI_HIDDEN_KEY = "yangui-hidden"
-    AUTO_EXPAND_BLANK_PRESENCE_CONTAINERS = True
+    ALWAYS_FETCH_CONTAINER_CONTENTS = True
+    ALWAYS_FETCH_LISTELEMENT_CONTENTS = True
 
     def __init__(self, yang_module, log: logging.Logger):
         self.log = log
@@ -268,6 +269,26 @@ class Expander:
         )
 
         self.shrink_trail(schema=False)
+
+    def subprocess_listelement(self, list_xpath: str):
+        self._clear()
+
+        for result in self.data_ctx.get_xpath(list_xpath):
+            if result.get_schema().nodetype() != Types.LIBYANG_NODETYPE["LIST"]:
+                raise NotImplementedError(f"subprocess only supports processing of a list: {list_xpath}")
+            break
+        else:
+            self.log.error("Cannot subprocess non-existing data path: %s", list_xpath)
+            return
+
+        node = result.get_schema()
+        self.id_path_trail.append(list_xpath)
+        self.data_path_trail.append(list_xpath)
+        self.schema_path_trail.append(result.get_schema_path())
+
+        self.log.info("Schema Data Expander: starting recursion for a list_element: %s", list_xpath)
+        self._handle_container_contents(node)
+        self.log.info("Schema Data Expander: completed recursion of a list element: %s", list_xpath)
 
     def subprocess_container(self, container_xpath: str):
         self._clear()
@@ -574,7 +595,7 @@ class Expander:
                 presence = True
 
         self.callback_open_containing_node(node, presence=presence, node_id="".join(self.id_path_trail))
-        if presence is None or presence is True or (presence is False and self.AUTO_EXPAND_BLANK_PRESENCE_CONTAINERS):
+        if presence is None or presence is True or (presence is False and self.ALWAYS_FETCH_CONTAINER_CONTENTS):
             if not node.get_extension("yangui-force-minimised"):
                 self._handle_container_contents(node)
 
@@ -583,6 +604,9 @@ class Expander:
         self.shrink_trail()
 
     def _handle_container_contents(self, node):
+        """
+        This can be used for the inner of a container (and also list elements)
+        """
         try:
             for subnode in self.ctx.find_path(f"{node.schema_path()}/*"):
                 self._process_nodes(subnode)
@@ -677,9 +701,10 @@ class Expander:
             node_id="".join(self.id_path_trail),
         )
 
-        xpath = "".join(self.schema_path_trail)
-        for subnode in self.ctx.find_path(f"{xpath}/*"):
-            self._process_nodes(subnode)
+        if self.ALWAYS_FETCH_LISTELEMENT_CONTENTS:
+            xpath = "".join(self.schema_path_trail)
+            for subnode in self.ctx.find_path(f"{xpath}/*"):
+                self._process_nodes(subnode)
 
         self.callback_close_list_element(node)
 

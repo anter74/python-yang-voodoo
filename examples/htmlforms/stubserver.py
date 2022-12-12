@@ -70,6 +70,7 @@ class AjaxHandler(tornado.web.RequestHandler):
         "create-leaf-list": "_create_leaflist_item",
         "create-list": "_create_list_element",
         "create-container": "_create_container",
+        "expand-list-element": "_expand_list_element",
     }
 
     def set_default_headers(self):
@@ -98,9 +99,26 @@ class AjaxHandler(tornado.web.RequestHandler):
         self.finish()
 
     def _create_container(self, yang_model, input):
+        session, new_payload, _ = DataTree.process_data_tree_against_libyang(
+            input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
+        )
+
         instance = HtmlFormExpander(input["yang_model"], log)
+        instance.load(json.dumps(new_payload), 2)
         instance.data_tree_create_container(base64_tostring(input["base64_data_path"]))
         instance.subprocess_container(container_xpath=base64_tostring(input["base64_data_path"]))
+        self.write(instance.dumps())
+        self.finish()
+
+    def _expand_list_element(self, yang_model, input):
+        session, new_payload, _ = DataTree.process_data_tree_against_libyang(
+            input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
+        )
+
+        instance = HtmlFormExpander(input["yang_model"], log)
+        instance.load(json.dumps(new_payload), 2)
+        # by definition a list element must exist to be shown on the web page.
+        instance.subprocess_listelement(list_xpath=base64_tostring(input["base64_data_path"]))
         self.write(instance.dumps())
         self.finish()
 

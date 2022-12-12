@@ -404,9 +404,38 @@ function list_element_expand(b_path,uuid){
   }else{
     ELEMENTS_EXPANDED_BY_USER[uuid] = false;
   }
+
+  payload = {
+    "base64_data_path": b_path,
+    "yang_model":LIBYANG_MODEL,
+    "payload": LIBYANG_USER_PAYLOAD,
+     "changes": LIBYANG_CHANGES
+  }
+  $.ajax({
+      type: "POST",
+      url: AJAX_BASE_SERVER_URL+"/expand-list-element",
+      crossDomain: true,
+      data: JSON.stringify(payload),
+      cache: false,
+      success: function(response) {
+          stop_yangui_spinner();
+          $(document.getElementById("collapse-"+uuid)).append(response);
+      },
+      error: function(xhr, options, err) {
+        showMessage("Connectivity Error", handle_ajax_error(xhr), 'danger');
+        stop_yangui_spinner();
+      }
+  });
+
 }
 
 function presence_container_expand(b_path, uuid){
+  if($(document.getElementById("collapse-"+uuid)).data('yangui-collapse')=='collapse'){
+    ELEMENTS_EXPANDED_BY_USER[uuid] = true;
+  }else{
+    ELEMENTS_EXPANDED_BY_USER[uuid] = false;
+  }
+
   containerDiv = $(document.getElementById(b_path));
   if(containerDiv.hasClass("yangui-disable")){
     containerDiv.removeClass("yangui-disable");
@@ -416,7 +445,9 @@ function presence_container_expand(b_path, uuid){
 
     payload = {
       "base64_data_path": b_path,
-      "yang_model":LIBYANG_MODEL
+      "yang_model":LIBYANG_MODEL,
+      "payload": LIBYANG_USER_PAYLOAD,
+       "changes": LIBYANG_CHANGES
     }
 
     $.ajax({

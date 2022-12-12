@@ -22,7 +22,7 @@ module testforms {
 
   extension yangui-force-minimised {
     description "Even if a presence container has no data do not expand it.
-    See also: the class variable AUTO_EXPAND_BLANK_PRESENCE_CONTAINERS decided if to expand blank presence containers";
+    See also: the class variable ALWAYS_FETCH_CONTAINER_CONTENTS decided if to expand blank presence containers";
     argument boolean;
   }
 
@@ -165,6 +165,7 @@ module testforms {
 
       leaf simplekey {
         type string;
+        description "Short description for a simplekey";
       }
       leaf simplenonkey {
         type union{

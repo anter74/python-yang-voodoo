@@ -15,7 +15,9 @@ class HtmlFormExpander(Expander):
     }
     AJAX_BASE_SERVER_URL = os.getenv("YANGUI_BASE_API", "http://127.0.0.1:8099/api")
     BASE64_ENCODE_PATHS = True
-    AUTO_EXPAND_BLANK_PRESENCE_CONTAINERS = False
+    ALWAYS_FETCH_CONTAINER_CONTENTS = False
+    ALWAYS_FETCH_LISTELEMENT_CONTENTS = False
+    AUTO_EXPAND_LIST_ELEMENTS = False  # this can be False even if  ALWAYS_FETCH_LISTELEMENT_CONTENTS  is True
 
     """
     This provides an example implementation of forming a HTML from a given YANG based data tree
@@ -275,12 +277,13 @@ class HtmlFormExpander(Expander):
             this_container_expand_javascript = " yangui-field-type='presence-container' "
         else:
             this_container_expand_javascript = " yangui-field-type='container' "
-        if presence is False or node.get_extension("yangui-force-minimised"):
-            this_container_collapse_or_show = "collapse"
-            this_container_disable = "yangui-disable"
-            this_container_expand_javascript += self._get_html_attr(
-                "onClick", "presence_container_expand", data=True, uuid=True
-            )
+        if not self.ALWAYS_FETCH_CONTAINER_CONTENTS:
+            if presence is False or node.get_extension("yangui-force-minimised"):
+                this_container_collapse_or_show = "collapse"
+                this_container_disable = "yangui-disable"
+                this_container_expand_javascript += self._get_html_attr(
+                    "onClick", "presence_container_expand", data=True, uuid=True
+                )
 
         i = self.get_id()
         if i in self.USER_UI_STATE_CHANGES:
