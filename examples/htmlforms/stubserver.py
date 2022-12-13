@@ -11,6 +11,7 @@ import logging
 
 from yangvoodoo.Describer import Yang2HTML
 from examples.htmlforms.HtmlForms import HtmlFormExpander
+from examples.singlepage.SinglePage import HtmlExpander
 from examples.plantuml.Diagram import PlantUMLExpander
 from yangvoodoo.Merger import DataTree, DataTreeChanges, base64_tostring
 
@@ -28,6 +29,33 @@ def shell_command(command):
     process = subprocess.Popen("/bin/bash", stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     (output, error) = process.communicate(command.encode("utf-8"))
     return (output, error)
+
+
+def get_upload_form(yang_model, uri):
+    return f"""
+            <h1>Upload {yang_model} JSON Data Instance </h1>
+            <form action="{uri.replace('-upload','')}" method="post" enctype="multipart/form-data">
+                    <input type="file" name='payload' class="custom-file-input" accept='application/json'>
+                                        <button type="submit" class="btn btn-primary">Upload</button>
+
+            </form>
+
+                  """
+
+
+def get_input_and_set_generator_options(request, generator):
+    try:
+        input = request.files["payload"][0]["body"].decode("utf-8")
+    except:
+        input = request.body.decode("utf-8")
+
+    generator.include_as_subpage = "yangui_include_as_subpage" in input
+    if "yangui_schema_filter_list" in input:
+        generator.set_schema_filter_list(input["yangui_schema_filter_list"])
+    if "yangui_payload" in input:
+        input = input["yangui_payload"]
+
+    return input
 
 
 class AjaxHandler(tornado.web.RequestHandler):
@@ -71,6 +99,7 @@ class AjaxHandler(tornado.web.RequestHandler):
         "create-list": "_create_list_element",
         "create-container": "_create_container",
         "expand-list-element": "_expand_list_element",
+        "expand-list": "_expand_list",
     }
 
     def set_default_headers(self):
@@ -79,6 +108,9 @@ class AjaxHandler(tornado.web.RequestHandler):
         self.set_header("Access-Control-Allow-Methods", "POST, GET")
 
     def _create_list_element(self, yang_model, input):
+        """
+        Called when creating a new list element (i.e. submit from the dialog box).
+        """
         instance = HtmlFormExpander(input["yang_model"], log)
         list_element_predicates = instance.data_tree_add_list_element(
             base64_tostring(input["base64_data_path"]), input["key_values"]
@@ -104,9 +136,21 @@ class AjaxHandler(tornado.web.RequestHandler):
         )
 
         instance = HtmlFormExpander(input["yang_model"], log)
-        instance.load(json.dumps(new_payload), 2)
+        instance.load(json.dumps(new_payload), 2, trusted=True)
         instance.data_tree_create_container(base64_tostring(input["base64_data_path"]))
         instance.subprocess_container(container_xpath=base64_tostring(input["base64_data_path"]))
+        self.write(instance.dumps())
+        self.finish()
+
+    def _expand_list(self, yang_model, input):
+        session, new_payload, _ = DataTree.process_data_tree_against_libyang(
+            input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
+        )
+
+        instance = HtmlFormExpander(input["yang_model"], log)
+        instance.load(json.dumps(new_payload), 2, trusted=True)
+        # by definition a list element must exist to be shown on the web page.
+        instance.subprocess_existing_list(list_xpath=base64_tostring(input["base64_data_path"]))
         self.write(instance.dumps())
         self.finish()
 
@@ -116,7 +160,7 @@ class AjaxHandler(tornado.web.RequestHandler):
         )
 
         instance = HtmlFormExpander(input["yang_model"], log)
-        instance.load(json.dumps(new_payload), 2)
+        instance.load(json.dumps(new_payload), 2, trusted=True)
         # by definition a list element must exist to be shown on the web page.
         instance.subprocess_listelement(list_xpath=base64_tostring(input["base64_data_path"]))
         self.write(instance.dumps())
@@ -194,7 +238,6 @@ class AjaxHandler(tornado.web.RequestHandler):
 
     def post(self, yang_model, action):
         self.set_header("Content-Type", "text/html")
-
         if self.request.uri.endswith("/upload"):
             input = json.loads(str(self.request.files["payload"][0]["body"].decode("utf-8")))
             real_yang_model = DataTree.get_root_yang_model(input)
@@ -205,7 +248,6 @@ class AjaxHandler(tornado.web.RequestHandler):
             self.write(instance.dumps())
             self.finish()
         else:
-
             input = json.loads(self.request.body.decode("utf-8"))
             print(f"AjaxHandler POST: {self.request.uri} {input}")
 
@@ -248,6 +290,9 @@ GET /web/{yangmodel}             : Returns an empty form for the given yang mode
 GET /text/{yangmodel}            : Returns a plain text representation of the given yang model (schema only)
 POST /text/{yangmodel}           : Returns a plain text representation of the given yang model and data tree
 
+GET /html/{yangmodel}            : Returns a html (readonly) representation of the given yang model (schema only)
+POST /html/{yangmodel}           : Returns a html (readonly) representation of the given yang model and data tree
+
 GET /plantuml/{yangmodel}        : Returns a PlantUML JSON representation of the yang model (schema only)
 POST /plantuml/{yangmodel}       : Returns a PlantUML JSON representation of the yang model and data tree
 """
@@ -269,10 +314,12 @@ POST /api/{yangmodel}/upload     : Returns a form for the given yang model with 
             for yang_file in glob.glob(f"{DEFAULT_YANG_DIR}/*.yang"):
                 y = yang_file.split(".yang")[0].split("/")[-1]
                 self.write(
-                    f"<li> {y} <a href='/web/{y}'>web form</a> <a href='/text/{y}'>text</a> <a href='/plantuml/{y}'>plantuml(json)</a>"
+                    f"<li> {y} <a href='/web/{y}'>web form</a> <a href='/text/{y}'>text</a> <a href='/html/{y}'>html</a>(<a href='/html-upload/{y}'>upload</a>) <a href='/plantuml/{y}'>plantuml-json(<a href='/plantuml-upload/{y}'>upload</a>)</a>"
                 )
                 if os.path.exists(PLANTUML_PATH):
-                    self.write(f" <a href='/plantuml-png/{y}'>plantuml(png)</a>")
+                    self.write(
+                        f" <a href='/plantuml-png/{y}'>plantuml-png((<a href='/plantuml-png-upload/{y}'>upload</a>))</a>"
+                    )
 
         self.finish()
 
@@ -290,33 +337,65 @@ class WebHandler(tornado.web.RequestHandler):
 
 
 class TextHandler(tornado.web.RequestHandler):
-    def set_default_headers(self):
-        self.set_header("Content-Type", "text/plain")
-
     def get(self, formatter, yang_model):
-        try:
-            generator = Yang2HTML(yang_model, log)
-            generator.options = Yang2HTML.Options()
-            generator.display = Yang2HTML.Display
-            result = generator.process()
-            self.write(generator.dumps())
-        except Exception as err:
-            self.set_status(500)
-            self.write(str(err))
+        if formatter.endswith("upload"):
+            self.set_header("Content-Type", "text/html")
+            self.write(
+                f"""
+                <h1>Upload {yang_model} JSON Data Instance </h1>
+                <form action="{self.request.uri.replace('-upload','')}" method="post" enctype="multipart/form-data">
+                        <input type="file" name='payload' class="custom-file-input" accept='application/json'>
+                                            <button type="submit" class="btn btn-primary">Upload</button>
+
+                </form>
+
+                      """
+            )
+        else:
+
+            if formatter.startswith("html"):
+                self.set_header("Content-Type", "text/html")
+            else:
+                self.set_header("Content-Type", "text/plain")
+            try:
+                if formatter.startswith("html"):
+                    generator = HtmlExpander(yang_model, log)
+                else:
+                    generator = Yang2HTML(yang_model, log)
+                    generator.options = Yang2HTML.Options()
+                    generator.display = Yang2HTML.Display
+                result = generator.process()
+                self.write(generator.dumps())
+            except Exception as err:
+                self.set_status(500)
+                self.write(str(err))
         self.finish()
 
     def post(self, formatter, yang_model):
-        try:
-            generator = Yang2HTML(yang_model, log)
-            generator.options = Yang2HTML.Options()
-            generator.display = Yang2HTML.Display
+        if formatter.endswith("upload"):
+            self.set_header("Content-Type", "text/html")
+            self.write(get_upload(yang_modle, self.request.uri))
 
-            result = generator.process(self.request.body.decode("utf-8"), 2)
-            self.write(generator.dumps())
-        except Exception as err:
-            self.set_status(500)
-            self.write(str(err))
-        self.finish()
+        else:
+            if formatter.startswith("html"):
+                self.set_header("Content-Type", "text/html")
+            else:
+                self.set_header("Content-Type", "text/plain")
+
+            try:
+                if formatter.startswith("html"):
+                    generator = HtmlExpander(yang_model, log)
+                else:
+                    generator = Yang2HTML(yang_model, log)
+                    generator.options = Yang2HTML.Options()
+                    generator.display = Yang2HTML.Display
+                payload = get_input_and_set_generator_options(self.request, generator)
+                result = generator.process(payload, 2)
+                self.write(generator.dumps())
+            except Exception as err:
+                self.set_status(500)
+                self.write(str(err))
+            self.finish()
 
 
 class PlantUmlHandler(tornado.web.RequestHandler):
@@ -331,36 +410,42 @@ class PlantUmlHandler(tornado.web.RequestHandler):
                 fh.write(result.dumps())
 
             log.info("Running plantuml...")
-            shell_command(f"java -jar {PLANTUML_PATH} -v {temp_dir.name}/uml.txt")
+            shell_command(f"java {os.getenv('PLANTUML_JAVA_OPTS','')} -jar {PLANTUML_PATH} -v {temp_dir.name}/uml.txt")
 
             with open(f"{temp_dir.name}/uml.png", "rb") as fh:
                 self.write(fh.read())
 
-    def get(self, type, yang_model):
-        if type == "":
-            self.set_header("Content-Type", "application/json")
-        if type == "-png":
-            if not os.path.exists(PLANTUML_PATH):
-                self.write(f"Could not find plantuml at: {PLANTUML_PATH}")
-                self.set_status(500)
-                return
-            self.set_header("Content-Type", "image/png")
+    def get(self, type, upload, yang_model):
+        if upload:
+            self.set_header("Content-Type", "text/html")
+            self.write(get_upload_form(yang_model, self.request.uri))
+        else:
+            if type == "":
+                self.set_header("Content-Type", "application/json")
+            if type == "-png":
+                if not os.path.exists(PLANTUML_PATH):
+                    self.write(f"Could not find plantuml at: {PLANTUML_PATH}")
+                    self.set_status(500)
+                    return
+                self.set_header("Content-Type", "image/png")
 
-        try:
-            generator = PlantUMLExpander(yang_model, log)
-            result = generator.process()
-            self._provide_result(generator, type)
-        except Exception as err:
-            self.set_status(500)
-            self.write(str(err))
+            try:
+                generator = PlantUMLExpander(yang_model, log)
+                result = generator.process()
+                self._provide_result(generator, type)
+            except Exception as err:
+                self.set_status(500)
+                self.write(str(err))
         self.finish()
 
-    def post(self, type, yang_model):
+    def post(self, type, upload, yang_model):
         try:
             generator = PlantUMLExpander(yang_model, log)
-            result = generator.process(self.request.body.decode("utf-8"), 2)
+            payload = get_input_and_set_generator_options(self.request, generator)
+            result = generator.process(payload, 2)
             self._provide_result(generator, type)
         except Exception as err:
+            log.exception("Error building plantuml")
             self.set_status(500)
             self.write(str(err))
         self.finish()
@@ -371,11 +456,12 @@ def make_app():
         [
             (r"/api/(.+)/(.+)", AjaxHandler),
             (r"/static/.*", StaticHandler),
-            (r"/plantuml(|-png)/(.*)", PlantUmlHandler),
-            (r"/(text|form)/(.*)", TextHandler),
+            (r"/plantuml(|-png)(|-upload)/(.*)", PlantUmlHandler),
+            (r"/(text|html|text-upload|html-upload)/(.*)", TextHandler),
             (r"/web/(.*)", WebHandler),
             (r"/.*", MainHandler),
-        ]
+        ],
+        debug=True,
     )
 
 

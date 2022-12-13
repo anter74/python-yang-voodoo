@@ -204,7 +204,7 @@ class Yang2Text(Expander):
         )
         self._show_description(node.description)
 
-    def callback_open_list_element(self, node, key_values, empty_list_element, node_id):
+    def callback_open_list_element(self, node, key_values, empty_list_element, force_open, node_id):
         if empty_list_element:
             self.result.write(
                 f"{self.open_indent()} {self.display.NORMAL}{self.display.LIST_ELEMENT}{self.display.DIM}keys: {','.join([k[0] for k in key_values])}{self.display.NORMAL}{self.display.NEWLINE}"

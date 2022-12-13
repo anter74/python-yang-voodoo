@@ -67,6 +67,8 @@ class Expander:
     YANGUI_HIDDEN_KEY = "yangui-hidden"
     ALWAYS_FETCH_CONTAINER_CONTENTS = True
     ALWAYS_FETCH_LISTELEMENT_CONTENTS = True
+    ALWAYS_FETCH_LIST_CONTENTS = True
+    AUTO_EXPAND_NON_PRESENCE_CONTAINERS = True
 
     def __init__(self, yang_module, log: logging.Logger):
         self.log = log
@@ -75,6 +77,8 @@ class Expander:
         self.ctx.load_module(yang_module)
         self.data_ctx = libyang.DataTree(self.ctx)
         self.schema_filter_list = []
+        self.schema_path_not_matched = False
+        self.schema_path_matched = True
         self._is_schema_node_filtered = lambda x: False
         self.result = StringIO()
         self.indent = 0
@@ -114,10 +118,10 @@ class Expander:
         for path in self.schema_filter_list:
             schema_path = node.schema_path()
             if schema_path.startswith(path):
-                return True
-        return False
+                return self.schema_path_matched
+        return self.schema_path_not_matched
 
-    def load(self, initial_data: str = None, format: int = 1):
+    def load(self, initial_data: str = None, format: int = 1, trusted=False):
         """
         Load an initial data tree but do not trigger processing based on the root of the data/scheam tree.
 
@@ -127,7 +131,7 @@ class Expander:
         """
         self.log.info("Loading: %s", self.yang_module)
         if initial_data:
-            self.data_ctx.loads(initial_data, format)
+            self.data_ctx.loads(initial_data, format, trusted=trusted)
         self.data_path_trail = [""]
         self.id_path_trail = [""]
         self.schema_path_trail = [""]
@@ -270,9 +274,31 @@ class Expander:
 
         self.shrink_trail(schema=False)
 
-    def subprocess_listelement(self, list_xpath: str):
+    def subprocess_existing_list(self, list_xpath: str):
         self._clear()
 
+        for result in self.data_ctx.get_xpath(list_xpath):
+            if result.get_schema().nodetype() != Types.LIBYANG_NODETYPE["LIST"]:
+                raise NotImplementedError(f"subprocess only supports processing of a list: {list_xpath}")
+            break
+        else:
+            self.log.error("Cannot subprocess non-existing data path: %s", list_xpath)
+            return
+
+        node = result.get_schema()
+        self.id_path_trail.append(list_xpath)
+        self.data_path_trail.append(list_xpath)
+        self.schema_path_trail.append(result.get_schema_path())
+
+        self.log.info("Schema Data Expander: starting recursion for a list_element: %s", list_xpath)
+        self._handle_list_contents(node)
+        self.log.info("Schema Data Expander: completed recursion of a list element: %s", list_xpath)
+
+    def subprocess_listelement(self, list_xpath: str):
+        """
+        This is used to expand a list element which is not expanded on the UI
+        """
+        self._clear()
         for result in self.data_ctx.get_xpath(list_xpath):
             if result.get_schema().nodetype() != Types.LIBYANG_NODETYPE["LIST"]:
                 raise NotImplementedError(f"subprocess only supports processing of a list: {list_xpath}")
@@ -339,7 +365,7 @@ class Expander:
         self.log.info("Schema Data Expander: starting recursion for a list element: %s", list_data_xpath)
         for list_node in [f"{list_data_xpath}{predicates}"]:
             self.grow_trail(list_element_predicates=predicates, schema=False)
-            self._handle_list_element(node)
+            self._handle_list_element(node, force_open=True)
             self.shrink_trail(result.get_schema_path())
         self.log.info("Schema Data Expander: completed recursion of a list element: %s", list_data_xpath)
 
@@ -425,6 +451,7 @@ class Expander:
         node: libyang.Node,
         key_values: List[Tuple[str, str]],
         empty_list_element: bool,
+        force_open: bool,
         node_id: str,
     ):
         """
@@ -434,6 +461,7 @@ class Expander:
             node: The libyang node of the list element statement
             key_values: A list of key and value tuples.
             empty_list_element: Indiciates this is not an item in the list rather based on the schema.
+            force_open: indicates if this node should be forced open (i.e. a user has created it)
             node_id: The node id using a hybrid schema/data path.
         """
         raise NotImplementedError("callback_open_list_element")
@@ -595,9 +623,8 @@ class Expander:
                 presence = True
 
         self.callback_open_containing_node(node, presence=presence, node_id="".join(self.id_path_trail))
-        if presence is None or presence is True or (presence is False and self.ALWAYS_FETCH_CONTAINER_CONTENTS):
-            if not node.get_extension("yangui-force-minimised"):
-                self._handle_container_contents(node)
+        if self._should_container_be_visisble(node, presence):
+            self._handle_container_contents(node)
 
         self.callback_close_containing_node(node)
 
@@ -612,6 +639,53 @@ class Expander:
                 self._process_nodes(subnode)
         except libyang.util.LibyangError:
             pass
+
+    def _should_container_be_visisble(self, node: libyang.schema.Node, presence: bool) -> bool:
+        result = False
+        if presence is None or presence is True or (presence is False and self.AUTO_EXPAND_NON_PRESENCE_CONTAINERS):
+            # base on the data we should be expanded
+            result = True
+
+        if node.get_extension("yangui-force-minimised"):
+            return False
+
+        if node.get_extension("yangui-force-expand"):
+            return True
+
+        if self.ALWAYS_FETCH_CONTAINER_CONTENTS:
+            return result
+
+        return False
+
+    def _should_listelement_be_visisble(self, node: libyang.schema.Node, force_open: bool) -> bool:
+        if force_open:
+            return True
+        result = True
+
+        if node.get_extension("yangui-force-minimised"):
+            return False
+
+        if node.get_extension("yangui-force-expand"):
+            return True
+
+        if self.ALWAYS_FETCH_LISTELEMENT_CONTENTS:
+            return result
+
+        return False
+
+    def _should_list_be_visisble(self, node: libyang.schema.Node) -> bool:
+        result = True
+
+        if node.get_extension("yangui-force-minimised"):
+            return False
+
+        if node.get_extension("yangui-force-expand"):
+            return True
+
+        if self.ALWAYS_FETCH_LIST_CONTENTS:
+            return result
+
+        return False
 
     def _handle_schema_leaf(self, node: libyang.schema.Node):
         """
@@ -665,6 +739,15 @@ class Expander:
             node_id="".join(self.id_path_trail),
         )
 
+        if self._should_list_be_visisble(node):
+            self._handle_list_contents(node)
+
+        self.callback_close_list(node)
+
+        self.shrink_trail()
+
+    def _handle_list_contents(self, node):
+        trail = "".join(self.data_path_trail)
         list_items = list(self.data_ctx.gets_xpath(trail))
 
         if not list_items and self.INCLUDE_BLANK_LIST_ELEMENTS:
@@ -678,11 +761,7 @@ class Expander:
             self._handle_list_element(node)
             self.shrink_trail(schema=False)
 
-        self.callback_close_list(node)
-
-        self.shrink_trail()
-
-    def _handle_list_element(self, node: libyang.Node, populate_key_value_tuple: bool = True):
+    def _handle_list_element(self, node: libyang.Node, populate_key_value_tuple: bool = True, force_open=False):
         """
         Args:
             node: The node of the list containing this list element.
@@ -698,10 +777,11 @@ class Expander:
             node,
             key_values=key_values,
             empty_list_element=populate_key_value_tuple is not True,
+            force_open=force_open,
             node_id="".join(self.id_path_trail),
         )
 
-        if self.ALWAYS_FETCH_LISTELEMENT_CONTENTS:
+        if self._should_listelement_be_visisble(node, force_open):
             xpath = "".join(self.schema_path_trail)
             for subnode in self.ctx.find_path(f"{xpath}/*"):
                 self._process_nodes(subnode)
@@ -926,6 +1006,10 @@ class Expander:
         quote = self.get_quote_style(trail)
         return f"{quote}{trail}{quote}"
 
+    def get_uuid(self):
+        trail = "".join(self.id_path_trail)
+        return str(uuid.uuid5(uuid.uuid5(uuid.NAMESPACE_URL, "pyvwu"), trail))
+
     def get_indent(self):
         return self.INDENT_CHAR * (self.indent + self.INDENT_MINIMUM) * self.INDENT_SPACING
 
@@ -934,9 +1018,58 @@ class Expander:
             " " * (len(self.INDENT_CHAR) + (self.indent - 1) + self.INDENT_MINIMUM + extra_indent) * self.INDENT_SPACING
         )
 
-    def block_quotify(self, text, width, indent):
+    def _get_html_attr(
+        self, attribute, method, data=False, hybrid=False, schema=False, parent=False, this=False, uuid=False
+    ):
+        """
+        For a HTML attribute for href's onBlur, onChange etc and ensure we use the correct quoting/encoding
+        of quotes - this needs to ensure we use.
+
+        Based on an XPATH we are likely to receive
+            "/xpath/to/thing[with-list-key='1234']"
+
+        However if the list key values container a " then we would receive
+            '/xpath/to/thing[with-list-key="1234"]'
+
+        A HTML attribute will be formed in the form of the following - instead of this we create Base64
+        encoded XPATH's isntead of trying to escape/find the best quotes.
+            onClick='myfunction("/an/xpath[listkey='listval']")'
+                    ^           ^                  ^       ^ ^ ^
+                    |           |                  |       | | |- outer quote
+                    |           |                  |       | |--- inner quote
+                    |           |                  |       |
+                    |           |                  |-------|-- these need replacing with html codes
+                    |           |- inner quote
+                    |- outer quote
+
+        Args:
+            attribute: e.g., href, onClick, onBlur, onChange
+            method: e.g. javascript:function, function
+            data: include the data xpath
+            xpath: incldue the schema xpath
+            parent: add in parent id
+            this: include the literal 'this'
+        """
+        args = []
+        attr_quote = '"'
+        inner_quote = "'"
+        if data:
+            args.append(f"{inner_quote}{self.get_id()}{inner_quote}")
+        if schema:
+            args.append(f"'{self.get_schema_id()}'")
+        if hybrid:
+            args.append(f"{inner_quote}{self.get_hybrid_id()}{inner_quote}")
+        if parent:
+            args.append(f"{inner_quote}{self._parent_id}{inner_quote}")
+        if this:
+            args.append("this")
+        if uuid:
+            args.append(f"{inner_quote}{self.get_hybrid_id(as_uuid=True)}{inner_quote}")
+        return f"{attribute}={attr_quote}{method}({', '.join(args)}){attr_quote}"
+
+    def block_quotify(self, text, width, indent, newline_split="\n", newline="\n"):
         next_line_indent = None
-        lines = text.split("\n")
+        lines = text.split(newline_split)
         for line in lines:
             if next_line_indent:
                 yield next_line_indent
@@ -947,13 +1080,13 @@ class Expander:
                 for word in line.split(" "):
                     line_width += len(word)
                     if len(word) > width:
-                        yield f"\n{indent}{word}"
+                        yield f"{newline}{indent}{word}"
                     elif line_width < width:
                         yield f"{word} "
                     else:
-                        yield f"\n{indent}{word} "
+                        yield f"{newline}{indent}{word} "
                         line_width = 0
-            next_line_indent = f"\n{indent}"
+            next_line_indent = f"{newline}{indent}"
 
     def open_indent(self):
         self.indent += 1

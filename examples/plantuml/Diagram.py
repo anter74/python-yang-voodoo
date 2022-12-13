@@ -102,7 +102,7 @@ class PlantUMLExpander(Expander):
     def callback_close_list(self, node):
         self.obj_pointer.pop()
 
-    def callback_open_list_element(self, node, key_values, empty_list_element, node_id):
+    def callback_open_list_element(self, node, key_values, empty_list_element, force_open, node_id):
         for key, val in key_values:
             if empty_list_element:
                 val = "<color:gray>unset"

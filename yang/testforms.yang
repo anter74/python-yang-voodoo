@@ -21,10 +21,15 @@ module testforms {
   }
 
   extension yangui-force-minimised {
-    description "Even if a presence container has no data do not expand it.
-    See also: the class variable ALWAYS_FETCH_CONTAINER_CONTENTS decided if to expand blank presence containers";
+    description "Even if a presence container has no data do not expand it.";
     argument boolean;
   }
+  extension yangui-force-expand {
+    description "Force expanding this container even if the default behaviour is to collapse everything";
+    argument boolean;
+  }
+
+
 
   extension yangui-tab {
     // not implemented
@@ -49,6 +54,26 @@ module testforms {
   typedef mysubtype {
     type enumeration {
       enum a;
+    }
+  }
+
+  typedef constrainttype {
+    type string {
+      pattern "A.*";
+    }
+  }
+
+  typedef enumtype {
+    type enumeration {
+      enum "ANTELOPE";
+      enum "ADVARK";
+    }
+  }
+
+  typedef combotype {
+    type union {
+      type constrainttype;
+      type enumtype;
     }
   }
 
@@ -342,52 +367,61 @@ module testforms {
       leaf mainleaf {
 	       type string;
       }
+
+
+    }
+  }
+  list trio-list {
+    key "key1 key2 key3";
+
+    leaf key1 {
+      type string;
+    }
+
+    leaf key2 {
+      type enumeration {
+        enum bumblebee;
+        enum wasp;
+      }
+    }
+    leaf key3 {
+      type uint16;
+    }
+
+    leaf bob {
+      type string;
     }
   }
 
-  container tab1 {
+  container validation {
     presence true;
-    testforms:yangui-tab "one";
-    uses tab-contents;
+    leaf mandatory {
+      type uint32;
+      mandatory true;
+    }
+
+    container sometimes {
+      when "../always='true'";
+
+      leaf this-is-a-thing {
+        type string;
+      }
+    }
+    leaf always {
+      type boolean;
+    }
+
+    leaf combo {
+      description "This is a mandatory leaf";
+      mandatory true;
+      type combotype;
+    }
   }
-  container tab2 {
-    presence true;
-    testforms:yangui-tab "two";
-    uses tab-contents;
-  }
-  container tab3 {
-    presence true;
-    testforms:yangui-tab "three";
-    uses tab-contents;
-  }
-  container tab4 {
-    presence true;
-    testforms:yangui-tab "four";
-    uses tab-contents;
-  }
-  container tab5 {
-    presence true;
-    testforms:yangui-tab "five";
-    uses tab-contents;
-  }
-  container tab6 {
-    presence true;
-    testforms:yangui-tab "six";
-    uses tab-contents;
-  }
-  container tab7 {
-    presence true;
-    testforms:yangui-tab "seven";
-    uses tab-contents;
-  }
-  container tab8 {
-    presence true;
-    testforms:yangui-tab "eight";
-    uses tab-contents;
-  }
+
+
   container tab9 {
     presence true;
-    testforms:yangui-tab "nine";
+    testforms:yangui-force-expand true;
     uses tab-contents;
   }
 

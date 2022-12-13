@@ -122,6 +122,9 @@ function cancelMessages(){
 }
 
 function showMessage(title, message, theme, timeout) {
+  if(message == "No data to dump (500)"){
+    return;
+  }
   $(document.getElementById('yangui-msg-'+theme)).data('yangui-hide-at', Date.now());
   $(document.getElementById('yangui-msg-'+theme)).html('<strong>'+title+'</strong><br/>' + message);
   $(document.getElementById('yangui-msg-'+theme)).data('yangui-hide-at', Date.now()+timeout);
@@ -216,15 +219,26 @@ function empty_blur(d, h){
   enable_validate_save_buttons();
 }
 
-function add_list_element(d, s, u){
+function yangui_add_list_element_dialog(d, s, u){
+  /*
+  Show dialog box to add a new list element
+
+  Fetch a page from the server which provides the form elements required to satisfy
+  all the the list keys on the page.
+
+  */
+  console.log("YANGUI: yangui_add_list_element_dialog (show dialog box) - "+atob(d)+ " - "+u);
   Mousetrap.bind('escape', function() { close_new_item(); });
   $(document.getElementById("yangui-create-list-button")).data("yangui-for-datapath", d);
   $(document.getElementById("yangui-create-list-button")).data("yangui-for-schemapath", s);
   $(document.getElementById("yangui-create-list-button")).data("yangui-for-type", "list");
   $(document.getElementById("yangui-create-list-button")).data("yangui-containing-div", u );
+  list_expand(d, u);
   start_yangui_spinner('');
   payload={ "type":"list", "data_xpath": d, "schema_xpath":s, "yang_model":LIBYANG_MODEL}
+  list_expand(d, u);
 
+  console.log("YANGUI: yangui_add_list_element_dialog (POST) - "+atob(d)+ " - "+u);
   $.ajax({
       type: "POST",
       url: AJAX_BASE_SERVER_URL+"/get-list-create-page",
@@ -238,6 +252,7 @@ function add_list_element(d, s, u){
           $("#yanguiNewItemContents").find("select").each(function(index){
             $(this).selectpicker('show');
           });
+          console.log("YANGUI: yangui_add_list_element_dialog (finished drawing dialog for adding list element) - "+atob(d)+ " - "+u);
       },
       error: function(xhr, options, err) {
         showMessage("Connectivity Error", handle_ajax_error(xhr), 'danger');
@@ -253,14 +268,23 @@ function close_new_item(){
 }
 
 function create_new_item(){
-  // Create anew item in a list.
+  /*
+  Create New Item:
+
+  Pressed when the UI presses submit on the 'new' item model.
+  This must handle a list (with one or more keys) and a leaf-list (with an implicit `.` key)
+
+  The dialog to create a list element is shown by `yangui_add_list_element_dialog`
+  */
+  console.log("YANGUI: Create New List Element/Leaf List Item Required: " + $(document.getElementById("yangui-create-list-button")).data('yangui-for-datapath'));
   yangui_default_mousetrap();
   list_type=$(document.getElementById("yangui-create-list-button")).data('yangui-for-type');
   div_to_append = $(document.getElementById("yangui-create-list-button")).data('yangui-containing-div');
   payload = {
+    "uuid":div_to_append,
     "base64_data_path": $(document.getElementById("yangui-create-list-button")).data('yangui-for-datapath'),
     "base64_schema_path": $(document.getElementById("yangui-create-list-button")).data('yangui-for-schemapath'),
-    key_values:[],
+     key_values:[],
     "yang_model":LIBYANG_MODEL
   }
 
@@ -278,6 +302,7 @@ function create_new_item(){
     }
   });
 
+  console.log("YANGUI: Create New List Element/Leaf List Item Required: " + JSON.stringify(payload.key_values));
   $.ajax({
       type: "POST",
       url: AJAX_BASE_SERVER_URL+"/create-"+list_type,
@@ -285,14 +310,12 @@ function create_new_item(){
       data: JSON.stringify(payload),
       cache: false,
       success: function(response) {
-          stop_yangui_spinner();
-
+          // stop_yangui_spinner();
+          // The response from the AJAX page is simple a bit of javascript instructing the list to be expanded.
           $(document.getElementById("collapse-"+div_to_append)).append(response);
           LIBYANG_CHANGES.push({"action": "create_list_xpath", "base64_path": payload.base64_data_path, "value":payload.key_values ,"undo_to_do":"todo - need more info like list elemetn html id"});
           $("#yanguiNewItemModal").modal('hide');
           enable_validate_save_buttons();
-
-
       },
       error: function(xhr, options, err) {
         showMessage("Connectivity Error", handle_ajax_error(xhr), 'danger');
@@ -397,6 +420,52 @@ function handle_ajax_error(xhr){
   return xhr.responseText + " ("+xhr.status+")"
 }
 
+function list_expand(b_path, uuid){
+  /*
+  List Exapnd
+
+  Make an AJAX call to exapnd the list and find all the list elements.
+
+  */
+  console.log("YANGUI: List Expand: "+atob(b_path) +" " +uuid);
+  if($(document.getElementById("collapse-"+uuid)).data('yangui-collapse')=='collapse'){
+    ELEMENTS_EXPANDED_BY_USER[uuid] = true;
+  }else{
+    ELEMENTS_EXPANDED_BY_USER[uuid] = false;
+  }
+
+  if(!$(document.getElementById("collapse-"+uuid)).data('yangui-ever-expanded')){
+    $(document.getElementById("collapse-"+uuid)).data('yangui-ever-expanded','true');
+    payload = {
+      "uuid": uuid,
+      "base64_data_path": b_path,
+      "yang_model":LIBYANG_MODEL,
+      "payload": LIBYANG_USER_PAYLOAD,
+      "changes": LIBYANG_CHANGES,
+      "ui": ELEMENTS_EXPANDED_BY_USER,
+    }
+    $.ajax({
+        type: "POST",
+        url: AJAX_BASE_SERVER_URL+"/expand-list",
+        crossDomain: true,
+        data: JSON.stringify(payload),
+        cache: false,
+        success: function(response) {
+            stop_yangui_spinner();
+            $(document.getElementById("collapse-"+uuid)).append(response);
+            $(document.getElementById("collapse-"+uuid)).find("select").each(function(index){
+              $(this).selectpicker('show');
+            });
+            $(document.getElementById("collapse-"+uuid)).collapse('show');
+        },
+        error: function(xhr, options, err) {
+          showMessage("Connectivity Error", handle_ajax_error(xhr), 'danger');
+          stop_yangui_spinner();
+        }
+    });
+  }
+}
+
 function list_element_expand(b_path,uuid){
   console.log(b_path);
   if($(document.getElementById("collapse-"+uuid)).data('yangui-collapse')=='collapse'){
@@ -409,7 +478,7 @@ function list_element_expand(b_path,uuid){
     "base64_data_path": b_path,
     "yang_model":LIBYANG_MODEL,
     "payload": LIBYANG_USER_PAYLOAD,
-     "changes": LIBYANG_CHANGES
+    "changes": LIBYANG_CHANGES
   }
   $.ajax({
       type: "POST",
@@ -420,6 +489,10 @@ function list_element_expand(b_path,uuid){
       success: function(response) {
           stop_yangui_spinner();
           $(document.getElementById("collapse-"+uuid)).append(response);
+          $(document.getElementById("collapse-"+uuid)).find("select").each(function(index){
+            $(this).selectpicker('show');
+          });
+
       },
       error: function(xhr, options, err) {
         showMessage("Connectivity Error", handle_ajax_error(xhr), 'danger');
@@ -447,7 +520,7 @@ function presence_container_expand(b_path, uuid){
       "base64_data_path": b_path,
       "yang_model":LIBYANG_MODEL,
       "payload": LIBYANG_USER_PAYLOAD,
-       "changes": LIBYANG_CHANGES
+      "changes": LIBYANG_CHANGES
     }
 
     $.ajax({
@@ -459,6 +532,9 @@ function presence_container_expand(b_path, uuid){
         success: function(response) {
             stop_yangui_spinner();
             $(document.getElementById("collapse-"+uuid)).append(response);
+            $(document.getElementById("collapse-"+uuid)).find("select").each(function(index){
+              $(this).selectpicker('show');
+            });
         },
         error: function(xhr, options, err) {
           showMessage("Connectivity Error", handle_ajax_error(xhr), 'danger');

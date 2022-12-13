@@ -17,7 +17,9 @@ class HtmlFormExpander(Expander):
     BASE64_ENCODE_PATHS = True
     ALWAYS_FETCH_CONTAINER_CONTENTS = False
     ALWAYS_FETCH_LISTELEMENT_CONTENTS = False
-    AUTO_EXPAND_LIST_ELEMENTS = False  # this can be False even if  ALWAYS_FETCH_LISTELEMENT_CONTENTS  is True
+    ALWAYS_FETCH_LIST_CONTENTS = False
+    SHOW_DESCRIPTIONS = "tooltip"
+    READONLY = False
 
     """
     This provides an example implementation of forming a HTML from a given YANG based data tree
@@ -34,7 +36,7 @@ class HtmlFormExpander(Expander):
     The server could then provide an AJAX interface to match the hooks in yangui.js
 
         - `leaf_blur`, `check_blur`, `select_blur` could call `instance.data_tree_set_leaf(data_xpath, value)`
-        - `add_leaflist_item`, `add_list_element` could call
+        - `add_leaflist_item`, `yangui_add_list_element_dialog` could call
            `instance.data_tree_add_list_element(list_data_xpath, [[key1,val1,key2,val2]])
            Note: a leaf-list is simply a list with a key of `.`
         - `remove_leaflist_item` `remove_list_element` could call
@@ -257,6 +259,21 @@ class HtmlFormExpander(Expander):
         self.result.write(f"{self.close_indent()}</div> <!-- close wrapper -->\n")
         self.result.write(f"{self.close_indent()}</body>\n")
 
+    def callback_write_footer(self, module):
+        self.result.write("<hr/><script language=Javascript>\n")
+        if self.data_loaded:
+            self.result.write(f"LIBYANG_USER_PAYLOAD = {self.data_ctx.dumps(2)};\n")
+        self.result.write("stop_yangui_spinner();\n")
+        self.result.write("yangui_default_mousetrap();\n")
+        self.result.write("yangui_welcome();\n")
+        self.result.write("</script>")
+
+    #
+    #
+    # Callback methods for writing page contents
+    #
+    #
+
     def callback_open_containing_node(self, node, presence, node_id):
         """
         Open a container - which can be either:
@@ -270,6 +287,8 @@ class HtmlFormExpander(Expander):
 
         In the first case we need to support a hook to create the container even if there is no
         need to set child nodes.
+
+
         """
         this_container_collapse_or_show = self.default_collapse_state
         this_container_disable = ""
@@ -277,13 +296,13 @@ class HtmlFormExpander(Expander):
             this_container_expand_javascript = " yangui-field-type='presence-container' "
         else:
             this_container_expand_javascript = " yangui-field-type='container' "
-        if not self.ALWAYS_FETCH_CONTAINER_CONTENTS:
-            if presence is False or node.get_extension("yangui-force-minimised"):
-                this_container_collapse_or_show = "collapse"
-                this_container_disable = "yangui-disable"
-                this_container_expand_javascript += self._get_html_attr(
-                    "onClick", "presence_container_expand", data=True, uuid=True
-                )
+
+        if not self._should_container_be_visisble(node, presence):
+            this_container_collapse_or_show = "collapse"
+            this_container_disable = "yangui-disable"
+            this_container_expand_javascript += self._get_html_attr(
+                "onClick", "presence_container_expand", data=True, uuid=True
+            )
 
         i = self.get_id()
         if i in self.USER_UI_STATE_CHANGES:
@@ -296,7 +315,7 @@ class HtmlFormExpander(Expander):
         self._write_open_first_div("structure_container", extra_class=this_container_disable)
         self._write_button("th-large", on_click=this_container_expand_javascript)
         self._write_label(node, "structure_containerlabel", linebreak=True)
-        self._write_open_second_div("structure_indent", collapse=this_container_collapse_or_show)
+        self._write_open_second_div(node, "structure_indent", collapse=this_container_collapse_or_show)
 
     def callback_close_containing_node(self, node):
         self._write_close_second_div()
@@ -315,11 +334,18 @@ class HtmlFormExpander(Expander):
 
         basetype = node.type().base()
         if basetype in self.LEAF_MAPPING:
-            getattr(self, self.LEAF_MAPPING[basetype])(node, value, quote, disabled)
+            getattr(self, self.LEAF_MAPPING[basetype])(node, value, quote, disabled, template=template)
         else:
             self._write_textbox(node, value, quote, disabled, template=template)
 
-    def _write_checkbox(self, node, value, quote, disabled, extra_button=""):
+        if self.SHOW_DESCRIPTIONS == "inline":
+            if node.description():
+                self.result.write("<blockquote>")
+                for word in self.block_quotify(node.description(), 200, "", newline="<br>"):
+                    self.result.write(word)
+                self.result.write("</blockquote>")
+
+    def _write_checkbox(self, node, value, quote, disabled, extra_button="", template=False):
         """
         Write a checkbox to handle a boolean - within libyang booleans are stored as `true` and `false`
         """
@@ -341,11 +367,12 @@ class HtmlFormExpander(Expander):
         else:
             self.result.write(f" data-yangui-start-val='off' ")
         self.result.write(" data-yangui-field-type='checkbox' ")
-        self.result.write(f"{self._get_html_attr('onChange', 'check_change', this=True, data=True)} ")
+        if not template:
+            self.result.write(f"{self._get_html_attr('onChange', 'check_change', this=True, data=True)} ")
         self.result.write(f"{checked} {disabled}><br/>\n")
         self.result.write(f"{self.get_indent()} {extra_button}</div>\n")
 
-    def _write_checkbox_empty(self, node, value, quote, disabled, extra_button=""):
+    def _write_checkbox_empty(self, node, value, quote, disabled, extra_button="", template=False):
         """
         Write a checkbox to handle an empty leaf - within libyang an empty leaf is represented as
         a blank string - ''
@@ -361,7 +388,8 @@ class HtmlFormExpander(Expander):
         )
         self.result.write(f" id={self.get_id()} ")
         self.result.write(f' data-yangui-keyname="{node.name()}" ')
-        self.result.write(f"{self._get_html_attr('onChange', 'empty_change', this=True, data=True)} ")
+        if not template:
+            self.result.write(f"{self._get_html_attr('onChange', 'empty_change', this=True, data=True)} ")
         if value:
             self.result.write(f" data-yangui-start-val='on' ")
         else:
@@ -371,13 +399,12 @@ class HtmlFormExpander(Expander):
         self.result.write(f"{self.get_indent()}</div>\n")
         self.result.write(f"{self.get_indent()} {extra_button}\n")
 
-    def _write_dropdown(self, node, value, quote, disabled, extra_button=""):
+    def _write_dropdown(self, node, value, quote, disabled, extra_button="", template=False):
         """
         Write a drop down-box for enumerations, an enumeration *should* be implemented as a label
         and a numeric value (either explicitly assigned in the yang model, or auto-assigned).
         YANGVOODOO did not implement values for enumerations.
         """
-
         self.result.write(f'{self.get_indent()}<div class="form-input ">\n')
         self._write_label(node, "structure_leaflabel", linebreak=False, label_icon="fa-leaf")
         if disabled:
@@ -389,9 +416,10 @@ class HtmlFormExpander(Expander):
         self.result.write(" data-yangui-field-type='dropdown' ")
         self.result.write(f" data-yangui-start-val={quote}{value}{quote} ")
         self.result.write(f' data-yangui-keyname="{node.name()}" ')
-        self.result.write(
-            f"{self._get_html_attr('onChange', 'select_change', this=True, data=True)} title='select an item'>"
-        )
+        if not template:
+            self.result.write(f"{self._get_html_attr('onChange', 'select_change', this=True, data=True)} ")
+
+        self.result.write(f" title='select an item'>")
         self.result.write(f"{self.get_indent()} {extra_button}\n")
         for enum, _ in node.type().enums():
             selected = ""
@@ -439,10 +467,19 @@ class HtmlFormExpander(Expander):
         """
         self._write_anchor("List")
         self._write_open_first_div("structure_list")
-        self._write_button("list")
-        self._write_extra_button(
-            self._get_html_attr("href", "javascript:add_list_element", data=True, schema=True, uuid=True), "plus"
-        )
+        self._write_button("list", on_click=self._get_html_attr("onClick", "list_expand", data=True, uuid=True))
+
+        this_list_collapse_or_show = ""
+        if not self._should_list_be_visisble(node):
+            this_list_collapse_or_show = "collapse"
+
+        if not self.READONLY:
+            self._write_extra_button(
+                self._get_html_attr(
+                    "href", "javascript:yangui_add_list_element_dialog", data=True, schema=True, uuid=True
+                ),
+                "plus",
+            )
         self._write_label(node, "structure_listlabel", linebreak=False)
 
         self.result.write(
@@ -456,9 +493,9 @@ class HtmlFormExpander(Expander):
             self.result.write(f"{comma}{key}")
         self.result.write("</span>")
 
-        self._write_open_second_div("structure_null")
+        self._write_open_second_div(node, "structure_null", collapse=this_list_collapse_or_show)
 
-    def callback_open_list_element(self, node, key_values, empty_list_element, node_id):
+    def callback_open_list_element(self, node, key_values, empty_list_element, force_open, node_id):
         self.result.write(f"{self.open_indent()}<div id='list-item-{self.get_hybrid_id()}'>\n")
         self.result.write(f"{self.get_indent()}<hr/>")
         self._write_anchor("ListElements")
@@ -467,17 +504,23 @@ class HtmlFormExpander(Expander):
             "angle-right", on_click=self._get_html_attr("onClick", "list_element_expand", data=True, uuid=True)
         )
 
-        for comma, val in self.commaify([v for _, v in key_values]):
-            self.result.write(f"{comma}<b>{val}</b>")
+        if empty_list_element:
+            self.result.write("Template for a list element")
+        else:
+            for comma, val in self.commaify([v for _, v in key_values]):
+                self.result.write(f"{comma}<b>{val}</b>")
 
-        self._write_extra_button(
-            self._get_html_attr("href", "javascript:remove_list_element", data=True),
-            "times",
-            "danger",
-            "Delete this list element all the descendant data",
-        )
+        if not self.READONLY:
+            self._write_extra_button(
+                self._get_html_attr("href", "javascript:remove_list_element", data=True),
+                "times",
+                "danger",
+                "Delete this list element all the descendant data",
+            )
 
-        this_list_element_collapse_or_show = "collapse"
+        this_list_element_collapse_or_show = ""
+        if not self._should_listelement_be_visisble(node, force_open):
+            this_list_element_collapse_or_show = "collapse"
 
         i = self.get_id()
         if i in self.USER_UI_STATE_CHANGES:
@@ -486,7 +529,9 @@ class HtmlFormExpander(Expander):
             else:
                 this_list_element_collapse_or_show = "collapse"  # if the user collapsed this keep it collapsed
 
-        self._write_open_second_div("structure_indent", collapse=this_list_element_collapse_or_show)
+        self._write_open_second_div(
+            node, "structure_indent", collapse=this_list_element_collapse_or_show, no_description=True
+        )
 
     def callback_close_list_element(self, node):
         self._write_close_second_div()
@@ -527,13 +572,13 @@ class HtmlFormExpander(Expander):
         self._write_open_first_div("structure_choice")
         self._write_button("object-group")
         self._write_label(node, "structure_choicelabel", linebreak=False)
-        self._write_open_second_div("structure_null")
+        self._write_open_second_div(node, "structure_null")
 
     def callback_open_case(self, node, active_case, no_active_case, node_id):
         self._disable_input_fields = True
         this_case_collapse_or_show = self.default_collapse_state
         div_disable = ""
-        if not active_case:
+        if not active_case and not self.READONLY:
             this_case_collapse_or_show = "collapse"
             div_disable = "yangui-disable"
 
@@ -541,31 +586,34 @@ class HtmlFormExpander(Expander):
         self._write_open_first_div("structure_case")
         self._write_button("bullseye")
 
-        self._write_extra_button(
-            self._get_html_attr("href", "javascript:disable_case", parent=True),
-            "compress",
-            "warning",
-            (
-                "Cases within a choice are mutually exclusive - disable this case.\n\n"
-                "This data will only be remove if data is entered in a differnt case."
-            ),
-            name="remove-case",
-            visible=active_case,
-        )
+        if not self.READONLY:
+            self._write_extra_button(
+                self._get_html_attr("href", "javascript:disable_case", parent=True),
+                "compress",
+                "warning",
+                (
+                    "Cases within a choice are mutually exclusive - disable this case.\n\n"
+                    "This data will only be remove if data is entered in a differnt case."
+                ),
+                name="remove-case",
+                visible=active_case,
+            )
 
         if no_active_case:
             this_case_collapse_or_show = ""
-        self._write_extra_button(
-            self._get_html_attr("href", "javascript:enable_case", hybrid=True, parent=True),
-            "expand",
-            "success",
-            "Cases within a choice are mutually exclusive - enable this case",
-            name="enable-case",
-            visible=no_active_case,
-        )
+
+        if not self.READONLY:
+            self._write_extra_button(
+                self._get_html_attr("href", "javascript:enable_case", hybrid=True, parent=True),
+                "expand",
+                "success",
+                "Cases within a choice are mutually exclusive - enable this case",
+                name="enable-case",
+                visible=no_active_case,
+            )
 
         self._write_label(node, "structure_caselabel", linebreak=False)
-        self._write_open_second_div("structure_null")
+        self._write_open_second_div(node, "structure_null")
         self.result.write(
             f"\n{self.open_indent()}<div class='{div_disable} {this_case_collapse_or_show}' id='case-{self.get_hybrid_id()}'>\n"
         )
@@ -586,9 +634,10 @@ class HtmlFormExpander(Expander):
         self._write_anchor("LeafList")
         self._write_open_first_div("structure_leaflist")
         self._write_button("list-ul")
-        self._write_extra_button(
-            self._get_html_attr("href", "javascript:add_leaflist_item", data=True, schema=True, uuid=True), "plus"
-        )
+        if not self.READONLY:
+            self._write_extra_button(
+                self._get_html_attr("href", "javascript:add_leaflist_item", data=True, schema=True, uuid=True), "plus"
+            )
         self._write_label(node, "structure_leaflistlabel", linebreak=False)
 
         self.result.write(
@@ -596,7 +645,7 @@ class HtmlFormExpander(Expander):
         )
         self.result.write("</span>")
 
-        self._write_open_second_div("structure_null")
+        self._write_open_second_div(node, "structure_null")
 
     def callback_close_leaflist(self, node):
         self._write_close_second_div()
@@ -606,7 +655,7 @@ class HtmlFormExpander(Expander):
         self.result.write(f"{self.open_indent()}<div id='leaflist-item-{self.get_hybrid_id()}'>\n")
         extra_button = ""
         disabled = ""
-        if not template:
+        if not template and not self.READONLY:
             disabled = "disabled"
             extra_button = f"{self.get_indent()}&nbsp;&nbsp;<a class='btn btn-danger' {self._get_html_attr('href', 'javascript:remove_leaflist_item', data=True)}><i class='fa fa-times warning'></i></a>&nbsp;\n"
         basetype = node.type().base()
@@ -627,6 +676,11 @@ class HtmlFormExpander(Expander):
             else:
                 yield f"{type}" + "\n"
 
+    #
+    #
+    # Helper tools for consistently writing HTML elements of the page.
+    #
+    #
     def _write_anchor(self, section_type):
         """
         Write an anchor and provide the path
@@ -643,7 +697,7 @@ class HtmlFormExpander(Expander):
         """
         self.result.write(f"\n{self.open_indent()}&nbsp;&nbsp;")
         self.result.write(
-            f"<a class='btn' data-bs-toggle='collapse' role='button' href='#collapse-{self.get_hybrid_id(as_uuid=True)}'"
+            f"<a class='btn' data-bs-toggle='collapse' role='button' id='button-{self.get_hybrid_id(as_uuid=True)}' href='#collapse-{self.get_hybrid_id(as_uuid=True)}'"
         )
         self.result.write(
             f" aria-expanded='false' aria-controls='collapse-{self.get_hybrid_id(as_uuid=True)}' {on_click}>"
@@ -661,7 +715,7 @@ class HtmlFormExpander(Expander):
         else:
             visible = "yangui-hidden"
         self.result.write(f"<span id='{name}-{self.get_hybrid_id()}' class='{visible}'>")
-        self.result.write(f"&nbsp;<a class='btn btn-{theme}' {action} ")
+        self.result.write(f"&nbsp;<a class='btn btn-{theme}' {action} id='{icon}-{self.get_hybrid_id(as_uuid=True)}' ")
         if tooltip:
             self.result.write(f'data-toggle="tooltip" data-placement="top" data-html="true" title="{tooltip}"')
         self.result.write(f"><i class='fa fa-{icon}'></i></a>&nbsp;</span>")
@@ -680,7 +734,13 @@ class HtmlFormExpander(Expander):
             f"\n{self.open_indent()}<div class='{structure_class} {extra_class}' id={self.get_hybrid_id()}>\n"
         )
 
-    def _write_open_second_div(self, structure_class, extra_class="", collapse=""):
+    def _write_open_second_div(self, node, structure_class, extra_class="", collapse="", no_description=False):
+        if self.SHOW_DESCRIPTIONS == "inline" and not no_description:
+            if node.description():
+                self.result.write("<blockquote>")
+                for word in self.block_quotify(node.description(), 200, "", newline="<br>"):
+                    self.result.write(word)
+                self.result.write("</blockquote>")
 
         self.result.write(f"{self.open_indent()}<div class='{structure_class} {extra_class} {collapse}' ")
         self.result.write(f"data-yangui-collapse='{collapse}' id='collapse-{self.get_hybrid_id(as_uuid=True)}'>\n")
@@ -692,10 +752,12 @@ class HtmlFormExpander(Expander):
                 f"{self.get_indent()}<i class='fa {label_icon} yang_icon' aria-hidden='true'></i>&nbsp;\n"
             )
         self.result.write(f"{self.get_indent()}<label class='{css_class}' ")
-        if node.description():
-            self.result.write(
-                f'data-toggle="tooltip" data-placement="top" data-html="true" title="{self._get_tooltip(node.description())}"'
-            )
+
+        if self.SHOW_DESCRIPTIONS == "tooltip":
+            if node.description():
+                self.result.write(
+                    f'data-toggle="tooltip" data-placement="top" data-html="true" title="{self._get_tooltip(node.description())}"'
+                )
         self.result.write(f">{node.name()}</label>")
         if linebreak:
             self.result.write(" <br/>")
@@ -707,64 +769,6 @@ class HtmlFormExpander(Expander):
 
     def _write_close_first_div(self):
         self.result.write(f"{self.close_indent()}</div>\n")
-
-    def _get_html_attr(
-        self, attribute, method, data=False, hybrid=False, schema=False, parent=False, this=False, uuid=False
-    ):
-        """
-        For a HTML attribute for href's onBlur, onChange etc and ensure we use the correct quoting/encoding
-        of quotes - this needs to ensure we use.
-
-        Based on an XPATH we are likely to receive
-            "/xpath/to/thing[with-list-key='1234']"
-
-        However if the list key values container a " then we would receive
-            '/xpath/to/thing[with-list-key="1234"]'
-
-        A HTML attribute will be formed in the form of the following - instead of this we create Base64
-        encoded XPATH's isntead of trying to escape/find the best quotes.
-            onClick='myfunction("/an/xpath[listkey='listval']")'
-                    ^           ^                  ^       ^ ^ ^
-                    |           |                  |       | | |- outer quote
-                    |           |                  |       | |--- inner quote
-                    |           |                  |       |
-                    |           |                  |-------|-- these need replacing with html codes
-                    |           |- inner quote
-                    |- outer quote
-
-        Args:
-            attribute: e.g., href, onClick, onBlur, onChange
-            method: e.g. javascript:function, function
-            data: include the data xpath
-            xpath: incldue the schema xpath
-            parent: add in parent id
-            this: include the literal 'this'
-        """
-        args = []
-        attr_quote = '"'
-        inner_quote = "'"
-        if data:
-            args.append(f"{inner_quote}{self.get_id()}{inner_quote}")
-        if schema:
-            args.append(f"'{self.get_schema_id()}'")
-        if hybrid:
-            args.append(f"{inner_quote}{self.get_hybrid_id()}{inner_quote}")
-        if parent:
-            args.append(f"{inner_quote}{self._parent_id}{inner_quote}")
-        if this:
-            args.append("this")
-        if uuid:
-            args.append(f"{inner_quote}{self.get_hybrid_id(as_uuid=True)}{inner_quote}")
-        return f"{attribute}={attr_quote}{method}({', '.join(args)}){attr_quote}"
-
-    def callback_write_footer(self, module):
-        self.result.write("<hr/><script language=Javascript>\n")
-        if self.data_loaded:
-            self.result.write(f"LIBYANG_USER_PAYLOAD = {self.data_ctx.dumps(2)};\n")
-        self.result.write("stop_yangui_spinner();\n")
-        self.result.write("yangui_default_mousetrap();\n")
-        self.result.write("yangui_welcome();\n")
-        self.result.write("</script>")
 
 
 if __name__ == "__main__":
