@@ -133,10 +133,10 @@ class DataTree:
             json_dict: A dcitionary matching the JSON encoded data for a YANG model.
             changes: A list of changes
             yang_location: A location to look for yang modles
-            fomrat: the libyang format to use (json or xml)
+            format: the libyang format to use (json or xml)
             log: A python logger
-        """
 
+        """
         session = DataTree.connect_yang_model(json_dict, yang_model, yang_location)
         if json_dict:
             log.info("Loading initial JSON payload for %s...", session.module)
@@ -192,5 +192,7 @@ class DataTree:
             elif list_elements[xpath] is False:
                 session.uncreate(xpath)
 
-        log.info("Final Data tree: %s", session.dumps(2))
-        return session, json.loads(session.dumps(2)), []
+        if json_dict or changes:
+            log.info("Final Data tree: %s", session.dumps(2))
+            return session, json.loads(session.dumps(2)), []
+        return session, {}, []

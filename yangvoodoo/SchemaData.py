@@ -83,6 +83,7 @@ class Expander:
         self.result = StringIO()
         self.indent = 0
         self.data_loaded = False
+        self.expanded_elements = {}
 
     def set_schema_filter_list(self, filter_list: List[str]):
         """
@@ -623,7 +624,7 @@ class Expander:
                 presence = True
 
         self.callback_open_containing_node(node, presence=presence, node_id="".join(self.id_path_trail))
-        if self._should_container_be_visisble(node, presence):
+        if self._should_container_be_visible(node, presence):
             self._handle_container_contents(node)
 
         self.callback_close_containing_node(node)
@@ -640,8 +641,19 @@ class Expander:
         except libyang.util.LibyangError:
             pass
 
-    def _should_container_be_visisble(self, node: libyang.schema.Node, presence: bool) -> bool:
+    def _should_container_be_visible(self, node: libyang.schema.Node, presence: bool) -> bool:
+        """
+        Determine if a container should be visible:
+
+        Args:
+            node: The libyang schema node
+            presence: if a presence container False/True represents it's state in the data tree (None for non-presence)
+        """
         result = False
+        uuid = self.get_uuid()
+        if uuid in self.expanded_elements and self.expanded_elements[uuid]:
+            return True
+
         if presence is None or presence is True or (presence is False and self.AUTO_EXPAND_NON_PRESENCE_CONTAINERS):
             # base on the data we should be expanded
             result = True
@@ -657,10 +669,21 @@ class Expander:
 
         return False
 
-    def _should_listelement_be_visisble(self, node: libyang.schema.Node, force_open: bool) -> bool:
+    def _should_listelement_be_visible(self, node: libyang.schema.Node, force_open: bool) -> bool:
+        """
+        Determine if a list element should be visible:
+
+        Args:
+            node: The libyang schema node
+            force_open: If a user has added this item just now we want to force it open.
+        """
         if force_open:
             return True
         result = True
+
+        uuid = self.get_uuid()
+        if uuid in self.expanded_elements and self.expanded_elements[uuid]:
+            return True
 
         if node.get_extension("yangui-force-minimised"):
             return False
@@ -673,8 +696,17 @@ class Expander:
 
         return False
 
-    def _should_list_be_visisble(self, node: libyang.schema.Node) -> bool:
+    def _should_list_be_visible(self, node: libyang.schema.Node) -> bool:
+        """
+        Determine if a list should be visible:
+
+        Args:
+            node: The libyang schema node
+        """
         result = True
+        uuid = self.get_uuid()
+        if uuid in self.expanded_elements and self.expanded_elements[uuid]:
+            return True
 
         if node.get_extension("yangui-force-minimised"):
             return False
@@ -685,6 +717,25 @@ class Expander:
         if self.ALWAYS_FETCH_LIST_CONTENTS:
             return result
 
+        return False
+
+    def _gets(self, data_path):
+        for result in self.data_ctx.get_xpath(data_path):
+            yield result.value
+
+    def _exists(self, data_path, predicates=None, child_contents=False):
+        if predicates:
+            for k, v in predicates:
+                data_path += Utils.encode_xpath_predicate(k, v)
+        if child_contents:
+            data_path += "/*"
+        try:
+            next(self.data_ctx.get_xpath(data_path))
+            return True
+        except StopIteration:
+            pass
+        except libyang.util.LibyangError:
+            pass
         return False
 
     def _handle_schema_leaf(self, node: libyang.schema.Node):
@@ -739,7 +790,7 @@ class Expander:
             node_id="".join(self.id_path_trail),
         )
 
-        if self._should_list_be_visisble(node):
+        if self._should_list_be_visible(node):
             self._handle_list_contents(node)
 
         self.callback_close_list(node)
@@ -781,7 +832,7 @@ class Expander:
             node_id="".join(self.id_path_trail),
         )
 
-        if self._should_listelement_be_visisble(node, force_open):
+        if self._should_listelement_be_visible(node, force_open):
             xpath = "".join(self.schema_path_trail)
             for subnode in self.ctx.find_path(f"{xpath}/*"):
                 self._process_nodes(subnode)

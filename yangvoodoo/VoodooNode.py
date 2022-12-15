@@ -118,9 +118,7 @@ class Node:
                 "Returning Literal value from datastore for %s",
                 node_schema.real_data_path,
             )
-            dal_value = context.dal.get(
-                node_schema.real_data_path, default_value=node_schema.default()
-            )
+            dal_value = context.dal.get(node_schema.real_data_path, default_value=node_schema.default())
             if dal_value is None and leaf_type in Types.NUMBERS:
                 return 0
             if leaf_type == Types.DATA_ABSTRACTION_MAPPING["BOOLEAN"]:
@@ -159,8 +157,7 @@ class Node:
             node_schema.real_schema_path,
         )
         raise NotImplementedError(
-            "The YANG structure at %s of type %s is not supported."
-            % (node_schema.real_schema_path, node_type)
+            "The YANG structure at %s of type %s is not supported." % (node_schema.real_schema_path, node_type)
         )
 
     def __setattr__(self, attr, val):
@@ -181,10 +178,7 @@ class Node:
         leaf_type = node_schema.type().base()
         # Enumeration:
         if leaf_type == 6:
-            match = any(
-                str(enum_valid_val) == str(val)
-                for (enum_valid_val, _) in node_schema.type().enums()
-            )
+            match = any(str(enum_valid_val) == str(val) for (enum_valid_val, _) in node_schema.type().enums())
 
             if not match:
                 self._raise_ValueDoesMatchEnumeration(node_schema, val)
@@ -193,9 +187,7 @@ class Node:
             context.dal.delete(node_schema.real_data_path)
             return
 
-        backend_type = Common.Utils.get_yang_type(
-            node_schema.type(), val, node_schema.real_data_path
-        )
+        backend_type = Common.Utils.get_yang_type(node_schema.type(), val, node_schema.real_data_path)
         context.dal.set(node_schema.real_data_path, val, backend_type)
 
     @staticmethod
@@ -345,9 +337,7 @@ class LeafList(Node):
         if value == "":
             raise Errors.ListItemCannotBeBlank(node.real_data_path)
 
-        backend_type = Common.Utils.get_yang_type_from_path(
-            context, node.real_schema_path, value
-        )
+        backend_type = Common.Utils.get_yang_type_from_path(context, node.real_schema_path, value)
         context.dal.add(node.real_data_path, value, backend_type)
 
         return value
@@ -389,9 +379,7 @@ class LeafList(Node):
         try:
             result = results[index]
         except IndexError:
-            raise Errors.LeafListDoesNotContainIndexError(
-                len(results), index, node.real_data_path
-            )
+            raise Errors.LeafListDoesNotContainIndexError(len(results), index, node.real_data_path)
 
         return result
 
@@ -450,9 +438,7 @@ class List(ContainingNode):
 
         context.dal.create(node.real_data_path, keys=keys, values=values)
         # Return Object
-        new_node = Common.YangNode(
-            node.libyang_node, node.real_schema_path, node.real_data_path, node.module
-        )
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, node.real_data_path, node.module)
         return ListElement(context, new_node, self)
 
     def __getattr__(self, attr):
@@ -485,13 +471,9 @@ class List(ContainingNode):
         node = self._node
 
         if sorted_by_xpath:
-            return context.dal.gets_sorted(
-                node.real_data_path, node.real_schema_path, ignore_empty_lists=True
-            )
+            return context.dal.gets_sorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True)
 
-        return context.dal.gets_unsorted(
-            node.real_data_path, node.real_schema_path, ignore_empty_lists=True
-        )
+        return context.dal.gets_unsorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True)
 
     def keys(self, sorted_by_xpath=False):
         """
@@ -550,23 +532,15 @@ class List(ContainingNode):
         context = self._context
         node = self._node
 
-        results = list(
-            context.dal.gets_unsorted(
-                node.real_data_path, node.real_schema_path, ignore_empty_lists=True
-            )
-        )
+        results = list(context.dal.gets_unsorted(node.real_data_path, node.real_schema_path, ignore_empty_lists=True))
 
         try:
             result = results[index]
         except IndexError:
-            raise Errors.ListDoesNotContainIndexError(
-                len(results), index, node.real_data_path
-            )
+            raise Errors.ListDoesNotContainIndexError(len(results), index, node.real_data_path)
 
         # Return Object
-        new_node = Common.YangNode(
-            node.libyang_node, node.real_schema_path, result, node.module
-        )
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, result, node.module)
         return ListElement(context, new_node, self)
 
     def __iter__(self):
@@ -580,7 +554,6 @@ class List(ContainingNode):
         node = self._node
         (keys, values) = Common.Utils.get_key_val_tuples(context, node, list(args))
         predicates = Common.Utils.encode_xpath_predicates("", keys, values)
-
         return context.dal.has_item(node.real_data_path + predicates)
 
     def __getitem__(self, *args):
@@ -666,9 +639,7 @@ class ListIterator(Node):
         parent = self._parent
         this_xpath = next(self._iterator)
         # Return Object
-        new_node = Common.YangNode(
-            node.libyang_node, node.real_schema_path, this_xpath, node.module
-        )
+        new_node = Common.YangNode(node.libyang_node, node.real_schema_path, this_xpath, node.module)
         return ListElement(context, new_node, parent)
 
     def __repr__(self):
@@ -688,6 +659,7 @@ class LeafListIterator(Node):
         self.__dict__["_parent"] = parent_self
         self.__dict__["_xpath_sorted"] = xpath_sorted
         self.__dict__["_iterator"] = context.dal.gets(node.real_data_path)
+        breakpoint()
 
     def __next__(self):
         return next(self.__dict__["_iterator"])

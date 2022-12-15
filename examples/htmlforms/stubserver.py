@@ -18,7 +18,7 @@ from yangvoodoo.Merger import DataTree, DataTreeChanges, base64_tostring
 PORT = int(os.getenv("YANGUI_BIND_PORT", "8099"))
 DEFAULT_YANG_DIR = "yang/"
 
-PLANTUML_PATH = "/tmp/plantuml.jar"
+PLANTUML_PATH = os.getenv("PLANTUML_PATH", "/tmp/plantuml.jar")
 
 FORMAT = "%(asctime)-15s - %(name)-20s %(levelname)-12s  %(message)s"
 logging.basicConfig(level=logging.INFO, format=FORMAT)
@@ -110,8 +110,18 @@ class AjaxHandler(tornado.web.RequestHandler):
     def _create_list_element(self, yang_model, input):
         """
         Called when creating a new list element (i.e. submit from the dialog box).
+
+        The javascript is yangui_create_new_item
         """
+        session, new_payload, _ = DataTree.process_data_tree_against_libyang(
+            input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
+        )
         instance = HtmlFormExpander(input["yang_model"], log)
+        instance.load(json.dumps(new_payload), 2, trusted=True)
+        if instance._exists(base64_tostring(input["base64_data_path"]), predicates=input["key_values"]):
+            raise ValueError(
+                f"Cannot create list element because it already exists: {base64_tostring(input['base64_data_path'])} {input['key_values']}"
+            )
         list_element_predicates = instance.data_tree_add_list_element(
             base64_tostring(input["base64_data_path"]), input["key_values"]
         )
@@ -122,7 +132,25 @@ class AjaxHandler(tornado.web.RequestHandler):
         self.finish()
 
     def _create_leaflist_item(self, yang_model, input):
+        """
+        Called when creating a new leaf list item (i.e. submit from the dialog box).
+
+        The javascript is yangui_create_new_item
+        """
+        input["changes"].pop()
+        session, new_payload, _ = DataTree.process_data_tree_against_libyang(
+            input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
+        )
         instance = HtmlFormExpander(input["yang_model"], log)
+        instance.load(json.dumps(new_payload), 2, trusted=True)
+        log.warning(
+            "Should we prevent duplicate leaf-list items - yangvoodoo probably doesn't allow duplicated even if they are permitted by libyang?"
+        )
+        leaf_list_values = list(instance._gets(base64_tostring(input["base64_data_path"])))
+        if input["key_values"][0][1] in leaf_list_values:
+            raise ValueError(
+                f"Cannot create leaflist item because it already exists: {base64_tostring(input['base64_data_path'])} {input['key_values'][0][1]}"
+            )
         instance.data_tree_add_list_element(base64_tostring(input["base64_data_path"]), input["key_values"])
         instance.subprocess_leaflist(
             leaflist_xpath=base64_tostring(input["base64_schema_path"]), value=input["key_values"][0][1]
@@ -143,6 +171,10 @@ class AjaxHandler(tornado.web.RequestHandler):
         self.finish()
 
     def _expand_list(self, yang_model, input):
+        """
+        Handle the user expanding a list (not an individual list element).
+        This should update the UI with the list-elements (possibly none)
+        """
         session, new_payload, _ = DataTree.process_data_tree_against_libyang(
             input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
         )
@@ -231,20 +263,32 @@ class AjaxHandler(tornado.web.RequestHandler):
             input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
         )
         session.validate()
-        result["new_payload"] = new_payload
+        result["yangui"] = {"expanded": input["elements_expanded_by_user"]}
+        result["libyang_json"] = new_payload
 
         self.write(json.dumps(result, indent=4))
         self.finish()
 
     def post(self, yang_model, action):
+        """
+        1: Handle either uploading a save form (i.e. the `libyang_json` has the payload) or a direct json).
+
+        2: Handle the AJAX methods
+        """
         self.set_header("Content-Type", "text/html")
         if self.request.uri.endswith("/upload"):
             input = json.loads(str(self.request.files["payload"][0]["body"].decode("utf-8")))
-            real_yang_model = DataTree.get_root_yang_model(input)
-            if real_yang_model != yang_model:
-                log.error("User is on a website for %s but the payload is for %s", yang_model, real_yang_model)
-            instance = HtmlFormExpander(real_yang_model, log)
-            instance.process(json.dumps(input), 2)
+            # real_yang_model = DataTree.get_root_yang_model(input)
+            # if real_yang_model != yang_model:
+            # log.error("User is on a website for %s but the payload is for %s", yang_model, real_yang_model)
+            # instance = HtmlFormExpander(real_yang_model, log)
+            instance = HtmlFormExpander(yang_model, log)
+            if "yangui" in input and "expanded" in input["yangui"]:
+                instance.expanded_elements = input["yangui"]["expanded"]
+            if "libyang_json" in input:
+                instance.process(json.dumps(input["libyang_json"]), 2)
+            else:
+                instance.process(json.dumps(input), 2)
             self.write(instance.dumps())
             self.finish()
         else:
@@ -269,7 +313,7 @@ class AjaxHandler(tornado.web.RequestHandler):
 
 class StaticHandler(tornado.web.RequestHandler):
     def get(self):
-        if self.request.uri in ("/static/css/yangui.css", "/static/js/yangui.js"):
+        if self.request.uri in ("/static/css/yangui.css", "/static/js/yangui.js", "/static/js/your-actions.js"):
             with open(f"examples/htmlforms/{self.request.uri}") as fh:
                 self.write(fh.read())
         else:
@@ -287,6 +331,8 @@ class MainHandler(tornado.web.RequestHandler):
 <pre>
 GET /web/{yangmodel}             : Returns an empty form for the given yang model
 
+GET /pyang/{yangmodel}           : Returns a pyang tree of the yang model (schema only)
+
 GET /text/{yangmodel}            : Returns a plain text representation of the given yang model (schema only)
 POST /text/{yangmodel}           : Returns a plain text representation of the given yang model and data tree
 
@@ -302,6 +348,9 @@ POST /plantuml/{yangmodel}       : Returns a PlantUML JSON representation of the
                 """
 GET /plantuml-png/{yangmodel}    : Returns a PlantUML PNG image representation of the yang model (schema only)
 POST /plantuml-png/{yangmodel}   : Returns a PlantUML PNG image representation of the yang model and data tree
+
+GET /plantuml-svg/{yangmodel}    : Returns a PlantUML SVG image representation of the yang model (schema only)
+POST /plantuml-svg/{yangmodel}   : Returns a PlantUML SVG image representation of the yang model and data tree
 
 POST /api/{yangmodel}/validate   : Validate the payload in the JSON POSTED.
 POST /api/{yangmodel}/upload     : Returns a form for the given yang model with the JSON POSTED data loaded
@@ -320,6 +369,10 @@ POST /api/{yangmodel}/upload     : Returns a form for the given yang model with 
                     self.write(
                         f" <a href='/plantuml-png/{y}'>plantuml-png((<a href='/plantuml-png-upload/{y}'>upload</a>))</a>"
                     )
+                    self.write(
+                        f" <a href='/plantuml-png/{y}'>plantuml-svg((<a href='/plantuml-svg-upload/{y}'>upload</a>))</a>"
+                    )
+                self.write(f" <a href='/pyang/{y}'>pyang tree</a>")
 
         self.finish()
 
@@ -334,6 +387,13 @@ class WebHandler(tornado.web.RequestHandler):
         instance = HtmlFormExpander(yang_model, log)
         instance.process()
         self.write(instance.dumps())
+
+
+class PyangHandler(tornado.web.RequestHandler):
+    def get(self, yang_model):
+        self.set_header("Content-Type", "text/plain")
+        instance = HtmlFormExpander(yang_model, log)
+        self.write(str(instance.ctx.get_module(yang_model)))
 
 
 class TextHandler(tornado.web.RequestHandler):
@@ -403,16 +463,17 @@ class PlantUmlHandler(tornado.web.RequestHandler):
         if type == "":
             self.write(result.dumps())
             return
-        if type == "-png":
+        if type in ("-svg", "-png"):
             temp_dir = tempfile.TemporaryDirectory(prefix="yangui", suffix="plantuml", ignore_cleanup_errors=True)
             log.info("Using Plantuml inside of %s", temp_dir)
             with open(f"{temp_dir.name}/uml.txt", "w") as fh:
                 fh.write(result.dumps())
 
-            log.info("Running plantuml...")
-            shell_command(f"java {os.getenv('PLANTUML_JAVA_OPTS','')} -jar {PLANTUML_PATH} -v {temp_dir.name}/uml.txt")
+            cmd = f"java {os.getenv('PLANTUML_JAVA_OPTS','')} -jar {PLANTUML_PATH} -t{type[1:]} -v {temp_dir.name}/uml.txt"
+            log.info("Running plantuml... %s", cmd)
+            shell_command(cmd)
 
-            with open(f"{temp_dir.name}/uml.png", "rb") as fh:
+            with open(f"{temp_dir.name}/uml.{type[1:]}", "rb") as fh:
                 self.write(fh.read())
 
     def get(self, type, upload, yang_model):
@@ -422,12 +483,15 @@ class PlantUmlHandler(tornado.web.RequestHandler):
         else:
             if type == "":
                 self.set_header("Content-Type", "application/json")
-            if type == "-png":
+            if type in ("-png", "-svg"):
                 if not os.path.exists(PLANTUML_PATH):
                     self.write(f"Could not find plantuml at: {PLANTUML_PATH}")
                     self.set_status(500)
                     return
-                self.set_header("Content-Type", "image/png")
+                if type == "-png":
+                    self.set_header("Content-Type", "image/png")
+                if type == "-svg":
+                    self.set_header("Content-Type", "image/svg+xml")
 
             try:
                 generator = PlantUMLExpander(yang_model, log)
@@ -439,6 +503,12 @@ class PlantUmlHandler(tornado.web.RequestHandler):
         self.finish()
 
     def post(self, type, upload, yang_model):
+        if type == "-png":
+            self.set_header("Content-Type", "image/png")
+        elif type == "-svg":
+            self.set_header("Content-Type", "image/svg+xml")
+        else:
+            self.set_header("Content-Type", "text/html")
         try:
             generator = PlantUMLExpander(yang_model, log)
             payload = get_input_and_set_generator_options(self.request, generator)
@@ -456,9 +526,10 @@ def make_app():
         [
             (r"/api/(.+)/(.+)", AjaxHandler),
             (r"/static/.*", StaticHandler),
-            (r"/plantuml(|-png)(|-upload)/(.*)", PlantUmlHandler),
+            (r"/plantuml(|-png|-svg)(|-upload)/(.*)", PlantUmlHandler),
             (r"/(text|html|text-upload|html-upload)/(.*)", TextHandler),
             (r"/web/(.*)", WebHandler),
+            (r"/pyang/(.*)", PyangHandler),
             (r"/.*", MainHandler),
         ],
         debug=True,

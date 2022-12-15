@@ -39,8 +39,8 @@ class HtmlFormExpander(Expander):
         - `add_leaflist_item`, `yangui_add_list_element_dialog` could call
            `instance.data_tree_add_list_element(list_data_xpath, [[key1,val1,key2,val2]])
            Note: a leaf-list is simply a list with a key of `.`
-        - `remove_leaflist_item` `remove_list_element` could call
-           `instance.data_tree_remove_list_element(list_element_xpath)`
+        - `yangui_soft_delete_leaflist_item` `yangui_soft_delete_list_element` could call
+           `instance.data_tree_yangui_soft_delete_list_element(list_element_xpath)`
         - `presence_container_expand` could call `data_tree_set_leaf(xpath, '')`
            Note: libyang represents a presence container as existing as a blank string.
 
@@ -55,12 +55,23 @@ class HtmlFormExpander(Expander):
     of the browser.
 
     This could be refactored to provide templates to build the page.
+
+
+    Overview of the Dom:
+
+    - Each containing node (i.e. containers, choices, case, list) have a <div id="collapse-UUID"></div>
+      The UUID is calculated based on the hybrid path
+
+    - When adding items to a list element or leaf-list they are appended into this div
+
+    - When 'soft' deleting items from a list element or leaf-list they are disabled rather than delete.
+
+    - When changing cases in a choice the UI is disabled but the data is not removed.
     """
 
     def __init__(self, yang_module, log):
         super().__init__(yang_module, log)
         self.default_collapse_state = "collapse show"
-        self.USER_UI_STATE_CHANGES = {}
 
     def callback_write_header(self, module):
         self.result.write(
@@ -82,7 +93,7 @@ class HtmlFormExpander(Expander):
     AJAX_BASE_SERVER_URL="{self.AJAX_BASE_SERVER_URL}/{self.yang_module}";
     LIBYANG_USER_PAYLOAD = {{}};  // this will be populated in the footer
     LIBYANG_CHANGES = []; // a list of changes we need to make (supports the ability to do a simple UNDO mechnism)
-    ELEMENTS_EXPANDED_BY_USER = {{}};
+    ELEMENTS_EXPANDED_BY_USER = {{}}; // this contains the UUID's of elements which have been expanded by the user
     LIBYANG_MODEL = "{self.yang_module}";
     YANGUI_TITLE = "{self.TITLE}";
 </script>
@@ -133,7 +144,7 @@ class HtmlFormExpander(Expander):
                 <textarea id='yangui-content-debug' rows=20 cols=40 style='font-style: monospace;'></textarea>
               </div>
               <div class="modal-footer">
-                <button type="button" onClick="debug_close()" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" onClick="yangui_debug_close()" class="btn btn-secondary" data-dismiss="modal">Close</button>
               </div>
             </div>
           </div>
@@ -178,7 +189,7 @@ class HtmlFormExpander(Expander):
                 <hr/>
               </div>
               <div class="modal-footer">
-                <button type="submit" onClick="create_new_item()" data-yangui-for-type="" data-yangui-for-list="" id="yangui-create-list-button" class="btn btn-primary">Create</button>
+                <button type="submit" onClick="yangui_create_new_item()" data-yangui-for-type="" data-yangui-for-list="" id="yangui-create-list-button" class="btn btn-primary">Create</button>
                 <button type="button" onClick="modal_visibility('yanguiNewItemModal', 'hide')" class="btn btn-secondary" data-dismiss="modal">Close</button>
               </div>
             </div>
@@ -198,37 +209,49 @@ class HtmlFormExpander(Expander):
         <nav id="sidebar">
         <div class='yangui-floating-left-buttons'>
           <div id='yangui-new'>
-            <a class="btn btn-primary" href="javascript:new_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Start new payload (y n)">
+            <a class="btn btn-primary" href="javascript:yangui_new_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Start new payload (y n)">
                 <i class="fa fa-file" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
           <div id='yangui-undo' class='yangui-disable'>
-            <a class="btn btn-primary" href="javascript:yangui_undo()" role="button" data-toggle="tooltip" data-placement="top" data-html="true" title="Undo the last change (ctrl+z)" tabindex="-1">
+            <a class="btn btn-primary" id="yangui-undo-button" href="javascript:yangui_undo()" role="button" data-toggle="tooltip" data-placement="top" data-html="true" title="Undo the last change (ctrl+z)" tabindex="-1">
                 <i class="fa fa-undo" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
           <div id='yangui-validate' class='yangui-disable'>
-            <a class="btn btn-primary" id="yangui-validate-button" href="javascript:validate_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Validate data (y s)">
+            <a class="btn btn-primary" id="yangui-validate-button" href="javascript:yangui_validate_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Validate data (y s)">
               <i class="fa fa-microscope" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
           <div id='yangui-save' class='yangui-disable'>
-            <a class="btn btn-primary" href="javascript:download_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Download a saved payload (ctrl+s)">
+            <a class="btn btn-primary" href="javascript:yangui_save(false)" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Download the contents of this form (ctrl+s)">
                 <i class="fa fa-download" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
+          <div id='yangui-export' class='yangui-disable'>
+            <a class="btn btn-primary" href="javascript:yangui_save(true)" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Export a YANG compliant JSON encoding (ctrl+shitf+s)">
+                <i class="fa fa-file-export" aria-hidden="true"></i>
+            </a>
+          </div>
+          <hr/>
+          <div id='yangui-debug' class='yangui-disable'>
+            <a class="btn btn-primary" href="javascript:yangui_debug_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Show a JSON payload (y d)">
+                <i class="fa fa-bug" aria-hidden="true"></i>
+            </a>
+          </div>
+          <hr/>
           <div id='yangui-submit'>
-            <a class="btn btn-primary" href="javascript:upload_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Upload a saved payload (ctrl+o)">
+            <a class="btn btn-primary" id="yangui-upload-button" href="javascript:yangui_upload_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Upload a saved payload (ctrl+o)">
                 <i class="fa fa-upload" aria-hidden="true"></i>
             </a>
           </div>
           <hr/>
           <div id='yangui-upload'>
-            <a class="btn btn-primary" href="javascript:submit_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Submit a payload (y c)">
+            <a class="btn btn-primary" href="javascript:yangui_submit_payload()" role="button" tabindex="-1" data-toggle="tooltip" data-placement="top" data-html="true" title="Submit a payload (y c)">
                 <i class="fa fa-sun" aria-hidden="true"></i>
             </a>
           </div>
@@ -292,29 +315,32 @@ class HtmlFormExpander(Expander):
         """
         this_container_collapse_or_show = self.default_collapse_state
         this_container_disable = ""
+        extra_label = ""
         if presence in (True, False):
             this_container_expand_javascript = " yangui-field-type='presence-container' "
         else:
             this_container_expand_javascript = " yangui-field-type='container' "
 
-        if not self._should_container_be_visisble(node, presence):
+        if presence is True:
+            extra_label = " &nbsp; <span class='yangui-has-contents'>(exists)</span>"
+
+        if not self._should_container_be_visible(node, presence):
             this_container_collapse_or_show = "collapse"
-            this_container_disable = "yangui-disable"
+            if not self._exists("".join(self.data_path_trail), child_contents=True):
+                this_container_disable = "yangui-disable"
+            else:
+                if presence is True:
+                    extra_label = " &nbsp; <span class='yangui-has-contents'>(exists)</span>"
+                else:
+                    extra_label = " &nbsp; <span class='yangui-has-contents'>(has contents)</span>"
             this_container_expand_javascript += self._get_html_attr(
                 "onClick", "presence_container_expand", data=True, uuid=True
             )
 
-        i = self.get_id()
-        if i in self.USER_UI_STATE_CHANGES:
-            if self.USER_UI_STATE_CHANGES[i]:
-                this_container_collapse_or_show = ""  # if the user expanded this keep it expanded
-            else:
-                this_container_collapse_or_show = "collapse"  # if the user collapsed this keep it collapsed
-
         self._write_anchor("Container")
         self._write_open_first_div("structure_container", extra_class=this_container_disable)
         self._write_button("th-large", on_click=this_container_expand_javascript)
-        self._write_label(node, "structure_containerlabel", linebreak=True)
+        self._write_label(node, "structure_containerlabel", linebreak=True, extra_label=extra_label)
         self._write_open_second_div(node, "structure_indent", collapse=this_container_collapse_or_show)
 
     def callback_close_containing_node(self, node):
@@ -467,10 +493,10 @@ class HtmlFormExpander(Expander):
         """
         self._write_anchor("List")
         self._write_open_first_div("structure_list")
-        self._write_button("list", on_click=self._get_html_attr("onClick", "list_expand", data=True, uuid=True))
+        self._write_button("list", on_click=self._get_html_attr("onClick", "yangui_expand_list", data=True, uuid=True))
 
         this_list_collapse_or_show = ""
-        if not self._should_list_be_visisble(node):
+        if not self._should_list_be_visible(node):
             this_list_collapse_or_show = "collapse"
 
         if not self.READONLY:
@@ -496,7 +522,7 @@ class HtmlFormExpander(Expander):
         self._write_open_second_div(node, "structure_null", collapse=this_list_collapse_or_show)
 
     def callback_open_list_element(self, node, key_values, empty_list_element, force_open, node_id):
-        self.result.write(f"{self.open_indent()}<div id='list-item-{self.get_hybrid_id()}'>\n")
+        self.result.write(f"{self.open_indent()}<div id='list-element-{self.get_hybrid_id()}'>\n")
         self.result.write(f"{self.get_indent()}<hr/>")
         self._write_anchor("ListElements")
         self._write_open_first_div("structure_listelement")
@@ -512,26 +538,20 @@ class HtmlFormExpander(Expander):
 
         if not self.READONLY:
             self._write_extra_button(
-                self._get_html_attr("href", "javascript:remove_list_element", data=True),
+                self._get_html_attr("href", "javascript:yangui_soft_delete_list_element", data=True),
                 "times",
                 "danger",
                 "Delete this list element all the descendant data",
             )
 
         this_list_element_collapse_or_show = ""
-        if not self._should_listelement_be_visisble(node, force_open):
+        if not self._should_listelement_be_visible(node, force_open):
             this_list_element_collapse_or_show = "collapse"
-
-        i = self.get_id()
-        if i in self.USER_UI_STATE_CHANGES:
-            if self.USER_UI_STATE_CHANGES[i]:
-                this_list_element_collapse_or_show = ""  # if the user expanded this keep it expanded
-            else:
-                this_list_element_collapse_or_show = "collapse"  # if the user collapsed this keep it collapsed
 
         self._write_open_second_div(
             node, "structure_indent", collapse=this_list_element_collapse_or_show, no_description=True
         )
+        # self.result.write(f"<script>ELEMENTS_EXPANDED_BY_USER['{self.get_uuid()}']=true;</script>")
 
     def callback_close_list_element(self, node):
         self._write_close_second_div()
@@ -657,7 +677,7 @@ class HtmlFormExpander(Expander):
         disabled = ""
         if not template and not self.READONLY:
             disabled = "disabled"
-            extra_button = f"{self.get_indent()}&nbsp;&nbsp;<a class='btn btn-danger' {self._get_html_attr('href', 'javascript:remove_leaflist_item', data=True)}><i class='fa fa-times warning'></i></a>&nbsp;\n"
+            extra_button = f"{self.get_indent()}&nbsp;&nbsp;<a class='btn btn-danger' {self._get_html_attr('href', 'javascript:yangui_soft_delete_leaflist_item', data=True)}><i class='fa fa-times warning'></i></a>&nbsp;\n"
         basetype = node.type().base()
         if basetype in self.LEAF_MAPPING:
             getattr(self, self.LEAF_MAPPING[basetype])(node, value, quote, disabled, extra_button=extra_button)
@@ -746,7 +766,7 @@ class HtmlFormExpander(Expander):
         self.result.write(f"data-yangui-collapse='{collapse}' id='collapse-{self.get_hybrid_id(as_uuid=True)}'>\n")
         self.open_indent()
 
-    def _write_label(self, node, css_class, linebreak=True, label_icon=None):
+    def _write_label(self, node, css_class, linebreak=True, label_icon=None, extra_label=""):
         if label_icon:
             self.result.write(
                 f"{self.get_indent()}<i class='fa {label_icon} yang_icon' aria-hidden='true'></i>&nbsp;\n"
@@ -758,7 +778,7 @@ class HtmlFormExpander(Expander):
                 self.result.write(
                     f'data-toggle="tooltip" data-placement="top" data-html="true" title="{self._get_tooltip(node.description())}"'
                 )
-        self.result.write(f">{node.name()}</label>")
+        self.result.write(f">{node.name()}</label> {extra_label}")
         if linebreak:
             self.result.write(" <br/>")
         self.result.write("\n")

@@ -18,16 +18,15 @@ class HtmlExpander(HtmlFormExpander):
     def __init__(self, yang_module, log):
         super().__init__(yang_module, log)
         self.default_collapse_state = "collapse show"
-        self.USER_UI_STATE_CHANGES = {}
         self.include_as_subpage = False
 
-    def _should_container_be_visisble(self, node: libyang.schema.Node, presence: bool) -> bool:
+    def _should_container_be_visible(self, node: libyang.schema.Node, presence: bool) -> bool:
         return True
 
-    def _should_listelement_be_visisble(self, node: libyang.schema.Node, force_visible: bool) -> bool:
+    def _should_listelement_be_visible(self, node: libyang.schema.Node, force_visible: bool) -> bool:
         return True
 
-    def _should_list_be_visisble(self, node: libyang.schema.Node) -> bool:
+    def _should_list_be_visible(self, node: libyang.schema.Node) -> bool:
         return True
 
     def callback_write_header(self, module):

@@ -11,6 +11,10 @@ from yangvoodoo.SchemaData import Expander
 class PlantUMLExpander(Expander):
     QUOTE_ESCAPE_STYLE = "escape"
     INCLUDE_BLANK_LIST_ELEMENTS = True
+    ALWAYS_FETCH_CONTAINER_CONTENTS = True
+    ALWAYS_FETCH_LISTELEMENT_CONTENTS = True
+    ALWAYS_FETCH_LIST_CONTENTS = True
+    AUTO_EXPAND_NON_PRESENCE_CONTAINERS = True
 
     """
     Render a schema with data expanded into a PlantUML diagram
