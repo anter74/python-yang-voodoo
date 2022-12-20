@@ -241,11 +241,11 @@ class AjaxHandler(tornado.web.RequestHandler):
             if "changes" in input:
                 changes = list(DataTreeChanges.convert(input["changes"], log))
             session, _, _ = DataTree.process_data_tree_against_libyang(
-                input["payload"], changes=changes, yang_model=yang_model, format=format, log=log
+                input["payload"], changes=changes, yang_model=yang_model, log=log
             )
         else:
             session, _, _ = DataTree.process_data_tree_against_libyang(
-                input, changes=[], yang_model=yang_model, format="json", log=log
+                input, changes=[], yang_model=yang_model, log=log
             )
         session.validate()
 

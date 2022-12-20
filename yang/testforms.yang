@@ -117,6 +117,14 @@ module testforms {
     testforms:yangui-hidden "";
   }
 
+  leaf topdrop {
+    type enumeration {
+      enum a;
+      enum b;
+      enum c;
+      enum d;
+    }
+  }
   leaf topleaf {
     type union {
       type mytype;

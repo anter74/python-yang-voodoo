@@ -21,6 +21,10 @@ The other advantage is less interesting containers can be less clear on the UI.
 
 */
 
+function yangui_set_attr(id_name, attr_name, attr_value){
+  $(document.getElementById(id_name)).attr(attr_name, attr_value);
+}
+
 
 function yangui_default_mousetrap(){
   Mousetrap.reset();

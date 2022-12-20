@@ -159,13 +159,13 @@ class HtmlFormExpander(Expander):
               <div class="modal-body">
                 <form action="{self.AJAX_BASE_SERVER_URL}/{self.yang_module}/upload" method="post" enctype="multipart/form-data">
                     <div class="custom-file">
-                      <input type="file" name='payload' class="custom-file-input" accept='application/json'>
+                      <input id="yangui-file-input" type="file" name='payload' class="custom-file-input" accept='application/json'>
                       <label class="custom-file-label" for="customFileLang">JSON instance data (RFC7159)</label>
                     </div><hr/>
                     <p class='text-danger'>If you upload any unsaved data on this page will be lost</p>
                   </div>
                   <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Upload</button>
+                    <button type="submit" id="yangui-file-button" class="btn btn-primary">Upload</button>
                     <button type="button" onClick="modal_visibility('yanguiUploadModal', 'hide')" class="btn btn-secondary" data-dismiss="modal">Close</button>
                   </div>
                 </form>
@@ -272,7 +272,6 @@ class HtmlFormExpander(Expander):
 
 
             <div class="tab-content" id="nav-tabContent">
-
                           """
         )
 

@@ -32,7 +32,7 @@ def test_retrieve_a_list_element(subject):
     subject.load(open("templates/forms/simplelist2.xml").read())
 
     # Act
-    subject.subprocess("/testforms:toplevel/simplelist[simplekey='B']")
+    subject.subprocess_existing_list("/testforms:toplevel/simplelist[simplekey='B']")
 
     assert subject.callback_open_list.mock_calls == [
         # call(ANY, count=2, node_id="/testforms:toplevel/simplelist")
@@ -42,6 +42,7 @@ def test_retrieve_a_list_element(subject):
             ANY,
             key_values=[("simplekey", "B")],
             empty_list_element=False,
+            force_open=False,
             node_id="/testforms:toplevel/simplelist[simplekey='B']",
         )
     ]
@@ -81,7 +82,7 @@ def test_add_a_list_element(subject):
         "/testforms:toplevel/simplelist[simplekey='C']/simplenonkey",
         "cult-of-dom-keller",
     )
-    subject.subprocess("/testforms:toplevel/simplelist[simplekey='C']")
+    subject.subprocess_existing_list("/testforms:toplevel/simplelist[simplekey='C']")
 
     assert subject.callback_open_list.mock_calls == [
         # call(ANY, count=2, node_id="/testforms:toplevel/simplelist")
@@ -91,6 +92,7 @@ def test_add_a_list_element(subject):
             ANY,
             key_values=[("simplekey", "C")],
             empty_list_element=False,
+            force_open=False,
             node_id="/testforms:toplevel/simplelist[simplekey='C']",
         )
     ]
@@ -124,7 +126,7 @@ def test_add_a_list_element(subject):
 def test_remove_a_leaf_of_a_list_element(subject):
     subject.load(open("templates/forms/simplelist4.xml").read())
 
-    subject.subprocess("/testforms:toplevel/simplelist[simplekey='B']")
+    subject.subprocess_existing_list("/testforms:toplevel/simplelist[simplekey='B']")
 
     assert subject.callback_open_list.mock_calls == []
     assert subject.callback_open_list_element.mock_calls == [
@@ -132,6 +134,7 @@ def test_remove_a_leaf_of_a_list_element(subject):
             ANY,
             key_values=[("simplekey", "B")],
             empty_list_element=False,
+            force_open=False,
             node_id="/testforms:toplevel/simplelist[simplekey='B']",
         )
     ]
@@ -166,7 +169,7 @@ def test_remove_a_leaf_of_a_list_element(subject):
     # Act
     subject.data_tree_set_leaf("/testforms:toplevel/simplelist[simplekey='B']/simplenonkey", None)
 
-    subject.subprocess("/testforms:toplevel/simplelist[simplekey='B']")
+    subject.subprocess_existing_list("/testforms:toplevel/simplelist[simplekey='B']")
 
     # Assert
     assert subject.callback_write_leaf.mock_calls == [
@@ -198,6 +201,6 @@ def test_trying_to_subprocess_a_non_list_element(subject):
 
     # Act
     with pytest.raises(NotImplementedError) as err:
-        subject.subprocess("/testforms:toplevel")
+        subject.subprocess_existing_list("/testforms:toplevel")
 
-    assert str(err.value) == "subprocess only supports processing of a list element: /testforms:toplevel"
+    assert str(err.value) == "subprocess only supports processing of a list: /testforms:toplevel"

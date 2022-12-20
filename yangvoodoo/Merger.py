@@ -7,6 +7,8 @@ from yangvoodoo import DataAccess
 from yangvoodoo import Types
 from yangvoodoo.Common import Utils
 
+from yangvoodoo.Errors import InvalidPayloadError, InvalidChangeError
+
 
 def base64_tostring(input_string):
     return base64.b64decode(input_string.encode("utf-8")).decode("utf-8")
@@ -74,7 +76,7 @@ class DataTreeChanges:
                 log.info("Change: %s", change)
                 yield change
             except KeyError as err:
-                raise ValueError(f"Cannot create a DataTreeChange from %s\n%s", change, str(err))
+                raise InvalidChangeError(f"Cannot create a DataTreeChange from %s\n%s", change, str(err))
 
 
 class DataTree:
@@ -85,7 +87,7 @@ class DataTree:
     def get_root_yang_model(json_dict: dict) -> str:
         for key in json_dict:
             return key.split(":")[0]
-        raise ValueError("Unable to determine yang model from payload")
+        raise InvalidPayloadError("Unable to determine yang model from payload.")
 
     @classmethod
     def connect_yang_model(cls, json_dict: dict, yang_model: str = None, yang_location: str = None) -> DataAccess:
@@ -113,7 +115,6 @@ class DataTree:
         changes: List[DataTreeChange],
         yang_model: str = None,
         yang_location: str = None,
-        format: str = "json",
         log=logging.Logger,
     ) -> Tuple[DataAccess, dict, List[DataTreeChange]]:
         """
@@ -133,14 +134,13 @@ class DataTree:
             json_dict: A dcitionary matching the JSON encoded data for a YANG model.
             changes: A list of changes
             yang_location: A location to look for yang modles
-            format: the libyang format to use (json or xml)
             log: A python logger
 
         """
         session = DataTree.connect_yang_model(json_dict, yang_model, yang_location)
         if json_dict:
             log.info("Loading initial JSON payload for %s...", session.module)
-            session.loads(json.dumps(json_dict), Types.FORMAT[format.upper()])
+            session.loads(json.dumps(json_dict), 2)
         else:
             log.info("Initial JSON payload is empty for %s...", session.module)
 
