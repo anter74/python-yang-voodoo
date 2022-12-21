@@ -330,6 +330,8 @@ function yangui_create_new_list_element_or_leaflist_item(){
           $(document.getElementById("collapse-"+div_to_append)).find("select").each(function(index){
             $(this).selectpicker('show');
           });
+          $(document.getElementById("collapse-"+div_to_append)).data('yangui-ever-expanded','true');
+
           enable_validate_save_buttons();
       },
       error: function(xhr, options, err) {
@@ -484,40 +486,42 @@ function yangui_expand_list(b_path, uuid){
   }
 }
 
-function list_element_expand(b_path,uuid){
-  console.log(b_path);
+function yangui_list_element_expand(b_path,uuid){
+  console.log("YANGUI: List Element Expand: "+atob(b_path) +" " +uuid);
   if($(document.getElementById("collapse-"+uuid)).data('yangui-collapse')=='collapse'){
     ELEMENTS_EXPANDED_BY_USER[uuid] = true;
   }else{
     ELEMENTS_EXPANDED_BY_USER[uuid] = false;
   }
 
-  payload = {
-    "base64_data_path": b_path,
-    "yang_model":LIBYANG_MODEL,
-    "payload": LIBYANG_USER_PAYLOAD,
-    "changes": LIBYANG_CHANGES
-  }
-  $.ajax({
-      type: "POST",
-      url: AJAX_BASE_SERVER_URL+"/expand-list-element",
-      crossDomain: true,
-      data: JSON.stringify(payload),
-      cache: false,
-      success: function(response) {
+  if(!$(document.getElementById("collapse-"+uuid)).data('yangui-ever-expanded')){
+    $(document.getElementById("collapse-"+uuid)).data('yangui-ever-expanded','true');
+    payload = {
+      "base64_data_path": b_path,
+      "yang_model":LIBYANG_MODEL,
+      "payload": LIBYANG_USER_PAYLOAD,
+      "changes": LIBYANG_CHANGES
+    }
+    $.ajax({
+        type: "POST",
+        url: AJAX_BASE_SERVER_URL+"/expand-list-element",
+        crossDomain: true,
+        data: JSON.stringify(payload),
+        cache: false,
+        success: function(response) {
+            stop_yangui_spinner();
+            $(document.getElementById("collapse-"+uuid)).append(response);
+            $(document.getElementById("collapse-"+uuid)).find("select").each(function(index){
+              $(this).selectpicker('show');
+            });
+
+        },
+        error: function(xhr, options, err) {
+          showMessage("Error", handle_ajax_error(xhr), 'danger');
           stop_yangui_spinner();
-          $(document.getElementById("collapse-"+uuid)).append(response);
-          $(document.getElementById("collapse-"+uuid)).find("select").each(function(index){
-            $(this).selectpicker('show');
-          });
-
-      },
-      error: function(xhr, options, err) {
-        showMessage("Error", handle_ajax_error(xhr), 'danger');
-        stop_yangui_spinner();
-      }
-  });
-
+        }
+    });
+  }
 }
 
 function presence_container_expand(b_path, uuid){

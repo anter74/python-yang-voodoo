@@ -74,11 +74,18 @@ def test_missing_enumerations_in_list_elements(runner):
 
     expand = runner.get_html_byuuid("/testforms:trio-list[key1='aaaaaah'][key2='bumblebee'][key3='55']", "button-")
     expand.click()
+    runner.wait_after_ajax()
     expand.click()
+    runner.wait_after_ajax()
     expand.click()
+    runner.wait_after_ajax()
     expand.click()
+    runner.wait_after_ajax()
     expand.click()
-    breakpoint()
+    runner.wait_after_ajax()
+
+    list = runner.get_html_byuuid("/testforms:trio-list", "collapse-")
+    runner.assert_screenshot(list_element, "test/yangui/results/ensure_new_listelements_dont_repeatedly_add")
 
     runner.driver.execute_script("yangui_debug_payload()")
     #

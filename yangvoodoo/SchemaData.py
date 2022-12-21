@@ -345,6 +345,9 @@ class Expander:
         The trails are not perfectly formed therefore we may not shrink the trails up the data tree
         - however assuming this is about creating additions of list elements to ane existing data
         tree this should be ok.
+
+        force open is used in cases where the list element has just been created rather than showing
+        list elements that pre-existed in the data tree.
         """
         self._clear()
 

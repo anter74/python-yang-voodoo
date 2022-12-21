@@ -30,7 +30,7 @@ else
 fi
 
 printf "\n\e[1;33mSchema Data Expander.....\e[0m\n"
-PYTHONPATH=./ pytest test/forms/
+PYTHONPATH=./ pytest test/yangui/
 
 if [ -d htmlcov ]
 then

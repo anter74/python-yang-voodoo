@@ -525,7 +525,7 @@ class HtmlFormExpander(Expander):
         self._write_anchor("ListElements")
         self._write_open_first_div("structure_listelement")
         self._write_button(
-            "angle-right", on_click=self._get_html_attr("onClick", "list_element_expand", data=True, uuid=True)
+            "angle-right", on_click=self._get_html_attr("onClick", "yangui_list_element_expand", data=True, uuid=True)
         )
 
         if empty_list_element:
@@ -547,9 +547,12 @@ class HtmlFormExpander(Expander):
             this_list_element_collapse_or_show = "collapse"
 
         self._write_open_second_div(
-            node, "structure_indent", collapse=this_list_element_collapse_or_show, no_description=True
+            node,
+            "structure_indent",
+            collapse=this_list_element_collapse_or_show,
+            no_description=True,
+            force_open=force_open,
         )
-        # self.result.write(f"<script>ELEMENTS_EXPANDED_BY_USER['{self.get_uuid()}']=true;</script>")
 
     def callback_close_list_element(self, node):
         self._write_close_second_div()
@@ -752,7 +755,9 @@ class HtmlFormExpander(Expander):
             f"\n{self.open_indent()}<div class='{structure_class} {extra_class}' id={self.get_hybrid_id()}>\n"
         )
 
-    def _write_open_second_div(self, node, structure_class, extra_class="", collapse="", no_description=False):
+    def _write_open_second_div(
+        self, node, structure_class, extra_class="", collapse="", no_description=False, force_open=False
+    ):
         if self.SHOW_DESCRIPTIONS == "inline" and not no_description:
             if node.description():
                 self.result.write("<blockquote>")
@@ -761,6 +766,8 @@ class HtmlFormExpander(Expander):
                 self.result.write("</blockquote>")
 
         self.result.write(f"{self.open_indent()}<div class='{structure_class} {extra_class} {collapse}' ")
+        if force_open:
+            self.result.write("data-yangui-ever-expanded='true' ")
         self.result.write(f"data-yangui-collapse='{collapse}' id='collapse-{self.get_hybrid_id(as_uuid=True)}'>\n")
         self.open_indent()
 
