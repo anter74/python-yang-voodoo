@@ -659,7 +659,6 @@ class LeafListIterator(Node):
         self.__dict__["_parent"] = parent_self
         self.__dict__["_xpath_sorted"] = xpath_sorted
         self.__dict__["_iterator"] = context.dal.gets(node.real_data_path)
-        breakpoint()
 
     def __next__(self):
         return next(self.__dict__["_iterator"])

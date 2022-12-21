@@ -33,6 +33,7 @@ class BaseDataAbstractionLayer:
         self.datastore_changed = None
         self.module = None
         self._initdal()
+        self._libyang_errors = []
 
     def _initdal(self):
         """

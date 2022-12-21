@@ -33,7 +33,7 @@ ENV LIBYANG_GIT_BRANCH=master
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.14" >/version && \
+      echo "0.0.15" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
