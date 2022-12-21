@@ -20,6 +20,10 @@ advantage of this that the user cannot create too much data in one place.
 The other advantage is less interesting containers can be less clear on the UI.
 
 */
+function yangui_set_picker(id_name, attr_value){
+  $(document.getElementById(id_name)).selectpicker('val', attr_value);
+
+}
 
 function yangui_set_attr(id_name, attr_name, attr_value){
   $(document.getElementById(id_name)).attr(attr_name, attr_value);
@@ -153,15 +157,13 @@ function yangui_debug(path, message){
 }
 
 
-function leaf_change(d, h){
+function yangui_leaf_change(d, h){
   enable_validate_save_buttons();
 }
 
-function get_start_value(i){
-  return "a";
-}
 
-function leaf_blur(b_path, h){
+function yangui_leaf_blur(b_path, h){
+  console.log("YANGUI: yangui_leaf_blur  "+atob(b_path)+ " - "+h.value);
   new_val=$(h).val();
   old_val=$(h).data('yangui-start-val');
   if(old_val!=new_val){
@@ -180,10 +182,8 @@ function leaf_blur(b_path, h){
   }
 }
 
-function leaf_focus(b_path, h){
-}
-
-function select_change(b_path, h){
+function yangui_select_change(b_path, h){
+  console.log("YANGUI: yangui_select_change  "+atob(b_path)+ " - "+h.value);
   enable_validate_save_buttons();
   old_val=$(h).data('yangui-start-val');
   new_val=h.value;
@@ -193,7 +193,8 @@ function select_change(b_path, h){
   $(document.getElementById("yangui-undo")).removeClass("yangui-disable");
 }
 
-function check_change(b_path, h){
+function yangui_checkbox_change(b_path, h){
+  console.log("YANGUI: yangui_checkbox_change  "+atob(b_path));
   enable_validate_save_buttons();
   old_val=$(h).data('yangui-start-val');
   if($(document.getElementById(b_path)).is(":checked")){
@@ -208,7 +209,8 @@ function check_change(b_path, h){
 }
 
 
-function empty_change(b_path, h){
+function yangui_empty_leaf_change(b_path, h){
+  console.log("YANGUI: yangui_empty_leaf_change  "+atob(b_path)+ " - "+h.value);
   enable_validate_save_buttons();
   old_val=$(h).data('yangui-start-val');
   if($(document.getElementById(b_path)).is(":checked")){
@@ -220,11 +222,6 @@ function empty_change(b_path, h){
   yangui_debug(b_path, "changed "+ old_val +" to "+new_val);
   $(h).data('yangui-start-val', new_val)
   $(document.getElementById("yangui-undo")).removeClass("yangui-disable");
-}
-
-function empty_blur(d, h){
-  console.log("Empty leaf has blurred\n\nData XPATH:" + d + "\nHTMLNode: "+h);
-  enable_validate_save_buttons();
 }
 
 function yangui_add_list_element_dialog(d, s, u){
@@ -274,7 +271,7 @@ function yangui_close_new_item(){
   $("#capture-new-item-list-contents").innerHTML="Not Implemented - fetch contents from a server specific to list";
 }
 
-function yangui_create_new_item(){
+function yangui_create_new_list_element_or_leaflist_item(){
   /*
   Create New Item:
 

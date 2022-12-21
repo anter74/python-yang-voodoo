@@ -35,7 +35,7 @@ class HtmlFormExpander(Expander):
 
     The server could then provide an AJAX interface to match the hooks in yangui.js
 
-        - `leaf_blur`, `check_blur`, `select_blur` could call `instance.data_tree_set_leaf(data_xpath, value)`
+        - `yangui_leaf_blur`, `check_blur`, `select_blur` could call `instance.data_tree_set_leaf(data_xpath, value)`
         - `add_leaflist_item`, `yangui_add_list_element_dialog` could call
            `instance.data_tree_add_list_element(list_data_xpath, [[key1,val1,key2,val2]])
            Note: a leaf-list is simply a list with a key of `.`
@@ -189,7 +189,7 @@ class HtmlFormExpander(Expander):
                 <hr/>
               </div>
               <div class="modal-footer">
-                <button type="submit" onClick="yangui_create_new_item()" data-yangui-for-type="" data-yangui-for-list="" id="yangui-create-list-button" class="btn btn-primary">Create</button>
+                <button type="submit" onClick="yangui_create_new_list_element_or_leaflist_item()" data-yangui-for-type="" data-yangui-for-list="" id="yangui-create-list-button" class="btn btn-primary">Create</button>
                 <button type="button" onClick="modal_visibility('yanguiNewItemModal', 'hide')" class="btn btn-secondary" data-dismiss="modal">Close</button>
               </div>
             </div>
@@ -393,7 +393,7 @@ class HtmlFormExpander(Expander):
             self.result.write(f" data-yangui-start-val='off' ")
         self.result.write(" data-yangui-field-type='checkbox' ")
         if not template:
-            self.result.write(f"{self._get_html_attr('onChange', 'check_change', this=True, data=True)} ")
+            self.result.write(f"{self._get_html_attr('onChange', 'yangui_checkbox_change', this=True, data=True)} ")
         self.result.write(f"{checked} {disabled}><br/>\n")
         self.result.write(f"{self.get_indent()} {extra_button}</div>\n")
 
@@ -414,7 +414,7 @@ class HtmlFormExpander(Expander):
         self.result.write(f" id={self.get_id()} ")
         self.result.write(f' data-yangui-keyname="{node.name()}" ')
         if not template:
-            self.result.write(f"{self._get_html_attr('onChange', 'empty_change', this=True, data=True)} ")
+            self.result.write(f"{self._get_html_attr('onChange', 'yangui_empty_leaf_change', this=True, data=True)} ")
         if value:
             self.result.write(f" data-yangui-start-val='on' ")
         else:
@@ -442,7 +442,7 @@ class HtmlFormExpander(Expander):
         self.result.write(f" data-yangui-start-val={quote}{value}{quote} ")
         self.result.write(f' data-yangui-keyname="{node.name()}" ')
         if not template:
-            self.result.write(f"{self._get_html_attr('onChange', 'select_change', this=True, data=True)} ")
+            self.result.write(f"{self._get_html_attr('onChange', 'yangui_select_change', this=True, data=True)} ")
 
         self.result.write(f" title='select an item'>")
         self.result.write(f"{self.get_indent()} {extra_button}\n")
@@ -467,10 +467,9 @@ class HtmlFormExpander(Expander):
         self.result.write(" data-yangui-field-type='text' ")
 
         if not template:
-            self.result.write(f"{self._get_html_attr('onChange', 'leaf_change', this=True, data=True)} ")
-            self.result.write(f"{self._get_html_attr('onKeyUp', 'leaf_change', this=True, data=True)} ")
-            self.result.write(f"{self._get_html_attr('onFocus', 'leaf_focus', this=True, data=True)} ")
-            self.result.write(f"{self._get_html_attr('onBlur', 'leaf_blur', this=True, data=True)} {disabled} ")
+            self.result.write(f"{self._get_html_attr('onChange', 'yangui_leaf_change', this=True, data=True)} ")
+            self.result.write(f"{self._get_html_attr('onKeyUp', 'yangui_leaf_change', this=True, data=True)} ")
+            self.result.write(f"{self._get_html_attr('onBlur', 'yangui_leaf_blur', this=True, data=True)} {disabled} ")
         self.result.write(f' data-yangui-keyname="{node.name()}" ')
 
         self.result.write(

@@ -399,6 +399,13 @@ module testforms {
     leaf bob {
       type string;
     }
+    leaf alice {
+      type enumeration {
+        enum abc;
+        enum abcde;
+        enum abcdefg;
+      }
+    }
   }
 
   container validation {

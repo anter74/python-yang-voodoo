@@ -173,69 +173,73 @@ def test_leafs(subject):
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[31])
-        == """call(<libyang.schema.Leaf: mandatory uint32>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:validation/mandatory')"""
+        == """call(<libyang.schema.Leaf: alice enumeration>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:trio-list/alice')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[32])
-        == """call(<libyang.schema.Leaf: this-is-a-thing string>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:validation/sometimes/this-is-a-thing')"""
+        == """call(<libyang.schema.Leaf: mandatory uint32>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:validation/mandatory')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[33])
-        == """call(<libyang.schema.Leaf: always boolean>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:validation/always')"""
+        == """call(<libyang.schema.Leaf: this-is-a-thing string>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:validation/sometimes/this-is-a-thing')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[34])
-        == """call(<libyang.schema.Leaf: combo combotype>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:validation/combo')"""
+        == """call(<libyang.schema.Leaf: always boolean>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:validation/always')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[35])
-        == """call(<libyang.schema.Leaf: t1 string>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t1')"""
+        == """call(<libyang.schema.Leaf: combo combotype>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:validation/combo')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[36])
-        == """call(<libyang.schema.Leaf: t2 boolean>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t2')"""
+        == """call(<libyang.schema.Leaf: t1 string>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t1')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[37])
-        == """call(<libyang.schema.Leaf: t3 empty>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t3')"""
+        == """call(<libyang.schema.Leaf: t2 boolean>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t2')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[38])
-        == """call(<libyang.schema.Leaf: t4 uint32>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t4')"""
+        == """call(<libyang.schema.Leaf: t3 empty>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t3')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[39])
-        == """call(<libyang.schema.Leaf: t5 string>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t5')"""
+        == """call(<libyang.schema.Leaf: t4 uint32>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t4')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[40])
-        == """call(<libyang.schema.Leaf: t6 enumeration>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t6')"""
+        == """call(<libyang.schema.Leaf: t5 string>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t5')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[41])
-        == """call(<libyang.schema.Leaf: t1 string>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab11/t1')"""
+        == """call(<libyang.schema.Leaf: t6 enumeration>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab9/t6')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[42])
-        == """call(<libyang.schema.Leaf: t2 boolean>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab11/t2')"""
+        == """call(<libyang.schema.Leaf: t1 string>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab11/t1')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[43])
-        == """call(<libyang.schema.Leaf: t3 empty>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab11/t3')"""
+        == """call(<libyang.schema.Leaf: t2 boolean>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab11/t2')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[44])
-        == """call(<libyang.schema.Leaf: t4 uint32>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab11/t4')"""
+        == """call(<libyang.schema.Leaf: t3 empty>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab11/t3')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[45])
-        == """call(<libyang.schema.Leaf: t5 string>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab11/t5')"""
+        == """call(<libyang.schema.Leaf: t4 uint32>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab11/t4')"""
     )
     assert (
         str(subject.callback_write_leaf.mock_calls[46])
+        == """call(<libyang.schema.Leaf: t5 string>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab11/t5')"""
+    )
+    assert (
+        str(subject.callback_write_leaf.mock_calls[47])
         == """call(<libyang.schema.Leaf: t6 enumeration>, '', "'", False, default=None, key=False, template=False, node_id='/testforms:tab11/t6')"""
     )
-    assert len(subject.callback_write_leaf.mock_calls) == 47
+    assert len(subject.callback_write_leaf.mock_calls) == 48
 
     # Assert Leaf-Lists
     # write_string_based_asserts(subject, "callback_write_leaflist_item")

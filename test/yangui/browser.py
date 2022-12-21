@@ -18,6 +18,10 @@ class Runner:
     def __init__(self, driver):
         self.driver = driver
 
+    @staticmethod
+    def path_to_base64(path):
+        return base64.urlsafe_b64encode(path.encode("utf-8")).decode("utf-8")
+
     def wait_after_ajax(self):
         if self.driver == "firefox":
             time.sleep(3)
@@ -57,11 +61,13 @@ class Runner:
 
     def assert_screenshot(self, id, stored_result):
         tf = tempfile.NamedTemporaryFile(suffix=".png")
-        self.driver.find_element(By.ID, id).screenshot(tf.name)
+        if isinstance(id, str):
+            id = self.driver.find_element(By.ID, id)
+        id.screenshot(tf.name)
 
         result_name = f"{stored_result}_{self.driver.name}.png"
         if not os.path.exists(result_name):
-            self.driver.find_element(By.ID, id).screenshot(YANGUI_SELENIUM_LAST_FAILED_SCREENSHOT)
+            id.screenshot(YANGUI_SELENIUM_LAST_FAILED_SCREENSHOT)
             assert (
                 False
             ), f"Stored Screenshot Result: {stored_result}_{self.driver.name}.png does not exist.\nSee\neog {YANGUI_SELENIUM_LAST_FAILED_SCREENSHOT}\ncp {YANGUI_SELENIUM_LAST_FAILED_SCREENSHOT} {os.getcwd()}/{stored_result}_{self.driver.name}.png\n"
@@ -70,7 +76,7 @@ class Runner:
         received_md5sum = self.get_file_md5sum(tf.name)
         if expected_md5sum == received_md5sum:
             return True
-        self.driver.find_element(By.ID, id).screenshot(YANGUI_SELENIUM_LAST_FAILED_SCREENSHOT)
+        id.screenshot(YANGUI_SELENIUM_LAST_FAILED_SCREENSHOT)
         assert (
             False
         ), f"Stored Screenshot Result: {stored_result}_{self.driver.name}.png {expected_md5sum} != {received_md5sum}\n\nReceived {received_md5sum}:\neog {YANGUI_SELENIUM_LAST_FAILED_SCREENSHOT}\nExpected {expected_md5sum}:\neog {os.getcwd()}/{stored_result}_{self.driver.name}.png\n\ncp {YANGUI_SELENIUM_LAST_FAILED_SCREENSHOT} {os.getcwd()}/{stored_result}_{self.driver.name}.png\n"

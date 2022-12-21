@@ -111,7 +111,7 @@ class AjaxHandler(tornado.web.RequestHandler):
         """
         Called when creating a new list element (i.e. submit from the dialog box).
 
-        The javascript is yangui_create_new_item
+        The javascript is yangui_create_new_list_element_or_leaflist_item
         """
         session, new_payload, _ = DataTree.process_data_tree_against_libyang(
             input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
@@ -135,7 +135,7 @@ class AjaxHandler(tornado.web.RequestHandler):
         """
         Called when creating a new leaf list item (i.e. submit from the dialog box).
 
-        The javascript is yangui_create_new_item
+        The javascript is yangui_create_new_list_element_or_leaflist_item
         """
         input["changes"].pop()
         session, new_payload, _ = DataTree.process_data_tree_against_libyang(
