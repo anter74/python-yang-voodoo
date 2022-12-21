@@ -1,4 +1,10 @@
 import libyang
+import os
+
+
+class YangModelCouldNotBeLoadedError(ValueError):
+    def __init__(self, yang_model):
+        super().__init__(f"Unable to load the yang model {yang_model}\nYANGPATH: {os.getenv('YANGPATH')}\n")
 
 
 class InvalidChangeError(KeyError):

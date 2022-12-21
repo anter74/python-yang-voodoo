@@ -117,11 +117,12 @@ class AjaxHandler(tornado.web.RequestHandler):
             input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
         )
         instance = HtmlFormExpander(input["yang_model"], log)
-        instance.load(json.dumps(new_payload), 2, trusted=True)
-        if instance._exists(base64_tostring(input["base64_data_path"]), predicates=input["key_values"]):
-            raise ValueError(
-                f"Cannot create list element because it already exists: {base64_tostring(input['base64_data_path'])} {input['key_values']}"
-            )
+        if new_payload:
+            instance.load(json.dumps(new_payload), 2, trusted=True)
+            if instance._exists(base64_tostring(input["base64_data_path"]), predicates=input["key_values"]):
+                raise ValueError(
+                    f"Cannot create list element because it already exists: {base64_tostring(input['base64_data_path'])} {input['key_values']}"
+                )
         list_element_predicates = instance.data_tree_add_list_element(
             base64_tostring(input["base64_data_path"]), input["key_values"]
         )
@@ -141,16 +142,18 @@ class AjaxHandler(tornado.web.RequestHandler):
         session, new_payload, _ = DataTree.process_data_tree_against_libyang(
             input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
         )
+
         instance = HtmlFormExpander(input["yang_model"], log)
-        instance.load(json.dumps(new_payload), 2, trusted=True)
-        log.warning(
-            "Should we prevent duplicate leaf-list items - yangvoodoo probably doesn't allow duplicated even if they are permitted by libyang?"
-        )
-        leaf_list_values = list(instance._gets(base64_tostring(input["base64_data_path"])))
-        if input["key_values"][0][1] in leaf_list_values:
-            raise ValueError(
-                f"Cannot create leaflist item because it already exists: {base64_tostring(input['base64_data_path'])} {input['key_values'][0][1]}"
+        if new_payload:
+            instance.load(json.dumps(new_payload), 2, trusted=True)
+            log.warning(
+                "Should we prevent duplicate leaf-list items - yangvoodoo probably doesn't allow duplicated even if they are permitted by libyang?"
             )
+            leaf_list_values = list(instance._gets(base64_tostring(input["base64_data_path"])))
+            if input["key_values"][0][1] in leaf_list_values:
+                raise ValueError(
+                    f"Cannot create leaflist item because it already exists: {base64_tostring(input['base64_data_path'])} {input['key_values'][0][1]}"
+                )
         instance.data_tree_add_list_element(base64_tostring(input["base64_data_path"]), input["key_values"])
         instance.subprocess_leaflist(
             leaflist_xpath=base64_tostring(input["base64_schema_path"]), value=input["key_values"][0][1]
@@ -178,24 +181,24 @@ class AjaxHandler(tornado.web.RequestHandler):
         session, new_payload, _ = DataTree.process_data_tree_against_libyang(
             input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
         )
-
         instance = HtmlFormExpander(input["yang_model"], log)
-        instance.load(json.dumps(new_payload), 2, trusted=True)
-        # by definition a list element must exist to be shown on the web page.
-        instance.subprocess_existing_list(list_xpath=base64_tostring(input["base64_data_path"]))
-        self.write(instance.dumps())
+        if new_payload:
+            instance.load(json.dumps(new_payload), 2, trusted=True)
+            # by definition a list element must exist to be shown on the web page.
+            instance.subprocess_existing_list(list_xpath=base64_tostring(input["base64_data_path"]))
+            self.write(instance.dumps())
         self.finish()
 
     def _expand_list_element(self, yang_model, input):
         session, new_payload, _ = DataTree.process_data_tree_against_libyang(
             input["payload"], list(DataTreeChanges.convert(input["changes"], log)), yang_model=yang_model, log=log
         )
-
         instance = HtmlFormExpander(input["yang_model"], log)
-        instance.load(json.dumps(new_payload), 2, trusted=True)
-        # by definition a list element must exist to be shown on the web page.
-        instance.subprocess_listelement(list_xpath=base64_tostring(input["base64_data_path"]))
-        self.write(instance.dumps())
+        if new_payload:
+            instance.load(json.dumps(new_payload), 2, trusted=True)
+            # by definition a list element must exist to be shown on the web page.
+            instance.subprocess_listelement(list_xpath=base64_tostring(input["base64_data_path"]))
+            self.write(instance.dumps())
         self.finish()
 
     def _get_list_create_page(self, yang_model, input):

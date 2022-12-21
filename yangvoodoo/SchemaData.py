@@ -8,6 +8,7 @@ from typing import List, Tuple
 import libyang
 from yangvoodoo import Types
 from yangvoodoo.Common import Utils
+from yangvoodoo.Errors import YangModelCouldNotBeLoadedError
 
 
 class EscapeOptions:
@@ -164,6 +165,11 @@ class Expander:
             self.load(initial_data, format)
             self.data_loaded = True
         self.result = StringIO()
+
+        try:
+            self.ctx.get_module(self.yang_module)
+        except libyang.util.LibyangError as err:
+            raise YangModelCouldNotBeLoadedError(self.yang_module) from err
 
         self.callback_write_header(self.ctx.get_module(self.yang_module))
         self.callback_write_title(self.ctx.get_module(self.yang_module))
