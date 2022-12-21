@@ -71,6 +71,15 @@ def test_missing_enumerations_in_list_elements(runner):
     runner.driver.execute_script(f'yangui_set_picker("{path}","abc", true)')
 
     runner.wait_after_ajax()
+
+    expand = runner.get_html_byuuid("/testforms:trio-list[key1='aaaaaah'][key2='bumblebee'][key3='55']", "button-")
+    expand.click()
+    expand.click()
+    expand.click()
+    expand.click()
+    expand.click()
+    breakpoint()
+
     runner.driver.execute_script("yangui_debug_payload()")
     #
     debug = runner.get_html_byid("yangui-content-debug")
