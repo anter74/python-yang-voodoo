@@ -25,7 +25,7 @@ class Runner:
     def wait_after_ajax(self):
         if self.driver == "firefox":
             time.sleep(3)
-        time.sleep(0.2)
+        time.sleep(0.5)
 
     def get(self, url):
         self.driver.get(url)

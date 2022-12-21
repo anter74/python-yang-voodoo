@@ -17,7 +17,6 @@ os.environ["YANGUI_BASE_API"] = "http://127.0.0.1:8096"
 
 from examples.htmlforms.stubserver import do
 
-DELAY_AFTER_FILE_SELECTION = 0.5
 BASE_URL = "http://127.0.0.1:8099"
 
 
@@ -57,5 +56,36 @@ def test_missing_enumerations_in_list_elements(runner):
     button = runner.get_html_byid("yangui-create-list-button")
     button.click()
 
-    raise ValueError("fix here required to ensure select picker is shown")
-    breakpoint()
+    runner.wait_after_ajax()
+    runner.wait_after_ajax()
+    list_element = runner.get_html_byuuid(
+        "/testforms:trio-list[key1='aaaaaah'][key2='bumblebee'][key3='55']", "collapse-"
+    )
+    runner.assert_screenshot(list_element, "test/yangui/results/ensure_new_listelements_selectpickers_are_visible")
+
+    bob = runner.get_html_bybase64id("/testforms:trio-list[key1='aaaaaah'][key2='bumblebee'][key3='55']/bob")
+    bob.click()
+    bob.send_keys("BOBBBBBBBBBBBBBBBBBBBYY")
+    bob.send_keys(Keys.TAB)
+    path = runner.path_to_base64("/testforms:trio-list[key1='aaaaaah'][key2='bumblebee'][key3='55']/alice")
+    runner.driver.execute_script(f'yangui_set_picker("{path}","abc", true)')
+
+    runner.wait_after_ajax()
+    runner.driver.execute_script("yangui_debug_payload()")
+    #
+    debug = runner.get_html_byid("yangui-content-debug")
+    # runner.save_value_to_temporary_file(debug, not_empty=True, attempts=50)
+    assert (
+        runner.wait_for_text_value(debug, not_empty=True, attempts=100)
+        == """{
+    "testforms:trio-list": [
+        {
+            "key1": "aaaaaah",
+            "key2": "bumblebee",
+            "key3": 55,
+            "bob": "BOBBBBBBBBBBBBBBBBBBBYY",
+            "alice": "abc"
+        }
+    ]
+}"""
+    )

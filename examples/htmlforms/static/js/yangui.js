@@ -20,9 +20,13 @@ advantage of this that the user cannot create too much data in one place.
 The other advantage is less interesting containers can be less clear on the UI.
 
 */
-function yangui_set_picker(id_name, attr_value){
+function yangui_set_picker(id_name, attr_value, emulate){
   $(document.getElementById(id_name)).selectpicker('val', attr_value);
-
+  if(emulate){
+    console.log("YANGUI: test_workaround - partial emulate changing a select picker  "+id_name + " " + attr_value);
+    enable_validate_save_buttons();
+    LIBYANG_CHANGES.push({"action": "set", "base64_path": id_name, "value":attr_value});
+  }
 }
 
 function yangui_set_attr(id_name, attr_name, attr_value){
@@ -323,6 +327,9 @@ function yangui_create_new_list_element_or_leaflist_item(){
           $(document.getElementById("collapse-"+div_to_append)).append(response);
           LIBYANG_CHANGES.push({"action": "create_list_xpath", "base64_path": payload.base64_data_path, "value":payload.key_values ,"undo_to_do":"todo - need more info like list elemetn html id"});
           $("#yanguiNewItemModal").modal('hide');
+          $(document.getElementById("collapse-"+div_to_append)).find("select").each(function(index){
+            $(this).selectpicker('show');
+          });
           enable_validate_save_buttons();
       },
       error: function(xhr, options, err) {
