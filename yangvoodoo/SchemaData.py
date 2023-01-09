@@ -928,6 +928,22 @@ class Expander:
             return value[0].value
         return None
 
+    def get_annotation(
+        self,
+        node: libyang.schema.Node,
+        extension: str = "",
+        default: str = "",
+        prefix: str = "",
+        suffix: str = "",
+        escape: bool = False,
+    ) -> str:
+        if node.get_extension(extension):
+            value = node.get_extension(extension).argument()
+            if escape:
+                value = self.escape_value(value)
+            return f"{prefix}{value}{suffix}"
+        return default
+
     def get_data(self, node: libyang.schema.Node) -> Tuple[str, str, bool]:
         """
         Return data for the current data item at the head of the trail.

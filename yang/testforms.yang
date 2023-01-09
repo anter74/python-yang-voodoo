@@ -29,6 +29,15 @@ module testforms {
     argument boolean;
   }
 
+  extension yangui-units {
+    description "Describe the units of a field";
+    argument string;
+  }
+
+  extension yangui-short-hint {
+    description "A short hint";
+    argument string;
+  }
 
 
   extension yangui-tab {
@@ -451,6 +460,7 @@ module testforms {
   grouping tab-contents {
     leaf t1 {
       type string;
+      testforms:yangui-short-hint "Short hint goes here";
     }
     leaf t2 {
       type boolean;
@@ -462,6 +472,7 @@ module testforms {
       type uint32 {
         range 1..30000;
       }
+      testforms:yangui-units "GB";
     }
     leaf t5 {
       type string {

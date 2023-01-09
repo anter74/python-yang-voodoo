@@ -452,19 +452,28 @@ class HtmlFormExpander(Expander):
                 selected = "selected"
             self.result.write(f"{self.get_indent()}  <option {selected}>{enum}</option>\n")
         self.result.write(f"{self.get_indent()}</select>\n")
+        self.result.write(
+            self.get_annotation(
+                node,
+                "yangui-units",
+                prefix="<i>",
+                suffix="</i>",
+            )
+        )
         self.result.write(f"{self.get_indent()} {extra_button} </div>\n")
 
     def _write_textbox(self, node, value, quote, disabled, extra_button="", template=False):
         """
         Write a text box - this is used for strings and integers.
         """
-        self.result.write(f"{self.get_indent()}<div class='form-input'      >\n")
+        self.result.write(f"{self.get_indent()}<div class='form-input'>\n")
         self._write_label(node, "structure_leaflabel", linebreak=False, label_icon="fa-leaf")
 
         self.result.write(f"{self.get_indent()}<input type='text' id={self.get_id()} ")
         self.result.write(f"value={quote}{value}{quote} ")
         self.result.write(f"data-yangui-start-val={quote}{value}{quote} ")
         self.result.write(" data-yangui-field-type='text' ")
+        self.result.write(self.get_annotation(node, "yangui-short-hint", prefix='placeholder="', suffix='"'))
 
         if not template:
             self.result.write(f"{self._get_html_attr('onChange', 'yangui_leaf_change', this=True, data=True)} ")
@@ -477,6 +486,14 @@ class HtmlFormExpander(Expander):
         )
 
         self.result.write(">\n")
+        self.result.write(
+            self.get_annotation(
+                node,
+                "yangui-units",
+                prefix="<i>",
+                suffix="</i>",
+            )
+        )
         self.result.write(f"{self.get_indent()} {extra_button}</div>\n")
 
     def callback_open_list(self, node, count, node_id):
