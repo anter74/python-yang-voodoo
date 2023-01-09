@@ -1,0 +1,158 @@
+.yangui-main-wrapper {
+}
+
+.structure_indent {
+  margin-left: 35px;
+}
+
+.structure_null {
+}
+
+.structure_choice {
+  border-style: dotted;
+  border-radius: 15px;
+  border-color: silver;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_case {
+  border-style: dotted;
+  border-radius: 15px;
+  border-color: silver;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_list {
+  border-style: dotted;
+  border-radius: 15px;
+  border-color: silver;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_listelement {
+  border-style: dotted;
+  border-radius: 15px;
+  border-color: silver;
+  padding-left: 10px;
+  padding-top: 10px;
+
+}
+
+.structure_leaflist {
+  border-style: dotted;
+  border-radius: 15px;
+  border-color: silver;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_container {
+  border-style: dotted;
+  border-radius: 15px;
+  border-color: silver;
+  padding-left: 10px;
+  padding-top: 10px;
+}
+.structure_leaflabel{
+  min-width: 150px;
+}
+.yang_icon {
+  color: gray;
+}
+.not-important-info {
+  color: gray;
+}
+.yangui-disable {
+  opacity: 0.5;
+}
+.yangui-deleted {
+  opacity: 0.1;
+}
+
+.fix-margin-left-switch-2 {
+    margin-left: 2em !important;
+}
+.fix-margin-left-switch-1 {
+    margin-left: -2.5em !important;
+}
+
+.yangui-hidden {
+  display: none;
+}
+
+.yangui-popup {
+  z-index: 90;
+  position: absolute;
+  overflow: automatic;
+  left: 20%;
+  top: 30%;
+  width: 60%;
+  height: 50%;
+  background: white;
+  opacity: 0.8;
+  border: solid;
+  border-size: 1px
+  border-color: black;
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+}
+
+.yangui-floating-left-buttons {
+  z-index: 91;
+  position: fixed;
+  left: 0px;
+  width: 75px;
+  top: 30%;
+  background: white;
+  padding-left: 5px;
+  padding-top: 5px;
+}
+
+.yangui-debug {
+  z-index: 92;
+  position: fixed;
+  bottom: 20px;
+  left: 20%;
+  height: 30px;
+  background: white;
+  opacity: 0.9;
+  font-weight:bold;
+  padding-left: 5px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.yangui-messages-normal {
+  text-align: right;
+  background: black;
+  color: white;
+}
+.yangui-messages-danger {
+  background: red;
+  color: white;
+  display: none;
+}
+.yangui-messages-success {
+  background: green;
+  color: white;
+  display: none;
+}
+
+.yangui-alerts {
+  z-index: 98;
+  position: fixed;
+  overflow: automatic;
+  top: 0px;
+  right: 1px;
+  width: 400px;
+  min-height: 200px;
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+}
+
+.yangui-dbg {
+  background-color: red;
+}

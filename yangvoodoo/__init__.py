@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 import libyang
+from _libyang import ffi
+from libyang.util import c2str
+
 import os
 import yangvoodoo.VoodooNode as VoodooNode
 import yangvoodoo.Errors as Errors
@@ -23,7 +26,7 @@ class DataAccess(StubLyDataAbstractionLayer):
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.13"
+    __version__ = "0.0.15"
 
     def __init__(
         self,
@@ -46,6 +49,13 @@ class DataAccess(StubLyDataAbstractionLayer):
             self.libyang_data = data_abstraction_layer.libyang_data
         if yang_model:
             self.connect(yang_model, yang_location)
+
+        self._libyang_errors = []
+        libyang_errors = self._libyang_errors
+
+        @ffi.def_extern(name="lypy_log_cb")
+        def libyang_c_logging_callback(level, msg, path):
+            libyang_errors.append(c2str(msg))
 
     def __enter__(self):
         self.root_voodoo = self.get_node()

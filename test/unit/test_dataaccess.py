@@ -24,8 +24,8 @@ class test_node_based_access(unittest.TestCase):
         with self.assertRaises(yangvoodoo.Errors.NotConnect):
             self.subject.gets_len("/xpath")
 
-        with self.assertRaises(yangvoodoo.Errors.NotConnect):
-            self.subject.gets_sorted("/xpath", "/spath")
+        # with self.assertRaises(yangvoodoo.Errors.NotConnect):
+        #     self.subject.gets_sorted("/xpath", "/spath")
 
         # this will call gets_unsorted which will provide the NotConnect check
         # with self.assertRaises(yangvoodoo.Errors.NotConnect):

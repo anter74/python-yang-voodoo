@@ -29,6 +29,8 @@ else
   printf "\n\e[1;32mComplexity checks.. Passed\e[0m\n"
 fi
 
+printf "\n\e[1;33mSchema Data Expander.....\e[0m\n"
+PYTHONPATH=./ pytest test/yangui/
 
 if [ -d htmlcov ]
 then

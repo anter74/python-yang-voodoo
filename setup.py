@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="yangvoodoo",
     # CHANGE VERSION NUMBER HERE
-    version="0.0.13",
+    version="0.0.15",
     author="Adam Allen",
     author_email="allena29@users.noreply.github.com",
     description="Python based access to YANG Datatstores using libyang1 and a forked libyang-cffi",
@@ -20,6 +20,7 @@ setuptools.setup(
         "Jinja2>=2.11.1",
         "dictdiffer>=0.8.1",
     ],
+    scripts=["yang-on-a-page"],
     zip_safe=False,
     include_package_data=True,
     classifiers=[

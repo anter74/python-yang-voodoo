@@ -1,0 +1,480 @@
+module testforms {
+  prefix "testforms";
+  namespace "http://testforms";
+
+  description "This is a yang model";
+
+  revision 2022-12-07 {
+    description "An update which provides monsters and people eating monsters and people";
+  }
+
+  revision 2022-11-29 {
+    description "This is a test revision";
+  }
+
+  revision 2022-11-28 {
+    description "This is a description with a very long single revision history that could have easily been broken down into a much better format within the yang model itself but it is okay because we are going to format it into a block quote section of text which is more readable in our display tool";
+  }
+
+  extension yangui-hidden {
+    argument string;
+  }
+
+  extension yangui-force-minimised {
+    description "Even if a presence container has no data do not expand it.";
+    argument boolean;
+  }
+  extension yangui-force-expand {
+    description "Force expanding this container even if the default behaviour is to collapse everything";
+    argument boolean;
+  }
+
+
+
+  extension yangui-tab {
+    // not implemented
+    argument string;
+  }
+
+  typedef frankie {
+    type enumeration {
+      enum people;
+      enum monsters;
+    }
+  }
+
+  typedef animals {
+    type enumeration {
+      enum advark;
+      enum bear;
+      enum camel;
+    }
+  }
+
+  typedef mysubtype {
+    type enumeration {
+      enum a;
+    }
+  }
+
+  typedef constrainttype {
+    type string {
+      pattern "A.*";
+    }
+  }
+
+  typedef enumtype {
+    type enumeration {
+      enum "ANTELOPE";
+      enum "ADVARK";
+    }
+  }
+
+  typedef combotype {
+    type union {
+      type constrainttype;
+      type enumtype;
+    }
+  }
+
+  typedef mytype {
+    type mysubtype;
+  }
+  typedef myothersubsubtype {
+    type string {
+      pattern "ax{4,}";
+    }
+  }
+
+  typedef myothersubtype {
+    type myothersubsubtype;
+  }
+
+  typedef myothertype {
+    type myothersubtype;
+  }
+
+  typedef leaflistenum {
+    type enumeration {
+      enum m;
+      enum M;
+      enum em;
+      enum emmm;
+      enum MMMMM;
+      enum MOO;
+    }
+  }
+
+  leaf simpleleaf {
+    type string {
+      pattern "a";
+    }
+  }
+
+  leaf hiddenleaf {
+    type string;
+    default "hidden-with-default";
+    testforms:yangui-hidden "";
+  }
+
+  leaf topdrop {
+    type enumeration {
+      enum a;
+      enum b;
+      enum c;
+      enum d;
+    }
+  }
+  leaf topleaf {
+    type union {
+      type mytype;
+      type uint8 {
+        range 1..5;
+      }
+      type myothertype;
+    }
+  }
+  container toplevel {
+    presence true;
+     description "Container Description using a block of text which includes a very long line which should be wrapped during the output to ensure that it fits within a sensible width to try get a sensible width which becomes much more important as the description appear in nested deeper leaves of the yang model. If we don't do something to wrap the description then it becomes harder to see the structure of the yang model.\nIt is of course possible to use
+     new lines with a yang model either with a \\n or an explicit\n
+     carriage return. We also have to handle super long words without spaces in them sdlkfhsdlfkhsdlkfhsdklfhsdofhiowdhfdwihfiuwdhfuidwhfuwdgfudwigfiuggggggggggggggggggggggggggggggggggguuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuhhhhhhhhhhhhhhhhhhhhhh.";
+
+    leaf hello {
+      description "leaf description";
+      type string;
+      default 'put something here';
+    }
+
+    leaf animal {
+      type animals;
+      default "bear";
+    }
+
+    leaf otheranimal {
+      type animals;
+      default "bear";
+    }
+
+    leaf tickbox {
+      type boolean;
+      default true;
+    }
+
+    leaf thing-that-means-something {
+      type empty;
+    }
+
+    leaf-list multi {
+      description "leaf-list description";
+      type leaflistenum;
+    }
+
+    choice mychoice {
+      case mycase1 {
+        container box {
+          leaf clown {
+            type string;
+          }
+        }
+      }
+
+      case mycase2 {
+        container tupperware {
+          presence true;
+        }
+      }
+
+      case mycase3 {
+        leaf empty {
+          type empty;
+        }
+      }
+    }
+
+    list simplelist {
+      description "list description ";
+      key simplekey;
+
+      leaf simplekey {
+        type string;
+        description "Short description for a simplekey";
+      }
+      leaf simplenonkey {
+        type union{
+          type uint32;
+          type enumeration {
+            enum a-place-to-bury-strangers;
+            enum brian-jonestown-massacre;
+            enum cult-of-dom-keller;
+            enum dead-meadow;
+            enum elephant-stone;
+            enum flamingods;
+            enum gluts;
+            enum helicon;
+            enum juju;
+            enum kurt-vile;
+            enum lumerians;
+            enum medicine-boy;
+            enum night-beats;
+            enum oscilliation;
+            enum psychic-ills;
+            enum radar-men-from-the-moon;
+            enum slowdive;
+            enum tess-parks;
+            enum underground-youth;
+            enum vacant-lots;
+            enum you-said-strange;
+          }
+          type string {
+            pattern "non key value goes here";
+          }
+        }
+        default "non key value goes here";
+      }
+
+    } // end list simplelist
+/*
+    list mylist {
+      key simplekey;
+      leaf simplekey {
+	type string;
+      }
+      leaf nonkey {
+	type string;
+      }
+
+      container inner {
+        presence true;
+        list innerlist {
+          key "key1 key2";
+          leaf key1 {
+            type string;
+           }
+           leaf key2 {
+              type string;
+          }
+	  leaf dropdownbox {
+	    type enumeration {
+	      enum bob;
+	      enum alice;
+	    }
+	  }
+	  leaf checkbox {
+	    type boolean;
+	  }
+	  leaf number {
+	    type uint8;
+	  }
+	  leaf regex {
+	    type string {
+	      pattern "bob[0-9]{1,4}";
+	    }
+	  }
+	  leaf anothercheckbox {
+	    type empty;
+	  }
+	  container deep {
+	    presence true;
+	    leaf mine {
+	      type string;
+	    }
+	  }
+        }
+      }
+    } */
+    container still-in-top {
+      presence true;
+      leaf of-the-world {
+        type string;
+        default 'withdefault';
+      }
+      leaf pointer {
+        type leafref {
+          path "/testforms:toplevel/testforms:simplelist/testforms:simplekey";
+        }
+        description "This is a leaf-ref it must contain a value matching something in the list";
+      }
+      leaf a {
+        type string;
+        when "../a-turned-on=true";
+      }
+      leaf a-turned-on {
+        type boolean;
+        default true;
+      }
+      container b {
+        presence true;
+        must "../b-turned-on=true";
+        must "../a-turned-of=false";
+      }
+      leaf b-turned-on {
+        type boolean;
+        default false;
+      }
+    }
+  } // end container top level
+
+  container other {
+    presence true;
+    leaf foreign {
+      type string;
+    }
+    leaf vacant {
+      description "An empty leaf";
+      type empty;
+    }
+  } // end container other
+
+  list mainlist {
+    key "mainkey subkey";
+    leaf mainkey {
+      type string;
+    }
+    leaf subkey {
+      type string;
+    }
+
+    choice another-choice {
+      case this {
+        leaf this {
+          type string;
+        }
+        list this-second-list {
+          key key;
+          leaf key {
+            type string;
+          }
+          container monsters {
+            container eating {
+              container people {
+                leaf eating {
+                  description "Frankie and the witchfingers album";
+                  type frankie;
+                }
+              }
+            }
+          }
+
+        }
+      }
+      case that {
+        leaf that {
+          type string;
+        }
+        list that-second-list {
+          key key;
+          leaf key {
+            type string;
+          }
+        }
+      }
+    }
+    container maincontainer {
+      presence true;
+      leaf mainleaf {
+	       type string;
+      }
+
+
+    }
+  }
+  list trio-list {
+    key "key1 key2 key3";
+
+    leaf key1 {
+      type string;
+    }
+
+    leaf key2 {
+      type enumeration {
+        enum bumblebee;
+        enum wasp;
+      }
+    }
+    leaf key3 {
+      type uint16;
+    }
+
+    leaf bob {
+      type string;
+    }
+    leaf alice {
+      type enumeration {
+        enum abc;
+        enum abcde;
+        enum abcdefg;
+      }
+    }
+  }
+
+  container validation {
+    presence true;
+    leaf mandatory {
+      type uint32;
+      mandatory true;
+    }
+
+    container sometimes {
+      when "../always='true'";
+
+      leaf this-is-a-thing {
+        type string;
+      }
+    }
+    leaf always {
+      type boolean;
+    }
+
+    leaf combo {
+      description "This is a mandatory leaf";
+      mandatory true;
+      type combotype;
+    }
+  }
+
+
+  container tab9 {
+    presence true;
+    testforms:yangui-force-expand true;
+    uses tab-contents;
+  }
+
+  container tab10 {
+    testforms:yangui-force-minimised true;
+    uses tab-contents;
+  }
+  container tab11 {
+    uses tab-contents;
+  }
+
+  grouping tab-contents {
+    leaf t1 {
+      type string;
+    }
+    leaf t2 {
+      type boolean;
+    }
+    leaf t3 {
+      type empty;
+    }
+    leaf t4 {
+      type uint32 {
+        range 1..30000;
+      }
+    }
+    leaf t5 {
+      type string {
+        pattern "tab.*";
+      }
+    }
+    leaf t6 {
+      type enumeration {
+        enum a;
+        enum b;
+        enum bb;
+        enum c;
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 from typing import Generator, Tuple
-from yangvoodoo.Errors import NotConnect, PathIsNotALeaf
+from yangvoodoo.Errors import InvalidValueError, NotConnect, PathIsNotALeaf
 from yangvoodoo.basedal import BaseDataAbstractionLayer
 from yangvoodoo.Common import PlainObject, Types, Utils, YangNode
 
@@ -110,9 +110,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         # )
         return self.libyang_data.get_attributes(xpath)
 
-    def insert_attribute(
-        self, xpath: str, module: str, attribute_name: str, attribute_value
-    ) -> bool:
+    def insert_attribute(self, xpath: str, module: str, attribute_name: str, attribute_value) -> bool:
         """
         Add an attribute to an existing libyang data node.
         This function is a pass through to libyang.
@@ -128,13 +126,9 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         #     attribute_name,
         #     attribute_value,
         # )
-        return self.libyang_data.insert_attribute(
-            xpath, module, attribute_name, attribute_value
-        )
+        return self.libyang_data.insert_attribute(xpath, module, attribute_name, attribute_value)
 
-    def remove_attribute(
-        self, xpath: str, attribute_name: str, attribute_value: str = None
-    ) -> bool:
+    def remove_attribute(self, xpath: str, attribute_name: str, attribute_value: str = None) -> bool:
         """
         Remove an attribute from an existing libyang node
 
@@ -145,9 +139,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         # self.log.trace(
         #     "REMOVE ATRIBUTE: %s, %s, %s", xpath, attribute_name, attribute_value
         # )
-        return self.libyang_data.remove_attribute(
-            xpath, attribute_name, attribute_value
-        )
+        return self.libyang_data.remove_attribute(xpath, attribute_name, attribute_value)
 
     def create(self, xpath, keys=None, values=None, module=None):
         """
@@ -198,7 +190,10 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         if not self.connected:
             raise NotConnect()
         # self.log.trace("SET: StubLy Datastore- %s => %s", xpath, value)
+        self._libyang_errors.clear()
         self.libyang_data.set_xpath(xpath, value)
+        if self._libyang_errors:
+            raise InvalidValueError(value, xpath, "; ".join(self._libyang_errors))
 
     def libyang_get_xpath(self, xpath):
         """
@@ -271,9 +266,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         if not self.connected:
             raise NotConnect()
         # self.log.trace("REMOVE: %s %s", xpath, value)
-        self.libyang_data.delete_xpath(
-            f"{xpath}{Utils.encode_xpath_predicate('.', value)}"
-        )
+        self.libyang_data.delete_xpath(f"{xpath}{Utils.encode_xpath_predicate('.', value)}")
 
     def set_data_by_xpath(self, context, data_path, value):
         """
@@ -289,14 +282,10 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         node_schema = Utils.get_nodeschema_from_data_path(context, data_path)
         if node_schema.nodetype() != Types.LIBYANG_NODETYPE["LEAF"]:
             raise PathIsNotALeaf("set_raw_data only operates on leaves")
-        val_type = Utils.get_yang_type(
-            node_schema.type(), value, node_schema.real_schema_path
-        )
+        val_type = Utils.get_yang_type(node_schema.type(), value, node_schema.real_schema_path)
         self.set(data_path, value, val_type)
 
-    def get_raw_xpath(
-        self, xpath: str, with_val: bool = False
-    ) -> Generator[Tuple[str, str], None, None]:
+    def get_raw_xpath(self, xpath: str, with_val: bool = False) -> Generator[Tuple[str, str], None, None]:
         """
         Get raw xpath
         xpath:       /integrationtest:web/bands[name='Idlewild']/gigs
@@ -342,6 +331,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
 
         returns: generator of sorted XPATHS
         """
+
         result = list(self.gets_unsorted(xpath, spath, ignore_empty_lists))
         result.sort()
         for xpath in result:
@@ -434,10 +424,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
             except StopIteration:
                 pass
 
-        return {
-            node.xpath: node.value
-            for node in self.libyang_data.dump_datanodes(start_node=data_node)
-        }
+        return {node.xpath: node.value for node in self.libyang_data.dump_datanodes(start_node=data_node)}
 
     def empty(self):
         """
@@ -445,9 +432,7 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
 
         returns: True
         """
-        raise NotImplementedError(
-            "empty not implemented with the libyang based datastore"
-        )
+        raise NotImplementedError("empty not implemented with the libyang based datastore")
 
     def dump(self, filename, format=1):
         """

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+export PYTHONPATH="$PYTHONPATH:/examples/htmlforms:/examples/plantuml"
+export YANGPATH="$YANGPATH:/yang:/yang/other"
+
+python3 examples/htmlforms/stubserver.py $*

@@ -12,10 +12,10 @@ RUN cd openssl-1.1.1q && \
     make && \
     make install
 
-RUN wget https://www.python.org/ftp/python/3.10.5/Python-3.10.5.tar.xz && \
-    tar -xf Python-3.10.5.tar.xz
+RUN wget https://www.python.org/ftp/python/3.10.8/Python-3.10.8.tar.xz && \
+    tar -xf Python-3.10.8.tar.xz
 
-RUN cd Python-3.10.5 && \
+RUN cd Python-3.10.8 && \
     ./configure -C --with-openssl=/usr/local/openssl-1-1-1q --with-openssl-rpath=auto --with-ensurepip=install && \
     make install
 
@@ -27,11 +27,13 @@ RUN \
       pip3 install wheel
 
 
-ENV GIT_BRANCH=support-attrs
+
+ENV GIT_BRANCH=expander-for-html-forms
+ENV LIBYANG_GIT_BRANCH=master
 
 RUN \
       # CHANGE VERSION HERE
-      echo "0.0.13" >/version && \
+      echo "0.0.15" >/version && \
       git clone https://github.com/allena29/libyang-cffi.git && \
       git clone https://github.com/allena29/python-yang-voodoo.git /working
 
@@ -47,20 +49,20 @@ RUN \
       cd /opt/dev && \
       cd libyang-cffi && \
       git pull && \
-      git checkout $GIT_BRANCH && \
+      git checkout $LIBYANG_GIT_BRANCH && \
       git submodule update --init --recursive && \
       python3 setup.py bdist_wheel && \
       mv dist/*.whl /pkgs
 
 
 
-RUN \
-      wget https://files.pythonhosted.org/packages/e8/36/edc85ab295ceff724506252b774155eff8a238f13730c8b13badd33ef866/bcrypt-3.2.2.tar.gz && \
-      tar xvfz bcrypt-3.2.2.tar.gz && \
-      cd bcrypt-3.2.2 && \
-      python3 setup.py bdist_wheel && \
-      python3 -m pip install dist/*.whl && \
-      mv dist/*.whl /pkgs
+#RUN \
+#      wget https://files.pythonhosted.org/packages/e8/36/edc85ab295ceff724506252b774155eff8a238f13730c8b13badd33ef866/bcrypt-3.2.2.tar.gz && \
+#      tar xvfz bcrypt-3.2.2.tar.gz && \
+#      cd bcrypt-3.2.2 && \
+#      python3 setup.py bdist_wheel && \
+#      python3 -m pip install dist/*.whl && \
+#      mv dist/*.whl /pkgs
 
 #RUN \
 #      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh && \
@@ -83,4 +85,4 @@ RUN \
       rsync -avz /usr/local/include /cleanpython/ && \
       rsync -avz  --exclude='test/' --exclude='__pycache__/' /usr/local/lib /cleanpython/ && \
       cd /cleanpython && \
-      tar cvpfz /pkgs/python-3.10.5-openssl-1-1-1q-centos-7.tar.gz bin include lib openssl-1-1-1q
+      tar cvpfz /pkgs/python-3.10.8-openssl-1-1-1q-centos-7.tar.gz bin include lib openssl-1-1-1q

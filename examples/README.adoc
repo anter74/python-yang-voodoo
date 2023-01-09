@@ -1,0 +1,53 @@
+= Examples
+
+The following examples show a few proof of concept examples of combining schema and data trees together.
+
+== Docker
+
+.Run test form example
+----
+docker run -p 8099:8099 -it allena29/yangvoodoo:centos-release /exmaples/run
+----
+
+The docker image will look at `/yang`, and `/yang/other` when importing yang models, with the only
+difference that those in `/yang` will be provided at the top level URL.
+
+
+.Run other yang models
+----
+docker run -p 8099:8099 -v /path/to/host/yang:/yang -it allena29/yangvoodoo:centos-release /exmaples/run
+----
+
+This prototype doesn't allow relative paths, `yangui.js` uses `/api` for it's calls which match with
+`stub-http-server.py`
+
+.Run on a different port
+----
+export YANGUI_BASE_API="http://192.168.3.1:5000"
+export YANGUI_BIND_PORT=5000
+docker run -p $YANGUI_BIND_PORT:$YANGUI_BIND_PORT \
+       -e YANGUI_BIND_PORT=$YANGUI_BIND_PORT -e YANGUI_BASE_API=$YANGUI_BASE_API \
+       -it allena29/yangvoodoo:centos-release /exmaples/run
+
+----
+
+
+== Basic Examples
+
+----
+GET /                            : Provides an index based on the contents of `/yang/*.yang`
+
+GET /web/{yangmodel}             : Returns an empty form for the given yang model
+
+GET /text/{yangmodel}            : Returns a plain text representation of the given yang model (schema only)
+POST /text/{yangmodel}           : Returns a plain text representation of the given yang model and data tree
+
+GET /plantuml/{yangmodel}   : Returns a PlantUML JSON representation of the yang model (schema only)
+POST /plantuml/{yangmodel}  : Returns a PlantUML JSON representation of the yang model and data tree
+
+GET /plantuml-png/{yangmodel}    : Returns a PlantUML PNG image representation of the yang model (schema only)
+POST /plantuml-png/{yangmodel}   : Returns a PlantUML PNG image representation of the yang model and data tree
+
+POST /api/{yangmodel}/validate   : Validate the payload in the JSON POSTED.
+POST /api/{yangmodel}/upload     : Returns a form for the given yang model with the JSON POSTED data loaded
+----
