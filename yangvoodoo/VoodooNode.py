@@ -674,6 +674,19 @@ class ListElement(Node):
     _NODE_TYPE = "ListElement"
 
 
+    def _dict(self) -> dict:
+        """
+        Return a dictionary of items in the dictionary.
+
+        Names of elements are translated to ensure python safety (i.e. hyphens -> underscores,
+        underscore suffix to reserved keywords).
+        """
+        result = {}
+        for item in self.__dir__():
+            result[item] = self.__getattr__(item)
+        return result
+
+
 class Container(ContainingNode):
     """
     Represents a Container from a yang module, with access to the child
@@ -681,6 +694,18 @@ class Container(ContainingNode):
     """
 
     _NODE_TYPE = "Container"
+
+    def _dict(self) -> dict:
+        """
+        Return a dictionary of items in the dictionary.
+
+        Names of elements are translated to ensure python safety (i.e. hyphens -> underscores,
+        underscore suffix to reserved keywords).
+        """
+        result = {}
+        for item in self.__dir__():
+            result[item] = self.__getattr__(item)
+        return result
 
 
 class PresenceContainer(Container):
