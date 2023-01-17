@@ -238,6 +238,25 @@ class test_node_based_access(unittest.TestCase):
 
         self.assertEqual(result, {"nonleafkey": 0, "simplekey": "newlistitem"})
 
+    def test_list_get_items(self):
+        self.assertEqual(list(self.root.simplelist.items()), [])
+
+        # Arrange
+        list_element = self.root.simplelist.create("newlistitem")
+        list_element2 = self.root.simplelist.create("newlistitem2")
+
+        # Act
+        with self.assertRaises(Errors.CannotOperateOnCompositeKeyListError):
+            next(self.root.twokeylist.items())
+
+        result = list(self.root.simplelist.items())
+
+        # Assert
+        self.assertEqual(result[0][0], "newlistitem")
+        self.assertEqual(repr(result[0][1]), repr(list_element))
+        self.assertEqual(result[1][0], "newlistitem2")
+        self.assertEqual(repr(result[1][1]), repr(list_element2))
+
     def test_iteration_of_lists(self):
         # Build
         self.root.psychedelia.psychedelic_rock.stoner_rock.bands.create("Dead Meadow")

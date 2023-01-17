@@ -441,6 +441,24 @@ class List(ContainingNode):
         new_node = Common.YangNode(node.libyang_node, node.real_schema_path, node.real_data_path, node.module)
         return ListElement(context, new_node, self)
 
+    def items(self):
+        node = self._node
+        context = self._context
+
+        keys = Common.Utils.get_keys_from_a_node(node)
+
+        if len(keys) > 1:
+            raise Errors.CannotOperateOnCompositeKeyListError(node.real_data_path)
+
+        for list_element_xpath in context.dal.gets_unsorted(
+            node.real_data_path, node.real_schema_path, ignore_empty_lists=True
+        ):
+
+            new_node = Common.YangNode(node.libyang_node, node.real_schema_path, list_element_xpath, node.module)
+            yield context.dal.get_raw_xpath_single_val(f"{list_element_xpath}/{keys[0]}"), ListElement(
+                context, new_node, node
+            )
+
     def __getattr__(self, attr):
         node = self._node
         context = self._context
