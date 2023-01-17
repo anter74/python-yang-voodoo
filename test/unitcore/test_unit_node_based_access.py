@@ -238,6 +238,15 @@ class test_node_based_access(unittest.TestCase):
 
         self.assertEqual(result, {"nonleafkey": 0, "simplekey": "newlistitem"})
 
+    def test_contains_list_element(self):
+        # Arrange
+        list_element = self.root.simplelist.create("newlistitem")
+
+        # Act
+        self.assertTrue("nonleafkey" in list_element)
+        self.assertTrue("simplekey" in list_element)
+        self.assertFalse("xxxxxx" in list_element)
+
     def test_list_get_items(self):
         self.assertEqual(list(self.root.simplelist.items()), [])
 

@@ -691,6 +691,8 @@ class ListElement(Node):
 
     _NODE_TYPE = "ListElement"
 
+    def __contains__(self, item):
+        return item in self.__dir__()
 
     def _dict(self) -> dict:
         """
