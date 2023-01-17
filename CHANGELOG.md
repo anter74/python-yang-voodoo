@@ -167,3 +167,28 @@
    - tested against python 3.10.5
    - support for augments into our yang model
    - Minimum Python version now 3.6
+
+
+# 0.0.13
+
+    - Correct `gets_sorted` which should be a generator
+    - Support extraction of attrbiutes from nodes.
+
+
+# 0.0.14
+
+    - Support extrcat of libyang errors to raise errors when setting invalid values on existing nodes
+
+
+# 0.0.15
+
+    - Support merging of Schema/Data Nodes with plantuml, html and text examples
+
+
+# 0.0.0.16
+
+    - Improve handling of VoodooNode's inside templates (support `.items()` on list))
+    - Improve handling of VoodooNode's inside templates (support `._dict()` on list elements and containers)
+    - Improve handling of VoodooNode's inside templates (support 'node' in list element)
+    - Support dumping of a sub data-tree using `subdumps()`
+
