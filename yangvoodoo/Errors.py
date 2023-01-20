@@ -200,3 +200,10 @@ class NodeAlreadyProvidedCannotChangeSchemaError(Exception):
         message = "A node has already been returned, it is not longer possible to change the schema."
 
         super().__init__(message)
+
+
+class CannotOperateOnCompositeKeyListError(Exception):
+    def __init__(self, xpath):
+        message = f"The items() method can only be used on a list with a single key.\n\nXPATH: {xpath}"
+
+        super().__init__(message)

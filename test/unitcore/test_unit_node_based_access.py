@@ -20,9 +20,7 @@ class test_node_based_access(unittest.TestCase):
         self.root = self.subject.get_node()
 
     def test_root(self):
-        self.assertEqual(
-            repr(self.root), "VoodooTopNode{} YANG Module: integrationtest"
-        )
+        self.assertEqual(repr(self.root), "VoodooTopNode{} YANG Module: integrationtest")
 
         expected_children = [
             "augments",
@@ -82,9 +80,7 @@ class test_node_based_access(unittest.TestCase):
         result = self.subject.dump_xpaths()
 
         # Assert
-        expected_result = {
-            "/integrationtest:simpleleaf": "/path/inside/a/leaf[key='sdf']/dsfsdf"
-        }
+        expected_result = {"/integrationtest:simpleleaf": "/path/inside/a/leaf[key='sdf']/dsfsdf"}
         self.assertDictEqual(result, expected_result)
         self.assertEqual(self.root.simpleleaf, "/path/inside/a/leaf[key='sdf']/dsfsdf")
 
@@ -112,9 +108,7 @@ class test_node_based_access(unittest.TestCase):
 
         self.assertFalse(self.root.empty.exists())
         self.root.empty.create()
-        self.assertEqual(
-            repr(self.root.empty), "VoodooEmpty{/integrationtest:empty} - Exists"
-        )
+        self.assertEqual(repr(self.root.empty), "VoodooEmpty{/integrationtest:empty} - Exists")
         self.assertTrue(self.root.empty.exists())
         self.root.empty.remove()
         self.assertEqual(
@@ -125,9 +119,7 @@ class test_node_based_access(unittest.TestCase):
 
     def test_containers(self):
         morecomplex = self.root.morecomplex
-        self.assertEqual(
-            repr(morecomplex), "VoodooContainer{/integrationtest:morecomplex}"
-        )
+        self.assertEqual(repr(morecomplex), "VoodooContainer{/integrationtest:morecomplex}")
 
         expected_children = [
             "extraboolean",
@@ -225,6 +217,55 @@ class test_node_based_access(unittest.TestCase):
 
         self.assertEqual(dir(self.root.simplelist), ["simplekey"])
 
+    def test_get_dict(self):
+        # Arrange
+        list_element = self.root.simplelist.create("newlistitem")
+
+        # Act
+        result = self.root.container1.container2._dict()
+
+        # Assert
+        self.assertEqual(
+            str(result),
+            (
+                "{'container3': VoodooPresenceContainer{/integrationtest:container1/container2/container3} Does Not Exist, "
+                "'leaf2a': None, 'leaf2b': None}"
+            ),
+        )
+
+        # Act
+        result = list_element._dict()
+
+        self.assertEqual(result, {"nonleafkey": 0, "simplekey": "newlistitem"})
+
+    def test_contains_list_element(self):
+        # Arrange
+        list_element = self.root.simplelist.create("newlistitem")
+
+        # Act
+        self.assertTrue("nonleafkey" in list_element)
+        self.assertTrue("simplekey" in list_element)
+        self.assertFalse("xxxxxx" in list_element)
+
+    def test_list_get_items(self):
+        self.assertEqual(list(self.root.simplelist.items()), [])
+
+        # Arrange
+        list_element = self.root.simplelist.create("newlistitem")
+        list_element2 = self.root.simplelist.create("newlistitem2")
+
+        # Act
+        with self.assertRaises(Errors.CannotOperateOnCompositeKeyListError):
+            next(self.root.twokeylist.items())
+
+        result = list(self.root.simplelist.items())
+
+        # Assert
+        self.assertEqual(result[0][0], "newlistitem")
+        self.assertEqual(repr(result[0][1]), repr(list_element))
+        self.assertEqual(result[1][0], "newlistitem2")
+        self.assertEqual(repr(result[1][1]), repr(list_element2))
+
     def test_iteration_of_lists(self):
         # Build
         self.root.psychedelia.psychedelic_rock.stoner_rock.bands.create("Dead Meadow")
@@ -240,12 +281,8 @@ class test_node_based_access(unittest.TestCase):
             expected_answer = expected_answers.pop(0)
             self.assertEqual(repr(band), expected_answer)
 
-        self.assertTrue(
-            "Dead Meadow" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands
-        )
-        self.assertFalse(
-            "Taylor Swift" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands
-        )
+        self.assertTrue("Dead Meadow" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)
+        self.assertFalse("Taylor Swift" in self.root.psychedelia.psychedelic_rock.stoner_rock.bands)
 
         twolist = self.root.twokeylist
         self.assertTrue((True, True) in twolist)
@@ -305,13 +342,9 @@ class test_node_based_access(unittest.TestCase):
         self.assertEqual(int(self.root.morecomplex.superstar * 100), 9560)
 
     def test_parents_and_help_text(self):
-        great_grandparent = (
-            self.root.bronze.silver.gold.platinum._parent._parent._parent
-        )
+        great_grandparent = self.root.bronze.silver.gold.platinum._parent._parent._parent
 
-        self.assertEqual(
-            repr(great_grandparent), "VoodooContainer{/integrationtest:bronze}"
-        )
+        self.assertEqual(repr(great_grandparent), "VoodooContainer{/integrationtest:bronze}")
 
         description = self.subject.describe(great_grandparent, print_description=False)
 
@@ -330,14 +363,10 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
         self.assertEqual(description, expected_description)
 
         list_element = self.root.simplelist.create("newlistitem")
-        self.assertEqual(
-            repr(list_element._parent), "VoodooList{/integrationtest:simplelist}"
-        )
+        self.assertEqual(repr(list_element._parent), "VoodooList{/integrationtest:simplelist}")
 
         obj = self.root.bronze.silver._parent.silver._parent.silver.gold
-        self.assertEqual(
-            repr(obj), "VoodooContainer{/integrationtest:bronze/silver/gold}"
-        )
+        self.assertEqual(repr(obj), "VoodooContainer{/integrationtest:bronze/silver/gold}")
 
     def test_lists_ordering(self):
         self.root.simplelist.create("A")
@@ -478,11 +507,7 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
         expected_result = []
         self.assertEqual(
             expected_result,
-            list(
-                yangvoodoo.DataAccess.get_extensions(
-                    self.root, "default", module="crux"
-                )
-            ),
+            list(yangvoodoo.DataAccess.get_extensions(self.root, "default", module="crux")),
         )
 
         expected_result = "underscores help text for the container"
@@ -494,9 +519,7 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
         expected_result = "underscores help text"
         self.assertEqual(
             expected_result,
-            yangvoodoo.DataAccess.get_extension(
-                self.root.underscoretests, "info", "underscore_only"
-            ),
+            yangvoodoo.DataAccess.get_extension(self.root.underscoretests, "info", "underscore_only"),
         )
 
     def test_choices(self):
@@ -510,23 +533,17 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
         )
 
         self.root.morecomplex.inner.beer_type.craft.brewdog = "PUNK IPA"
-        self.assertEqual(
-            self.root.morecomplex.inner.beer_type.craft.brewdog, "PUNK IPA"
-        )
+        self.assertEqual(self.root.morecomplex.inner.beer_type.craft.brewdog, "PUNK IPA")
         # self.assertEqual(
         #     self.stub.stub_store["/integrationtest:morecomplex/inner/brewdog"],
         #     "PUNK IPA",
         # )
 
     def test_silly_things(self):
-        with self.assertRaises(
-            yangvoodoo.Errors.CannotAssignValueToContainingNode
-        ) as context:
+        with self.assertRaises(yangvoodoo.Errors.CannotAssignValueToContainingNode) as context:
             self.root.morecomplex = "ssdfsdf"
         self.assertEqual(str(context.exception), "Cannot assign a value to morecomplex")
-        self.assertNotEqual(
-            self.root.morecomplex.inner.beer_type.craft.brewdog, "PUNK IPA"
-        )
+        self.assertNotEqual(self.root.morecomplex.inner.beer_type.craft.brewdog, "PUNK IPA")
 
     def test_underscore_and_hyphens(self):
         self.root.underscoretests.underscore_and_hyphen = "sdf"
@@ -537,9 +554,7 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
             "VoodooEmpty{/integrationtest:underscore_and-hyphen} - Exists",
         )
         xpaths = self.root._context.dal.dump_xpaths()
-        self.assertEqual(
-            xpaths["/integrationtest:underscoretests/underscore_and-hyphen"], "sdf"
-        )
+        self.assertEqual(xpaths["/integrationtest:underscoretests/underscore_and-hyphen"], "sdf")
         self.assertEqual(xpaths["/integrationtest:underscore_and-hyphen"], "")
 
     def test_getitem_and_steitem(self):
@@ -547,24 +562,16 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
         self.assertEqual(self.root.bronze["A"], "bronze-set-by-set-attr")
 
     def test_set_data_by_xpath(self):
-        self.subject.set_data_by_xpath(
-            self.root._context, "/integrationtest:simpleleaf", "A"
-        )
+        self.subject.set_data_by_xpath(self.root._context, "/integrationtest:simpleleaf", "A")
         self.assertEqual(self.root.simpleleaf, "A")
 
         with self.assertRaises(yangvoodoo.Errors.PathIsNotALeaf):
-            self.subject.set_data_by_xpath(
-                self.root._context, "/integrationtest:morecomplex", "A"
-            )
+            self.subject.set_data_by_xpath(self.root._context, "/integrationtest:morecomplex", "A")
 
     def test_setting_and_removing_attributes(self):
-        self.subject.set_data_by_xpath(
-            self.root._context, "/integrationtest:simpleleaf", "A"
-        )
+        self.subject.set_data_by_xpath(self.root._context, "/integrationtest:simpleleaf", "A")
 
-        self.subject.insert_attribute(
-            "/integrationtest:simpleleaf", "ietf-netconf", "operation", "remove"
-        )
+        self.subject.insert_attribute("/integrationtest:simpleleaf", "ietf-netconf", "operation", "remove")
 
         self.assertEqual(
             self.subject.dumps(),
@@ -579,7 +586,5 @@ Children: 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
 
         self.assertEqual(
             self.subject.dumps(),
-            (
-                '<simpleleaf xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest">A</simpleleaf>'
-            ),
+            ('<simpleleaf xmlns="http://brewerslabng.mellon-collie.net/yang/integrationtest">A</simpleleaf>'),
         )

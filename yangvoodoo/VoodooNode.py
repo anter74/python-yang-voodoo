@@ -441,6 +441,24 @@ class List(ContainingNode):
         new_node = Common.YangNode(node.libyang_node, node.real_schema_path, node.real_data_path, node.module)
         return ListElement(context, new_node, self)
 
+    def items(self):
+        node = self._node
+        context = self._context
+
+        keys = Common.Utils.get_keys_from_a_node(node)
+
+        if len(keys) > 1:
+            raise Errors.CannotOperateOnCompositeKeyListError(node.real_data_path)
+
+        for list_element_xpath in context.dal.gets_unsorted(
+            node.real_data_path, node.real_schema_path, ignore_empty_lists=True
+        ):
+
+            new_node = Common.YangNode(node.libyang_node, node.real_schema_path, list_element_xpath, node.module)
+            yield context.dal.get_raw_xpath_single_val(f"{list_element_xpath}/{keys[0]}"), ListElement(
+                context, new_node, node
+            )
+
     def __getattr__(self, attr):
         node = self._node
         context = self._context
@@ -673,6 +691,21 @@ class ListElement(Node):
 
     _NODE_TYPE = "ListElement"
 
+    def __contains__(self, item):
+        return item in self.__dir__()
+
+    def _dict(self) -> dict:
+        """
+        Return a dictionary of items in the dictionary.
+
+        Names of elements are translated to ensure python safety (i.e. hyphens -> underscores,
+        underscore suffix to reserved keywords).
+        """
+        result = {}
+        for item in self.__dir__():
+            result[item] = self.__getattr__(item)
+        return result
+
 
 class Container(ContainingNode):
     """
@@ -681,6 +714,18 @@ class Container(ContainingNode):
     """
 
     _NODE_TYPE = "Container"
+
+    def _dict(self) -> dict:
+        """
+        Return a dictionary of items in the dictionary.
+
+        Names of elements are translated to ensure python safety (i.e. hyphens -> underscores,
+        underscore suffix to reserved keywords).
+        """
+        result = {}
+        for item in self.__dir__():
+            result[item] = self.__getattr__(item)
+        return result
 
 
 class PresenceContainer(Container):

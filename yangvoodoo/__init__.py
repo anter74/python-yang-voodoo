@@ -26,7 +26,7 @@ class DataAccess(StubLyDataAbstractionLayer):
     """
 
     # CHANGE VERSION NUMBER HERE
-    __version__ = "0.0.15"
+    __version__ = "0.0.16"
 
     def __init__(
         self,
@@ -119,10 +119,7 @@ class DataAccess(StubLyDataAbstractionLayer):
         leaf_type = None
         node_type = node_schema.nodetype()
         description = node_schema.description()
-        type = (
-            Types.LIBYANG_NODETYPE[node_type][0]
-            + Types.LIBYANG_NODETYPE[node_type][1:].lower()
-        )
+        type = Types.LIBYANG_NODETYPE[node_type][0] + Types.LIBYANG_NODETYPE[node_type][1:].lower()
         if node_type in Types.LIBYANG_LEAF_LIKE_NODES:
             leaf_type = node_schema.type().base()
             type = (
@@ -199,9 +196,7 @@ Children: %s"""
         """
 
         if node._NODE_TYPE == "Root" and not attr:
-            raise ValueError(
-                "Attribute name of a child leaf is required for 'has_extension' on root"
-            )
+            raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
         context = node._context
         node = node._node
 
@@ -236,9 +231,7 @@ Children: %s"""
         If the extension is not present None is returned.
         """
         if node._NODE_TYPE == "Root" and not attr:
-            raise ValueError(
-                "Attribute name of a child leaf is required for 'has_extension' on root"
-            )
+            raise ValueError("Attribute name of a child leaf is required for 'has_extension' on root")
 
         extensions = DataAccess.get_extensions(node, attr, module)
         for (m, a) in extensions:
@@ -322,9 +315,7 @@ Children: %s"""
 
         returns: True
         """
-        if yang_location and not os.path.exists(
-            f"{yang_location}{os.sep}{module}.yang"
-        ):
+        if yang_location and not os.path.exists(f"{yang_location}{os.sep}{module}.yang"):
             raise ValueError(f"YANG Module {module} not present in {yang_location}")
         self.module = module
         self.yang_ctx = libyang.Context(yang_location) if not yang_ctx else yang_ctx
@@ -334,9 +325,7 @@ Children: %s"""
         self.session = self
         self.connected = True
 
-        self.context = VoodooNode.VoodooContext(
-            self.module, self, self.yang_schema, self.yang_ctx, log=self.log
-        )
+        self.context = VoodooNode.VoodooContext(self.module, self, self.yang_schema, self.yang_ctx, log=self.log)
 
         self.log.trace("CONNECT: module %s. yang_location %s", module, yang_location)
         self.log.trace("       : libyangctx %s ", self.yang_ctx)
@@ -457,11 +446,7 @@ Children: %s"""
 
     @staticmethod
     def _welcome():
-        if (
-            os.path.exists(".colour")
-            and "TERM" in os.environ
-            and "xterm" in os.environ["TERM"]
-        ):
+        if os.path.exists(".colour") and "TERM" in os.environ and "xterm" in os.environ["TERM"]:
             with open(".colour") as fh:
                 print(fh.read())
         elif os.path.exists(".black"):
