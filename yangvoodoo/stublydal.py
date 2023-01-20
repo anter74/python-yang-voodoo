@@ -458,9 +458,20 @@ class StubLyDataAbstractionLayer(BaseDataAbstractionLayer):
         # self.log.trace("LOAD: %s (format: %s)", filename, format)
         self.libyang_data.load(filename, format, trusted)
 
-    def dumps(self, format=1):
+    def subdumps(self, xpath: str, format: int = 1):
         """
-        Save data to the filename in the format specified.
+        Return a sub portion of the data tree in the format specified.
+
+        Types.FORMAT['XML'] or Types.FORMAT['JSON']
+        """
+        if not self.connected:
+            raise NotConnect()
+        # self.log.trace("DUMPS: (xpath: %s, format: %s)", xpath, format)
+        return self.libyang_data.subdumps(xpath, format)
+
+    def dumps(self, format: int = 1):
+        """
+        Return the root data tree in the format specified.
 
         Types.FORMAT['XML'] or Types.FORMAT['JSON']
         """
